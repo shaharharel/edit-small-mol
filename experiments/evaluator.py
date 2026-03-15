@@ -146,6 +146,15 @@ def evaluate_all_models(trained_models: Dict, train_data: Dict, test_datasets: D
     task_names = list(train_data.keys())
 
     for method_name, method_info in trained_models.items():
+        # Clear MPS cache to prevent placeholder storage errors
+        try:
+            import torch
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+            import gc
+            gc.collect()
+        except Exception:
+            pass
         print(f"\nEvaluating {method_name}...")
 
         method_type = method_info['type']
@@ -160,6 +169,13 @@ def evaluate_all_models(trained_models: Dict, train_data: Dict, test_datasets: D
         results['test'][method_name] = {}
 
         for prop in task_names:
+            # Clear MPS cache between tasks
+            try:
+                if torch.backends.mps.is_available():
+                    torch.mps.empty_cache()
+            except Exception:
+                pass
+
             splits = train_data[prop]
             test_df = splits['test']
 
@@ -239,6 +255,40 @@ def evaluate_all_models(trained_models: Dict, train_data: Dict, test_datasets: D
                     attach_atoms_A=test_mmp['attach_atom_indices_A'],
                     mapped_pairs=test_mmp['mapped_atom_pairs']
                 )
+                y_pred = preds_all[prop]
+
+            elif method_type == 'attention_delta':
+                # AttentionDeltaPredictor (GatedCrossAttn / AttnThenFiLM)
+                # predict() takes list of dicts with keys: wt, mt, mol_a, mol_b, edit_smiles
+                smiles_a_test = test_df['mol_a'].tolist()
+                smiles_b_test = test_df['mol_b'].tolist()
+                y_true = test_df['delta'].values
+
+                wt_test = np.array(embedder.encode(smiles_a_test), dtype=np.float32)
+                mt_test = np.array(embedder.encode(smiles_b_test), dtype=np.float32)
+
+                test_data_dicts = []
+                for idx in range(len(test_df)):
+                    row = test_df.iloc[idx]
+                    test_data_dicts.append({
+                        'wt': wt_test[idx],
+                        'mt': mt_test[idx],
+                        'mol_a': row.get('mol_a', ''),
+                        'mol_b': row.get('mol_b', ''),
+                        'edit_smiles': row.get('edit_smiles', ''),
+                    })
+
+                y_pred = model.predict(test_data_dicts)
+
+            elif method_type == 'deepdelta':
+                # DeepDelta-style: concat([emb_a, emb_b]) → MLP → Δ
+                # Uses EditEffectPredictor.predict() with SMILES so that
+                # ConcatEditEmbedder.encode_from_smiles() is invoked.
+                smiles_a_test = test_df['mol_a'].tolist()
+                smiles_b_test = test_df['mol_b'].tolist()
+                y_true = test_df['delta'].values
+
+                preds_all = model.predict(smiles_a_test, smiles_b_test)
                 y_pred = preds_all[prop]
 
             else:
@@ -339,6 +389,35 @@ def evaluate_all_models(trained_models: Dict, train_data: Dict, test_datasets: D
                         attach_atoms_A=test_mmp['attach_atom_indices_A'],
                         mapped_pairs=test_mmp['mapped_atom_pairs']
                     )
+                    y_pred = preds_all[prop]
+
+                elif method_type == 'attention_delta':
+                    smiles_a_test = prop_test_df['mol_a'].tolist()
+                    smiles_b_test = prop_test_df['mol_b'].tolist()
+                    y_true = prop_test_df['delta'].values
+
+                    wt_test = np.array(embedder.encode(smiles_a_test), dtype=np.float32)
+                    mt_test = np.array(embedder.encode(smiles_b_test), dtype=np.float32)
+
+                    test_data_dicts = []
+                    for idx in range(len(prop_test_df)):
+                        row = prop_test_df.iloc[idx]
+                        test_data_dicts.append({
+                            'wt': wt_test[idx],
+                            'mt': mt_test[idx],
+                            'mol_a': row.get('mol_a', ''),
+                            'mol_b': row.get('mol_b', ''),
+                            'edit_smiles': row.get('edit_smiles', ''),
+                        })
+
+                    y_pred = model.predict(test_data_dicts)
+
+                elif method_type == 'deepdelta':
+                    smiles_a_test = prop_test_df['mol_a'].tolist()
+                    smiles_b_test = prop_test_df['mol_b'].tolist()
+                    y_true = prop_test_df['delta'].values
+
+                    preds_all = model.predict(smiles_a_test, smiles_b_test)
                     y_pred = preds_all[prop]
 
                 else:

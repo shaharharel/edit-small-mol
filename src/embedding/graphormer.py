@@ -195,7 +195,7 @@ class GraphormerEmbedder(nn.Module, MoleculeEmbedder):
         batch = Batch.from_data_list(data_list)
         return batch
 
-    def encode(self, smiles: Union[str, List[str]]) -> np.ndarray:
+    def encode(self, smiles: Union[str, List[str]], show_progress: bool = False) -> np.ndarray:
         """
         Encode molecule(s) to embedding vector(s).
 

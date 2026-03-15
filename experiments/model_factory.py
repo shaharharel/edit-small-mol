@@ -4,8 +4,17 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from typing import Dict
 from src.models import PropertyPredictor, EditEffectPredictor, StructuredEditEffectPredictor
-from src.models.predictors import TrainablePropertyPredictor, TrainableEditEffectPredictor
+from src.models.predictors import TrainableEditEffectPredictor
+
+# TrainablePropertyPredictor does not yet exist; guard to prevent ImportError
+try:
+    from src.models.predictors import TrainablePropertyPredictor
+except ImportError:
+    TrainablePropertyPredictor = None
+from src.models.predictors.attention_delta_predictor import AttentionDeltaPredictor
 from src.embedding import ChemBERTaEmbedder, ChemPropEmbedder, EditEmbedder
+from src.embedding.trainable_edit_embedder import ConcatenationEditEmbedder
+from src.embedding.edit_embedder import ConcatEditEmbedder
 
 # Optional imports for new embedders
 try:
@@ -36,7 +45,12 @@ def create_embedder(embedder_type: str, trainable_encoder: bool = False, encoder
     # Auto-detect device if requested
     if encoder_device == 'auto':
         import torch
-        encoder_device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        if torch.cuda.is_available():
+            encoder_device = 'cuda'
+        elif hasattr(torch.backends, 'mps') and torch.backends.mps.is_available():
+            encoder_device = 'mps'
+        else:
+            encoder_device = 'cpu'
         print(f"Auto-detected device: {encoder_device}")
 
     if embedder_type == 'chemberta':
@@ -284,6 +298,115 @@ def create_models(config, train_data: Dict, embedder=None) -> Dict:
             models[method_name] = {
                 'type': 'edit_framework_structured',
                 'mol_embedder': method_embedder,
+                'model': model,
+                'config': method_config
+            }
+
+        elif method_type == 'attention_delta':
+            # AttentionDeltaPredictor: GatedCrossAttn or AttnThenFiLM
+            # Uses explicit edit embedding z = sub_enc(mt - wt) with cross-attention
+            # conditioned on 28-dim chemical edit features + molecular context.
+            # This is our primary edit-aware model.
+            #
+            # Required config keys:
+            #   arch: 'gated_cross_attn' (default) or 'attn_then_film'
+            #   embedder_type: e.g. 'chemberta', 'chemprop_dmpnn'
+            # Optional:
+            #   hidden_dim: int (default 256)
+            #   n_layers: int for gated_cross_attn (default 3)
+            #   n_tokens: int (default 4)
+            #   n_heads: int (default 4)
+            #   n_film_layers: int for attn_then_film (default 2)
+            #   dropout: float (default 0.2)
+            #   attn_dropout: float (default 0.1)
+            #   lr: float (default 3e-4)
+            #   weight_decay: float (default 1e-4)
+            #   batch_size: int (default 64)
+            #   max_epochs / epochs: int (default 100)
+            #   patience: int (default 15)
+            #   use_cosine: bool (default True)
+            #   warmup_epochs: int (default 5)
+            arch = method_config.get('arch', 'gated_cross_attn')
+            input_dim = method_embedder.embedding_dim
+
+            model_kwargs = {}
+            if arch == 'gated_cross_attn':
+                model_kwargs['n_layers'] = method_config.get('n_layers', 3)
+                model_kwargs['attn_dropout'] = method_config.get('attn_dropout', 0.1)
+            elif arch == 'attn_then_film':
+                model_kwargs['n_film_layers'] = method_config.get('n_film_layers', 2)
+
+            model = AttentionDeltaPredictor(
+                arch=arch,
+                input_dim=input_dim,
+                hidden_dim=method_config.get('hidden_dim', 256),
+                n_tokens=method_config.get('n_tokens', 4),
+                n_heads=method_config.get('n_heads', 4),
+                dropout=method_config.get('dropout', 0.2),
+                learning_rate=method_config.get('lr', 3e-4),
+                weight_decay=method_config.get('weight_decay', 1e-4),
+                batch_size=method_config.get('batch_size', 64),
+                max_epochs=method_config.get('max_epochs', method_config.get('epochs', 100)),
+                patience=method_config.get('patience', 15),
+                use_cosine=method_config.get('use_cosine', True),
+                warmup_epochs=method_config.get('warmup_epochs', 5),
+                **model_kwargs,
+            )
+
+            models[method_name] = {
+                'type': 'attention_delta',
+                'mol_embedder': method_embedder,
+                'model': model,
+                'config': method_config
+            }
+
+        elif method_type == 'deepdelta':
+            # DeepDelta-style baseline: concat([emb_a, emb_b]) → MLP → Δ
+            # Mirrors the DeepDelta paper approach of pairwise concatenation.
+            # Uses ConcatEditEmbedder: encodes (mol_a, mol_b) via learned MLP on concat.
+            # Fair comparison: same molecule embedder as our attention_delta model.
+            #
+            # Required config keys:
+            #   embedder_type: e.g. 'chemberta', 'chemprop_dmpnn'
+            # Optional:
+            #   concat_hidden_dims: list[int] for inner concat MLP (default [mol_dim, mol_dim//2])
+            #   hidden_dims: list[int] for outer prediction MLP (default auto)
+            #   dropout: float (default 0.2)
+            #   lr: float (default 1e-3)
+            #   batch_size: int (default 32)
+            #   max_epochs / epochs: int (default 100)
+            mol_dim = method_embedder.embedding_dim
+
+            # Inner MLP that maps concat([emb_a, emb_b]) → edit_vector of dim mol_dim
+            concat_nn = ConcatenationEditEmbedder(
+                mol_dim=mol_dim,
+                edit_dim=mol_dim,
+                hidden_dims=method_config.get('concat_hidden_dims', [mol_dim, mol_dim // 2]),
+                dropout=method_config.get('dropout', 0.1),
+            )
+
+            # Wrapper with encode_from_smiles() API compatible with EditEffectPredictor
+            concat_edit_embedder = ConcatEditEmbedder(
+                molecule_embedder=method_embedder,
+                concat_module=concat_nn,
+            )
+
+            model = EditEffectPredictor(
+                mol_embedder=method_embedder,
+                edit_embedder=concat_edit_embedder,
+                task_names=task_names,
+                hidden_dims=method_config.get('hidden_dims'),
+                dropout=method_config.get('dropout', 0.2),
+                learning_rate=method_config.get('lr', 1e-3),
+                batch_size=method_config.get('batch_size', 32),
+                max_epochs=method_config.get('max_epochs', method_config.get('epochs', 100)),
+                trainable_edit_embeddings=False,
+            )
+
+            models[method_name] = {
+                'type': 'deepdelta',
+                'mol_embedder': method_embedder,
+                'edit_embedder': concat_edit_embedder,
                 'model': model,
                 'config': method_config
             }

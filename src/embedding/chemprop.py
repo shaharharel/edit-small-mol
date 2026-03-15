@@ -343,7 +343,8 @@ class ChemPropEmbedder(nn.Module, MoleculeEmbedder):
 
                 # Forward through message passing
                 # Move batch_graph to the same device as the model
-                batch_graph = batch_graph.to(self.device)
+                # Note: BatchMolGraph.to() is in-place and returns None in chemprop v2
+                batch_graph.to(self.device)
                 h = self.message_passing(batch_graph)
 
                 # Aggregate to molecule-level embeddings

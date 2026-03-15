@@ -8,7 +8,8 @@ from .baseline_property_predictor import BaselinePropertyPredictor, BaselineProp
 from .film_delta_predictor import FiLMDeltaPredictor, FiLMDeltaMLP, FiLMLayer, FiLMBlock
 from .attention_delta_predictor import (
     AttentionDeltaPredictor, GatedCrossAttnMLP, AttnThenFiLMMLP,
-    ResidualCrossAttnLayer, compute_mutation_features, MUT_FEAT_DIM,
+    ResidualCrossAttnLayer, compute_edit_features_tensor,
+    compute_mutation_features, EDIT_FEAT_DIM, MUT_FEAT_DIM,
 )
 
 __all__ = [
@@ -35,6 +36,8 @@ __all__ = [
     'GatedCrossAttnMLP',
     'AttnThenFiLMMLP',
     'ResidualCrossAttnLayer',
+    'compute_edit_features_tensor',
     'compute_mutation_features',
+    'EDIT_FEAT_DIM',
     'MUT_FEAT_DIM',
 ]

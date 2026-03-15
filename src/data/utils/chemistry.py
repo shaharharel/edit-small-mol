@@ -1,9 +1,11 @@
 """Chemistry utilities using RDKit."""
 
 import logging
+import math
+import numpy as np
 from typing import Optional, List, Tuple
 from rdkit import Chem
-from rdkit.Chem import AllChem, Descriptors, rdMolDescriptors
+from rdkit.Chem import AllChem, Descriptors, rdMolDescriptors, DataStructs
 from rdkit.Chem.MolStandardize import rdMolStandardize
 
 logger = logging.getLogger(__name__)
@@ -282,6 +284,161 @@ def parse_edit_smiles(edit_smiles: str) -> Tuple[str, str]:
         raise ValueError(f"Empty fragment in edit SMILES: {edit_smiles}")
 
     return frag_a, frag_b
+
+
+# ── Edit Feature Extraction ──────────────────────────────────────────────────
+
+EDIT_FEAT_DIM = 28
+
+
+def _mol_descriptors(mol: Chem.Mol) -> np.ndarray:
+    """Compute 9 molecular descriptors for a molecule.
+
+    Returns array of [logP, MW, TPSA, HBA, HBD, RotBonds, ArRings, AlipRings, Fsp3].
+    """
+    return np.array([
+        Descriptors.MolLogP(mol),
+        Descriptors.MolWt(mol),
+        Descriptors.TPSA(mol),
+        Descriptors.NumHAcceptors(mol),
+        Descriptors.NumHDonors(mol),
+        Descriptors.NumRotatableBonds(mol),
+        Descriptors.NumAromaticRings(mol),
+        Descriptors.NumAliphaticRings(mol),
+        Descriptors.FractionCSP3(mol),
+    ], dtype=np.float32)
+
+
+def compute_edit_features(
+    mol_a_smiles: str,
+    mol_b_smiles: str,
+    edit_smiles: str,
+) -> np.ndarray:
+    """Compute 28-dim edit feature vector for a matched molecular pair.
+
+    Feature layout (28 dimensions total):
+        [0:9]   Whole-molecule descriptor deltas (mol_b - mol_a):
+                delta_logP, delta_MW, delta_TPSA, delta_HBA, delta_HBD,
+                delta_RotBonds, delta_ArRings, delta_AlipRings, delta_Fsp3
+        [9:18]  Fragment-level descriptor deltas (incoming - leaving):
+                Same 9 descriptors computed on the edit fragments
+        [18:24] Structural edit type features:
+                Tanimoto similarity between fragments, n_attachment_points,
+                attachment_is_aromatic, attachment_atom_type_encoded,
+                adds_ring, removes_ring
+        [24:28] Physicochemical change direction (sign indicators):
+                sign(delta_TPSA), sign(delta_logP), sign(delta_MW),
+                sign(delta_HBond_total) where HBond_total = HBA + HBD
+
+    Args:
+        mol_a_smiles: SMILES for the original molecule.
+        mol_b_smiles: SMILES for the edited molecule.
+        edit_smiles: Edit in reaction SMILES format "leaving_frag>>incoming_frag".
+
+    Returns:
+        Feature vector of shape (28,).
+    """
+    feats = np.zeros(EDIT_FEAT_DIM, dtype=np.float32)
+
+    # Parse whole molecules
+    mol_a = Chem.MolFromSmiles(mol_a_smiles) if mol_a_smiles else None
+    mol_b = Chem.MolFromSmiles(mol_b_smiles) if mol_b_smiles else None
+
+    # [0:9] Whole-molecule descriptor deltas
+    if mol_a is not None and mol_b is not None:
+        try:
+            desc_a = _mol_descriptors(mol_a)
+            desc_b = _mol_descriptors(mol_b)
+            feats[0:9] = desc_b - desc_a
+        except Exception:
+            pass
+
+    # Parse fragments from edit_smiles
+    frag_leaving_mol = None
+    frag_incoming_mol = None
+    if edit_smiles and '>>' in edit_smiles:
+        parts = edit_smiles.split('>>')
+        if len(parts) == 2:
+            leaving_smi, incoming_smi = parts[0].strip(), parts[1].strip()
+            # Fragments may contain [*] attachment points; replace with [H] for descriptors
+            leaving_clean = leaving_smi.replace('[*:1]', '[H]').replace('[*:2]', '[H]').replace('[*:3]', '[H]').replace('[*]', '[H]')
+            incoming_clean = incoming_smi.replace('[*:1]', '[H]').replace('[*:2]', '[H]').replace('[*:3]', '[H]').replace('[*]', '[H]')
+            frag_leaving_mol = Chem.MolFromSmiles(leaving_clean)
+            frag_incoming_mol = Chem.MolFromSmiles(incoming_clean)
+
+    # [9:18] Fragment-level descriptor deltas
+    if frag_leaving_mol is not None and frag_incoming_mol is not None:
+        try:
+            desc_leaving = _mol_descriptors(frag_leaving_mol)
+            desc_incoming = _mol_descriptors(frag_incoming_mol)
+            feats[9:18] = desc_incoming - desc_leaving
+        except Exception:
+            pass
+
+    # [18:24] Structural edit type features
+    if frag_leaving_mol is not None and frag_incoming_mol is not None:
+        try:
+            # Tanimoto between fragment fingerprints
+            fp_leaving = AllChem.GetMorganFingerprintAsBitVect(frag_leaving_mol, 2, nBits=1024)
+            fp_incoming = AllChem.GetMorganFingerprintAsBitVect(frag_incoming_mol, 2, nBits=1024)
+            feats[18] = DataStructs.TanimotoSimilarity(fp_leaving, fp_incoming)
+        except Exception:
+            feats[18] = 0.0
+
+        # Count attachment points from original edit_smiles
+        if edit_smiles and '>>' in edit_smiles:
+            leaving_smi = edit_smiles.split('>>')[0].strip()
+            n_attach = leaving_smi.count('[*')
+            feats[19] = float(n_attach)
+
+            # Check if attachment atom is aromatic (use mol_a and leaving fragment context)
+            if mol_a is not None and n_attach > 0:
+                try:
+                    # Parse the leaving fragment with attachment points as query
+                    frag_with_attach = Chem.MolFromSmiles(leaving_smi)
+                    if frag_with_attach is not None:
+                        # Check if any atom bonded to a dummy atom is aromatic
+                        for atom in frag_with_attach.GetAtoms():
+                            if atom.GetAtomicNum() == 0:  # dummy atom [*]
+                                for neighbor in atom.GetNeighbors():
+                                    if neighbor.GetIsAromatic():
+                                        feats[20] = 1.0
+                                        break
+                except Exception:
+                    pass
+
+            # Attachment atom type: encode as atomic number / 10 for normalization
+            if mol_a is not None and n_attach > 0:
+                try:
+                    frag_with_attach = Chem.MolFromSmiles(leaving_smi)
+                    if frag_with_attach is not None:
+                        for atom in frag_with_attach.GetAtoms():
+                            if atom.GetAtomicNum() == 0:
+                                for neighbor in atom.GetNeighbors():
+                                    feats[21] = float(neighbor.GetAtomicNum()) / 10.0
+                                    break
+                                break
+                except Exception:
+                    pass
+
+        # adds_ring: incoming fragment has ring but leaving does not
+        try:
+            leaving_has_ring = frag_leaving_mol.GetRingInfo().NumRings() > 0
+            incoming_has_ring = frag_incoming_mol.GetRingInfo().NumRings() > 0
+            feats[22] = 1.0 if (incoming_has_ring and not leaving_has_ring) else 0.0
+            feats[23] = 1.0 if (leaving_has_ring and not incoming_has_ring) else 0.0
+        except Exception:
+            pass
+
+    # [24:28] Physicochemical change direction (sign indicators)
+    feats[24] = float(np.sign(feats[2]))   # sign(delta_TPSA)
+    feats[25] = float(np.sign(feats[0]))   # sign(delta_logP)
+    feats[26] = float(np.sign(feats[1]))   # sign(delta_MW)
+    # sign(delta_HBond_total) where HBond_total = HBA + HBD
+    delta_hbond_total = feats[3] + feats[4]  # delta_HBA + delta_HBD
+    feats[27] = float(np.sign(delta_hbond_total))
+
+    return feats
 
 
 def get_edit_name(mol_a_smiles: str, mol_b_smiles: str) -> str:

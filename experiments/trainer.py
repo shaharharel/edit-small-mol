@@ -7,7 +7,13 @@ import numpy as np
 import pandas as pd
 import gc
 from src.models import PropertyPredictor, EditEffectPredictor
-from src.models.predictors import TrainablePropertyPredictor, TrainableEditEffectPredictor
+from src.models.predictors import TrainableEditEffectPredictor
+
+# TrainablePropertyPredictor does not yet exist; guard to prevent ImportError
+try:
+    from src.models.predictors import TrainablePropertyPredictor
+except ImportError:
+    TrainablePropertyPredictor = None
 
 
 def train_all_models(models: Dict, train_data: Dict, config) -> Dict:
@@ -19,6 +25,15 @@ def train_all_models(models: Dict, train_data: Dict, config) -> Dict:
     num_tasks = len(task_names)
 
     for method_name, method_info in models.items():
+        # Clear MPS cache between methods to prevent placeholder storage errors
+        try:
+            import torch
+            if torch.backends.mps.is_available():
+                torch.mps.empty_cache()
+            import gc
+            gc.collect()
+        except Exception:
+            pass
         print(f"\nTraining {method_name}...")
 
         method_type = method_info['type']
@@ -263,6 +278,109 @@ def train_all_models(models: Dict, train_data: Dict, config) -> Dict:
 
             del mol_emb_a_train, mol_emb_b_train, delta_train, delta_val
             del train_combined, val_combined
+            gc.collect()
+
+        elif method_type == 'attention_delta':
+            # AttentionDeltaPredictor (GatedCrossAttn / AttnThenFiLM)
+            # fit() takes a list of dicts: {wt, mt, mol_a, mol_b, edit_smiles, z_delta}
+            from src.data.utils.chemistry import compute_edit_features
+
+            train_data_dicts = []
+            val_data_dicts = []
+
+            for prop in task_names:
+                train_prop = train_data[prop]['train']
+                val_prop = train_data[prop]['val']
+
+                print(f"  Computing {prop} embeddings for attention_delta ({len(train_prop)} train pairs)...")
+                wt_train = np.array(embedder.encode(train_prop['mol_a'].tolist(), show_progress=True), dtype=np.float32)
+                mt_train = np.array(embedder.encode(train_prop['mol_b'].tolist(), show_progress=True), dtype=np.float32)
+
+                for idx in range(len(train_prop)):
+                    row = train_prop.iloc[idx]
+                    train_data_dicts.append({
+                        'wt': wt_train[idx],
+                        'mt': mt_train[idx],
+                        'mol_a': row.get('mol_a', ''),
+                        'mol_b': row.get('mol_b', ''),
+                        'edit_smiles': row.get('edit_smiles', ''),
+                        'z_delta': float(row['delta']),
+                    })
+
+                if len(val_prop) > 0:
+                    wt_val = np.array(embedder.encode(val_prop['mol_a'].tolist(), show_progress=True), dtype=np.float32)
+                    mt_val = np.array(embedder.encode(val_prop['mol_b'].tolist(), show_progress=True), dtype=np.float32)
+                    for idx in range(len(val_prop)):
+                        row = val_prop.iloc[idx]
+                        val_data_dicts.append({
+                            'wt': wt_val[idx],
+                            'mt': mt_val[idx],
+                            'mol_a': row.get('mol_a', ''),
+                            'mol_b': row.get('mol_b', ''),
+                            'edit_smiles': row.get('edit_smiles', ''),
+                            'z_delta': float(row['delta']),
+                        })
+
+            print(f"  Training attention_delta on {len(train_data_dicts)} samples...")
+            model.fit(
+                train_data=train_data_dicts,
+                val_data=val_data_dicts if val_data_dicts else train_data_dicts[:max(1, len(train_data_dicts)//10)],
+                verbose=True,
+            )
+
+            del train_data_dicts, val_data_dicts
+            gc.collect()
+
+        elif method_type == 'deepdelta':
+            # DeepDelta-style baseline: concat([emb_a, emb_b]) → MLP → Δ
+            # Uses EditEffectPredictor with ConcatEditEmbedder as the edit_embedder.
+            # ConcatEditEmbedder.encode_from_smiles() embeds both molecules and runs them
+            # through the ConcatenationEditEmbedder MLP, producing the edit vector.
+            # We pass SMILES (not pre-computed arrays) so that the SMILES path is used in
+            # EditEffectPredictor.fit(), which calls edit_embedder.encode_from_smiles().
+            train_df_list = []
+            val_df_list = []
+            for prop in task_names:
+                train_df_list.append(train_data[prop]['train'])
+                val_df_list.append(train_data[prop]['val'])
+
+            train_combined = pd.concat(train_df_list, ignore_index=True)
+            val_combined = pd.concat(val_df_list, ignore_index=True)
+
+            delta_train = np.full((len(train_combined), num_tasks), np.nan, dtype=np.float32)
+            delta_val = np.full((len(val_combined), num_tasks), np.nan, dtype=np.float32)
+
+            train_idx = 0
+            val_idx = 0
+            for i, prop in enumerate(task_names):
+                train_prop = train_data[prop]['train']
+                val_prop = train_data[prop]['val']
+                delta_train[train_idx:train_idx+len(train_prop), i] = train_prop['delta'].values
+                delta_val[val_idx:val_idx+len(val_prop), i] = val_prop['delta'].values
+                train_idx += len(train_prop)
+                val_idx += len(val_prop)
+
+            print(f"  Training deepdelta on {len(train_combined)} pairs (concat edit embedding)...")
+
+            if len(val_combined) > 0:
+                model.fit(
+                    smiles_a=train_combined['mol_a'].tolist(),
+                    smiles_b=train_combined['mol_b'].tolist(),
+                    delta_y=delta_train,
+                    smiles_a_val=val_combined['mol_a'].tolist(),
+                    smiles_b_val=val_combined['mol_b'].tolist(),
+                    delta_y_val=delta_val,
+                    verbose=True,
+                )
+            else:
+                model.fit(
+                    smiles_a=train_combined['mol_a'].tolist(),
+                    smiles_b=train_combined['mol_b'].tolist(),
+                    delta_y=delta_train,
+                    verbose=True,
+                )
+
+            del delta_train, delta_val, train_combined, val_combined
             gc.collect()
 
         elif method_type == 'edit_framework_structured':

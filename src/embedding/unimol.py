@@ -54,7 +54,7 @@ class UniMolEmbedder(MoleculeEmbedder):
     # Embedding dimensions for each model variant
     EMBEDDING_DIMS = {
         'unimolv1': 512,
-        'unimolv2_84m': 480,
+        'unimolv2_84m': 768,  # actual output dim (docs say 480 but runtime gives 768)
         'unimolv2_164m': 640,
         'unimolv2_310m': 800,
         'unimolv2_570m': 960,
@@ -119,7 +119,7 @@ class UniMolEmbedder(MoleculeEmbedder):
         print(f"  Embedding dim: {self._embedding_dim}")
         print(f"  Device: {device}")
 
-    def encode(self, smiles: Union[str, List[str]]) -> np.ndarray:
+    def encode(self, smiles: Union[str, List[str]], show_progress: bool = False) -> np.ndarray:
         """
         Encode molecule(s) to embedding vector(s).
 
@@ -146,7 +146,11 @@ class UniMolEmbedder(MoleculeEmbedder):
         """
         try:
             result = self.model.get_repr([smiles], return_atomic_reprs=False)
-            return np.array(result['cls_repr'][0], dtype=np.float32)
+            # unimol_tools returns a list of per-molecule arrays, not a dict
+            if isinstance(result, list):
+                return np.array(result[0], dtype=np.float32)
+            else:
+                return np.array(result['cls_repr'][0], dtype=np.float32)
         except Exception as e:
             print(f"Warning: Failed to embed {smiles}: {e}")
             return np.zeros(self._embedding_dim, dtype=np.float32)
@@ -166,7 +170,11 @@ class UniMolEmbedder(MoleculeEmbedder):
 
         try:
             result = self.model.get_repr(smiles_list, return_atomic_reprs=False)
-            return np.array(result['cls_repr'], dtype=np.float32)
+            # unimol_tools returns a list of per-molecule arrays, not a dict
+            if isinstance(result, list):
+                return np.array(result, dtype=np.float32)
+            else:
+                return np.array(result['cls_repr'], dtype=np.float32)
         except Exception as e:
             print(f"Warning: Batch embedding failed: {e}")
             # Fall back to individual embedding

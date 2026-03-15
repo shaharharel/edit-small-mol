@@ -237,7 +237,7 @@ class MolFMEmbedder(nn.Module, MoleculeEmbedder):
         self._backend = 'fallback'
         print(f"  → Embedding dimension: {self._embedding_dim}")
 
-    def encode(self, smiles: Union[str, List[str]]) -> np.ndarray:
+    def encode(self, smiles: Union[str, List[str]], show_progress: bool = False) -> np.ndarray:
         """
         Encode molecule(s) to embedding vector(s).
 

@@ -829,6 +829,384 @@ class CoreSplitter(MolecularSplitter):
         )
 
 
+class AssaySplitter(MolecularSplitter):
+    """
+    Assay-level split for cross-lab noise analysis.
+
+    Splits at the assay level (not molecule level) to prevent data leakage
+    between train and test sets. Supports three evaluation scenarios designed
+    to test the edit effect framework's robustness to inter-assay noise:
+
+    Scenario A ("within_assay"):
+        Train and test on within-assay MMP pairs from *disjoint* assay sets.
+        Both training and evaluation data are clean (same-assay measurements).
+        Measures baseline performance under clean conditions.
+
+    Scenario B ("cross_assay"):
+        Train on within-assay pairs, test on cross-assay pairs.
+        Training uses clean within-assay MMPs; test uses noisy cross-assay
+        MMPs where mol_a and mol_b come from different assays. Measures
+        robustness to inter-assay noise at test time.
+
+    Scenario C ("mixed"):
+        Train on a noisy mix (within + cross-assay), test on clean
+        within-assay ground truth. The most realistic scenario: the model
+        sees noisy training data but is evaluated on clean data, simulating
+        real-world conditions where most available data is pooled from
+        heterogeneous sources.
+
+    The split is performed at the *assay* level: all pairs involving a given
+    assay go to the same split. This prevents the model from memorising
+    assay-specific biases. Pairs that span assay groups are dropped to
+    prevent leakage.
+
+    Required DataFrame columns (from OverlappingAssayExtractor):
+        - is_within_assay: bool, True if both molecules measured in same assay
+        - assay_id_a: int, assay ID for molecule A
+        - assay_id_b: int, assay ID for molecule B
+    """
+
+    VALID_SCENARIOS = ("within_assay", "cross_assay", "mixed")
+
+    def __init__(
+        self,
+        train_size: float = 0.7,
+        val_size: float = 0.15,
+        test_size: float = 0.15,
+        random_state: Optional[int] = 42,
+        scenario: str = "within_assay",
+    ):
+        super().__init__(train_size, val_size, test_size, random_state)
+        if scenario not in self.VALID_SCENARIOS:
+            raise ValueError(
+                f"Unknown scenario '{scenario}'. "
+                f"Valid: {self.VALID_SCENARIOS}"
+            )
+        self.scenario = scenario
+
+    # ------------------------------------------------------------------ #
+    #  Public API                                                         #
+    # ------------------------------------------------------------------ #
+
+    def split(
+        self,
+        df: pd.DataFrame,
+        smiles_col: str = "smiles",  # unused but keeps base signature
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """
+        Split overlapping-assay pairs into train / val / test.
+
+        Requires columns:
+        - assay_id_a, assay_id_b  (assay IDs for each molecule)
+        - is_within_assay          (bool flag from OverlappingAssayExtractor)
+
+        Args:
+            df: DataFrame from OverlappingAssayExtractor output.
+            smiles_col: Unused (kept for API compatibility with base class).
+
+        Returns:
+            train, val, test DataFrames.
+        """
+        for col in ("assay_id_a", "assay_id_b", "is_within_assay"):
+            if col not in df.columns:
+                raise ValueError(f"Required column '{col}' missing from DataFrame")
+
+        # Collect all unique assay IDs and split them
+        all_assay_ids = sorted(
+            set(df["assay_id_a"].unique()) | set(df["assay_id_b"].unique())
+        )
+        train_assays, val_assays, test_assays = self._split_assay_ids(all_assay_ids)
+
+        print(f"AssaySplitter (scenario={self.scenario}):")
+        print(f"  Total pairs: {len(df):,}")
+        within_n = df["is_within_assay"].sum()
+        cross_n = len(df) - within_n
+        print(f"  Within-assay pairs: {within_n:,}, Cross-assay pairs: {cross_n:,}")
+        print(f"  Total assays: {len(all_assay_ids)}")
+        print(f"  Assay split: train={len(train_assays)}, val={len(val_assays)}, test={len(test_assays)}")
+
+        if self.scenario == "within_assay":
+            return self._scenario_within_assay(df, train_assays, val_assays, test_assays)
+        elif self.scenario == "cross_assay":
+            return self._scenario_cross_assay(df, train_assays, val_assays, test_assays)
+        else:  # mixed
+            return self._scenario_mixed(df, train_assays, val_assays, test_assays)
+
+    # ------------------------------------------------------------------ #
+    #  Assay ID splitting                                                 #
+    # ------------------------------------------------------------------ #
+
+    def _split_assay_ids(
+        self, assay_ids: List
+    ) -> Tuple[set, set, set]:
+        """Split assay IDs into train / val / test sets."""
+        n = len(assay_ids)
+        np.random.seed(self.random_state)
+        perm = np.random.permutation(n)
+
+        train_end = int(n * self.train_size)
+        val_end = train_end + int(n * self.val_size)
+
+        train_ids = set(assay_ids[i] for i in perm[:train_end])
+        val_ids = set(assay_ids[i] for i in perm[train_end:val_end])
+        test_ids = set(assay_ids[i] for i in perm[val_end:])
+
+        return train_ids, val_ids, test_ids
+
+    @staticmethod
+    def _both_assays_in(df: pd.DataFrame, assay_set: set) -> pd.Series:
+        """Return boolean mask where both assay_id_a and assay_id_b are in assay_set."""
+        return df["assay_id_a"].isin(assay_set) & df["assay_id_b"].isin(assay_set)
+
+    # ------------------------------------------------------------------ #
+    #  Scenario implementations                                          #
+    # ------------------------------------------------------------------ #
+
+    def _scenario_within_assay(
+        self,
+        df: pd.DataFrame,
+        train_assays: set,
+        val_assays: set,
+        test_assays: set,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Scenario A: within-assay pairs from disjoint assay sets.
+
+        Train AND test on within-assay pairs only. Assays are split into
+        train/val/test groups so no assay appears in multiple splits.
+        """
+        within = df[df["is_within_assay"] == True]
+
+        train = within[self._both_assays_in(within, train_assays)].reset_index(drop=True)
+        val = within[self._both_assays_in(within, val_assays)].reset_index(drop=True)
+        test = within[self._both_assays_in(within, test_assays)].reset_index(drop=True)
+
+        dropped = len(within) - len(train) - len(val) - len(test)
+        print(f"  Scenario A (within_assay):")
+        print(f"    train={len(train):,}, val={len(val):,}, test={len(test):,}")
+        if dropped > 0:
+            print(f"    Dropped {dropped:,} cross-group pairs to prevent leakage")
+        return train, val, test
+
+    def _scenario_cross_assay(
+        self,
+        df: pd.DataFrame,
+        train_assays: set,
+        val_assays: set,
+        test_assays: set,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Scenario B: train on within-assay, test on cross-assay pairs.
+
+        Training uses clean within-assay MMPs from train assay group.
+        Validation uses within-assay MMPs from val assay group.
+        Test uses cross-assay pairs where at least one assay is in the
+        test group and neither assay is in the train/val groups.
+        """
+        within = df[df["is_within_assay"] == True]
+        cross = df[df["is_within_assay"] == False]
+
+        # Train/val: clean within-assay pairs
+        train = within[self._both_assays_in(within, train_assays)].reset_index(drop=True)
+        val = within[self._both_assays_in(within, val_assays)].reset_index(drop=True)
+
+        # Test: cross-assay pairs where at least one assay is in the test group
+        # and neither assay touches the train/val groups (prevents leakage)
+        has_test_assay = cross["assay_id_a"].isin(test_assays) | cross["assay_id_b"].isin(test_assays)
+        train_val_assays = train_assays | val_assays
+        no_leak = ~(cross["assay_id_a"].isin(train_val_assays) | cross["assay_id_b"].isin(train_val_assays))
+        test = cross[has_test_assay & no_leak].reset_index(drop=True)
+
+        print(f"  Scenario B (cross_assay):")
+        print(f"    train={len(train):,} (within-assay), val={len(val):,} (within-assay)")
+        print(f"    test={len(test):,} (cross-assay)")
+        return train, val, test
+
+    def _scenario_mixed(
+        self,
+        df: pd.DataFrame,
+        train_assays: set,
+        val_assays: set,
+        test_assays: set,
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Scenario C: train on mixed data, test on within-assay only.
+
+        Training mixes within-assay and cross-assay pairs where BOTH assays
+        belong to the train group. Validation similarly uses pairs where both
+        assays are in the val group. Test uses only clean within-assay pairs
+        from test assays.
+        """
+        within = df[df["is_within_assay"] == True]
+        cross = df[df["is_within_assay"] == False]
+
+        # Train: within + cross pairs where BOTH assays are in train group
+        train_within = within[self._both_assays_in(within, train_assays)]
+        train_cross = cross[self._both_assays_in(cross, train_assays)]
+        train = pd.concat([train_within, train_cross], ignore_index=True)
+        if len(train) > 0:
+            train = train.sample(frac=1, random_state=self.random_state).reset_index(drop=True)
+
+        # Val: within + cross pairs where BOTH assays are in val group
+        val_within = within[self._both_assays_in(within, val_assays)]
+        val_cross = cross[self._both_assays_in(cross, val_assays)]
+        val = pd.concat([val_within, val_cross], ignore_index=True)
+        if len(val) > 0:
+            val = val.sample(frac=1, random_state=self.random_state).reset_index(drop=True)
+
+        # Test: clean within-assay pairs only, from test assay group
+        test = within[self._both_assays_in(within, test_assays)].reset_index(drop=True)
+
+        print(f"  Scenario C (mixed):")
+        print(f"    train={len(train):,} ({len(train_within)} within + {len(train_cross)} cross)")
+        print(f"    val={len(val):,} ({len(val_within)} within + {len(val_cross)} cross)")
+        print(f"    test={len(test):,} (within-assay only)")
+        return train, val, test
+
+
+class PairAwareRandomSplitter(MolecularSplitter):
+    """
+    Random split that ensures no (mol_a, mol_b) pair appears in both train and test.
+
+    Splits unique molecule pairs first, then assigns all rows for each pair
+    to the same split. This prevents the model from memorizing pair-specific
+    deltas during training and reproducing them at test time.
+    """
+
+    def split(
+        self,
+        df: pd.DataFrame,
+        smiles_col: str = 'smiles'  # unused, kept for API compat
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Split by unique molecule pairs."""
+        print("PairAwareRandomSplitter: splitting by unique (mol_a, mol_b) pairs...")
+
+        # Create canonical pair keys (sorted to handle A,B vs B,A)
+        pair_keys = df.apply(
+            lambda r: tuple(sorted([r['mol_a'], r['mol_b']])), axis=1
+        )
+        df = df.copy()
+        df['_pair_key'] = pair_keys
+
+        unique_pairs = df['_pair_key'].unique()
+        n_pairs = len(unique_pairs)
+
+        np.random.seed(self.random_state)
+        perm = np.random.permutation(n_pairs)
+
+        train_end = int(n_pairs * self.train_size)
+        val_end = train_end + int(n_pairs * self.val_size)
+
+        train_pairs = set(unique_pairs[perm[:train_end]])
+        val_pairs = set(unique_pairs[perm[train_end:val_end]])
+        # test_pairs = everything else
+
+        train_mask = df['_pair_key'].isin(train_pairs)
+        val_mask = df['_pair_key'].isin(val_pairs)
+        test_mask = ~train_mask & ~val_mask
+
+        train_df = df[train_mask].drop(columns=['_pair_key']).reset_index(drop=True)
+        val_df = df[val_mask].drop(columns=['_pair_key']).reset_index(drop=True)
+        test_df = df[test_mask].drop(columns=['_pair_key']).reset_index(drop=True)
+
+        print(f"  {n_pairs:,} unique pairs → train={len(train_df):,}, val={len(val_df):,}, test={len(test_df):,}")
+        return train_df, val_df, test_df
+
+
+class StrictScaffoldSplitter(ScaffoldSplitter):
+    """
+    Strict scaffold split for MMP pairs: both mol_a AND mol_b must have
+    scaffolds assigned to the same split.
+
+    Unlike the standard ScaffoldSplitter (which only considers one molecule),
+    this ensures that NEITHER molecule in a test pair was seen during training.
+    Pairs that span scaffold groups are dropped.
+    """
+
+    def split(
+        self,
+        df: pd.DataFrame,
+        smiles_col: str = 'smiles'  # unused
+    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        """Split requiring both mol_a and mol_b to have novel scaffolds."""
+        print(f"StrictScaffoldSplitter: computing scaffolds for mol_a AND mol_b...")
+
+        # Get all unique molecules
+        all_mols = list(set(df['mol_a'].tolist() + df['mol_b'].tolist()))
+        print(f"  {len(all_mols):,} unique molecules")
+
+        # Compute scaffold for each molecule
+        mol_to_scaffold = {}
+        for smi in all_mols:
+            mol_to_scaffold[smi] = self._get_scaffold(smi)
+
+        # Group molecules by scaffold
+        scaffold_to_mols = defaultdict(set)
+        for smi, scaf in mol_to_scaffold.items():
+            if scaf is not None:
+                scaffold_to_mols[scaf].add(smi)
+
+        scaffold_sizes = [(scaf, len(mols)) for scaf, mols in scaffold_to_mols.items()]
+        scaffold_sizes.sort(key=lambda x: x[1], reverse=True)
+        print(f"  {len(scaffold_sizes):,} unique scaffolds")
+
+        # Split scaffolds into train/val/test
+        n_mols = len(all_mols)
+        target_train = int(n_mols * self.train_size)
+        target_val = int(n_mols * self.val_size)
+
+        np.random.seed(self.random_state)
+        np.random.shuffle(scaffold_sizes)
+
+        train_scaffolds, val_scaffolds, test_scaffolds = set(), set(), set()
+        train_count, val_count = 0, 0
+
+        for scaf, size in scaffold_sizes:
+            if train_count < target_train:
+                train_scaffolds.add(scaf)
+                train_count += size
+            elif val_count < target_val:
+                val_scaffolds.add(scaf)
+                val_count += size
+            else:
+                test_scaffolds.add(scaf)
+
+        # Map molecules to splits
+        mol_split = {}
+        for smi, scaf in mol_to_scaffold.items():
+            if scaf in train_scaffolds:
+                mol_split[smi] = 'train'
+            elif scaf in val_scaffolds:
+                mol_split[smi] = 'val'
+            elif scaf in test_scaffolds:
+                mol_split[smi] = 'test'
+            # else: scaffold was None, skip
+
+        # Assign pairs: BOTH mol_a and mol_b must be in the same split
+        train_idx, val_idx, test_idx = [], [], []
+        dropped = 0
+
+        for idx in range(len(df)):
+            split_a = mol_split.get(df.iloc[idx]['mol_a'])
+            split_b = mol_split.get(df.iloc[idx]['mol_b'])
+            if split_a is None or split_b is None:
+                dropped += 1
+                continue
+            if split_a == split_b:
+                if split_a == 'train':
+                    train_idx.append(idx)
+                elif split_a == 'val':
+                    val_idx.append(idx)
+                else:
+                    test_idx.append(idx)
+            else:
+                dropped += 1
+
+        print(f"  Pairs kept: train={len(train_idx):,}, val={len(val_idx):,}, test={len(test_idx):,}")
+        print(f"  Pairs dropped (cross-split): {dropped:,} ({100*dropped/len(df):.1f}%)")
+
+        return self._split_indices_to_dataframes(
+            df, np.array(train_idx), np.array(val_idx), np.array(test_idx)
+        )
+
+
 def get_splitter(
     split_type: str,
     train_size: float = 0.7,
@@ -842,7 +1220,7 @@ def get_splitter(
 
     Args:
         split_type: One of ['random', 'scaffold', 'target', 'butina',
-                    'stratified', 'temporal', 'few_shot_target', 'core']
+                    'stratified', 'temporal', 'few_shot_target', 'core', 'assay']
         train_size, val_size, test_size: Split fractions
         random_state: Random seed
         **kwargs: Additional arguments for specific splitters
@@ -853,6 +1231,7 @@ def get_splitter(
                  - temporal: time_col
                  - scaffold: use_generic
                  - butina: cutoff, fp_radius, fp_size
+                 - assay: scenario ('within_assay', 'cross_assay', 'mixed')
 
     Returns:
         MolecularSplitter instance
@@ -864,8 +1243,8 @@ def get_splitter(
         >>> splitter = get_splitter('few_shot_target', few_shot_samples=100)
         >>> train, val, test = splitter.split(df, target_col='target_chembl_id')
 
-        >>> splitter = get_splitter('core')
-        >>> train, val, test = splitter.split(df, core_col='core')
+        >>> splitter = get_splitter('assay', scenario='cross_assay')
+        >>> train, val, test = splitter.split(df)
     """
     splitters = {
         'random': RandomSplitter,
@@ -875,7 +1254,10 @@ def get_splitter(
         'stratified': PropertyStratifiedSplitter,
         'temporal': TemporalSplitter,
         'few_shot_target': FewShotTargetSplitter,
-        'core': CoreSplitter
+        'core': CoreSplitter,
+        'assay': AssaySplitter,
+        'pair_aware_random': PairAwareRandomSplitter,
+        'strict_scaffold': StrictScaffoldSplitter,
     }
 
     if split_type not in splitters:

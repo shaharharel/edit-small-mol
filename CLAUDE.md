@@ -3,57 +3,81 @@
 ## Environment Setup
 
 **Use the `quris` conda environment for all Python operations.**
+**Use CPU for all transformer-based experiments** (MPS crashes with ChemBERTa after prolonged use).
 
 ---
 
 ## Causal Edit Effect Framework
 
-The central idea of the causal edit effect framework is to explicitly model how molecular systems respond to **interventions**, rather than only learning correlations over static inputs. In small molecule optimization, the question of interest is not "what is the property of this molecule," but "what will happen if I change this part of it."
-
-We formulate prediction as an **edit effect problem**: given a baseline molecule and a defined edit (matched molecular pair transformation), predict the resulting change in a property of interest.
+The central idea is to explicitly model how molecular systems respond to **interventions**: given a baseline molecule and a defined edit (matched molecular pair transformation), predict the resulting change in a property of interest.
 
 ### Edit Embeddings
 
-Edit embeddings serve as the representation layer that makes this possible: they encode edits as **structured, context-aware interventions**, capturing how local chemical changes propagate through molecular structure. This abstraction decouples:
+Edit embeddings encode edits as **structured, context-aware interventions**, decoupling:
 - The **representation of the molecule** (the background system)
 - The **representation of the chemical transformation** applied to it
 
-This alignment with causal reasoning makes the learning problem closer to how medicinal chemistry optimization is performed in practice.
-
-### Advantages Over Direct Prediction
-
-Compared to direct prediction approaches that map molecules to properties in a single step, the edit effect framework introduces **strong inductive structure**:
-
-- **Information sharing**: Learn across many related perturbations
-- **Consistency enforcement**: Between base predictions and predicted effects
-- **Compositional reasoning**: Over multiple edits
-
-This leads to:
-- Improved **data efficiency**
-- Better **generalization** to unseen transformations
-- Clearer **interpretability**: similar edits have similar representations and effects, even across different molecular contexts
-
 ### Primary Validation: Edit Effect vs. Subtraction Baseline
-
-**The most critical validation** is demonstrating that the edit effect framework significantly outperforms the common subtraction approach:
 
 | Approach | Method | Formula |
 |----------|--------|---------|
-| **Subtraction baseline** | Predict property independently for each molecule, then subtract | `F(mol_after) - F(mol_before) = Δproperty` |
-| **Edit effect framework** | Learn directly from supervised delta signal with edit embeddings | `F(mol_before, edit) → Δproperty` |
+| **Subtraction baseline** | Predict property independently, then subtract | `F(mol_after) - F(mol_before) = Δproperty` |
+| **Edit effect framework** | Learn directly from supervised delta signal | `F(mol_before, edit) → Δproperty` |
 
-We must show that learning with the supervised delta signal and specialized edit embedding modeling outperforms independent property prediction followed by subtraction.
+### Validation Criteria
 
-### Additional Validation Criteria
+1. Edit effect **outperforms subtraction baseline** across scenarios
+2. **Generalization** across scaffolds, targets, and challenging splits
+3. **Noise robustness**: leveraging within-assay pairs to avoid cross-lab noise
+4. **Data efficiency**: better performance in low-data regimes
 
-Beyond raw predictive performance, we should demonstrate:
-1. Edit embeddings organize interventions into **meaningful geometric structure**
-2. Representations **transfer across scaffolds and datasets**
-3. Accurate prediction in **low-data regimes**
-4. Generalization to **out-of-distribution** edits
-5. **Chemically sensible clustering** of similar transformations
+---
 
-Together, these establish edit effect prediction with edit embeddings as a principled, causal alternative to direct property prediction.
+## Current Experiment Plan (March 2026)
+
+### Paper: "Edit Effect Framework for Noise-Robust Bioactivity Prediction"
+
+**Canonical experiment script**: `experiments/run_paper_evaluation.py`
+
+#### Phase 1: Embedder Selection (DONE — shared pairs, 1.7M)
+- **Winner: Morgan FP (via ChemProp featurizer)** (2048-dim) — MAE=0.631
+- Note: "ChemProp D-MPNN" is actually Morgan FP, NOT a pretrained GNN
+- Morgan FP (RDKit) very close (MAE=0.637), all pretrained models lagged
+- CheMeleon (pretrained D-MPNN): MAE=0.659, best pretrained but still worse than fingerprints
+- MoLFormer-XL: MAE=0.691, Uni-Mol v1: MAE=0.690 — last place
+
+#### Phase 2: Architecture Comparison (DONE — 8 architectures, within-assay)
+- **Winner: FiLMDelta** (FiLM-conditioned f(B|δ)−f(A|δ)) — 7.8% MAE reduction over Subtraction
+- FiLMDelta MAE=0.616±0.022, EditDiff MAE=0.631±0.016, Subtraction MAE=0.668±0.019
+- Attention architectures (GatedCrossAttn, AttnThenFiLM) underperformed even vs Subtraction
+
+#### Phase 3: Generalization (DONE — 7 splits)
+- Splits: assay_within, assay_cross, assay_mixed, scaffold, random, cross-target, strict_scaffold, pair_random
+- Methods: FiLMDelta, EditDiff, DeepDelta, Subtraction (all with Morgan FP 2048d)
+- **CRITICAL**: Random split has 71% exact pair duplicates — useless for generalization claims
+- **CRITICAL**: Old scaffold split only uses mol_a scaffolds — asymmetric, misleading
+- Assay-within is the primary evaluation (42% both-mols-new, genuine generalization)
+
+#### Noise Robustness Analysis (DONE)
+- **Realistic noise tiers** (40 targets, noise ratios 0.35x–3.3x): FiLMDelta wins 40/40 (69.6% avg advantage)
+  - Spearman/Pearson/R² gaps all grow significantly with noise (p<0.001)
+  - FiLMDelta trains on within-assay pairs; Subtraction trains on all data (realistic usage)
+  - Script: `experiments/run_fair_noise_tiers.py`
+- **Controlled noise injection** (σ=0→1.5): FiLMDelta degrades 3.2% vs Subtraction 12.3%
+  - Script: `experiments/run_noise_injection.py`
+- Advantage decomposes: ~8% architecture (Phase 2) + ~62% data curation (within-assay pairs)
+
+#### Results location
+- `results/paper_evaluation/all_results.json` — Phase 1-3 results
+- `results/paper_evaluation/fair_noise_tiers_results.json` — per-target noise tier results
+- `results/paper_evaluation/noise_injection_results.json` — controlled noise injection
+- `results/paper_evaluation/evaluation_report.html` — unified HTML report
+
+### Metrics Policy
+- **Primary**: MAE (lower is better)
+- **Secondary**: Spearman rank correlation (higher is better)
+- **Also report**: Pearson r, R² (per-target averaged, NOT pooled multi-target)
+- **Never report**: pooled multi-target R² (misleading artifact of prediction shrinkage)
 
 ---
 
@@ -76,16 +100,13 @@ scripts/       # Data preprocessing and extraction scripts
 tests/         # Unit tests
 ```
 
-**Do NOT write code outside these directories** (e.g., standalone scripts in root, temporary notebooks, one-off analysis files).
+**Do NOT write code outside these directories.**
 
 ### Requesting Exceptions
 
-If you believe a one-off script or analysis is necessary:
-
-1. **Ask for permission first** - Do not create the file without explicit approval
-2. **Provide rationale** - Explain why this cannot fit within the existing structure
-3. **Propose integration path** - Describe how/if this will be incorporated into the framework later, or why it should remain a one-off
-4. **Suggest location** - If approved, propose the most appropriate location within the project structure
+If a one-off script is necessary:
+1. **Ask for permission first**
+2. **Provide rationale** and propose integration path
 
 ---
 
@@ -97,67 +118,55 @@ src/
 │   ├── base_extractor.py  # Abstract base for data extractors
 │   ├── chembl_extractor.py # ChEMBL data extraction pipeline
 │   ├── mmp_long_format.py # MMP extraction in long format
-│   ├── mmp_atom_mapping.py # Atom mapping for MMPs
 │   ├── mmp_atom_mapping_fast.py # Fast atom mapping (84x speedup)
-│   ├── mmp_parser.py      # Parse MMP structural columns
-│   ├── parallel_extraction.py # Parallel extraction utilities
 │   ├── scalable_mmp.py    # Scalable MMP extraction
-│   ├── structured_dataset.py # Structured dataset wrapper
 │   └── utils/
-│       └── chemistry.py   # RDKit-based chemistry utilities
+│       └── chemistry.py   # RDKit utilities + compute_edit_features(28d)
 ├── embedding/             # Molecule and edit embedders
 │   ├── base.py            # MoleculeEmbedder abstract base
 │   ├── fingerprints.py    # Morgan, RDKit, MACCS, Atom Pair
+│   ├── chemberta.py       # ChemBERTa-2 (MLM/MTR, 77M params)
+│   ├── chemprop.py        # ChemProp D-MPNN
+│   ├── molformer.py       # MoLFormer-XL (needs transformers fix)
 │   ├── edit_embedder.py   # Simple edit differences
-│   ├── trainable_edit_embedder.py # Learnable edit embeddings
-│   ├── structured_edit_base.py # Structured embedder base
-│   ├── structured_edit_embedder.py # Rich structured edit representations
-│   ├── chemberta.py       # ChemBERTa transformer embeddings
-│   ├── chemprop.py        # ChemProp D-MPNN embeddings
-│   ├── graphormer.py      # Graphormer graph embeddings
-│   ├── molfm.py           # MolFM foundation model
-│   ├── unimol.py          # UniMol embeddings
-│   └── *_structured.py    # Structured variants of above
+│   └── trainable_edit_embedder.py # Learnable edit embeddings
 ├── models/                # Neural network architectures
 │   ├── predictors/        # Edit effect and property predictors
-│   ├── architectures/     # Multi-task learning components
-│   ├── dataset.py         # PyTorch dataset wrappers
 │   └── trainer.py         # Training utilities
-└── utils/                 # Splits, metrics, caching, logging
-    ├── splits.py          # Scaffold, target, Butina, etc.
-    ├── metrics.py         # Regression and ranking metrics
-    ├── embedding_cache.py # Embedding caching utilities
-    └── logging.py         # Logging setup
+└── utils/
+    ├── splits.py          # Random, Scaffold, Target, Butina, Assay, FewShot, Core
+    └── metrics.py         # Regression and ranking metrics
 
-experiments/               # Experiment runners
-├── main.py                # Main entry point
-├── experiment_config.py   # Configuration dataclass
-├── data_loader.py         # Dataset loading and splitting
-├── model_factory.py       # Embedder and model creation
-├── trainer.py             # Training loop
-├── evaluator.py           # Evaluation and metrics
-├── report_generator.py    # Visualization and reports
-├── cluster_analysis.py    # Edit embedding clustering
-└── edit_embedding_comparison.py # Embedding comparison
+experiments/
+├── run_paper_evaluation.py     # CANONICAL: Phase 1→2→3 pipeline
+├── generate_report.py          # HTML report generator
+├── run_fair_noise_tiers.py     # Realistic noise tier experiment (40 targets)
+├── run_noise_injection.py      # Controlled noise injection experiment
+├── run_data_efficiency.py      # Learning curve analysis
+├── run_embedding_visualization.py # PCA/t-SNE/UMAP visualization
+├── run_noise_performance_analysis.py # 2×2 factorial noise analysis
+└── model_factory.py            # Embedder/model creation
 
-scripts/
-├── extraction/            # ChEMBL and MMP extraction scripts
-│   ├── extract_chembl_data.py
-│   ├── download_chembl_long_format.py
-│   ├── build_pairs_long_format.py
-│   ├── run_chembl_pair_extraction.py
-│   └── mmpdb/             # mmpdb-based extraction
-└── add_mmp_columns.py     # Compute MMP structural columns
-
-data/                      # Raw and processed datasets (gitignored)
-tests/                     # Unit tests
+scripts/extraction/             # ChEMBL and MMP extraction scripts
+data/                           # Raw and processed datasets (gitignored)
+tests/                          # Unit tests
 ```
+
+---
+
+## Key Data
+
+- **Canonical dataset (shared pairs)**: `data/overlapping_assays/extracted/shared_pairs_deduped.csv` — 1.7M pairs (856K within + 844K cross), 88K molecules, 751 targets
+- **Full dataset**: `data/overlapping_assays/extracted/overlapping_assay_pairs_minimal_mmp.csv` — 5M pairs, 758 targets, 105K molecules
+- **50K subsample**: `data/overlapping_assays/extracted/overlapping_assay_pairs_minimal_mmp_50k.csv`
+- **Embedding cache**: `data/embedding_cache/*.npz` (morgan, chemberta2-mlm, chemberta2-mtr, chemprop-dmpnn)
+- **Columns**: mol_a, mol_b, mol_a_id, mol_b_id, edit_smiles, delta, is_within_assay, value_a, value_b, target_chembl_id, assay_id_a, assay_id_b
+- **Shared pairs**: pairs appearing in BOTH within-assay and cross-assay contexts — enables perfectly matched noise comparison
 
 ---
 
 ## Key Patterns
 
 - **Embedders**: Inherit from `MoleculeEmbedder` base class in `src/embedding/base.py`
-- **Experiments**: Config-driven via `ExperimentConfig` dataclass, placed in `experiments/`
-- **Preprocessing**: Scripts go in `scripts/extraction/`
-- **Edit modes**: Two modes supported — full molecule difference (context-aware) and edit fragment difference (scaffold-independent)
+- **Splits**: Use `get_splitter()` factory in `src/utils/splits.py`
+- **Edit modes**: Full molecule difference (context-aware) and edit fragment difference (scaffold-independent)

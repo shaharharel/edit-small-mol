@@ -460,7 +460,7 @@ class PropertyPredictor:
             train_dataset,
             batch_size=self.batch_size,
             shuffle=True,
-            num_workers=4,
+            num_workers=0,
             pin_memory=True
         )
 
@@ -497,7 +497,7 @@ class PropertyPredictor:
             val_loader = DataLoader(
                 val_dataset,
                 batch_size=self.batch_size,
-                num_workers=4,
+                num_workers=0,
                 pin_memory=True
             )
 

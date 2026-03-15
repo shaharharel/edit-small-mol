@@ -108,7 +108,7 @@ class ChemBERTaEmbedder(nn.Module, MoleculeEmbedder):
         # Cache embedding dimension
         self._embedding_dim = self.model.config.hidden_size
 
-    def encode(self, smiles: Union[str, List[str]]) -> np.ndarray:
+    def encode(self, smiles: Union[str, List[str]], show_progress: bool = False) -> np.ndarray:
         """
         Encode molecule(s) to embedding vector(s).
 

@@ -25,6 +25,7 @@ from .splits import (
     TemporalSplitter,
     FewShotTargetSplitter,
     CoreSplitter,
+    AssaySplitter,
     get_splitter
 )
 from .metrics import (
@@ -54,6 +55,7 @@ __all__ = [
     'TemporalSplitter',
     'FewShotTargetSplitter',
     'CoreSplitter',
+    'AssaySplitter',
     'get_splitter',
     'RegressionMetrics',
     'MultiTaskMetrics',

@@ -18,13 +18,13 @@ Two promoted architectures:
 Architecture overview:
     - Edit signal: z = LinearProj(emb_edited - emb_original)              [B, H]
     - Context: z_ctx = LinearProj(emb_original)                            [B, H]
-    - Mutation features: mf = structural edit features                     [B, F]
-    - Context tokens: [mf, z_ctx] → Linear → reshape → [B, N_tokens, H]
+    - Edit features: ef = structural edit features (28-dim)                [B, F]
+    - Context tokens: [ef, z_ctx] → Linear → reshape → [B, N_tokens, H]
     - Integration: cross-attention (GatedCrossAttn) or attention+FiLM
     - Head: [z, z_ctx] → MLP → Δproperty
 
-Forward signature: forward(wt, mt, mf) → predicted delta [B]
-    where wt, mt are [B, D] embeddings and mf is [B, MFD] mutation features.
+Forward signature: forward(wt, mt, ef) → predicted delta [B]
+    where wt, mt are [B, D] embeddings and ef is [B, EFD] edit features.
 """
 
 import math
@@ -34,6 +34,8 @@ import torch.nn.functional as F
 import numpy as np
 from typing import Optional, List, Union, Dict, Tuple
 from scipy.stats import spearmanr
+
+from src.data.utils.chemistry import compute_edit_features, EDIT_FEAT_DIM
 
 
 # ── Building Blocks ──────────────────────────────────────────────────────────
@@ -91,8 +93,8 @@ class GatedCrossAttnMLP(nn.Module):
     molecular contexts.
 
     Args:
-        input_dim: Embedding dimension (default: 1024 for IgT5).
-        mut_feat_dim: Mutation feature dimension (default: 48).
+        input_dim: Embedding dimension (default: 1024).
+        mut_feat_dim: Edit feature dimension (default: 28).
         hidden_dim: Hidden dimension (default: 256).
         n_layers: Number of gated cross-attention layers (default: 3).
         n_tokens: Number of context aspect tokens (default: 4).
@@ -103,7 +105,7 @@ class GatedCrossAttnMLP(nn.Module):
     def __init__(
         self,
         input_dim: int = 1024,
-        mut_feat_dim: int = 48,
+        mut_feat_dim: int = EDIT_FEAT_DIM,
         hidden_dim: int = 256,
         n_layers: int = 3,
         n_tokens: int = 4,
@@ -220,8 +222,8 @@ class AttnThenFiLMMLP(nn.Module):
     element-wise modulation of the edit representation.
 
     Args:
-        input_dim: Embedding dimension (default: 1024 for IgT5).
-        mut_feat_dim: Mutation feature dimension (default: 48).
+        input_dim: Embedding dimension (default: 1024).
+        mut_feat_dim: Edit feature dimension (default: 28).
         hidden_dim: Hidden dimension (default: 256).
         n_tokens: Number of context aspect tokens (default: 4).
         n_heads: Number of attention heads (default: 4).
@@ -231,7 +233,7 @@ class AttnThenFiLMMLP(nn.Module):
     def __init__(
         self,
         input_dim: int = 1024,
-        mut_feat_dim: int = 48,
+        mut_feat_dim: int = EDIT_FEAT_DIM,
         hidden_dim: int = 256,
         n_tokens: int = 4,
         n_heads: int = 4,
@@ -328,71 +330,50 @@ class AttnThenFiLMMLP(nn.Module):
         return torch.cat([z, z_ctx], -1)
 
 
-# ── Mutation Feature Extraction ──────────────────────────────────────────────
+# ── Edit Feature Extraction ─────────────────────────────────────────────────
 
-AA_ORDER = "ACDEFGHIKLMNPQRSTVWY"
-AA_IDX = {a: i for i, a in enumerate(AA_ORDER)}
-
-HYDROPATHY = {
-    'A': 1.8, 'C': 2.5, 'D': -3.5, 'E': -3.5, 'F': 2.8, 'G': -0.4,
-    'H': -3.2, 'I': 4.5, 'K': -3.9, 'L': 3.8, 'M': 1.9, 'N': -3.5,
-    'P': -1.6, 'Q': -3.5, 'R': -4.5, 'S': -0.8, 'T': -0.7, 'V': 4.2,
-    'W': -0.9, 'Y': -1.3,
-}
-
-CHARGE = {'D': -1, 'E': -1, 'K': 1, 'R': 1, 'H': 0.5}
-
-MUT_FEAT_DIM = 48  # 20 from_oh + 20 to_oh + 8 extras
+# Backward compatibility alias
+MUT_FEAT_DIM = EDIT_FEAT_DIM
 
 
-def compute_mutation_features(
-    mutations: list,
+def compute_edit_features_tensor(
+    edit_info: dict,
     device: torch.device = torch.device('cpu'),
 ) -> torch.Tensor:
-    """Compute 48-dim mutation feature vector.
+    """Compute edit feature tensor from an edit info dict.
 
-    Features:
-        - [0:20]: Normalized one-hot of source amino acids.
-        - [20:40]: Normalized one-hot of target amino acids.
-        - [40]: Mean hydropathy change (normalized by 5.0).
-        - [41]: Mean charge change.
-        - [42]: Mutation count / 10.
-        - [43]: Padding (0).
-        - [44]: Std of hydropathy changes.
-        - [45:48]: Padding (0).
+    Wraps compute_edit_features() from chemistry utils and returns a torch tensor.
 
     Args:
-        mutations: List of mutation dicts with 'from' and 'to' keys.
+        edit_info: Dict with keys 'mol_a', 'mol_b', 'edit_smiles'.
+            Falls back to empty strings for missing keys.
         device: Target device.
 
     Returns:
-        Feature vector [48].
+        Feature tensor [EDIT_FEAT_DIM] on the specified device.
     """
-    if not mutations:
-        return torch.zeros(MUT_FEAT_DIM, device=device, dtype=torch.float32)
+    mol_a = edit_info.get('mol_a', '')
+    mol_b = edit_info.get('mol_b', '')
+    edit_smiles = edit_info.get('edit_smiles', '')
 
-    from_oh = torch.zeros(20, device=device, dtype=torch.float32)
-    to_oh = torch.zeros(20, device=device, dtype=torch.float32)
-    dh, dc = [], []
+    feats = compute_edit_features(mol_a, mol_b, edit_smiles)
+    return torch.tensor(feats, device=device, dtype=torch.float32)
 
-    for m in mutations:
-        f, t = m['from'], m['to']
-        if f in AA_IDX:
-            from_oh[AA_IDX[f]] += 1
-        if t in AA_IDX:
-            to_oh[AA_IDX[t]] += 1
-        dh.append((HYDROPATHY.get(t, 0) - HYDROPATHY.get(f, 0)) / 5.0)
-        dc.append(CHARGE.get(t, 0) - CHARGE.get(f, 0))
 
-    n = len(mutations)
-    from_oh /= n
-    to_oh /= n
-    extras = torch.tensor(
-        [np.mean(dh), np.mean(dc), n / 10.0, 0.0,
-         np.std(dh) if len(dh) > 1 else 0, 0, 0, 0],
-        device=device, dtype=torch.float32)
+# Backward compatibility: keep compute_mutation_features as an alias
+def compute_mutation_features(
+    mutations_or_edit_info,
+    device: torch.device = torch.device('cpu'),
+) -> torch.Tensor:
+    """Backward-compatible wrapper that delegates to compute_edit_features_tensor.
 
-    return torch.cat([from_oh, to_oh, extras])
+    Accepts either the new edit_info dict format (with 'mol_a', 'mol_b', 'edit_smiles')
+    or returns zeros for old-style mutation list input.
+    """
+    if isinstance(mutations_or_edit_info, dict):
+        return compute_edit_features_tensor(mutations_or_edit_info, device)
+    # Old-style mutation list: return zeros since amino acid features are meaningless
+    return torch.zeros(EDIT_FEAT_DIM, device=device, dtype=torch.float32)
 
 
 # ── High-Level Predictor ─────────────────────────────────────────────────────
@@ -413,6 +394,14 @@ class AttentionDeltaPredictor:
 
     Handles training, evaluation, checkpointing, and edit embedding extraction.
 
+    Data format: Each sample is a dict with keys:
+        - 'wt': Original molecule embedding (numpy array or list).
+        - 'mt': Edited molecule embedding (numpy array or list).
+        - 'mol_a': SMILES of original molecule.
+        - 'mol_b': SMILES of edited molecule.
+        - 'edit_smiles': Edit in "leaving_frag>>incoming_frag" format.
+        - 'z_delta': Target property delta (for training/eval).
+
     Example:
         >>> predictor = AttentionDeltaPredictor(arch='gated_cross_attn')
         >>> predictor.fit(train_data, val_data)
@@ -422,7 +411,7 @@ class AttentionDeltaPredictor:
     Args:
         arch: Architecture name ('gated_cross_attn' or 'attn_then_film').
         input_dim: Embedding dimension.
-        mut_feat_dim: Mutation feature dimension.
+        mut_feat_dim: Edit feature dimension (default: 28).
         hidden_dim: Hidden dimension.
         learning_rate: Learning rate.
         weight_decay: Weight decay.
@@ -444,7 +433,7 @@ class AttentionDeltaPredictor:
         self,
         arch: str = 'gated_cross_attn',
         input_dim: int = 1024,
-        mut_feat_dim: int = 48,
+        mut_feat_dim: int = EDIT_FEAT_DIM,
         hidden_dim: int = 256,
         learning_rate: float = 1e-3,
         weight_decay: float = 1e-4,
@@ -502,7 +491,7 @@ class AttentionDeltaPredictor:
         """Train the model and return best validation Spearman ρ.
 
         Args:
-            train_data: List of dicts with keys 'wt', 'mt', 'muts', 'z_delta'.
+            train_data: List of dicts with keys 'wt', 'mt', 'mol_a', 'mol_b', 'edit_smiles', 'z_delta'.
             val_data: List of dicts with same keys.
             verbose: Print progress.
 
@@ -532,7 +521,7 @@ class AttentionDeltaPredictor:
                 batch = train_data[i:i + self.batch_size]
                 wt = torch.stack([torch.tensor(d['wt'], dtype=torch.float32) for d in batch]).to(dev)
                 mt = torch.stack([torch.tensor(d['mt'], dtype=torch.float32) for d in batch]).to(dev)
-                mf = torch.stack([compute_mutation_features(d['muts'], torch.device(dev)) for d in batch])
+                mf = torch.stack([compute_edit_features_tensor(d, torch.device(dev)) for d in batch])
                 tgt = torch.tensor([d['z_delta'] for d in batch], dtype=torch.float32).to(dev)
 
                 opt.zero_grad()
@@ -574,7 +563,7 @@ class AttentionDeltaPredictor:
                 batch = data[i:i + self.batch_size]
                 wt = torch.stack([torch.tensor(d['wt'], dtype=torch.float32) for d in batch]).to(dev)
                 mt = torch.stack([torch.tensor(d['mt'], dtype=torch.float32) for d in batch]).to(dev)
-                mf = torch.stack([compute_mutation_features(d['muts'], torch.device(dev)) for d in batch])
+                mf = torch.stack([compute_edit_features_tensor(d, torch.device(dev)) for d in batch])
                 out = self.model(wt, mt, mf)
                 preds.extend(out.cpu().tolist())
                 tgts.extend([d['z_delta'] for d in batch])
@@ -586,7 +575,7 @@ class AttentionDeltaPredictor:
         """Predict delta values.
 
         Args:
-            data: List of dicts with keys 'wt', 'mt', 'muts'.
+            data: List of dicts with keys 'wt', 'mt', 'mol_a', 'mol_b', 'edit_smiles'.
 
         Returns:
             Predictions array [N].
@@ -603,7 +592,7 @@ class AttentionDeltaPredictor:
                 batch = data[i:i + self.batch_size]
                 wt = torch.stack([torch.tensor(d['wt'], dtype=torch.float32) for d in batch]).to(dev)
                 mt = torch.stack([torch.tensor(d['mt'], dtype=torch.float32) for d in batch]).to(dev)
-                mf = torch.stack([compute_mutation_features(d['muts'], torch.device(dev)) for d in batch])
+                mf = torch.stack([compute_edit_features_tensor(d, torch.device(dev)) for d in batch])
                 out = self.model(wt, mt, mf)
                 preds.extend(out.cpu().tolist())
 
@@ -613,7 +602,7 @@ class AttentionDeltaPredictor:
         """Extract intermediate edit embeddings.
 
         Args:
-            data: List of dicts with keys 'wt', 'mt', 'muts'.
+            data: List of dicts with keys 'wt', 'mt', 'mol_a', 'mol_b', 'edit_smiles'.
 
         Returns:
             Embeddings array [N, H*2].
@@ -630,7 +619,7 @@ class AttentionDeltaPredictor:
                 batch = data[i:i + self.batch_size]
                 wt = torch.stack([torch.tensor(d['wt'], dtype=torch.float32) for d in batch]).to(dev)
                 mt = torch.stack([torch.tensor(d['mt'], dtype=torch.float32) for d in batch]).to(dev)
-                mf = torch.stack([compute_mutation_features(d['muts'], torch.device(dev)) for d in batch])
+                mf = torch.stack([compute_edit_features_tensor(d, torch.device(dev)) for d in batch])
                 emb = self.model.get_edit_embedding(wt, mt, mf)
                 embs.append(emb.cpu().numpy())
 
@@ -643,7 +632,7 @@ class AttentionDeltaPredictor:
         """Evaluate model on data.
 
         Args:
-            data: List of dicts with keys 'wt', 'mt', 'muts', 'z_delta'.
+            data: List of dicts with keys 'wt', 'mt', 'mol_a', 'mol_b', 'edit_smiles', 'z_delta'.
 
         Returns:
             Dict with spearman, mse, mae metrics.

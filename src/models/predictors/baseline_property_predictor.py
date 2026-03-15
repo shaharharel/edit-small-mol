@@ -3,10 +3,12 @@ Baseline Property Predictor for delta prediction via subtraction.
 
 This is the non-edit-aware baseline that:
 1. Trains a property predictor on absolute values: f(molecule) → property
-2. Predicts delta as: delta = f(mutant) - f(wild-type)
+2. Predicts delta as: delta = f(mol_b) - f(mol_a)
 
-This approach is molecule-type agnostic and works with any pre-computed embeddings
-(works with any pre-computed molecular embeddings).
+Training uses individual molecules with their absolute property values (e.g. pIC50).
+At inference, the predicted delta is computed by subtracting individual predictions.
+
+This approach is molecule-type agnostic and works with any pre-computed embeddings.
 """
 
 import torch
@@ -141,30 +143,28 @@ class BaselinePropertyMLP(pl.LightningModule):
 
 class BaselinePropertyPredictor:
     """
-    Baseline property predictor that learns f(molecule) and computes delta.
+    Baseline property predictor that learns f(molecule) -> absolute_property and
+    computes delta at inference via subtraction.
 
     This works with any pre-computed molecular embeddings:
-    - SMILES → ChemBERTa/Fingerprint/ChemProp → embedding
+    - SMILES -> ChemBERTa/Fingerprint/ChemProp -> embedding
 
     Training:
-        - Trains on absolute property values for both wild-type and mutant
-        - Wild-type gets label 0 (reference), mutant gets label delta
+        - Trains on absolute property values for individual molecules
+        - Input: (mol_embeddings, absolute_property_values)
 
     Inference:
-        - delta_pred = f(mutant_embedding) - f(wt_embedding)
+        - delta_pred = f(mol_b_embedding) - f(mol_a_embedding)
 
     Example:
-        >>> # With pre-computed embeddings
         >>> predictor = BaselinePropertyPredictor(hidden_dims=[256, 128])
         >>> predictor.fit(
-        ...     wt_emb_train=wt_embeddings,
-        ...     mut_emb_train=mut_embeddings,
-        ...     delta_train=delta_values,
-        ...     wt_emb_val=wt_val_embeddings,
-        ...     mut_emb_val=mut_val_embeddings,
-        ...     delta_val=delta_val_values,
+        ...     mol_emb_train=all_mol_embeddings,
+        ...     y_train=all_absolute_values,
+        ...     mol_emb_val=val_mol_embeddings,
+        ...     y_val=val_absolute_values,
         ... )
-        >>> delta_pred = predictor.predict(wt_emb_test, mut_emb_test)
+        >>> delta_pred = predictor.predict(mol_a_emb_test, mol_b_emb_test)
     """
 
     def __init__(
@@ -212,45 +212,31 @@ class BaselinePropertyPredictor:
 
     def fit(
         self,
-        wt_emb_train: Union[np.ndarray, torch.Tensor],
-        mut_emb_train: Union[np.ndarray, torch.Tensor],
-        delta_train: Union[np.ndarray, torch.Tensor],
-        wt_emb_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
-        mut_emb_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
-        delta_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
+        mol_emb_train: Union[np.ndarray, torch.Tensor],
+        y_train: Union[np.ndarray, torch.Tensor],
+        mol_emb_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
+        y_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
         verbose: bool = True,
     ) -> Dict[str, List[float]]:
         """
-        Train the baseline property predictor.
+        Train the baseline property predictor on absolute property values.
 
-        The model learns f(embedding) → property_value, where:
-        - Wild-type embeddings have label 0 (reference)
-        - Mutant embeddings have label delta
+        The model learns f(embedding) -> absolute_property_value for individual
+        molecules. At inference, delta is computed as f(mol_b) - f(mol_a).
 
         Args:
-            wt_emb_train: Wild-type embeddings [N, D]
-            mut_emb_train: Mutant embeddings [N, D]
-            delta_train: Delta values [N]
-            wt_emb_val: Optional validation wild-type embeddings
-            mut_emb_val: Optional validation mutant embeddings
-            delta_val: Optional validation delta values
+            mol_emb_train: Molecule embeddings [N, D] (individual molecules,
+                not pairs -- combine mol_a and mol_b embeddings before calling)
+            y_train: Absolute property values [N] (e.g. pIC50 values)
+            mol_emb_val: Optional validation molecule embeddings [M, D]
+            y_val: Optional validation absolute property values [M]
             verbose: Show training progress
 
         Returns:
             Training history dict with 'train_loss' and 'val_loss' lists
         """
-        # Convert to tensors
-        wt_emb_train = self._to_tensor(wt_emb_train)
-        mut_emb_train = self._to_tensor(mut_emb_train)
-        delta_train = self._to_tensor(delta_train)
-
-        # Combine wt and mut for training
-        # wt has value 0 (reference), mut has value delta
-        X_train = torch.cat([wt_emb_train, mut_emb_train], dim=0)
-        y_train = torch.cat([
-            torch.zeros(len(wt_emb_train)),
-            delta_train,
-        ], dim=0)
+        X_train = self._to_tensor(mol_emb_train)
+        y_train = self._to_tensor(y_train)
 
         self.input_dim = X_train.shape[1]
 
@@ -266,7 +252,7 @@ class BaselinePropertyPredictor:
         print(f"\nBaseline Property Predictor:")
         print(f"  Input dim: {self.input_dim}")
         print(f"  Hidden dims: {self.model.hidden_dims}")
-        print(f"  Training samples: {len(wt_emb_train)} pairs → {len(X_train)} total")
+        print(f"  Training samples: {len(X_train)}")
         print(f"  Parameters: {sum(p.numel() for p in self.model.parameters()):,}")
 
         # Create dataloaders
@@ -276,16 +262,9 @@ class BaselinePropertyPredictor:
         )
 
         val_loader = None
-        if wt_emb_val is not None and mut_emb_val is not None and delta_val is not None:
-            wt_emb_val = self._to_tensor(wt_emb_val)
-            mut_emb_val = self._to_tensor(mut_emb_val)
-            delta_val = self._to_tensor(delta_val)
-
-            X_val = torch.cat([wt_emb_val, mut_emb_val], dim=0)
-            y_val = torch.cat([
-                torch.zeros(len(wt_emb_val)),
-                delta_val,
-            ], dim=0)
+        if mol_emb_val is not None and y_val is not None:
+            X_val = self._to_tensor(mol_emb_val)
+            y_val = self._to_tensor(y_val)
 
             val_dataset = TensorDataset(X_val, y_val)
             val_loader = DataLoader(
@@ -364,17 +343,17 @@ class BaselinePropertyPredictor:
 
     def predict(
         self,
-        wt_emb: Union[np.ndarray, torch.Tensor],
-        mut_emb: Union[np.ndarray, torch.Tensor],
+        mol_emb_a: Union[np.ndarray, torch.Tensor],
+        mol_emb_b: Union[np.ndarray, torch.Tensor],
     ) -> np.ndarray:
         """
-        Predict delta values.
+        Predict delta values via subtraction.
 
-        Computes: delta_pred = f(mut_emb) - f(wt_emb)
+        Computes: delta_pred = f(mol_b) - f(mol_a)
 
         Args:
-            wt_emb: Wild-type embeddings [N, D]
-            mut_emb: Mutant embeddings [N, D]
+            mol_emb_a: Molecule A embeddings [N, D]
+            mol_emb_b: Molecule B embeddings [N, D]
 
         Returns:
             Predicted delta values [N]
@@ -382,35 +361,35 @@ class BaselinePropertyPredictor:
         if self.model is None:
             raise RuntimeError("Model not trained yet!")
 
-        wt_emb = self._to_tensor(wt_emb).to(self.device)
-        mut_emb = self._to_tensor(mut_emb).to(self.device)
+        mol_emb_a = self._to_tensor(mol_emb_a).to(self.device)
+        mol_emb_b = self._to_tensor(mol_emb_b).to(self.device)
 
         self.model.eval()
         with torch.no_grad():
-            pred_wt = self.model(wt_emb).cpu().numpy()
-            pred_mut = self.model(mut_emb).cpu().numpy()
+            pred_a = self.model(mol_emb_a).cpu().numpy()
+            pred_b = self.model(mol_emb_b).cpu().numpy()
 
-        return pred_mut - pred_wt
+        return pred_b - pred_a
 
     def evaluate(
         self,
-        wt_emb: Union[np.ndarray, torch.Tensor],
-        mut_emb: Union[np.ndarray, torch.Tensor],
+        mol_emb_a: Union[np.ndarray, torch.Tensor],
+        mol_emb_b: Union[np.ndarray, torch.Tensor],
         delta_true: Union[np.ndarray, torch.Tensor],
     ) -> Tuple[Dict[str, float], np.ndarray, np.ndarray]:
         """
         Evaluate model and return metrics.
 
         Args:
-            wt_emb: Wild-type embeddings [N, D]
-            mut_emb: Mutant embeddings [N, D]
+            mol_emb_a: Molecule A embeddings [N, D]
+            mol_emb_b: Molecule B embeddings [N, D]
             delta_true: True delta values [N]
 
         Returns:
             Tuple of (metrics_dict, y_true, y_pred)
         """
         delta_true = self._to_numpy(delta_true)
-        delta_pred = self.predict(wt_emb, mut_emb)
+        delta_pred = self.predict(mol_emb_a, mol_emb_b)
 
         # Compute metrics
         mae = np.mean(np.abs(delta_pred - delta_true))

@@ -44,7 +44,7 @@ class FingerprintEmbedder(MoleculeEmbedder):
                 f"Must be one of: morgan, rdkit, maccs, atompair"
             )
 
-    def encode(self, smiles: Union[str, List[str]]) -> np.ndarray:
+    def encode(self, smiles: Union[str, List[str]], show_progress: bool = False) -> np.ndarray:
         """
         Encode molecule(s) to fingerprint vector(s).
 

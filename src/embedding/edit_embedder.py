@@ -165,6 +165,79 @@ class EditEmbedder:
         return f"edit_diff_{self.molecule_embedder.name}"
 
 
+class ConcatEditEmbedder:
+    """
+    DeepDelta-style edit embedder using concatenation of molecule embeddings.
+
+    Produces edit embeddings as: concat([emb_a, emb_b]) → MLP → edit_vector
+
+    This matches the DeepDelta paper's approach of encoding both molecules
+    jointly without an explicit edit representation. Serves as a competitive
+    baseline for comparison with the causal edit effect framework.
+
+    Args:
+        molecule_embedder: Any MoleculeEmbedder instance
+        concat_module: ConcatenationEditEmbedder nn.Module that maps
+                       (emb_a, emb_b) → edit_vector via learned MLP.
+
+    Example:
+        >>> from src.embedding.trainable_edit_embedder import ConcatenationEditEmbedder
+        >>> mol_emb = ChemBERTaEmbedder()
+        >>> concat_nn = ConcatenationEditEmbedder(mol_dim=768, edit_dim=768)
+        >>> edit_emb = ConcatEditEmbedder(mol_emb, concat_nn)
+        >>> edit_vec = edit_emb.encode_from_smiles(['CCO'], ['CC(=O)O'])
+    """
+
+    def __init__(self, molecule_embedder: MoleculeEmbedder, concat_module):
+        import torch
+        self._mol_emb = molecule_embedder
+        self._concat = concat_module
+        self._torch = torch
+
+    def encode_from_smiles(
+        self,
+        mol_a: Union[str, List[str]],
+        mol_b: Union[str, List[str]]
+    ) -> np.ndarray:
+        """Encode edits as concat([emb_a, emb_b]) → MLP.
+
+        Args:
+            mol_a: Molecule A SMILES (single or list)
+            mol_b: Molecule B SMILES (single or list)
+
+        Returns:
+            Edit embeddings [N, edit_dim]
+        """
+        if isinstance(mol_a, str):
+            mol_a = [mol_a]
+            mol_b = [mol_b]
+            return_single = True
+        else:
+            return_single = False
+
+        ea = np.array(self._mol_emb.encode(list(mol_a)), dtype=np.float32)
+        eb = np.array(self._mol_emb.encode(list(mol_b)), dtype=np.float32)
+
+        ea_t = self._torch.FloatTensor(ea)
+        eb_t = self._torch.FloatTensor(eb)
+        self._concat.eval()
+        with self._torch.no_grad():
+            out = self._concat(ea_t, eb_t).numpy()
+
+        if return_single:
+            return out[0]
+        return out
+
+    @property
+    def embedding_dim(self) -> int:
+        """Return the dimensionality of edit embeddings."""
+        return self._concat.edit_dim
+
+    @property
+    def name(self) -> str:
+        return f"concat_edit_{self._mol_emb.name}"
+
+
 # Convenience constructors
 def edit_embedder_morgan(radius: int = 2, n_bits: int = 2048) -> EditEmbedder:
     """
