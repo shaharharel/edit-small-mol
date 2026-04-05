@@ -11,6 +11,7 @@ from .attention_delta_predictor import (
     ResidualCrossAttnLayer, compute_edit_features_tensor,
     compute_mutation_features, EDIT_FEAT_DIM, MUT_FEAT_DIM,
 )
+from .smiles_critic import SmilesCritic
 
 __all__ = [
     # Pre-computed embedding predictors
@@ -40,4 +41,6 @@ __all__ = [
     'compute_mutation_features',
     'EDIT_FEAT_DIM',
     'MUT_FEAT_DIM',
+    # PPO critic
+    'SmilesCritic',
 ]

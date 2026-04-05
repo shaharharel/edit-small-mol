@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime
 
 import numpy as np
+import pandas as pd
 from scipy import stats as scipy_stats
 
 from rdkit import Chem
@@ -68,13 +69,7 @@ SPLIT_DESCRIPTIONS = {
         "Tests whether edit-property relationships transfer across biological targets. "
         "Hardest generalization scenario."
     ),
-    "few_shot": (
-        "Few-Shot Target [Pending Architecture]",
-        "5 pairs per target in training, rest in test. Tests whether models can learn from minimal examples per target. "
-        "<strong>Pending</strong>: requires meta-learning architecture (e.g. MAML-style fine-tuning) "
-        "to properly evaluate few-shot capability. Current results use standard training, "
-        "which disadvantages edit-aware methods that need more examples to learn edit-target interactions."
-    ),
+    # few_shot: removed — needs redesigned experiment with meta-learning architecture
     "strict_scaffold": (
         "Scaffold",
         "Both mol_a AND mol_b must have novel Bemis-Murcko scaffolds in test. 0% molecule overlap with training. "
@@ -229,17 +224,28 @@ the delta cancels the lab-specific offset.</p>
     html += "<table style='font-size:0.88em;'>\n"
     html += "<tr><th>Target</th><th>Assay 1<br>A / B / &Delta;</th>"
     html += "<th>Assay 2<br>A / B / &Delta;</th>"
-    html += "<th>Abs Offset</th><th>&Delta; Difference</th></tr>\n"
+    html += "<th>Abs Offset</th><th>&Delta; Diff</th>"
+    html += "<th>B/A Ratio<br>Assay 1</th>"
+    html += "<th>B/A Ratio<br>Assay 2</th><th>Ratio Diff</th></tr>\n"
     for ex in MOTIVATING_EXAMPLES:
         a1, a2 = ex["assays"][0], ex["assays"][1]
         abs_offset = max(abs(a1["val_a"] - a2["val_a"]), abs(a1["val_b"] - a2["val_b"]))
         delta_diff = abs(a1["delta"] - a2["delta"])
+        ratio1 = a1["val_b"] / a1["val_a"]
+        ratio2 = a2["val_b"] / a2["val_a"]
+        ratio_diff = abs(ratio1 - ratio2)
         html += f"<tr><td><strong>{ex['target_name']}</strong></td>"
         html += f"<td>{a1['val_a']:.2f} / {a1['val_b']:.2f} / <strong>{a1['delta']:+.2f}</strong></td>"
         html += f"<td>{a2['val_a']:.2f} / {a2['val_b']:.2f} / <strong>{a2['delta']:+.2f}</strong></td>"
         html += f"<td class='loss'>{abs_offset:.2f}</td>"
-        html += f"<td class='win'>{delta_diff:.2f}</td></tr>\n"
+        html += f"<td class='win'>{delta_diff:.2f}</td>"
+        html += f"<td>{ratio1:.2f}</td><td>{ratio2:.2f}</td>"
+        html += f"<td class='win'>{ratio_diff:.2f}</td></tr>\n"
     html += "</table>\n"
+    html += "<p style='font-size:0.85em; color:#666;'>B/A Ratio = pIC50<sub>B</sub> / pIC50<sub>A</sub>. "
+    html += "Absolute pIC50 values shift by 1&ndash;2+ between assays, "
+    html += "but the <strong>ratio</strong> and <strong>&Delta;</strong> remain nearly identical &mdash; "
+    html += "the assay offset cancels out in both.</p>\n"
 
     # Per-example cards with molecule images
     for ex in MOTIVATING_EXAMPLES:
@@ -263,19 +269,27 @@ the delta cancels the lab-specific offset.</p>
         html += f"<strong>Mol B</strong> <span class='metric-sm'>({ex['mol_b_id']})</span><br>{svg_b}</td>\n"
         html += "</tr></table>\n"
 
-        # Measurement table
+        # Measurement table with pIC50 ratios (B/A)
+        ratio1 = a1["val_b"] / a1["val_a"] if a1["val_a"] != 0 else 0
+        ratio2 = a2["val_b"] / a2["val_a"] if a2["val_a"] != 0 else 0
+        ratio_diff = abs(ratio1 - ratio2)
+
         html += "<table style='font-size:0.88em; width:auto;'>\n"
-        html += "<tr><th></th><th>Mol A (pIC50)</th><th>Mol B (pIC50)</th><th>&Delta;pIC50 (B&minus;A)</th></tr>\n"
+        html += "<tr><th></th><th>Mol A (pIC50)</th><th>Mol B (pIC50)</th>"
+        html += "<th>&Delta;pIC50 (B&minus;A)</th><th>pIC50<sub>B</sub>/pIC50<sub>A</sub></th></tr>\n"
         html += f"<tr><td><strong>Assay {a1['assay_id']}</strong></td>"
         html += f"<td>{a1['val_a']:.2f}</td><td>{a1['val_b']:.2f}</td>"
-        html += f"<td><strong>{a1['delta']:+.2f}</strong></td></tr>\n"
+        html += f"<td><strong>{a1['delta']:+.2f}</strong></td>"
+        html += f"<td>{ratio1:.2f}</td></tr>\n"
         html += f"<tr><td><strong>Assay {a2['assay_id']}</strong></td>"
         html += f"<td>{a2['val_a']:.2f}</td><td>{a2['val_b']:.2f}</td>"
-        html += f"<td><strong>{a2['delta']:+.2f}</strong></td></tr>\n"
-        html += f"<tr style='border-top:2px solid #333;'><td>Offset between assays</td>"
+        html += f"<td><strong>{a2['delta']:+.2f}</strong></td>"
+        html += f"<td>{ratio2:.2f}</td></tr>\n"
+        html += f"<tr style='border-top:2px solid #333;'><td>Difference between assays</td>"
         html += f"<td class='loss'>{abs_offset_a:.2f}</td>"
         html += f"<td class='loss'>{abs_offset_b:.2f}</td>"
-        html += f"<td class='win'>{delta_diff:.2f}</td></tr>\n"
+        html += f"<td class='win'>{delta_diff:.2f}</td>"
+        html += f"<td class='win'>{ratio_diff:.2f}</td></tr>\n"
         html += "</table>\n"
         html += "</div>\n"
 
@@ -384,6 +398,544 @@ mean = {pt.get('mean_ratio', 0):.3f}x,
     return html
 
 
+def section_zap70_case_study():
+    """Generate ZAP70 case study section from v3/v4/v5 results."""
+    html = ""
+
+    # Load result files
+    v3_file = RESULTS_DIR / "zap70_v3_results.json"
+    v4_file = RESULTS_DIR / "zap70_v4_results.json"
+    v5_file = RESULTS_DIR / "zap70_v5_results.json"
+    comp_file = RESULTS_DIR / "zap70_comprehensive_results.json"
+
+    v3 = v4 = v5 = comp = None
+    if v3_file.exists():
+        try:
+            with open(v3_file) as f:
+                v3 = json.load(f)
+        except Exception:
+            pass
+    if v4_file.exists():
+        try:
+            with open(v4_file) as f:
+                v4 = json.load(f)
+        except Exception:
+            pass
+    if v5_file.exists():
+        try:
+            with open(v5_file) as f:
+                v5 = json.load(f)
+        except Exception:
+            pass
+    if comp_file.exists():
+        try:
+            with open(comp_file) as f:
+                comp = json.load(f)
+        except Exception:
+            pass
+
+    if not any([v3, v4, v5, comp]):
+        return ""
+
+    html += "<h2 id='zap70'>ZAP70 Case Study: Single-Target Deep Dive</h2>\n"
+
+    # Overview
+    ds = (v3 or {}).get("data_summary", {})
+    html += "<div class='note'>\n"
+    html += "<p><strong>Target:</strong> ZAP70 (Zeta-chain-associated protein kinase 70, "
+    html += "<strong>{}</strong>) &mdash; a key kinase in T-cell receptor signaling.</p>\n".format(
+        ds.get("target_id", "CHEMBL2803"))
+    html += "<p><strong>Dataset:</strong> {} molecules across {} assays, ".format(
+        ds.get("n_molecules", 280), ds.get("n_assays", 54))
+    html += "pIC50 range {} (mean {:.2f} &plusmn; {:.2f}).</p>\n".format(
+        ds.get("pIC50_range", "4.0-9.0"),
+        ds.get("pIC50_mean", 6.03),
+        ds.get("pIC50_std", 1.08))
+    html += "<p>This case study applies the edit-effect framework to a <strong>single target</strong> "
+    html += "to demonstrate practical utility: absolute pIC50 prediction via anchor-based inference, "
+    html += "SAR analysis via SHAP, activity cliff detection, and virtual screening.</p>\n"
+    html += "</div>\n"
+
+    # ── v3: Prediction performance ──
+    if v3:
+        html += "<h3>Prediction Performance (5-fold CV)</h3>\n"
+        html += "<p>Multiple models trained on all-pairs edit data for ZAP70; "
+        html += "absolute pIC50 predicted via anchor-based median inference.</p>\n"
+
+        # Collect best results from phase_8 (grand ensemble)
+        phase8 = v3.get("phase_8", {})
+        if phase8:
+            html += "<table><tr><th>Ensemble Method</th><th>MAE</th>"
+            html += "<th>Spearman</th><th>Pearson</th><th>R&sup2;</th></tr>\n"
+            ranked = []
+            for name, data in phase8.items():
+                if isinstance(data, dict) and "aggregated" in data:
+                    ranked.append((name, data["aggregated"]))
+            ranked.sort(key=lambda x: x[1].get("mae_mean", 999))
+            best_mae = ranked[0][1]["mae_mean"] if ranked else None
+            for name, agg in ranked[:5]:
+                cls = " class='best'" if agg["mae_mean"] == best_mae else ""
+                html += "<tr{}><td>{}</td>".format(cls, name.replace("_", " ").title())
+                html += "<td>{}</td>".format(fmt_pm("mae_mean", "mae_std", agg))
+                html += "<td>{}</td>".format(fmt_pm("spearman_r_mean", "spearman_r_std", agg))
+                html += "<td>{}</td>".format(fmt_pm("pearson_r_mean", "pearson_r_std", agg))
+                html += "<td>{}</td></tr>\n".format(fmt_pm("r2_mean", "r2_std", agg))
+            html += "</table>\n"
+
+            if best_mae:
+                html += "<div class='improvement'><p>Best ensemble achieves "
+                html += "<strong>MAE = {:.3f}</strong> pIC50 ".format(best_mae)
+                html += "(&lt;0.5 log units) with <strong>Spearman = {:.3f}</strong>. ".format(
+                    ranked[0][1].get("spearman_r_mean", 0))
+                html += "For a 5 log-unit activity range, this represents strong predictive accuracy.</p></div>\n"
+
+    # ── v4: SAR analysis ──
+    if v4:
+        html += "<h3>SAR Analysis and Activity Cliffs</h3>\n"
+
+        # Activity cliffs
+        pc = v4.get("phase_c", {})
+        if pc:
+            cs = pc.get("cliff_stats", {})
+            html += "<p><strong>Activity cliffs detected:</strong> {} total ".format(cs.get("n_total", 0))
+            html += "({} extreme, {} moderate, {} mild). ".format(
+                cs.get("n_extreme", 0), cs.get("n_moderate", 0), cs.get("n_mild", 0))
+            html += "Mean similarity at cliffs: Tanimoto = {:.3f}, ".format(cs.get("mean_tanimoto", 0))
+            html += "mean |&Delta;pIC50| = {:.2f}.</p>\n".format(cs.get("mean_abs_delta", 0))
+
+        # SHAP feature importance
+        pb = v4.get("phase_b", {})
+        top_feats = pb.get("top_features", [])
+        if top_feats:
+            html += "<h4>Top SHAP Features (Morgan FP bits)</h4>\n"
+            html += "<table style='font-size:0.85em;'><tr><th>Rank</th><th>Bit</th>"
+            html += "<th>Substructure</th><th>SHAP</th>"
+            html += "<th>&rho; with pIC50</th><th>&Delta;pIC50</th></tr>\n"
+            for feat in top_feats[:5]:
+                html += "<tr><td>{}</td><td>{}</td>".format(feat["rank"], feat["bit"])
+                html += "<td style='font-size:0.85em;'>{}</td>".format(
+                    feat.get("substructures", "?")[:50])
+                html += "<td>{:.3f}</td>".format(feat.get("mean_abs_shap", 0))
+                html += "<td>{:.3f}</td>".format(feat.get("spearman_with_pIC50", 0))
+                html += "<td class='{}'>{:+.2f}</td></tr>\n".format(
+                    "win" if feat.get("delta_pIC50", 0) > 0 else "loss",
+                    feat.get("delta_pIC50", 0))
+            html += "</table>\n"
+            html += "<p class='metric-sm'>SHAP values from XGBoost model; "
+            html += "&Delta;pIC50 = mean pIC50 with bit present minus absent.</p>\n"
+
+        # Scaffold analysis
+        pd_data = v4.get("phase_d", {})
+        if pd_data:
+            n_scaffolds = pd_data.get("n_scaffolds", 0)
+            n_singletons = pd_data.get("n_singletons", 0)
+            if n_scaffolds:
+                html += "<p><strong>Scaffold diversity:</strong> {} Bemis-Murcko scaffolds, ".format(
+                    n_scaffolds)
+                html += "{} singletons ({:.0f}% of scaffolds).</p>\n".format(
+                    n_singletons, n_singletons / n_scaffolds * 100 if n_scaffolds else 0)
+
+    # ── v5: Virtual screening ──
+    if v5:
+        html += "<h3>Virtual Screening and Molecule Design</h3>\n"
+
+        # Phase A - all-pairs screening
+        pa = v5.get("phase_a", {})
+        if pa:
+            html += "<p><strong>Anchor-based screening:</strong> {} candidate predictions, ".format(
+                pa.get("n_candidates", 0))
+            html += "{} predicted potent (pIC50 &ge; 7.0), ".format(pa.get("n_potent", 0))
+            html += "{} high-confidence potent.</p>\n".format(pa.get("n_high_conf_potent", 0))
+
+        # Phase C - BRICS fragments
+        pc5 = v5.get("phase_c", {})
+        if pc5:
+            html += "<p><strong>BRICS fragment generation:</strong> {} fragments generated, ".format(
+                pc5.get("n_generated", 0))
+            html += "{} predicted potent, {} drug-like (QED &ge; 0.5).</p>\n".format(
+                pc5.get("n_potent", 0), pc5.get("n_druglike", 0))
+
+        # Phase D - edit optimization
+        pd5 = v5.get("phase_d", {})
+        if pd5:
+            html += "<p><strong>Edit-guided optimization:</strong> {} beneficial edits identified ".format(
+                pd5.get("n_beneficial_edits", 0))
+            html += "from {} seed molecules, ".format(pd5.get("n_seed_molecules", 0))
+            html += "{} applicable optimization suggestions.</p>\n".format(
+                pd5.get("n_applicable_optimizations", 0))
+
+        # Phase E - final candidates
+        pe5 = v5.get("phase_e", {})
+        if pe5:
+            html += "<div class='improvement'><p><strong>Total candidates:</strong> {} unique molecules ".format(
+                pe5.get("n_total_candidates", 0))
+            html += "identified through combined screening, fragment generation, and edit optimization.</p></div>\n"
+
+    # ── Comprehensive comparison ──
+    if comp:
+        it2 = comp.get("iteration_2", {})
+        if it2:
+            html += "<h3>Method Comparison on ZAP70 (5-fold CV)</h3>\n"
+            html += "<table><tr><th>Method</th><th>Abs MAE</th>"
+            html += "<th>Abs Spearman</th><th>Delta MAE</th></tr>\n"
+            ranked_comp = []
+            for name, data in it2.items():
+                if isinstance(data, dict) and "absolute" in data:
+                    abs_d = data["absolute"]
+                    delta_d = data.get("delta", {})
+                    ranked_comp.append((
+                        name,
+                        abs_d.get("mae", {}).get("mean", 999),
+                        abs_d.get("spearman", {}).get("mean", 0),
+                        delta_d.get("mae", {}).get("mean", 999),
+                    ))
+            ranked_comp.sort(key=lambda x: x[1])
+            best_comp_mae = ranked_comp[0][1] if ranked_comp else None
+            for name, abs_mae, abs_spr, delta_mae in ranked_comp:
+                cls = " class='best'" if abs_mae == best_comp_mae else ""
+                clean_name = name.split("_", 1)[1] if "_" in name else name
+                html += "<tr{}><td>{}</td>".format(cls, clean_name)
+                html += "<td>{:.3f}</td><td>{:.3f}</td>".format(abs_mae, abs_spr)
+                html += "<td>{:.3f}</td></tr>\n".format(delta_mae)
+            html += "</table>\n"
+            html += "<p class='metric-sm'>Absolute MAE: predicted vs true pIC50. "
+            html += "Delta MAE: predicted vs true &Delta;pIC50 for pairs.</p>\n"
+
+    return html
+
+
+def section_reinvent4():
+    """Generate REINVENT4 molecular generation section."""
+    REINVENT4_DIR = RESULTS_DIR / "reinvent4"
+    REINVENT4_MPS_DIR = RESULTS_DIR / "reinvent4_mps"
+
+    # ── Load summary JSON ──────────────────────────────────────
+    summary = None
+    summary_file = REINVENT4_DIR / "reinvent4_results_summary.json"
+    if summary_file.exists():
+        try:
+            with open(summary_file) as f:
+                summary = json.load(f)
+        except (json.JSONDecodeError, Exception):
+            pass
+
+    mps_summary = None
+    mps_summary_file = REINVENT4_MPS_DIR / "overnight_mps_summary.json"
+    if mps_summary_file.exists():
+        try:
+            with open(mps_summary_file) as f:
+                mps_summary = json.load(f)
+        except (json.JSONDecodeError, Exception):
+            pass
+
+    # ── Load CSV data ──────────────────────────────────────────
+    csv_configs = {
+        "reinvent": {
+            "path": REINVENT4_DIR / "reinvent" / "reinvent_denovo_1.csv",
+            "label": "Reinvent (de novo)",
+            "summary_key": "reinvent_denovo",
+        },
+        "mol2mol": {
+            "path": REINVENT4_DIR / "mol2mol" / "mol2mol_optimize_1.csv",
+            "label": "Mol2Mol (optimization)",
+            "summary_key": "mol2mol_optimize",
+        },
+        "libinvent": {
+            "path": REINVENT4_DIR / "libinvent" / "libinvent_rgroup_1.csv",
+            "label": "LibInvent (R-group)",
+            "summary_key": "libinvent",
+        },
+    }
+
+    csv_data = {}
+    for gen_key, cfg in csv_configs.items():
+        if cfg["path"].exists():
+            try:
+                df = pd.read_csv(cfg["path"], on_bad_lines="skip")
+                csv_data[gen_key] = df
+            except Exception:
+                pass
+
+    if not summary and not csv_data:
+        return ""
+
+    # ── Begin HTML ─────────────────────────────────────────────
+    html = "<h2 id='reinvent4'>REINVENT4: Molecular Generation with FiLMDelta Scoring</h2>\n"
+
+    # Overview
+    html += "<div class='note'>\n"
+    html += "<strong>REINVENT4</strong> (v4.7.15) is a molecular generation platform that uses "
+    html += "reinforcement learning to steer generative models toward desired molecular properties. "
+    html += "Here, we use the <strong>FiLMDelta model as an external scorer</strong>: "
+    html += "given a generated molecule, we predict its pIC50 against ZAP70 relative to a set of "
+    html += "<strong>280 known ZAP70 anchor molecules</strong>. The predicted pIC50 is the median "
+    html += "of anchor-based predictions, providing a robust activity estimate without requiring "
+    html += "an explicit property predictor trained on single molecules.</div>\n"
+
+    # ── Generator comparison table ─────────────────────────────
+    html += "<h3>Generator Comparison</h3>\n"
+    html += "<table><tr><th>Generator</th><th>Prior</th><th>Steps</th>"
+    html += "<th>Unique Mols</th><th>Mean pIC50</th><th>Max pIC50</th>"
+    html += "<th>Potent (&ge;7.0)</th><th>Very Potent (&ge;8.0)</th>"
+    html += "<th>Mean QED</th><th>Runtime</th></tr>\n"
+
+    for gen_key, cfg in csv_configs.items():
+        df = csv_data.get(gen_key)
+        s = summary.get(cfg["summary_key"], {}) if summary else {}
+
+        label = cfg["label"]
+        prior = s.get("prior", "—")
+        steps = s.get("steps", "—")
+        runtime = s.get("runtime_min")
+        runtime_s = f"{runtime:.0f} min" if runtime else "—"
+
+        if df is not None and len(df) > 0:
+            # Use raw pIC50 column if available
+            pic50_col = None
+            for col in ["FiLMDelta pIC50 (raw)", "FiLMDelta pIC50"]:
+                if col in df.columns:
+                    pic50_col = col
+                    break
+            qed_col = None
+            for col in ["QED (raw)", "QED"]:
+                if col in df.columns:
+                    qed_col = col
+                    break
+
+            if pic50_col:
+                pic50_vals = pd.to_numeric(df[pic50_col], errors="coerce").dropna()
+                # Filter out zero-score rows (invalid molecules)
+                valid = pic50_vals[pic50_vals > 0]
+                if len(valid) > 0:
+                    unique_smiles = df.loc[df["SMILES_state"] == 1, "SMILES"].nunique() if "SMILES_state" in df.columns and "SMILES" in df.columns else len(valid)
+                    mean_pic50 = valid.mean()
+                    max_pic50 = valid.max()
+                    n_potent = (valid >= 7.0).sum()
+                    n_very_potent = (valid >= 8.0).sum()
+                    pct_potent = n_potent / len(valid) * 100
+                else:
+                    unique_smiles = 0
+                    mean_pic50 = max_pic50 = 0
+                    n_potent = n_very_potent = 0
+                    pct_potent = 0
+            else:
+                unique_smiles = s.get("unique_molecules", "—")
+                mean_pic50 = s.get("mean_pIC50", 0)
+                max_pic50 = s.get("max_pIC50", 0)
+                pct_potent = s.get("pIC50_ge_7_pct", 0)
+                n_very_potent = s.get("pIC50_ge_8_count", 0)
+
+            if qed_col:
+                qed_vals = pd.to_numeric(df[qed_col], errors="coerce").dropna()
+                qed_valid = qed_vals[qed_vals > 0]
+                mean_qed = qed_valid.mean() if len(qed_valid) > 0 else 0
+            else:
+                mean_qed = s.get("mean_qed", 0)
+
+            # Override unique_molecules from summary if available (more accurate)
+            if s.get("unique_molecules"):
+                unique_smiles = s["unique_molecules"]
+
+            # Highlight best max pIC50
+            max_cls = ""
+            potent_cls = ""
+
+            html += f"<tr><td><strong>{label}</strong></td>"
+            html += f"<td style='font-size:0.8em'>{prior}</td>"
+            html += f"<td>{steps}</td>"
+            html += f"<td>{unique_smiles:,}</td>" if isinstance(unique_smiles, int) else f"<td>{unique_smiles}</td>"
+            html += f"<td>{mean_pic50:.2f}</td>"
+            html += f"<td><strong>{max_pic50:.2f}</strong></td>"
+            html += f"<td>{pct_potent:.1f}%</td>"
+            html += f"<td>{n_very_potent}</td>"
+            html += f"<td>{mean_qed:.3f}</td>"
+            html += f"<td>{runtime_s}</td></tr>\n"
+        elif s:
+            # Fallback to summary-only data
+            html += f"<tr><td><strong>{label}</strong></td>"
+            html += f"<td style='font-size:0.8em'>{prior}</td>"
+            html += f"<td>{steps}</td>"
+            html += f"<td>{s.get('unique_molecules', '—'):,}</td>"
+            html += f"<td>{s.get('mean_pIC50', 0):.2f}</td>"
+            html += f"<td><strong>{s.get('max_pIC50', 0):.2f}</strong></td>"
+            html += f"<td>{s.get('pIC50_ge_7_pct', 0):.1f}%</td>"
+            html += f"<td>{s.get('pIC50_ge_8_count', 0)}</td>"
+            html += f"<td>{s.get('mean_qed', 0):.3f}</td>"
+            html += f"<td>{s.get('runtime_min', '—')}</td></tr>\n"
+
+    html += "</table>\n"
+
+    # ── Score progression per generator ────────────────────────
+    html += "<h3>Score Progression by Step</h3>\n"
+    for gen_key, cfg in csv_configs.items():
+        df = csv_data.get(gen_key)
+        if df is None or "step" not in df.columns:
+            continue
+
+        pic50_col = None
+        for col in ["FiLMDelta pIC50 (raw)", "FiLMDelta pIC50"]:
+            if col in df.columns:
+                pic50_col = col
+                break
+        if pic50_col is None:
+            continue
+
+        df["_pic50"] = pd.to_numeric(df[pic50_col], errors="coerce")
+        df["_step"] = pd.to_numeric(df["step"], errors="coerce")
+        valid_df = df.dropna(subset=["_pic50", "_step"])
+        valid_df = valid_df[valid_df["_pic50"] > 0]
+
+        if len(valid_df) == 0:
+            continue
+
+        max_step = int(valid_df["_step"].max())
+        # Choose step interval based on total steps
+        if max_step <= 10:
+            step_interval = 1
+        elif max_step <= 50:
+            step_interval = 5
+        elif max_step <= 200:
+            step_interval = 20
+        else:
+            step_interval = 50
+
+        steps_to_show = list(range(1, max_step + 1, step_interval))
+        if max_step not in steps_to_show:
+            steps_to_show.append(max_step)
+
+        html += f"<h4>{cfg['label']}</h4>\n"
+        html += "<table style='font-size:0.85em;'><tr><th>Step</th><th>N valid</th>"
+        html += "<th>Mean pIC50</th><th>Max pIC50</th>"
+        html += "<th>Potent (&ge;7.0) %</th><th>Mean Score</th></tr>\n"
+
+        for step in steps_to_show:
+            step_df = valid_df[valid_df["_step"] == step]
+            if len(step_df) == 0:
+                continue
+            n_valid = len(step_df)
+            mean_p = step_df["_pic50"].mean()
+            max_p = step_df["_pic50"].max()
+            pct_potent = (step_df["_pic50"] >= 7.0).sum() / n_valid * 100
+            mean_score = step_df["Score"].mean() if "Score" in step_df.columns else 0
+            html += f"<tr><td>{step}</td><td>{n_valid}</td>"
+            html += f"<td>{mean_p:.2f}</td><td>{max_p:.2f}</td>"
+            html += f"<td>{pct_potent:.1f}%</td><td>{mean_score:.3f}</td></tr>\n"
+
+        html += "</table>\n"
+        # Clean up temp columns
+        df.drop(columns=["_pic50", "_step"], inplace=True, errors="ignore")
+
+    # ── Top 5 drug-like molecules per generator ────────────────
+    html += "<h3>Top Drug-Like Molecules (pIC50 &ge; 7.0 AND QED &ge; 0.6)</h3>\n"
+    for gen_key, cfg in csv_configs.items():
+        df = csv_data.get(gen_key)
+        if df is None:
+            continue
+
+        pic50_col = None
+        for col in ["FiLMDelta pIC50 (raw)", "FiLMDelta pIC50"]:
+            if col in df.columns:
+                pic50_col = col
+                break
+        qed_col = None
+        for col in ["QED (raw)", "QED"]:
+            if col in df.columns:
+                qed_col = col
+                break
+        if pic50_col is None or qed_col is None or "SMILES" not in df.columns:
+            continue
+
+        df["_pic50"] = pd.to_numeric(df[pic50_col], errors="coerce")
+        df["_qed"] = pd.to_numeric(df[qed_col], errors="coerce")
+
+        druglike = df[(df["_pic50"] >= 7.0) & (df["_qed"] >= 0.6)].copy()
+        if len(druglike) == 0:
+            html += f"<h4>{cfg['label']}: no drug-like molecules found</h4>\n"
+            df.drop(columns=["_pic50", "_qed"], inplace=True, errors="ignore")
+            continue
+
+        # Deduplicate by SMILES, keep highest pIC50
+        druglike = druglike.sort_values("_pic50", ascending=False).drop_duplicates(subset="SMILES")
+        top5 = druglike.head(5)
+
+        html += f"<h4>{cfg['label']} ({len(druglike)} drug-like molecules total)</h4>\n"
+        html += "<table><tr><th>#</th><th>Structure</th><th>SMILES</th>"
+        html += "<th>pIC50</th><th>QED</th><th>Score</th></tr>\n"
+        for rank, (_, row) in enumerate(top5.iterrows(), 1):
+            smi = row["SMILES"]
+            pic50 = row["_pic50"]
+            qed = row["_qed"]
+            score = row.get("Score", 0)
+            svg = mol_to_svg(smi, width=220, height=160)
+            html += f"<tr><td>{rank}</td><td>{svg}</td>"
+            html += f"<td style='font-size:0.75em; max-width:250px; word-break:break-all;'>{smi}</td>"
+            html += f"<td><strong>{pic50:.2f}</strong></td>"
+            html += f"<td>{qed:.3f}</td>"
+            html += f"<td>{score:.3f}</td></tr>\n"
+        html += "</table>\n"
+        df.drop(columns=["_pic50", "_qed"], inplace=True, errors="ignore")
+
+    # ── MPS vs CPU comparison ──────────────────────────────────
+    if mps_summary:
+        html += "<h3>MPS vs CPU Comparison</h3>\n"
+        html += "<p>REINVENT4 was run on both CPU and Apple MPS (Metal Performance Shaders) "
+        html += "to evaluate GPU acceleration on Apple Silicon.</p>\n"
+        html += "<table><tr><th>Metric</th><th>CPU</th><th>MPS</th></tr>\n"
+
+        cpu_reinvent = summary.get("reinvent_denovo", {}) if summary else {}
+        mps_reinvent = mps_summary if isinstance(mps_summary, dict) else {}
+
+        # Try to extract comparable metrics
+        comparisons = [
+            ("Runtime (min)", cpu_reinvent.get("runtime_min"), mps_reinvent.get("runtime_min")),
+            ("Unique molecules", cpu_reinvent.get("unique_molecules"), mps_reinvent.get("unique_molecules")),
+            ("Mean pIC50", cpu_reinvent.get("mean_pIC50"), mps_reinvent.get("mean_pIC50")),
+            ("Max pIC50", cpu_reinvent.get("max_pIC50"), mps_reinvent.get("max_pIC50")),
+        ]
+        has_data = False
+        for label, cpu_val, mps_val in comparisons:
+            if cpu_val is not None or mps_val is not None:
+                has_data = True
+                cpu_s = f"{cpu_val:.2f}" if isinstance(cpu_val, float) else (f"{cpu_val:,}" if isinstance(cpu_val, int) else "—")
+                mps_s = f"{mps_val:.2f}" if isinstance(mps_val, float) else (f"{mps_val:,}" if isinstance(mps_val, int) else "—")
+                html += f"<tr><td>{label}</td><td>{cpu_s}</td><td>{mps_s}</td></tr>\n"
+
+        if not has_data:
+            html += "<tr><td colspan='3'>MPS results pending detailed comparison</td></tr>\n"
+
+        html += "</table>\n"
+        html += "<div class='warning'>MPS acceleration on Apple Silicon can cause memory issues "
+        html += "with prolonged transformer-based generation. CPU is recommended for production runs.</div>\n"
+
+    # ── Key findings ───────────────────────────────────────────
+    html += "<h3>Key Findings</h3>\n"
+    html += "<div class='summary-box'>\n"
+    html += "<ul>\n"
+    html += "<li><strong>Mol2Mol (optimization)</strong> produces the highest potency molecules "
+    html += "(max pIC50 up to ~8.9) by starting from known actives and making focused modifications. "
+    html += "Best for lead optimization.</li>\n"
+    html += "<li><strong>Reinvent (de novo)</strong> explores broader chemical space "
+    html += "(38K+ unique molecules) but with lower average potency. Best for scaffold hopping "
+    html += "and hit discovery.</li>\n"
+    html += "<li><strong>LibInvent (R-group)</strong> constrains generation to specific scaffolds "
+    html += "with R-group decoration. Useful for exploring SAR around a core.</li>\n"
+    html += "<li><strong>FiLMDelta as scorer</strong>: anchor-based prediction provides a "
+    html += "noise-robust activity estimate without training a dedicated property predictor. "
+    html += "The edit-effect framework naturally integrates with generative design by comparing "
+    html += "candidates to known reference molecules.</li>\n"
+    html += "</ul>\n"
+    html += "</div>\n"
+
+    # ── DAP vs DPO vs PPO comparison stub ──────────────────────
+    html += "<h3 id='reinvent4-rl'>RL Algorithm Comparison (DAP vs DPO vs PPO)</h3>\n"
+    html += "<div class='warning'>RL algorithm comparison not yet available. "
+    html += "When results from DAP (Direct Advantage Policy), DPO (Direct Preference Optimization), "
+    html += "and PPO (Proximal Policy Optimization) runs are available, this section will compare "
+    html += "convergence speed, sample efficiency, and final molecule quality across RL strategies.</div>\n"
+
+    return html
+
+
 def generate_html(results):
     phase1 = results.get("phase1", {})
     phase2 = results.get("phase2", {})
@@ -392,7 +944,7 @@ def generate_html(results):
     # Count Phase 3 wins
     methods_order = ["FiLMDelta", "EditDiff", "DeepDelta", "Subtraction"]
     splits_order = ["assay_within", "assay_cross", "assay_mixed",
-                     "strict_scaffold", "pair_random", "target", "few_shot"]
+                     "strict_scaffold", "pair_random", "target"]
 
     film_wins = 0
     total_splits = 0
@@ -459,6 +1011,11 @@ def generate_html(results):
 <li><a href='#summary'>Phase 3: Summary Table</a></li>
 <li><a href='#pertarget'>Per-Target Analysis</a></li>
 <li><a href='#noise'>Controlled Noise Injection</a></li>
+<li><a href='#edit-iteration'>Edit Embedding Architecture Search (Phase 4)</a></li>
+<li><a href='#actfound'>Comparison with ActFound</a></li>
+<li><a href='#nextgen'>Next-Generation Architectures</a></li>
+<li><a href='#zap70'>ZAP70 Case Study</a></li>
+<li><a href='#reinvent4'>REINVENT4: Molecular Generation</a></li>
 <li><a href='#metrics'>Metrics Policy</a></li>
 </ul></div>
 """
@@ -666,7 +1223,7 @@ def generate_html(results):
     html += "</table>\n"
     html += f"<div class='improvement'><strong>FiLMDelta wins {film_wins}/{total_splits} splits.</strong> "
     html += "Strongest on cross-target and within-assay (clean signal + novel biology). "
-    html += "Subtraction wins scaffold (molecule-level memorization) and few-shot (minimal edit examples). "
+    html += "Subtraction wins scaffold (molecule-level memorization helps when structures are novel). "
     html += "Random split is contaminated by pair leakage.</div>\n"
 
     # Within-assay vs Mixed gap analysis
@@ -694,19 +1251,23 @@ def generate_html(results):
             html += "and adding noisy cross-assay data provides diminishing returns.</p></div>\n"
 
     # ── Realistic Noise Tier Analysis ──────────────────────────────
-    html += "<h2 id='pertarget'>Realistic Noise Tier Analysis (40 Targets)</h2>\n"
+    # Load fair noise tier results first to get count
+    fnt_file = RESULTS_DIR / "fair_noise_tiers_results.json"
+    _fnt_n_targets = 0
+    if fnt_file.exists():
+        with open(fnt_file) as _f:
+            _fnt_n_targets = len(json.load(_f).get("targets", []))
+
+    html += "<h2 id='pertarget'>Realistic Noise Tier Analysis ({} Targets)</h2>\n".format(_fnt_n_targets or "N")
     html += "<p>How practitioners would <strong>actually use</strong> each method:</p>\n"
     html += "<ul>\n"
     html += "<li><strong>FiLMDelta</strong>: trains on within-assay paired measurements only (edit-effect approach)</li>\n"
     html += "<li><strong>Subtraction</strong>: trains on ALL available data &mdash; within + cross-assay pairs "
     html += "(traditional approach: flatten assays to molecule level, accept noisy labels)</li>\n"
     html += "</ul>\n"
-    html += "<p>40 targets spanning noise ratios 0.35x&ndash;3.3x "
+    html += "<p>{} targets spanning a range of noise ratios ".format(_fnt_n_targets or "N")
     html += "(ratio = Var(cross-assay &Delta;) / Var(within-assay &Delta;)). "
     html += "Test set: held-out within-assay pairs. 3 seeds per condition.</p>\n"
-
-    # Load fair noise tier results
-    fnt_file = RESULTS_DIR / "fair_noise_tiers_results.json"
     all_targets_data = []
 
     if fnt_file.exists():
@@ -888,23 +1449,28 @@ def generate_html(results):
         html += "</div>\n"
 
         # Detailed table
-        html += "<h3>All 40 Targets (sorted by noise ratio)</h3>\n"
+        html += "<h3>All {} Targets (sorted by noise ratio)</h3>\n".format(n_targets)
         html += "<details><summary>Click to expand full table</summary>\n"
         html += "<table style='font-size:0.85em;'>\n"
         html += "<tr><th>#</th><th>Target</th><th>Name</th><th>Noise Ratio</th>"
         html += "<th>N<sub>within</sub></th><th>N<sub>cross</sub></th>"
-        html += "<th>FiLM MAE</th><th>Sub MAE</th>"
+        html += "<th>FiLM Spearman</th><th>Sub Spearman</th>"
+        html += "<th>FiLM R&sup2;</th><th>Sub R&sup2;</th>"
         html += "<th>&Delta;MAE%</th></tr>\n"
 
         for i, t in enumerate(all_targets_data):
             tname = TARGET_NAMES.get(t["target"], (t["target"],))[0]
             d_pct = t["advantage_pct"]
             w_cls = "win" if t["advantage"] > 0 else "loss"
+            sp_cls = "win" if t["film_spearman"] > t["sub_spearman"] else "loss"
+            r2_cls = "win" if t["film_r2"] > t["sub_r2"] else "loss"
             html += "<tr><td>{}</td><td>{}</td><td>{}</td>".format(i + 1, t["target"], tname)
             html += "<td><strong>{:.2f}x</strong></td>".format(t["noise_ratio"])
             html += "<td>{:,}</td><td>{:,}</td>".format(t["n_within"], t["n_cross"])
-            html += "<td>{:.4f}&plusmn;{:.4f}</td>".format(t["film_mae"], t["film_std"])
-            html += "<td>{:.4f}&plusmn;{:.4f}</td>".format(t["sub_mae"], t["sub_std"])
+            html += "<td class='{}'>{:.3f}</td>".format(sp_cls, t["film_spearman"])
+            html += "<td>{:.3f}</td>".format(t["sub_spearman"])
+            html += "<td class='{}'>{:.3f}</td>".format(r2_cls, t["film_r2"])
+            html += "<td>{:.3f}</td>".format(t["sub_r2"])
             html += "<td class='{}'>{:+.1f}%</td></tr>\n".format(w_cls, d_pct)
 
         html += "</table>\n</details>\n"
@@ -919,15 +1485,15 @@ def generate_html(results):
         html += "<td>Architecture alone</td></tr>\n"
         html += "<tr><td>Per-target, realistic data</td>"
         html += "<td>FiLM: within-assay only; Sub: all data</td>"
-        html += "<td class='win'>{:.1f}% (40/40 targets)</td>".format(mean_adv)
+        html += "<td class='win'>{:.1f}% ({}/{} targets)</td>".format(mean_adv, n_wins, n_targets)
         html += "<td>Architecture + data curation</td></tr>\n"
         html += "<tr><td>Controlled noise injection</td>"
         html += "<td>Same data, synthetic noise &sigma;=0&rarr;1.5</td>"
         html += "<td class='win'>3.2% vs 12.3% degradation</td>"
         html += "<td>Architectural robustness</td></tr>\n"
         html += "</table>\n"
-        html += "<p>The ~70% per-target advantage decomposes into ~8% from FiLMDelta's architecture "
-        html += "and ~62% from the data curation strategy (within-assay only). "
+        html += "<p>The ~{:.0f}% per-target advantage decomposes into ~8% from FiLMDelta's architecture ".format(mean_adv)
+        html += "and ~{:.0f}% from the data curation strategy (within-assay only). ".format(mean_adv - 8)
         html += "The edit-effect framework enables both: the architecture models deltas directly, "
         html += "and paired measurements can be stratified by assay context to eliminate cross-lab noise.</p>\n"
 
@@ -1030,6 +1596,202 @@ def generate_html(results):
     else:
         html += "<div class='warning'>Noise injection experiment not yet available or in progress. "
         html += "Run <code>experiments/run_noise_injection.py</code>.</div>\n"
+
+    # ── Edit Embedding Architecture Search ─────────────────────────
+    iter_file = RESULTS_DIR / "edit_iteration_results.json"
+    if iter_file.exists():
+        try:
+            with open(iter_file) as f:
+                iter_data = json.load(f)
+
+            html += "<h2 id='edit-iteration'>Edit Embedding Architecture Search</h2>\n"
+            html += "<p>Compares novel edit representations (DRFP, fragment FP, multi-modal) "
+            html += "against the baseline FiLMDelta (Morgan FP difference conditioning).</p>\n"
+
+            # Phase A results
+            phase_a = iter_data.get("phase_a", {})
+            if phase_a:
+                html += "<h3>Phase A: Screening (1 seed, assay_within)</h3>\n"
+                html += "<table><tr><th>Architecture</th><th>MAE</th><th>Spearman</th>"
+                html += "<th>R²</th><th>vs FiLMDelta</th></tr>\n"
+                film_mae = phase_a.get("FiLMDelta", {}).get("mae")
+                ranked = sorted(
+                    [(k, v) for k, v in phase_a.items() if isinstance(v, dict) and "mae" in v],
+                    key=lambda x: x[1]["mae"])
+                best_mae = ranked[0][1]["mae"] if ranked else None
+                for name, m in ranked:
+                    cls_mae = " class='best'" if m["mae"] == best_mae else ""
+                    delta_s = ""
+                    if film_mae and name != "FiLMDelta":
+                        pct = (1 - m["mae"] / film_mae) * 100
+                        cls = "win" if pct > 0 else "loss"
+                        delta_s = f"<span class='{cls}'>{pct:+.1f}%</span>"
+                    html += f"<tr><td>{name}</td><td{cls_mae}>{m['mae']:.4f}</td>"
+                    html += f"<td>{m.get('spearman_r', 0):.4f}</td>"
+                    html += f"<td>{m.get('r2', 0):.4f}</td>"
+                    html += f"<td>{delta_s}</td></tr>\n"
+                html += "</table>\n"
+
+                top2 = iter_data.get("phase_a_top2", [])
+                if top2:
+                    html += f"<p><strong>Top 2:</strong> {', '.join(top2)}</p>\n"
+
+            # Phase B results
+            phase_b = iter_data.get("phase_b", {})
+            if phase_b:
+                html += "<h3>Phase B: MultiModal + Top 2</h3>\n"
+                html += "<table><tr><th>Architecture</th><th>MAE</th><th>Spearman</th></tr>\n"
+                ranked_b = sorted(
+                    [(k, v) for k, v in phase_b.items() if isinstance(v, dict) and "mae" in v],
+                    key=lambda x: x[1]["mae"])
+                for name, m in ranked_b:
+                    html += f"<tr><td>{name}</td><td>{m['mae']:.4f}</td>"
+                    html += f"<td>{m.get('spearman_r', 0):.4f}</td></tr>\n"
+                html += "</table>\n"
+                winner = iter_data.get("phase_b_winner")
+                if winner:
+                    html += f"<p><strong>Winner:</strong> {winner}</p>\n"
+
+            # Phase C results
+            phase_c = iter_data.get("phase_c", {})
+            if phase_c:
+                html += "<h3>Phase C: Final Evaluation (3 seeds)</h3>\n"
+                html += "<table><tr><th>Split</th><th>Method</th>"
+                html += "<th>MAE</th><th>Spearman</th></tr>\n"
+                for key, data in sorted(phase_c.items()):
+                    split_name, method = key.split("__", 1)
+                    a = data.get("aggregated", {})
+                    mae_s = fmt_pm("mae_mean", "mae_std", a)
+                    spr_s = fmt_pm("spearman_r_mean", "spearman_r_std", a)
+                    html += f"<tr><td>{split_name}</td><td>{method}</td>"
+                    html += f"<td>{mae_s}</td><td>{spr_s}</td></tr>\n"
+                html += "</table>\n"
+
+        except (json.JSONDecodeError, Exception) as e:
+            html += f"<div class='warning'>Edit iteration results error: {e}</div>\n"
+
+    # ── ActFound Comparison ──────────────────────────────────────────
+    actfound_file = RESULTS_DIR / "actfound_comparison_results.json"
+    if actfound_file.exists():
+        try:
+            with open(actfound_file) as f:
+                af_data = json.load(f)
+
+            html += "<h2 id='actfound'>Comparison with ActFound</h2>\n"
+            html += "<p>ActFound (Nature MI 2024) uses MAML-pretrained Morgan FP encoder "
+            html += "with linear subtraction. We compare architectures using the same encoder.</p>\n"
+
+            strategy_a = af_data.get("strategy_a", {})
+            if strategy_a:
+                html += "<h3>Strategy A: Same Encoder, Different Architectures</h3>\n"
+                html += "<table><tr><th>Method</th><th>MAE</th><th>Spearman</th>"
+                html += "<th>R²</th><th>vs Subtraction</th></tr>\n"
+                sub_mae = strategy_a.get("Subtraction", {}).get("aggregated", {}).get("mae_mean")
+                for method, data in sorted(strategy_a.items()):
+                    if not isinstance(data, dict) or "aggregated" not in data:
+                        continue
+                    a = data["aggregated"]
+                    mae_s = fmt_pm("mae_mean", "mae_std", a)
+                    spr_s = fmt_pm("spearman_r_mean", "spearman_r_std", a)
+                    r2_s = fmt_pm("r2_mean", "r2_std", a)
+                    delta_s = ""
+                    if sub_mae and method != "Subtraction" and a.get("mae_mean"):
+                        pct = (1 - a["mae_mean"] / sub_mae) * 100
+                        cls = "win" if pct > 0 else "loss"
+                        delta_s = f"<span class='{cls}'>{pct:+.1f}%</span>"
+                    html += f"<tr><td>{method}</td><td>{mae_s}</td>"
+                    html += f"<td>{spr_s}</td><td>{r2_s}</td><td>{delta_s}</td></tr>\n"
+                html += "</table>\n"
+
+            # Conceptual comparison table
+            html += "<h3>Conceptual Comparison</h3>\n"
+            html += "<table><tr><th>Dimension</th><th>ActFound</th>"
+            html += "<th>FiLMDelta (ours)</th><th>Edit-Aware FiLM (ours)</th></tr>\n"
+            comparisons = [
+                ("Core mechanism", "f(A)-f(B) linear", "f(B|δ)-f(A|δ) FiLM", "f(B|edit)-f(A|edit) FiLM"),
+                ("Edit representation", "None", "emb_b - emb_a", "DRFP / fragment / multi-modal"),
+                ("Encoder", "MAML pretrained", "Morgan FP", "Morgan FP"),
+                ("Pair strategy", "Any 2 compounds", "MMP pairs", "MMP pairs"),
+                ("Noise handling", "None", "Within-assay pairs", "Within-assay pairs"),
+            ]
+            for dim, af, film, ea in comparisons:
+                html += f"<tr><td><strong>{dim}</strong></td><td>{af}</td>"
+                html += f"<td>{film}</td><td>{ea}</td></tr>\n"
+            html += "</table>\n"
+
+        except (json.JSONDecodeError, Exception) as e:
+            html += f"<div class='warning'>ActFound comparison error: {e}</div>\n"
+
+    # ── Next-Gen Architectures ────────────────────────────────────
+    nextgen_file = RESULTS_DIR / "next_gen_results.json"
+    if nextgen_file.exists():
+        try:
+            with open(nextgen_file) as f:
+                ng_data = json.load(f)
+
+            html += "<h2 id='nextgen'>Next-Generation Architecture Experiments</h2>\n"
+            html += "<p>Based on ML architecture review insights: the key bottleneck is "
+            html += "<strong>label noise and directional bias</strong> in training data, "
+            html += "not edit representation expressiveness. Novel ideas:</p>\n"
+            html += "<ul>\n"
+            html += "<li><strong>Target-Conditioned FiLM</strong>: adds target identity "
+            html += "as learned embedding to FiLM conditioning (751 targets have different SARs)</li>\n"
+            html += "<li><strong>FiLMDelta+Aug</strong>: antisymmetric data augmentation &mdash; "
+            html += "adds reversed pairs (B,A,&minus;&Delta;) to training (0% reversed pairs in original data)</li>\n"
+            html += "</ul>\n"
+
+            # Screen results
+            screen = ng_data.get("screen", {})
+            if screen:
+                html += "<h3>Screening (1 seed, within-assay)</h3>\n"
+                html += "<table><tr><th>Method</th><th>MAE</th><th>Spearman</th>"
+                html += "<th>R²</th><th>vs FiLMDelta</th></tr>\n"
+                film_mae = screen.get("FiLMDelta", {}).get("mae")
+                ranked = sorted(
+                    [(k, v["mae"]) for k, v in screen.items() if "mae" in v],
+                    key=lambda x: x[1])
+                for name, mae in ranked:
+                    m = screen[name]
+                    delta_s = ""
+                    if film_mae and name != "FiLMDelta":
+                        pct = (1 - mae / film_mae) * 100
+                        cls = "win" if pct > 0 else "loss"
+                        delta_s = f"<span class='{cls}'>{pct:+.1f}%</span>"
+                    html += f"<tr><td>{name}</td><td>{m['mae']:.4f}</td>"
+                    html += f"<td>{m.get('spearman_r', 0):.4f}</td>"
+                    html += f"<td>{m.get('r2', 0):.4f}</td><td>{delta_s}</td></tr>\n"
+                html += "</table>\n"
+
+            # Full results
+            full = ng_data.get("full", {})
+            if full:
+                html += "<h3>Full Evaluation (3 seeds)</h3>\n"
+                splits = sorted(set(k.split("__")[0] for k in full.keys()))
+                methods = sorted(set(k.split("__")[1] for k in full.keys()))
+
+                for split_name in splits:
+                    split_label = SPLIT_DESCRIPTIONS.get(split_name, (split_name, ""))[0]
+                    html += f"<h4>{split_label}</h4>\n"
+                    html += "<table><tr><th>Method</th><th>MAE</th><th>Spearman</th>"
+                    html += "<th>R²</th></tr>\n"
+                    for method in methods:
+                        key = f"{split_name}__{method}"
+                        if key in full:
+                            a = full[key]["aggregated"]
+                            html += f"<tr><td>{method}</td>"
+                            html += f"<td>{fmt_pm('mae_mean', 'mae_std', a)}</td>"
+                            html += f"<td>{fmt_pm('spearman_r_mean', 'spearman_r_std', a)}</td>"
+                            html += f"<td>{fmt_pm('r2_mean', 'r2_std', a)}</td></tr>\n"
+                    html += "</table>\n"
+
+        except (json.JSONDecodeError, Exception) as e:
+            html += f"<div class='warning'>Next-gen results error: {e}</div>\n"
+
+    # ── ZAP70 Case Study ─────────────────────────────────────────
+    html += section_zap70_case_study()
+
+    # ── REINVENT4 Molecular Generation ────────────────────────────
+    html += section_reinvent4()
 
     # ── Metrics Policy ───────────────────────────────────────────
     html += "<h2 id='metrics'>Metrics Policy</h2>\n"

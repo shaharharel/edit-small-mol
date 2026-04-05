@@ -67,8 +67,29 @@ Edit embeddings encode edits as **structured, context-aware interventions**, dec
   - Script: `experiments/run_noise_injection.py`
 - Advantage decomposes: ~8% architecture (Phase 2) + ~62% data curation (within-assay pairs)
 
+#### Phase 4: Edit Embedding Architecture Search (IN PROGRESS — March 2026)
+- **Goal**: Replace Morgan FP difference (emb_b - emb_a) conditioning with better edit representations
+- **Key insight**: The edit is a REACTION — DRFP encodes symmetric difference of atom environments before hashing
+- **Variants** (all use FiLM backbone, differ in conditioning):
+  1. DrfpFiLM — DRFP reaction fingerprint (2048d) replaces Morgan diff
+  2. DualStreamFiLM — Gated fusion of DRFP + Morgan diff + 28d edit features
+  3. FragAnchoredFiLM — Fragment FP delta (1024d) + edit features (scaffold-independent)
+  4. MultiModalFiLM — Fuses DRFP + fragment + edit features (+ optional rxnfp)
+  5. EditHypernetFiLM — LoRA-style weight perturbations from edit encoding (HIGH RISK)
+- **Iteration script**: `experiments/run_edit_iteration.py` (Phase A→B→C)
+- **Models**: `src/models/predictors/edit_aware_film_predictor.py`
+- **Dependencies**: `drfp` (installed), `rxnfp` (installed, optional)
+
+#### ActFound Comparison (IN PROGRESS)
+- ActFound (Nature MI 2024): MAML-pretrained Morgan FP encoder + linear subtraction
+- Strategy A: Same encoder, compare architectures (isolates architecture contribution)
+- Strategy B: Full system comparison with their pretrained checkpoint
+- Script: `experiments/run_actfound_comparison.py`
+
 #### Results location
 - `results/paper_evaluation/all_results.json` — Phase 1-3 results
+- `results/paper_evaluation/edit_iteration_results.json` — Phase 4 edit iteration results
+- `results/paper_evaluation/actfound_comparison_results.json` — ActFound comparison
 - `results/paper_evaluation/fair_noise_tiers_results.json` — per-target noise tier results
 - `results/paper_evaluation/noise_injection_results.json` — controlled noise injection
 - `results/paper_evaluation/evaluation_report.html` — unified HTML report
@@ -121,7 +142,7 @@ src/
 │   ├── mmp_atom_mapping_fast.py # Fast atom mapping (84x speedup)
 │   ├── scalable_mmp.py    # Scalable MMP extraction
 │   └── utils/
-│       └── chemistry.py   # RDKit utilities + compute_edit_features(28d)
+│       └── chemistry.py   # RDKit utilities + compute_edit_features(28d) + fragment FPs
 ├── embedding/             # Molecule and edit embedders
 │   ├── base.py            # MoleculeEmbedder abstract base
 │   ├── fingerprints.py    # Morgan, RDKit, MACCS, Atom Pair
@@ -131,7 +152,7 @@ src/
 │   ├── edit_embedder.py   # Simple edit differences
 │   └── trainable_edit_embedder.py # Learnable edit embeddings
 ├── models/                # Neural network architectures
-│   ├── predictors/        # Edit effect and property predictors
+│   ├── predictors/        # Edit effect and property predictors (incl. edit_aware_film_predictor.py)
 │   └── trainer.py         # Training utilities
 └── utils/
     ├── splits.py          # Random, Scaffold, Target, Butina, Assay, FewShot, Core
@@ -145,6 +166,8 @@ experiments/
 ├── run_data_efficiency.py      # Learning curve analysis
 ├── run_embedding_visualization.py # PCA/t-SNE/UMAP visualization
 ├── run_noise_performance_analysis.py # 2×2 factorial noise analysis
+├── run_edit_iteration.py       # Edit embedding architecture search (Phase A→B→C)
+├── run_actfound_comparison.py  # ActFound (Nature MI 2024) comparison
 └── model_factory.py            # Embedder/model creation
 
 scripts/extraction/             # ChEMBL and MMP extraction scripts

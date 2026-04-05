@@ -1,0 +1,123 @@
+# REINVENT4: Extended De Novo Generation on MPS — Push for Maximum pIC50
+# 1500 steps Stage 1 + 1000 steps Stage 2 = 2500 total (~5.5h at 8 sec/step)
+# Goal: see how far RL optimization can push predicted pIC50
+
+run_type = "staged_learning"
+device = "mps"
+tb_logdir = "tb_reinvent_denovo_ext"
+json_out_config = "_reinvent_denovo_ext.json"
+
+[parameters]
+summary_csv_prefix = "reinvent_denovo_ext"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "__PRIOR_PATH__"
+agent_file = "__PRIOR_PATH__"
+
+batch_size = 128
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+### Stage 1: Explore with moderate pIC50 threshold (1500 steps)
+[[stage]]
+chkpt_file = "reinvent_denovo_ext_stage1.chkpt"
+termination = "simple"
+max_score = 0.70
+min_steps = 200
+max_steps = 1500
+
+[stage.scoring]
+type = "geometric_mean"
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.6
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 7.0
+transform.low = 5.0
+transform.k = 0.5
+
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.25
+
+[[stage.scoring.component]]
+[stage.scoring.component.custom_alerts]
+[[stage.scoring.component.custom_alerts.endpoint]]
+name = "Unwanted SMARTS"
+weight = 0.15
+params.smarts = [
+    "[*;r{8-17}]",
+    "[#8][#8]",
+    "[#6;+]",
+    "[#16][#16]",
+    "[#7;!n][S;!$(S(=O)=O)]",
+    "[#7;!n][#7;!n]",
+    "C#C",
+    "C(=[O,S])[O,S]",
+]
+
+### Stage 2: Push potency higher (1000 steps, tighter sigmoid)
+[[stage]]
+chkpt_file = "reinvent_denovo_ext_stage2.chkpt"
+termination = "simple"
+max_score = 0.80
+min_steps = 100
+max_steps = 1000
+
+[stage.scoring]
+type = "geometric_mean"
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.7
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 8.0
+transform.low = 6.0
+transform.k = 0.5
+
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.15
+
+[[stage.scoring.component]]
+[stage.scoring.component.custom_alerts]
+[[stage.scoring.component.custom_alerts.endpoint]]
+name = "Unwanted SMARTS"
+weight = 0.15
+params.smarts = [
+    "[*;r{8-17}]",
+    "[#8][#8]",
+    "[#6;+]",
+    "[#16][#16]",
+    "[#7;!n][S;!$(S(=O)=O)]",
+    "[#7;!n][#7;!n]",
+    "C#C",
+    "C(=[O,S])[O,S]",
+]

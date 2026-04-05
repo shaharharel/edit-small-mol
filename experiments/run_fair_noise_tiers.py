@@ -63,8 +63,14 @@ def log(msg):
         f.write(msg + "\n")
 
 
-def select_targets(df, max_targets=40):
-    """Select targets spanning full noise ratio range with sufficient data."""
+def select_targets(df, max_low=20):
+    """Select targets with stratified sampling: ALL high/medium, subsample low.
+
+    Tiers:
+      - High (>=3x):   take ALL
+      - Medium (1.5-3x): take ALL
+      - Low (<1.5x):   subsample evenly across range, up to max_low
+    """
     within = df[df['is_within_assay']]
     cross = df[~df['is_within_assay']]
 
@@ -89,14 +95,20 @@ def select_targets(df, max_targets=40):
             'noise_ratio': float(ratio),
         })
 
-    # Sort by noise ratio, take spread across full range
     candidates.sort(key=lambda x: x['noise_ratio'])
-    if len(candidates) <= max_targets:
-        return candidates
 
-    # Sample evenly across the range
-    step = len(candidates) / max_targets
-    selected = [candidates[int(i * step)] for i in range(max_targets)]
+    # Stratified: all high + all medium + subsampled low
+    high = [c for c in candidates if c['noise_ratio'] >= 3.0]
+    medium = [c for c in candidates if 1.5 <= c['noise_ratio'] < 3.0]
+    low = [c for c in candidates if c['noise_ratio'] < 1.5]
+
+    # Subsample low tier evenly
+    if len(low) > max_low:
+        step = len(low) / max_low
+        low = [low[int(i * step)] for i in range(max_low)]
+
+    selected = low + medium + high
+    selected.sort(key=lambda x: x['noise_ratio'])
     return selected
 
 

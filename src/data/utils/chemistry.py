@@ -441,6 +441,79 @@ def compute_edit_features(
     return feats
 
 
+def compute_fragment_fps(
+    edit_smiles: str,
+    radius: int = 2,
+    n_bits: int = 1024,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Compute Morgan fingerprints for leaving and incoming fragments of an edit.
+
+    Args:
+        edit_smiles: Edit in reaction SMILES format "leaving_frag>>incoming_frag".
+        radius: Morgan FP radius.
+        n_bits: Number of bits in fingerprint.
+
+    Returns:
+        Tuple of (fp_leaving, fp_incoming), each shape (n_bits,) as float32.
+        Returns zero vectors if fragments cannot be parsed.
+    """
+    zero = np.zeros(n_bits, dtype=np.float32)
+    if not edit_smiles or '>>' not in edit_smiles:
+        return zero, zero
+
+    parts = edit_smiles.split('>>')
+    if len(parts) != 2:
+        return zero, zero
+
+    leaving_smi, incoming_smi = parts[0].strip(), parts[1].strip()
+    # Replace attachment points with [H] for fingerprinting
+    leaving_clean = leaving_smi.replace('[*:1]', '[H]').replace('[*:2]', '[H]').replace('[*:3]', '[H]').replace('[*]', '[H]')
+    incoming_clean = incoming_smi.replace('[*:1]', '[H]').replace('[*:2]', '[H]').replace('[*:3]', '[H]').replace('[*]', '[H]')
+
+    fp_leaving = zero.copy()
+    fp_incoming = zero.copy()
+
+    mol_l = Chem.MolFromSmiles(leaving_clean)
+    if mol_l is not None:
+        try:
+            bv = AllChem.GetMorganFingerprintAsBitVect(mol_l, radius, nBits=n_bits)
+            DataStructs.ConvertToNumpyArray(bv, fp_leaving)
+        except Exception:
+            pass
+
+    mol_i = Chem.MolFromSmiles(incoming_clean)
+    if mol_i is not None:
+        try:
+            bv = AllChem.GetMorganFingerprintAsBitVect(mol_i, radius, nBits=n_bits)
+            DataStructs.ConvertToNumpyArray(bv, fp_incoming)
+        except Exception:
+            pass
+
+    return fp_leaving, fp_incoming
+
+
+def compute_fragment_delta(
+    edit_smiles: str,
+    radius: int = 2,
+    n_bits: int = 1024,
+) -> np.ndarray:
+    """Compute fragment FP difference: fp(incoming) - fp(leaving).
+
+    This is a scaffold-independent edit representation: the same edit
+    (e.g., F→Cl) produces the same delta regardless of scaffold.
+
+    Args:
+        edit_smiles: Edit in reaction SMILES format "leaving_frag>>incoming_frag".
+        radius: Morgan FP radius.
+        n_bits: Number of bits in fingerprint.
+
+    Returns:
+        Fragment delta vector of shape (n_bits,) as float32.
+    """
+    fp_leaving, fp_incoming = compute_fragment_fps(edit_smiles, radius, n_bits)
+    return fp_incoming - fp_leaving
+
+
 def get_edit_name(mol_a_smiles: str, mol_b_smiles: str) -> str:
     """
     Generate a canonical name for a molecular edit.

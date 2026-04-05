@@ -419,14 +419,15 @@ def train_and_predict_deepdelta(train_df, val_df, test_df, emb_dict, emb_dim, se
 
 
 def _compute_edit_feats_batch(df):
-    """Compute 28-dim edit features for a dataframe of pairs."""
+    """Compute 28-dim edit features for a dataframe of pairs (vectorized access)."""
     from src.data.utils.chemistry import compute_edit_features, EDIT_FEAT_DIM
     feats = []
-    has_edit_col = "edit_smiles" in df.columns
-    for _, row in df.iterrows():
+    mol_a_vals = df["mol_a"].values
+    mol_b_vals = df["mol_b"].values
+    edit_vals = df["edit_smiles"].values if "edit_smiles" in df.columns else [""] * len(df)
+    for i in range(len(df)):
         try:
-            es = row["edit_smiles"] if has_edit_col else ""
-            feats.append(compute_edit_features(row["mol_a"], row["mol_b"], es))
+            feats.append(compute_edit_features(mol_a_vals[i], mol_b_vals[i], edit_vals[i]))
         except Exception:
             feats.append(np.zeros(EDIT_FEAT_DIM, dtype=np.float32))
     return np.array(feats, dtype=np.float32)
@@ -603,6 +604,454 @@ def train_and_predict_trainable_edit(train_df, val_df, test_df, emb_dict, emb_di
     return predict_multi_input(model, forward_fn, test_a, test_b)
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Edit representation caching (DRFP, fragment deltas, edit features)
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Module-level caches (loaded once, reused across runs)
+DRFP_CACHE = None       # dict: (mol_a, mol_b) → np.ndarray(2048,)
+FRAG_DELTA_CACHE = None  # dict: edit_smiles → np.ndarray(1024,)
+EDIT_FEATS_CACHE = None  # dict: (mol_a, mol_b, edit_smiles) → np.ndarray(28,)
+
+
+def compute_drfp_cache(df):
+    """Compute or load cached DRFP reaction fingerprints for all pairs."""
+    global DRFP_CACHE
+    if DRFP_CACHE is not None:
+        return DRFP_CACHE
+
+    cache_file = CACHE_DIR / "drfp_2048.npz"
+    if cache_file.exists():
+        print("  Loading cached DRFP fingerprints...")
+        data = np.load(cache_file, allow_pickle=True)
+        keys = [tuple(k) for k in data['keys']]
+        values = data['values']
+        DRFP_CACHE = {k: values[i] for i, k in enumerate(keys)}
+        print(f"    Loaded {len(DRFP_CACHE):,} DRFP fingerprints")
+        return DRFP_CACHE
+
+    print("  Computing DRFP fingerprints for all pairs...")
+    from drfp import DrfpEncoder
+
+    # Get unique (mol_a, mol_b) pairs
+    pairs = list(set(zip(df["mol_a"], df["mol_b"])))
+    print(f"    {len(pairs):,} unique pairs")
+
+    DRFP_CACHE = {}
+    batch_size = 5000
+    for i in range(0, len(pairs), batch_size):
+        batch_pairs = pairs[i:i + batch_size]
+        rxn_smiles = [f"{a}>>{b}" for a, b in batch_pairs]
+        try:
+            fps = DrfpEncoder.encode(rxn_smiles, n_folded_length=2048)
+            for j, (a, b) in enumerate(batch_pairs):
+                DRFP_CACHE[(a, b)] = np.array(fps[j], dtype=np.float32)
+        except Exception as e:
+            print(f"    WARNING: DRFP batch {i} failed: {e}")
+            for a, b in batch_pairs:
+                try:
+                    fp = DrfpEncoder.encode(f"{a}>>{b}", n_folded_length=2048)
+                    DRFP_CACHE[(a, b)] = np.array(fp[0], dtype=np.float32)
+                except Exception:
+                    DRFP_CACHE[(a, b)] = np.zeros(2048, dtype=np.float32)
+
+        if (i // batch_size) % 20 == 0:
+            print(f"    {i + len(batch_pairs):,}/{len(pairs):,}")
+
+    # Save cache
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    keys_arr = np.array(list(DRFP_CACHE.keys()))
+    values_arr = np.array(list(DRFP_CACHE.values()))
+    np.savez_compressed(cache_file, keys=keys_arr, values=values_arr)
+    print(f"    Cached {len(DRFP_CACHE):,} DRFP fingerprints to {cache_file.name}")
+    return DRFP_CACHE
+
+
+def compute_frag_delta_cache(df):
+    """Compute or load cached fragment FP deltas for all edit_smiles."""
+    global FRAG_DELTA_CACHE
+    if FRAG_DELTA_CACHE is not None:
+        return FRAG_DELTA_CACHE
+
+    cache_file = CACHE_DIR / "fragment_deltas_1024.npz"
+    if cache_file.exists():
+        print("  Loading cached fragment deltas...")
+        data = np.load(cache_file, allow_pickle=True)
+        keys = data['keys'].tolist()
+        values = data['values']
+        FRAG_DELTA_CACHE = {k: values[i] for i, k in enumerate(keys)}
+        print(f"    Loaded {len(FRAG_DELTA_CACHE):,} fragment deltas")
+        return FRAG_DELTA_CACHE
+
+    print("  Computing fragment FP deltas...")
+    from src.data.utils.chemistry import compute_fragment_delta
+
+    edits = df["edit_smiles"].dropna().unique().tolist() if "edit_smiles" in df.columns else []
+    print(f"    {len(edits):,} unique edits")
+
+    FRAG_DELTA_CACHE = {}
+    for i, es in enumerate(edits):
+        FRAG_DELTA_CACHE[es] = compute_fragment_delta(es, n_bits=1024)
+        if (i + 1) % 50000 == 0:
+            print(f"    {i + 1:,}/{len(edits):,}")
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    keys_arr = np.array(list(FRAG_DELTA_CACHE.keys()))
+    values_arr = np.array(list(FRAG_DELTA_CACHE.values()))
+    np.savez_compressed(cache_file, keys=keys_arr, values=values_arr)
+    print(f"    Cached {len(FRAG_DELTA_CACHE):,} fragment deltas to {cache_file.name}")
+    return FRAG_DELTA_CACHE
+
+
+def get_drfp_tensors(df, drfp_cache):
+    """Get DRFP tensors for a dataframe of pairs (vectorized)."""
+    zero = np.zeros(2048, dtype=np.float32)
+    mol_a_vals = df["mol_a"].values
+    mol_b_vals = df["mol_b"].values
+    drfps = np.array([drfp_cache.get((mol_a_vals[i], mol_b_vals[i]), zero)
+                      for i in range(len(df))], dtype=np.float32)
+    return torch.from_numpy(drfps).float()
+
+
+def get_frag_delta_tensors(df, frag_cache):
+    """Get fragment delta tensors for a dataframe of pairs (vectorized)."""
+    zero = np.zeros(1024, dtype=np.float32)
+    if "edit_smiles" in df.columns:
+        edit_vals = df["edit_smiles"].values
+        deltas = np.array([frag_cache.get(edit_vals[i], zero)
+                          for i in range(len(df))], dtype=np.float32)
+    else:
+        deltas = np.zeros((len(df), 1024), dtype=np.float32)
+    return torch.from_numpy(deltas).float()
+
+
+def get_edit_feats_tensors(df):
+    """Get 28-dim edit feature tensors for a dataframe."""
+    feats = torch.from_numpy(_compute_edit_feats_batch(df)).float()
+    return torch.nan_to_num(feats, nan=0.0)
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Edit-aware FiLM architecture trainers
+# ═══════════════════════════════════════════════════════════════════════════
+
+def train_and_predict_drfp_film(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """DRFP-FiLM: FiLM conditioned on DRFP reaction fingerprint."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.edit_aware_film_predictor import DrfpFiLMDeltaMLP
+
+    drfp_cache = compute_drfp_cache(train_df)
+
+    def make_datasets(df):
+        emb_a, emb_b, delta = get_pair_tensors(df, emb_dict, emb_dim)
+        drfp = get_drfp_tensors(df, drfp_cache)
+        return emb_a, emb_b, drfp, delta
+
+    train_a, train_b, train_drfp, train_y = make_datasets(train_df)
+    val_a, val_b, val_drfp, val_y = make_datasets(val_df)
+
+    train_loader = DataLoader(
+        TensorDataset(train_a, train_b, train_drfp, train_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_drfp, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = DrfpFiLMDeltaMLP(mol_dim=emb_dim, drfp_dim=2048)
+
+    def forward_fn(m, a, b, drfp):
+        return m(a, b, drfp)
+
+    model = train_model_multi_input(model, train_loader, val_loader, forward_fn)
+
+    test_a, test_b, test_drfp, _ = make_datasets(test_df)
+    return predict_multi_input(model, forward_fn, test_a, test_b, test_drfp)
+
+
+def train_and_predict_dualstream_film(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """DualStream-FiLM: gated DRFP + Morgan diff fusion with edit features."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.edit_aware_film_predictor import DualStreamFiLMDeltaMLP
+
+    drfp_cache = compute_drfp_cache(train_df)
+
+    def make_datasets(df):
+        emb_a, emb_b, delta = get_pair_tensors(df, emb_dict, emb_dim)
+        drfp = get_drfp_tensors(df, drfp_cache)
+        ef = get_edit_feats_tensors(df)
+        return emb_a, emb_b, drfp, ef, delta
+
+    train_a, train_b, train_drfp, train_ef, train_y = make_datasets(train_df)
+    val_a, val_b, val_drfp, val_ef, val_y = make_datasets(val_df)
+
+    train_loader = DataLoader(
+        TensorDataset(train_a, train_b, train_drfp, train_ef, train_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_drfp, val_ef, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = DualStreamFiLMDeltaMLP(mol_dim=emb_dim, drfp_dim=2048, edit_feat_dim=28)
+
+    # Custom training with auxiliary loss
+    model = model.to(DEVICE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    criterion = nn.MSELoss()
+    best_val_loss = float("inf")
+    best_state = None
+    patience_counter = 0
+
+    for epoch in range(MAX_EPOCHS):
+        model.train()
+        for batch in train_loader:
+            a, b, drfp, ef, y = [t.to(DEVICE) for t in batch]
+            optimizer.zero_grad()
+            pred = model(a, b, drfp, ef)
+            loss = criterion(pred, y) + 0.1 * model.aux_loss(ef)
+            loss.backward()
+            optimizer.step()
+
+        model.eval()
+        val_losses = []
+        with torch.no_grad():
+            for batch in val_loader:
+                a, b, drfp, ef, y = [t.to(DEVICE) for t in batch]
+                pred = model(a, b, drfp, ef)
+                val_losses.append(criterion(pred, y).item())
+        val_loss = np.mean(val_losses)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            patience_counter = 0
+        else:
+            patience_counter += 1
+        if patience_counter >= PATIENCE:
+            break
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+        model = model.to(DEVICE)
+
+    test_a, test_b, test_drfp, test_ef, _ = make_datasets(test_df)
+
+    def forward_fn(m, a, b, drfp, ef):
+        return m(a, b, drfp, ef)
+
+    return predict_multi_input(model, forward_fn, test_a, test_b, test_drfp, test_ef)
+
+
+def train_and_predict_frag_anchored_film(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """Fragment-Anchored FiLM: scaffold-independent fragment + edit features."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.edit_aware_film_predictor import FragAnchoredFiLMDeltaMLP
+
+    frag_cache = compute_frag_delta_cache(train_df)
+
+    def make_datasets(df):
+        emb_a, emb_b, delta = get_pair_tensors(df, emb_dict, emb_dim)
+        frag_d = get_frag_delta_tensors(df, frag_cache)
+        ef = get_edit_feats_tensors(df)
+        return emb_a, emb_b, frag_d, ef, delta
+
+    train_a, train_b, train_frag, train_ef, train_y = make_datasets(train_df)
+    val_a, val_b, val_frag, val_ef, val_y = make_datasets(val_df)
+
+    train_loader = DataLoader(
+        TensorDataset(train_a, train_b, train_frag, train_ef, train_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_frag, val_ef, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = FragAnchoredFiLMDeltaMLP(mol_dim=emb_dim, frag_dim=1024, edit_feat_dim=28)
+
+    def forward_fn(m, a, b, frag_d, ef):
+        return m(a, b, frag_d, ef)
+
+    model = train_model_multi_input(model, train_loader, val_loader, forward_fn)
+
+    test_a, test_b, test_frag, test_ef, _ = make_datasets(test_df)
+    return predict_multi_input(model, forward_fn, test_a, test_b, test_frag, test_ef)
+
+
+def train_and_predict_multimodal_film(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """Multi-Modal Edit FiLM: fuses DRFP + fragment + edit features."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.edit_aware_film_predictor import MultiModalEditFiLMDeltaMLP
+
+    drfp_cache = compute_drfp_cache(train_df)
+    frag_cache = compute_frag_delta_cache(train_df)
+
+    def make_datasets(df):
+        emb_a, emb_b, delta = get_pair_tensors(df, emb_dict, emb_dim)
+        drfp = get_drfp_tensors(df, drfp_cache)
+        frag_d = get_frag_delta_tensors(df, frag_cache)
+        ef = get_edit_feats_tensors(df)
+        return emb_a, emb_b, drfp, frag_d, ef, delta
+
+    train_a, train_b, train_drfp, train_frag, train_ef, train_y = make_datasets(train_df)
+    val_a, val_b, val_drfp, val_frag, val_ef, val_y = make_datasets(val_df)
+
+    train_loader = DataLoader(
+        TensorDataset(train_a, train_b, train_drfp, train_frag, train_ef, train_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_drfp, val_frag, val_ef, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = MultiModalEditFiLMDeltaMLP(
+        mol_dim=emb_dim, drfp_dim=2048, frag_dim=1024, edit_feat_dim=28,
+        use_rxnfp=False)
+
+    # Custom training with auxiliary loss
+    model = model.to(DEVICE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LR)
+    criterion = nn.MSELoss()
+    best_val_loss = float("inf")
+    best_state = None
+    patience_counter = 0
+
+    for epoch in range(MAX_EPOCHS):
+        model.train()
+        for batch in train_loader:
+            a, b, drfp, frag_d, ef, y = [t.to(DEVICE) for t in batch]
+            optimizer.zero_grad()
+            pred = model(a, b, drfp, frag_d, ef)
+            loss = criterion(pred, y) + model.aux_loss(ef)
+            loss.backward()
+            optimizer.step()
+
+        model.eval()
+        val_losses = []
+        with torch.no_grad():
+            for batch in val_loader:
+                a, b, drfp, frag_d, ef, y = [t.to(DEVICE) for t in batch]
+                pred = model(a, b, drfp, frag_d, ef)
+                val_losses.append(criterion(pred, y).item())
+        val_loss = np.mean(val_losses)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+            patience_counter = 0
+        else:
+            patience_counter += 1
+        if patience_counter >= PATIENCE:
+            break
+
+    if best_state is not None:
+        model.load_state_dict(best_state)
+        model = model.to(DEVICE)
+
+    test_a, test_b, test_drfp, test_frag, test_ef, _ = make_datasets(test_df)
+
+    def forward_fn(m, a, b, drfp, frag_d, ef):
+        return m(a, b, drfp, frag_d, ef)
+
+    return predict_multi_input(model, forward_fn, test_a, test_b,
+                               test_drfp, test_frag, test_ef)
+
+
+# ── Target-Conditioned FiLM ──────────────────────────────────────────────
+
+# Module-level target ID mapping (computed once)
+TARGET_ID_MAP = None
+
+
+def get_target_id_map(df):
+    """Build or return cached mapping from target_chembl_id → integer index."""
+    global TARGET_ID_MAP
+    if TARGET_ID_MAP is None:
+        all_targets = sorted(df["target_chembl_id"].unique())
+        TARGET_ID_MAP = {t: i for i, t in enumerate(all_targets)}
+    return TARGET_ID_MAP
+
+
+def get_target_id_tensors(df, target_map):
+    """Convert target_chembl_id column to integer tensor."""
+    # Use target_chembl_id (same for both mols in a pair)
+    ids = df["target_chembl_id"].map(target_map).fillna(len(target_map)).astype(int).values
+    return torch.from_numpy(ids).long()
+
+
+def train_and_predict_target_cond_film(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """Target-Conditioned FiLMDelta: FiLM conditioning on delta + target identity."""
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.edit_aware_film_predictor import TargetCondFiLMDeltaMLP
+
+    target_map = get_target_id_map(train_df)
+    n_targets = len(target_map) + 1  # +1 for unknown targets
+
+    def make_datasets(df):
+        emb_a, emb_b, delta = get_pair_tensors(df, emb_dict, emb_dim)
+        tgt_ids = get_target_id_tensors(df, target_map)
+        return emb_a, emb_b, tgt_ids, delta
+
+    train_a, train_b, train_tgt, train_y = make_datasets(train_df)
+    val_a, val_b, val_tgt, val_y = make_datasets(val_df)
+
+    train_loader = DataLoader(
+        TensorDataset(train_a, train_b, train_tgt, train_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_tgt, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = TargetCondFiLMDeltaMLP(
+        input_dim=emb_dim, n_targets=n_targets,
+        target_emb_dim=64, hidden_dims=[512, 256, 128])
+
+    def forward_fn(m, a, b, tgt):
+        return m(a, b, tgt)
+
+    model = train_model_multi_input(model, train_loader, val_loader, forward_fn)
+
+    test_a, test_b, test_tgt, _ = make_datasets(test_df)
+    return predict_multi_input(model, forward_fn, test_a, test_b, test_tgt)
+
+
+def train_and_predict_film_delta_augmented(train_df, val_df, test_df, emb_dict, emb_dim, seed):
+    """FiLMDelta with antisymmetric data augmentation.
+
+    Adds reversed pairs (mol_b, mol_a, -delta) to training data, doubling
+    the effective dataset. This enforces antisymmetry in the delta conditioning
+    pathway (which is NOT structurally antisymmetric even though the output is).
+    """
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    from src.models.predictors.film_delta_predictor import FiLMDeltaMLP
+
+    # Get original pairs
+    train_a, train_b, train_y = get_pair_tensors(train_df, emb_dict, emb_dim)
+    # Augment: concatenate with reversed pairs (B, A, -delta)
+    aug_a = torch.cat([train_a, train_b], dim=0)
+    aug_b = torch.cat([train_b, train_a], dim=0)
+    aug_y = torch.cat([train_y, -train_y], dim=0)
+
+    val_a, val_b, val_y = get_pair_tensors(val_df, emb_dict, emb_dim)
+
+    train_loader = DataLoader(
+        TensorDataset(aug_a, aug_b, aug_y),
+        batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    val_loader = DataLoader(
+        TensorDataset(val_a, val_b, val_y),
+        batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+    model = FiLMDeltaMLP(input_dim=emb_dim, hidden_dims=[512, 256, 128])
+
+    def forward_fn(m, a, b):
+        return m(a, b)
+
+    model = train_model_multi_input(model, train_loader, val_loader, forward_fn)
+
+    test_a, test_b, _ = get_pair_tensors(test_df, emb_dict, emb_dim)
+    return predict_multi_input(model, forward_fn, test_a, test_b)
+
+
 # Architecture registry
 ARCHITECTURES = {
     "Subtraction": {
@@ -644,6 +1093,36 @@ ARCHITECTURES = {
         "fn": train_and_predict_trainable_edit,
         "label": "Trainable Edit Embedder",
         "color": "#8e44ad",
+    },
+    "DrfpFiLM": {
+        "fn": train_and_predict_drfp_film,
+        "label": "DRFP-FiLM",
+        "color": "#c0392b",
+    },
+    "DualStreamFiLM": {
+        "fn": train_and_predict_dualstream_film,
+        "label": "DualStream-FiLM",
+        "color": "#27ae60",
+    },
+    "FragAnchoredFiLM": {
+        "fn": train_and_predict_frag_anchored_film,
+        "label": "Fragment-Anchored FiLM",
+        "color": "#2980b9",
+    },
+    "MultiModalFiLM": {
+        "fn": train_and_predict_multimodal_film,
+        "label": "Multi-Modal Edit FiLM",
+        "color": "#8e44ad",
+    },
+    "TargetCondFiLM": {
+        "fn": train_and_predict_target_cond_film,
+        "label": "Target-Conditioned FiLM",
+        "color": "#16a085",
+    },
+    "FiLMDelta+Aug": {
+        "fn": train_and_predict_film_delta_augmented,
+        "label": "FiLMDelta + Antisymmetric Aug",
+        "color": "#d35400",
     },
 }
 

@@ -394,7 +394,9 @@ class FiLMDeltaPredictor:
         emb_a_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
         emb_b_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
         delta_val: Optional[Union[np.ndarray, torch.Tensor]] = None,
-        verbose: bool = True
+        verbose: bool = True,
+        antisymmetric_aug: bool = False,
+        antisym_reg_weight: float = 0.0,
     ) -> Dict[str, List[float]]:
         """
         Train the FiLM-conditioned predictor.
@@ -407,6 +409,12 @@ class FiLMDeltaPredictor:
             emb_b_val: Optional validation variant embeddings
             delta_val: Optional validation delta values
             verbose: Show training progress
+            antisymmetric_aug: If True, augment training data with reversed
+                pairs (emb_b, emb_a, -delta) to enforce f(A->B) = -f(B->A).
+                Doubles the training set.
+            antisym_reg_weight: Weight for antisymmetry regularization loss
+                L_sym = MSE(pred_forward + pred_reverse, 0). Only applied
+                when > 0 during training (independent of antisymmetric_aug).
 
         Returns:
             Training history dict with 'train_loss' and 'val_loss' lists
@@ -415,6 +423,14 @@ class FiLMDeltaPredictor:
         emb_a_train = self._to_tensor(emb_a_train)
         emb_b_train = self._to_tensor(emb_b_train)
         delta_train = self._to_tensor(delta_train)
+
+        # Antisymmetric data augmentation: append reversed pairs
+        if antisymmetric_aug:
+            emb_a_aug = torch.cat([emb_a_train, emb_b_train], dim=0)
+            emb_b_aug = torch.cat([emb_b_train, emb_a_train], dim=0)
+            delta_train = torch.cat([delta_train, -delta_train], dim=0)
+            emb_a_train = emb_a_aug
+            emb_b_train = emb_b_aug
 
         self.input_dim = emb_a_train.shape[1]
 
@@ -439,8 +455,11 @@ class FiLMDeltaPredictor:
             print(f"  Spectral norm: {self.spectral}")
             print(f"  BatchNorm: {self.use_batchnorm}")
             print(f"  Modulation strength: {self.modulation_strength}")
-            print(f"  Training samples: {len(delta_train)}")
+            print(f"  Training samples: {len(delta_train)}"
+                  f"{'  (incl. antisym aug)' if antisymmetric_aug else ''}")
             print(f"  Parameters: {sum(p.numel() for p in self.model.parameters()):,}")
+            if antisym_reg_weight > 0:
+                print(f"  Antisym reg weight: {antisym_reg_weight}")
 
         # Create dataloaders
         train_dataset = TensorDataset(emb_a_train, emb_b_train, delta_train)
@@ -484,6 +503,13 @@ class FiLMDeltaPredictor:
                 optimizer.zero_grad()
                 pred = self.model(batch_a, batch_b)
                 loss = criterion(pred, batch_y)
+
+                # Antisymmetry regularization: penalize pred_fwd + pred_rev != 0
+                if antisym_reg_weight > 0:
+                    pred_rev = self.model(batch_b, batch_a)
+                    sym_loss = torch.mean((pred + pred_rev) ** 2)
+                    loss = loss + antisym_reg_weight * sym_loss
+
                 loss.backward()
                 optimizer.step()
                 train_losses.append(loss.item())

@@ -1,0 +1,95 @@
+# REINVENT4: LibInvent R-Group Decoration with FiLMDelta Scoring for ZAP70
+# Generator: LibInvent (RNN) — decorates scaffolds with R-groups
+# Scoring: FiLMDelta anchor-based pIC50 + QED + MW filter
+# Input: ZAP70 scaffolds with attachment points
+
+run_type = "staged_learning"
+device = "cpu"
+tb_logdir = "tb_libinvent_rgroup"
+json_out_config = "_libinvent_rgroup.json"
+
+[parameters]
+summary_csv_prefix = "libinvent_rgroup"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "priors/libinvent.prior"
+agent_file = "priors/libinvent.prior"
+smiles_file = "__PROJECT_ROOT__/data/zap70_scaffolds.smi"
+
+batch_size = 64
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+### Stage 1: Decorate scaffolds for potent ZAP70 inhibitors
+[[stage]]
+chkpt_file = "libinvent_rgroup_stage1.chkpt"
+termination = "simple"
+max_score = 0.65
+min_steps = 50
+max_steps = 300
+
+[stage.scoring]
+type = "geometric_mean"
+
+# FiLMDelta pIC50 score
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.6
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 7.5
+transform.low = 5.5
+transform.k = 0.5
+
+# QED drug-likeness
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.2
+
+# Molecular weight filter (keep reasonable size)
+[[stage.scoring.component]]
+[stage.scoring.component.MolecularWeight]
+[[stage.scoring.component.MolecularWeight.endpoint]]
+name = "Molecular weight"
+weight = 0.05
+transform.type = "double_sigmoid"
+transform.high = 550.0
+transform.low = 200.0
+transform.coef_div = 500.0
+transform.coef_si = 20.0
+transform.coef_se = 20.0
+
+# Custom alerts
+[[stage.scoring.component]]
+[stage.scoring.component.custom_alerts]
+[[stage.scoring.component.custom_alerts.endpoint]]
+name = "Unwanted SMARTS"
+weight = 0.15
+params.smarts = [
+    "[*;r{8-17}]",
+    "[#8][#8]",
+    "[#6;+]",
+    "[#16][#16]",
+    "[#7;!n][S;!$(S(=O)=O)]",
+    "[#7;!n][#7;!n]",
+    "C#C",
+    "C(=[O,S])[O,S]",
+]
