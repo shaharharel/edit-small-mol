@@ -2,21 +2,12 @@
 Machine learning models for molecular property prediction.
 """
 
-# Predictors (each with their own PyTorch Lightning modules)
+# Predictors
 from .predictors import (
-    PropertyPredictor,
-    PropertyPredictorMLP,
-    EditEffectPredictor,
-    EditEffectMLP,
-    StructuredEditEffectPredictor,
-    StructuredEditEffectMLP,
-)
-
-# Multi-task architectures
-from .architectures import (
-    SharedBackbone,
-    TaskHead,
-    MultiTaskHead,
+    FiLMDeltaPredictor,
+    FiLMDeltaMLP,
+    FiLMLayer,
+    FiLMBlock,
 )
 
 # Training utilities
@@ -25,17 +16,10 @@ from .trainer import Trainer
 
 __all__ = [
     # Predictors
-    'PropertyPredictor',
-    'PropertyPredictorMLP',
-    'EditEffectPredictor',
-    'EditEffectMLP',
-    'StructuredEditEffectPredictor',
-    'StructuredEditEffectMLP',
-
-    # Multi-task architectures
-    'SharedBackbone',
-    'TaskHead',
-    'MultiTaskHead',
+    'FiLMDeltaPredictor',
+    'FiLMDeltaMLP',
+    'FiLMLayer',
+    'FiLMBlock',
 
     # Training
     'EditDataset',
