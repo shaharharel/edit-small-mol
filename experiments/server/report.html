@@ -349,6 +349,34 @@ div.dtsb-criteria{background:var(--neutral-0) !important;
   (port 5001) and refresh.
 </div>
 
+<!-- ────────── Column Reference ────────── -->
+<section class="page" style="padding:32px 24px 16px;">
+  <details open>
+    <summary style="cursor:pointer;font-size:14px;font-weight:600;color:var(--neutral-700);
+        text-transform:uppercase;letter-spacing:0.04em;padding:8px 0;
+        border-bottom:1px solid var(--neutral-200);user-select:none;">
+      Column Reference
+    </summary>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;">
+      <tbody>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;width:200px;color:var(--neutral-900);">pIC50 (mean ± std)</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Predicted ZAP70 pIC50 — mean ± std across 3 FiLMDelta ensemble seeds, each anchor-averaged over 280 ZAP70 training mols. Higher = more potent. ± shows model disagreement.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">Δ vs Mol1</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">pIC50<sub>candidate</sub> − pIC50<sub>Mol&nbsp;1</sub>. Positive = predicted more potent than Mol 1 (~6.77).</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">direct δ from Mol1</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Direct FiLMDelta(Mol&nbsp;1, candidate) prediction averaged across 3 seeds. Single-anchor prediction (Mol&nbsp;1 only), noisier than the anchor-mean Δ but more interpretable.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">wins / 280</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Number of the 280 ZAP70 training anchors where the candidate is predicted to be MORE potent (i.e., FiLMDelta predicts Δ &gt; 0). Range 0–280. Higher = predicted to beat more of the training set.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">wins ≥ 7</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Same as wins/280 but RESTRICTED to high-potency training anchors only (those with measured pIC50 ≥ 7.0; ~55 of the 280). Count of those the candidate is predicted to beat. The harder/cleaner bar — predicted to outperform actually potent compounds.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">SAS</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Ertl-Schuffenhauer Synthetic Accessibility Score. 1 = trivial to make, 10 = essentially impossible. Most drug-like molecules are 2–4.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">MW</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Molecular weight (Daltons). Drug-like &lt; 500. We allowed up to ~700 in this library.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">Tc → Mol1</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Morgan fingerprint (radius=2, 2048 bits) Tanimoto similarity to Mol 1. 0 = unrelated, 1 = identical. ≥ 0.4 = clear analog.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">max Tc → train</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Maximum Tanimoto to the closest of the 280 ZAP70 training mols. ≥ 0.5 = within model's training distribution. &lt; 0.3 = OOD extrapolation regime where FiLMDelta MAE ≈ 0.86.</td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">shape Tc</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">3D shape Tanimoto vs Mol 1 — RDKit O3A-aligned Gaussian-volume similarity over a 4-conformer ensemble (best alignment kept). 1 = identical 3D shape; 0 = unrelated. &gt; 0.7 = strong 3D footprint preservation. <em>Computed only for top-100 per method.</em></td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">ESP-Sim</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">Espsim electrostatic Tanimoto vs Mol 1 — combined shape + Gasteiger-charge electrostatic similarity after alignment. −1 to +1; positive = matching polar regions. Catches differences ESP-blind shape Tc misses. <em>Top-100 per method only.</em></td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">warhead Δ°</td><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);color:var(--neutral-700);">MIN angle (degrees) between Mol 1's C=C–C(=O)–N warhead vector and the candidate's, over a conformer ensemble after MCS-based 3D alignment. 0° = warhead points the same way (good covalent reach to catalytic Cys); &gt; 90° = pointing away. <em>Top-100 per method only.</em></td></tr>
+        <tr><td style="padding:8px 14px;border-bottom:1px solid var(--neutral-200);font-weight:600;color:var(--neutral-900);">PAINS</td><td style="padding:8px 14px;color:var(--neutral-700);">Pan-Assay Interference Compounds alerts — count of substructures known to cause false positives in screening. 0 = clean; ≥ 1 = potential issue.</td></tr>
+      </tbody>
+    </table>
+  </details>
+</section>
+
 <!-- ────────── Page (method sections) ────────── -->
 <main class="page" id="page">
   <!-- Method sections injected by JS -->
@@ -471,7 +499,7 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
           <th>pIC50 (mean ± std)</th><th>Δ vs Mol1</th>
           <th>direct δ from Mol1</th>
           <th>wins /280</th><th>wins ≥7</th>
-          <th>SAS</th><th>MW</th><th>RotB</th>
+          <th>SAS</th><th>MW</th>
           <th>Tc→Mol1</th><th>max Tc→train</th>
           <th>shape Tc</th><th>ESP-Sim</th><th>warhead Δ°</th>
           <th>PAINS</th>
@@ -483,11 +511,11 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
 }
 
 // SearchBuilder column definitions (numeric — indices in current header order)
-const SB_COLUMNS = [2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+const SB_COLUMNS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
 const COL_NAMES = ['row_id','smiles',
                    'pIC50_mean','delta_vs_mol1','direct_delta_from_mol1',
                    'anchor_wins','anchor_wins_ge7',
-                   'SAScore','MW','RotBonds',
+                   'SAScore','MW',
                    'Tc_to_Mol1','max_Tc_train',
                    'shape_Tc_seed','esp_sim_seed','warhead_dev_deg',
                    'PAINS_alerts'];
@@ -601,7 +629,6 @@ function buildTable(method, idx){
       }},
       {data:'SAScore', render:(d,t)=>t==='display'?`<span class="heat ${sasCls(d)}">${fmt(d,2)}</span>`:d},
       {data:'MW', render:(d,t)=>t==='display'?`<span class="heat ${mwCls(d)}">${fmt(d,0)}</span>`:d},
-      {data:'RotBonds', className:'num', render:d=>fmt(d,0)},
       {data:'Tc_to_Mol1', className:'num', render:d=>fmt(d,3)},
       {data:'max_Tc_train', render:(d,t)=>t==='display'?`<span class="heat ${tcCls(d)}">${fmt(d,3)}</span>`:d},
       {data:'shape_Tc_seed', className:'num', render:d=>fmt(d,3)},
