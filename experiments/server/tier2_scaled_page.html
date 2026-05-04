@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Tier 2 SCALED — Live filterable (498K)</title>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/searchbuilder/1.7.1/css/searchBuilder.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.5.3/css/dataTables.dateTime.min.css">
+
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;margin:24px;max-width:1900px;color:#222;line-height:1.45;}
+h1{color:#111;border-bottom:3px solid #2563eb;padding-bottom:8px;}
+.note{font-size:12px;color:#555;max-width:1200px;margin:6px 0;line-height:1.5;}
+.error-box{background:#fef2f2;border-left:3px solid #dc2626;padding:10px 14px;margin:8px 0;font-size:13px;display:none;}
+
+/* Filter chips */
+.chip-bar{margin:12px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.chip-bar .label{font-size:12px;color:#666;font-weight:600;margin-right:4px;}
+.chip{display:inline-block;padding:5px 12px;background:#f3f4f6;border:1px solid #d1d5db;
+    border-radius:14px;cursor:pointer;font-size:12px;color:#374151;
+    transition:all 0.15s;user-select:none;}
+.chip:hover{background:#e5e7eb;border-color:#9ca3af;}
+.chip.active{background:#2563eb;border-color:#2563eb;color:white;font-weight:600;}
+.chip-stats{font-size:12px;color:#374151;margin-left:auto;background:#f9fafb;padding:6px 12px;border-radius:14px;}
+
+/* Heatmap colors for numeric cells */
+.cell-pic50-good{background:#d1fae5!important;}
+.cell-pic50-mid{background:#fef9c3!important;}
+.cell-pic50-bad{background:#fee2e2!important;}
+.cell-sas-good{background:#d1fae5!important;}
+.cell-sas-mid{background:#fef9c3!important;}
+.cell-sas-bad{background:#fee2e2!important;}
+.cell-qed-good{background:#d1fae5!important;}
+.cell-qed-bad{background:#fee2e2!important;}
+.cell-mw-bad{background:#fef9c3!important;}
+.cell-tc-train-bad{background:#fee2e2!important;color:#7f1d1d;}
+.cell-warhead-good{background:#d1fae5!important;}
+.cell-warhead-bad{background:#fee2e2!important;}
+
+table.dt-table{border-collapse:collapse;font-size:12px;}
+table.dt-table th,table.dt-table td{border:1px solid #d1d5db;padding:5px 8px;}
+table.dt-table th{background:#f3f4f6;font-weight:600;text-align:center;font-size:11px;}
+table.dt-table td{text-align:right;font-variant-numeric:tabular-nums;}
+table.dt-table td.smiles{font-family:monospace;font-size:10px;max-width:280px;word-break:break-all;text-align:left;}
+table.dt-table td:nth-child(2){text-align:center;padding:1px;cursor:pointer;}
+
+.mol-thumb{cursor:pointer;display:inline-block;border-radius:4px;}
+.mol-thumb:hover{outline:2px solid #2563eb;outline-offset:2px;}
+.mol-modal-bg{display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;
+    background:rgba(0,0,0,0.65);z-index:9999;justify-content:center;align-items:center;}
+.mol-modal-bg.show{display:flex;}
+.mol-modal{background:white;border-radius:8px;padding:20px 28px;
+    max-width:90vw;max-height:90vh;overflow:auto;position:relative;box-shadow:0 10px 50px rgba(0,0,0,0.3);}
+.mol-modal svg{display:block;width:600px;height:500px;}
+.mol-modal .close{position:absolute;top:6px;right:12px;font-size:24px;
+    background:none;border:none;cursor:pointer;color:#444;line-height:1;padding:4px 8px;}
+.mol-modal .smiles-box{font-family:monospace;font-size:12px;background:#f3f4f6;
+    padding:8px 12px;border-radius:4px;margin-top:10px;word-break:break-all;max-width:600px;}
+</style>
+</head><body>
+
+<h1>Tier 2 SCALED — Live Filter (498K candidates)</h1>
+<p class="note">
+Top-20 visible per page. <strong>Filter and sort apply over the full 498K dataset</strong> — pagination shows the
+top-20 of whatever survives the filter, sorted by your chosen column. Backend is at <code>http://localhost:5001</code>;
+ensure it's running (<code>conda run -n quris python experiments/server/backend.py</code>) before using this page.
+</p>
+
+<div class="error-box" id="error-box">
+  <b>Cannot reach backend</b>: Start it with
+  <code>cd ~/Documents/github/edit-small-mol &amp;&amp; conda run -n quris python experiments/server/backend.py</code>
+  then refresh.
+</div>
+
+<h3>Quick filters</h3>
+<div class="chip-bar" id="chip-bar">
+  <span class="label">Presets:</span>
+  <span class="chip" data-chip="lipinski">Lipinski OK</span>
+  <span class="chip" data-chip="leadlike">Lead-like</span>
+  <span class="chip" data-chip="drug_like">Drug-like (QED≥0.5)</span>
+  <span class="chip" data-chip="potent">Potent (pIC50≥7)</span>
+  <span class="chip" data-chip="ultra_potent">Ultra-potent (pIC50≥8)</span>
+  <span class="chip" data-chip="warhead_intact">Warhead intact</span>
+  <span class="chip" data-chip="in_distribution">In-distribution (Tc→train≥0.3)</span>
+  <span class="chip" data-chip="synthesizable">Synthesizable (SAS&lt;4)</span>
+  <span class="chip" data-chip="pains_clean">PAINS-clean</span>
+  <span id="chip-stats" class="chip-stats">— / 498,992</span>
+</div>
+<p class="note">
+Click chips to toggle (multiple combine with AND). The ✕ on each filter pill below row count clears that filter.
+For more granular conditions (e.g., <code>0.4 ≤ QED ≤ 0.7</code>) use the <b>Add Condition</b> button below.
+</p>
+
+<table id="t2scaled" class="dt-table display compact" style="width:100%;">
+  <thead><tr>
+    <th>#</th>
+    <th>Structure</th>
+    <th>SMILES</th>
+    <th>pIC50 (anchor-mean)</th>
+    <th>SAScore</th>
+    <th>MW</th>
+    <th>QED</th>
+    <th>LogP</th>
+    <th>TPSA</th>
+    <th>HBA</th>
+    <th>HBD</th>
+    <th>RotBonds</th>
+    <th>Tc→Mol1</th>
+    <th>max Tc→train</th>
+    <th>mean top10 Tc→train</th>
+    <th>PAINS</th>
+    <th>WH intact</th>
+  </tr></thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal for enlarged molecule view -->
+<div id="mol-modal" class="mol-modal-bg" onclick="if(event.target===this) closeMolModal();">
+  <div class="mol-modal">
+    <button class="close" onclick="closeMolModal()" title="Close">&times;</button>
+    <div id="mol-modal-svg"></div>
+    <div id="mol-modal-smiles" class="smiles-box"></div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/datetime/1.5.3/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdn.datatables.net/searchbuilder/1.7.1/js/dataTables.searchBuilder.min.js"></script>
+<script>
+const BACKEND = "http://localhost:5001";
+let activeChips = new Set();
+
+// Heatmap color helpers
+function pic50Class(v){if(v>=8)return 'cell-pic50-good';if(v>=7)return 'cell-pic50-good';if(v>=5)return 'cell-pic50-mid';return 'cell-pic50-bad';}
+function sasClass(v){if(v<3)return 'cell-sas-good';if(v<5)return 'cell-sas-mid';return 'cell-sas-bad';}
+function qedClass(v){if(v>0.6)return 'cell-qed-good';if(v<0.4)return 'cell-qed-bad';return '';}
+function mwClass(v){return v>500?'cell-mw-bad':'';}
+function tcTrainClass(v){return v<0.2?'cell-tc-train-bad':'';}
+
+// Modal
+function showMolModal(svgHtml, smiles){
+  document.getElementById('mol-modal-svg').innerHTML = svgHtml;
+  const svg = document.querySelector('#mol-modal-svg svg');
+  if(svg){svg.removeAttribute('width');svg.removeAttribute('height');}
+  document.getElementById('mol-modal-smiles').textContent = smiles||'';
+  document.getElementById('mol-modal').classList.add('show');
+}
+function closeMolModal(){document.getElementById('mol-modal').classList.remove('show');}
+document.addEventListener('keydown', e=>{if(e.key==='Escape') closeMolModal();});
+
+// Lazy-load SVG for a given row_id
+function svgImg(rowId, smiles){
+  const id = 'mol-' + rowId;
+  // Use the backend SVG endpoint
+  return '<img src="'+BACKEND+'/api/svg/'+rowId+'?w=140&h=100" '
+       + 'class="mol-thumb" onclick="loadAndShow('+rowId+')" '
+       + 'data-smiles="'+(smiles||'').replace(/"/g,'&quot;')+'" '
+       + 'style="width:140px;height:100px;background:white;" '
+       + 'onerror="this.style.display=\'none\'"/>';
+}
+function loadAndShow(rowId){
+  fetch(BACKEND + '/api/svg/' + rowId + '?w=600&h=500')
+    .then(r=>r.text())
+    .then(svg=>{
+      // Get smiles from the visible row
+      const smi = $('#t2scaled tbody [data-rowid="'+rowId+'"]').data('smiles') || '';
+      showMolModal(svg, smi);
+    });
+}
+
+// Format with heatmap coloring
+function fmt(v, nd){if(v==null||isNaN(v))return '—';return Number(v).toFixed(nd);}
+function fmtCell(v, nd, cls){if(v==null||isNaN(v))return {display:'—',_:0};
+  return {display:Number(v).toFixed(nd), _:Number(v)};}
+
+// Build the DataTable with serverSide AJAX
+$(document).ready(function(){
+  const table = $('#t2scaled').DataTable({
+    serverSide: true,
+    processing: true,
+    pageLength: 20,
+    lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]],
+    order: [[3, 'desc']],
+    dom: 'Qfrtip',
+    searchBuilder: {depthLimit: 2, columns: [3,4,5,6,7,8,9,10,11,12,13,14,15]},
+    scrollX: true,
+    scrollY: '650px',
+    scrollCollapse: true,
+    ajax: function(data, callback, settings){
+      // Translate DataTables params + chips into our backend's payload
+      const order = data.order && data.order.length>0 ? data.order[0] : null;
+      const colMap = ['row_id','smiles','smiles','pIC50_film','SAScore','MW','QED',
+                      'LogP','TPSA','HBA','HBD','RotBonds','Tc_to_Mol1','max_Tc_train',
+                      'mean_top10_Tc_train','PAINS_alerts','warhead_intact'];
+      const orderCol = order ? colMap[order.column] : 'pIC50_film';
+      const orderDir = order ? order.dir : 'desc';
+      const sb = data.searchBuilder || null;
+
+      const payload = {
+        draw: data.draw,
+        start: data.start,
+        length: data.length,
+        order_col: orderCol,
+        order_dir: orderDir,
+        chips: Array.from(activeChips).join(','),
+      };
+      if(sb) payload.searchBuilder = JSON.stringify(sb);
+      if(data.search && data.search.value) payload.search = data.search.value;
+
+      $('#error-box').hide();
+      $.ajax({
+        url: BACKEND+'/api/data',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        timeout: 15000,
+        success: function(resp){
+          // Update count chip
+          $('#chip-stats').text(resp.recordsFiltered.toLocaleString()+' / '+resp.recordsTotal.toLocaleString());
+          callback(resp);
+        },
+        error: function(xhr){
+          console.error('Backend error:', xhr);
+          $('#error-box').show();
+          callback({draw: data.draw, recordsTotal:0, recordsFiltered:0, data:[]});
+        }
+      });
+    },
+    columns: [
+      {data: 'row_id', render: function(d,t,r,m){return m.row+1+m.settings._iDisplayStart+'';}},
+      {data: 'row_id', orderable: false, render: function(d,t,r){return svgImg(d, r.smiles);}},
+      {data: 'smiles', className: 'smiles', render: function(d){return d.length>60?d.slice(0,57)+'…':d;}},
+      {data: 'pIC50_film', render: function(d,t){if(t==='display'){
+        const cls = pic50Class(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
+      }return d;}},
+      {data: 'SAScore', render: function(d,t){if(t==='display'){
+        const cls = sasClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
+      }return d;}},
+      {data: 'MW', render: function(d,t){if(t==='display'){
+        const cls = mwClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,0)+'</span>';
+      }return d;}},
+      {data: 'QED', render: function(d,t){if(t==='display'){
+        const cls = qedClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
+      }return d;}},
+      {data: 'LogP', render: function(d){return fmt(d,2);}},
+      {data: 'TPSA', render: function(d){return fmt(d,1);}},
+      {data: 'HBA', render: function(d){return fmt(d,0);}},
+      {data: 'HBD', render: function(d){return fmt(d,0);}},
+      {data: 'RotBonds', render: function(d){return fmt(d,0);}},
+      {data: 'Tc_to_Mol1', render: function(d){return fmt(d,3);}},
+      {data: 'max_Tc_train', render: function(d,t){if(t==='display'){
+        const cls = tcTrainClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
+      }return d;}},
+      {data: 'mean_top10_Tc_train', render: function(d){return fmt(d,3);}},
+      {data: 'PAINS_alerts', render: function(d){return d>0?'⚠ '+d:'0';}},
+      {data: 'warhead_intact', render: function(d,t){if(t==='display'){
+        return d?'<span class="cell-warhead-good" style="display:block;padding:2px 4px;">✓</span>':
+                  '<span class="cell-warhead-bad" style="display:block;padding:2px 4px;">—</span>';
+      }return d?1:0;}},
+    ],
+  });
+
+  // Chip click handler
+  $('.chip').on('click', function(){
+    const chip = $(this).data('chip');
+    if(activeChips.has(chip)){activeChips.delete(chip); $(this).removeClass('active');}
+    else {activeChips.add(chip); $(this).addClass('active');}
+    table.ajax.reload();
+  });
+});
+</script>
+
+</body></html>

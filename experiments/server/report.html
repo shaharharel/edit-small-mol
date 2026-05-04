@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mol 1 — Generation Methods Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/searchbuilder/1.7.1/css/searchBuilder.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.5.3/css/dataTables.dateTime.min.css">
+
+<style>
+:root{
+  --fs-display:36px;--fs-h2:24px;--fs-h3:18px;
+  --fs-body:15px;--fs-table:13px;--fs-table-header:12px;
+  --fs-label:12px;--fs-mono:13px;
+  --lh-tight:1.2;--lh-snug:1.4;--lh-normal:1.6;
+  --font-ui:"Inter var","Inter",-apple-system,system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+
+  --s-1:4px;--s-2:8px;--s-3:12px;--s-4:16px;
+  --s-6:24px;--s-8:32px;--s-12:48px;--s-16:64px;--s-24:96px;
+
+  --neutral-0:#FFFFFF;--neutral-50:#FAFAF9;--neutral-100:#F4F4F2;
+  --neutral-200:#E7E5E2;--neutral-300:#D1CFCB;--neutral-500:#78756F;
+  --neutral-700:#3E3C38;--neutral-900:#1A1917;
+
+  --primary-50:#EEF2FF;--primary-500:#4F46E5;--primary-600:#4338CA;
+  --success-50:#E6F6EF;--success-500:#0E9F6E;
+  --warning-50:#FEF3E2;--warning-500:#D97706;
+  --error-50:#FEE7E7;--error-500:#DC2626;
+
+  --heat-0:#F4F4F2;--heat-1:#E8EEF7;--heat-2:#C7D7F0;
+  --heat-3:#93B4E0;--heat-4:#5388C9;
+  --heat-good:#E6F6EF;--heat-mid:#FEF3E2;--heat-bad:#FEE7E7;
+
+  --radius-sm:4px;--radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 2px rgba(26,25,23,0.04);
+  --shadow:0 4px 12px rgba(26,25,23,0.06);
+  --shadow-lg:0 24px 64px rgba(26,25,23,0.18);
+}
+
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--neutral-50);color:var(--neutral-900);
+  font-family:var(--font-ui);font-size:var(--fs-body);
+  line-height:var(--lh-normal);font-feature-settings:"cv11","ss01";
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+@supports (font-variation-settings:normal){
+  html,body{font-family:"Inter var",-apple-system,system-ui,sans-serif;}
+}
+
+a{color:var(--primary-500);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{font-family:var(--font-mono);font-size:0.9em;background:var(--neutral-100);
+  padding:1px 6px;border-radius:var(--radius-sm);}
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+.hero{background:var(--neutral-0);padding:var(--s-12) var(--s-16) var(--s-8);
+  border-bottom:1px solid var(--neutral-200);}
+.hero-inner{max-width:1280px;margin:0 auto;display:grid;
+  grid-template-columns:1fr auto;gap:var(--s-16);align-items:start;}
+.hero h1{font-size:var(--fs-display);font-weight:650;letter-spacing:-0.02em;
+  line-height:var(--lh-tight);margin:0 0 var(--s-3);color:var(--neutral-900);}
+.hero .subtitle{color:var(--neutral-500);font-size:15px;margin:0 0 var(--s-6);}
+.hero-stats{display:flex;gap:var(--s-8);margin-top:var(--s-4);}
+.hero-stat .label{font-size:var(--fs-label);font-weight:500;
+  letter-spacing:0.04em;text-transform:uppercase;color:var(--neutral-500);}
+.hero-stat .value{font-size:28px;font-weight:600;color:var(--neutral-900);
+  font-variant-numeric:tabular-nums;margin-top:2px;}
+.seed-card{background:var(--neutral-50);border:1px solid var(--neutral-200);
+  border-radius:var(--radius-lg);padding:var(--s-4);text-align:center;}
+.seed-card .label{font-size:var(--fs-label);text-transform:uppercase;
+  letter-spacing:0.04em;color:var(--neutral-500);font-weight:500;
+  margin-bottom:var(--s-2);}
+.seed-card .smiles{font-family:var(--font-mono);font-size:11px;
+  color:var(--neutral-700);margin-top:var(--s-2);max-width:280px;
+  word-break:break-all;line-height:1.4;}
+
+/* ── Sticky sub-nav ────────────────────────────────────────────────── */
+.subnav{position:sticky;top:0;z-index:30;background:rgba(250,250,249,0.95);
+  backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--neutral-200);
+  padding:var(--s-3) 0;}
+.subnav-inner{max-width:1280px;margin:0 auto;padding:0 var(--s-12);
+  display:flex;align-items:center;gap:var(--s-2);overflow-x:auto;
+  scrollbar-width:none;}
+.subnav-inner::-webkit-scrollbar{display:none;}
+.subnav-group-label{font-size:11px;color:var(--neutral-500);
+  text-transform:uppercase;letter-spacing:0.05em;font-weight:600;
+  white-space:nowrap;padding:0 var(--s-3);}
+.subnav-pill{flex:0 0 auto;padding:6px 14px;border-radius:999px;
+  background:var(--neutral-0);border:1px solid var(--neutral-200);
+  color:var(--neutral-700);font-size:13px;font-weight:500;
+  white-space:nowrap;cursor:pointer;text-decoration:none;
+  transition:all 120ms;}
+.subnav-pill:hover{border-color:var(--neutral-300);background:var(--neutral-100);text-decoration:none;}
+.subnav-pill[aria-current="true"]{background:var(--primary-500);
+  border-color:var(--primary-500);color:var(--neutral-0);}
+.subnav-pill .count{margin-left:6px;font-size:11px;color:var(--neutral-500);
+  font-variant-numeric:tabular-nums;}
+.subnav-pill[aria-current="true"] .count{color:rgba(255,255,255,0.75);}
+
+/* ── Page container ─────────────────────────────────────────────────── */
+.page{max-width:1280px;margin:0 auto;padding:var(--s-12) var(--s-12);}
+@media (max-width:1500px){.page{padding:var(--s-8) var(--s-8);}}
+.hero{padding:var(--s-12) var(--s-12) var(--s-8);}
+.footer{padding:var(--s-12) var(--s-12);}
+
+/* ── Method section ─────────────────────────────────────────────────── */
+.method{padding:var(--s-12) 0;border-top:1px solid var(--neutral-200);
+  scroll-margin-top:80px;}
+.method:first-of-type{border-top:none;padding-top:var(--s-6);}
+.method .eyebrow{font-size:var(--fs-label);font-weight:500;letter-spacing:0.04em;
+  text-transform:uppercase;color:var(--primary-500);margin-bottom:var(--s-2);}
+.method h2{font-size:var(--fs-h2);font-weight:600;letter-spacing:-0.015em;
+  line-height:1.3;margin:0 0 var(--s-2);color:var(--neutral-900);}
+.method .tagline{color:var(--neutral-700);font-size:var(--fs-body);
+  margin:0 0 var(--s-6);max-width:72ch;line-height:1.6;}
+
+/* Stats strip */
+.stats{display:flex;gap:var(--s-3);margin-bottom:var(--s-6);flex-wrap:wrap;}
+.stat{flex:1;min-width:140px;background:var(--neutral-0);
+  border:1px solid var(--neutral-200);border-radius:var(--radius);
+  padding:var(--s-4) var(--s-6);}
+.stat .label{font-size:11px;color:var(--neutral-500);
+  text-transform:uppercase;letter-spacing:0.04em;font-weight:500;}
+.stat .value{font-size:22px;font-weight:600;color:var(--neutral-900);
+  font-variant-numeric:tabular-nums;margin-top:2px;line-height:1.2;}
+.stat .sub{font-size:11px;color:var(--neutral-500);margin-top:2px;}
+
+/* ── Filter bar ──────────────────────────────────────────────────── */
+.filterbar{background:var(--neutral-0);border:1px solid var(--neutral-200);
+  border-radius:var(--radius);padding:var(--s-4);margin-bottom:var(--s-4);}
+.filter-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;
+  margin-bottom:var(--s-3);}
+.filter-row:last-child{margin-bottom:0;}
+.filter-label{font-size:11px;color:var(--neutral-500);font-weight:600;
+  letter-spacing:0.04em;text-transform:uppercase;margin-right:var(--s-2);}
+.chip{height:28px;padding:0 12px;border-radius:999px;
+  background:var(--neutral-100);color:var(--neutral-700);
+  font:inherit;font-size:12px;font-weight:500;border:1px solid transparent;cursor:pointer;
+  transition:all 120ms;display:inline-flex;align-items:center;gap:4px;}
+.chip:hover{background:var(--neutral-200);}
+.chip[aria-pressed="true"]{background:var(--primary-50);
+  color:var(--primary-600);border-color:var(--primary-500);}
+.chip .chip-count{font-size:10px;color:var(--neutral-500);
+  font-variant-numeric:tabular-nums;}
+.chip[aria-pressed="true"] .chip-count{color:var(--primary-600);}
+
+.preset-btn{height:28px;padding:0 12px;border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-700);border:1px solid var(--neutral-200);
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:all 120ms;}
+.preset-btn:hover{background:var(--neutral-100);}
+.preset-btn[aria-pressed="true"]{background:var(--primary-500);color:white;border-color:var(--primary-500);}
+
+.search-input{flex:0 0 280px;height:32px;background:var(--neutral-50);
+  border:1px solid var(--neutral-200);border-radius:var(--radius-sm);
+  padding:0 var(--s-3);font:inherit;font-size:13px;color:var(--neutral-900);}
+.search-input:focus{outline:2px solid var(--primary-500);outline-offset:1px;}
+
+.advanced-btn{height:28px;padding:0 12px;border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-700);border:1px solid var(--neutral-200);
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;}
+.advanced-btn:hover{background:var(--neutral-100);}
+
+.active-pills{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  font-size:12px;color:var(--neutral-700);}
+.active-pill{display:inline-flex;align-items:center;gap:4px;
+  background:var(--primary-50);color:var(--primary-600);
+  padding:3px 8px;border-radius:999px;font-size:12px;font-weight:500;}
+.active-pill button{background:none;border:none;color:inherit;cursor:pointer;
+  font-size:14px;line-height:1;padding:0 0 0 2px;}
+.active-pill button:hover{color:var(--error-500);}
+.clear-btn{font:inherit;font-size:12px;color:var(--neutral-500);
+  background:none;border:none;cursor:pointer;text-decoration:underline;}
+.clear-btn:hover{color:var(--neutral-900);}
+
+.count-bar{font-size:13px;color:var(--neutral-700);
+  font-variant-numeric:tabular-nums;margin-left:auto;}
+.count-bar strong{color:var(--neutral-900);font-weight:600;}
+
+.advanced-panel{display:none;margin-top:var(--s-3);padding-top:var(--s-3);
+  border-top:1px dashed var(--neutral-200);}
+.advanced-panel.show{display:block;}
+
+/* ── DataTable styling ──────────────────────────────────────────────── */
+table.dataTable{width:100% !important;border-collapse:separate;border-spacing:0;
+  font-size:var(--fs-table);background:var(--neutral-0);
+  border:1px solid var(--neutral-200);border-radius:var(--radius);
+  overflow:hidden;}
+table.dataTable thead th{background:var(--neutral-100) !important;
+  font-size:var(--fs-table-header);font-weight:600;letter-spacing:0.04em;
+  text-transform:uppercase;color:var(--neutral-700) !important;
+  padding:10px 14px !important;text-align:left;
+  border-bottom:1px solid var(--neutral-200) !important;}
+table.dataTable tbody td{padding:10px 14px !important;
+  border-bottom:1px solid var(--neutral-200) !important;
+  color:var(--neutral-900);vertical-align:middle;}
+table.dataTable tbody tr:last-child td{border-bottom:none !important;}
+table.dataTable tbody tr{transition:background 120ms;}
+table.dataTable tbody tr:hover td{background:var(--neutral-50) !important;}
+table.dataTable td.num{text-align:right;font-variant-numeric:tabular-nums;
+  font-family:var(--font-mono);font-size:12.5px;}
+table.dataTable td.smiles-cell{font-family:var(--font-mono);
+  color:var(--neutral-700);max-width:260px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font-size:11px;}
+
+/* Heat chips inside cells */
+.heat{display:inline-block;padding:2px 8px;border-radius:var(--radius-sm);
+  font-variant-numeric:tabular-nums;font-family:var(--font-mono);
+  font-size:12px;min-width:48px;text-align:right;}
+.heat-pic-good{background:var(--heat-good);color:#0E5C44;}
+.heat-pic-mid{background:var(--heat-mid);color:#7C3D00;}
+.heat-pic-bad{background:var(--heat-bad);color:#7F1D1D;}
+.heat-sas-good{background:var(--heat-good);color:#0E5C44;}
+.heat-sas-mid{background:var(--heat-mid);color:#7C3D00;}
+.heat-sas-bad{background:var(--heat-bad);color:#7F1D1D;}
+.heat-qed-good{background:var(--heat-good);color:#0E5C44;}
+.heat-qed-bad{background:var(--heat-bad);color:#7F1D1D;}
+.heat-tc-bad{background:var(--heat-bad);color:#7F1D1D;}
+.heat-mw-bad{background:var(--heat-mid);color:#7C3D00;}
+
+.wh-yes{color:var(--success-500);font-weight:600;}
+.wh-no{color:var(--error-500);}
+
+/* Structure thumb */
+.thumb{display:block;width:140px;height:100px;border-radius:var(--radius-sm);
+  cursor:pointer;background:white;
+  transition:transform 120ms,box-shadow 120ms,border-color 120ms;
+  border:1px solid var(--neutral-200);}
+tr:hover .thumb{border-color:var(--neutral-300);box-shadow:var(--shadow);
+  transform:scale(1.03);}
+
+/* Pagination/info bar */
+table.dataTable+.dt-info,table.dataTable+.dt-paging,
+.dataTables_wrapper .dt-info,.dataTables_wrapper .dt-paging,
+.dataTables_wrapper .dt-length,.dataTables_wrapper .dt-search{
+  font-size:12px;color:var(--neutral-700);padding:8px 0;}
+.dataTables_wrapper .dt-search input{
+  font:inherit;font-size:12px;border:1px solid var(--neutral-200);
+  border-radius:var(--radius-sm);padding:4px 10px;background:var(--neutral-50);}
+.dataTables_wrapper .dt-paging .dt-paging-button{
+  padding:4px 10px !important;border-radius:var(--radius-sm) !important;
+  border:1px solid var(--neutral-200) !important;background:var(--neutral-0) !important;
+  color:var(--neutral-700) !important;font-size:12px !important;margin:0 2px !important;}
+.dataTables_wrapper .dt-paging .dt-paging-button.current{
+  background:var(--primary-500) !important;color:white !important;
+  border-color:var(--primary-500) !important;}
+.dataTables_wrapper .dt-paging .dt-paging-button:hover:not(.disabled):not(.current){
+  background:var(--neutral-100) !important;}
+
+/* ── Modal ──────────────────────────────────────────────────────────── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,25,23,0.6);
+  backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{width:640px;max-width:92vw;background:var(--neutral-0);
+  border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);
+  padding:var(--s-8);position:relative;max-height:92vh;overflow:auto;}
+.modal .close{position:absolute;top:var(--s-3);right:var(--s-3);
+  width:32px;height:32px;border-radius:50%;border:none;background:var(--neutral-100);
+  color:var(--neutral-700);cursor:pointer;font-size:20px;line-height:1;
+  display:flex;align-items:center;justify-content:center;}
+.modal .close:hover{background:var(--neutral-200);}
+.modal .struct{display:flex;justify-content:center;margin-bottom:var(--s-4);}
+.modal .struct svg{width:480px;height:380px;}
+.modal .smiles-block{background:var(--neutral-50);padding:var(--s-3) var(--s-4);
+  border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;
+  color:var(--neutral-700);word-break:break-all;line-height:1.5;}
+.modal .props{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s-2) var(--s-4);
+  margin-top:var(--s-4);font-size:13px;}
+.modal .props .l{color:var(--neutral-500);font-size:12px;}
+.modal .props .v{color:var(--neutral-900);font-variant-numeric:tabular-nums;
+  font-family:var(--font-mono);}
+
+/* Loading */
+.loading{display:none;color:var(--neutral-500);font-size:12px;font-style:italic;}
+.loading.show{display:inline;}
+
+/* Error */
+.error-banner{display:none;background:var(--error-50);color:var(--error-500);
+  border:1px solid var(--error-500);padding:var(--s-3) var(--s-4);
+  border-radius:var(--radius);margin:var(--s-4) 0;font-size:13px;}
+.error-banner.show{display:block;}
+.error-banner code{background:rgba(220,38,38,0.08);}
+
+/* ── SearchBuilder restyle ──────────────────────────────────────────── */
+div.dtsb-searchBuilder{background:var(--neutral-50);padding:var(--s-3);
+  border-radius:var(--radius);border:1px solid var(--neutral-200) !important;
+  font-size:12px;}
+div.dtsb-searchBuilder button.dtsb-button{
+  font:inherit;font-size:12px !important;background:var(--neutral-0) !important;
+  border:1px solid var(--neutral-200) !important;color:var(--neutral-700) !important;
+  border-radius:var(--radius-sm) !important;padding:4px 10px !important;}
+div.dtsb-searchBuilder select,div.dtsb-searchBuilder input{
+  font:inherit;font-size:12px !important;
+  border:1px solid var(--neutral-200) !important;border-radius:var(--radius-sm) !important;
+  padding:4px 8px !important;background:var(--neutral-0) !important;}
+div.dtsb-criteria{background:var(--neutral-0) !important;
+  border:1px solid var(--neutral-200) !important;border-radius:var(--radius-sm) !important;}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+.footer{padding:var(--s-12) var(--s-16);text-align:center;
+  font-size:12px;color:var(--neutral-500);border-top:1px solid var(--neutral-200);
+  background:var(--neutral-0);margin-top:var(--s-12);}
+</style>
+</head>
+<body>
+
+<!-- ────────── Hero ────────── -->
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1>Mol 1 — Generation Methods Report</h1>
+      <p class="subtitle">Live filterable view across <strong id="hero-total">—</strong>
+        candidates from 12 generation methods, scored uniformly with single-seed FiLMDelta
+        anchored to 280 ZAP70 training molecules.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="label">Total candidates</div>
+          <div class="value" id="stat-total">—</div></div>
+        <div class="hero-stat"><div class="label">Methods</div>
+          <div class="value">12</div></div>
+        <div class="hero-stat"><div class="label">Predicted ≥ 7.0</div>
+          <div class="value" id="stat-pot7">—</div></div>
+        <div class="hero-stat"><div class="label">Predicted ≥ 8.0</div>
+          <div class="value" id="stat-pot8">—</div></div>
+      </div>
+    </div>
+    <div class="seed-card">
+      <div class="label">Seed: Mol 1</div>
+      <div id="seed-svg"></div>
+      <div class="smiles">C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1</div>
+    </div>
+  </div>
+</header>
+
+<!-- ────────── Sticky sub-nav ────────── -->
+<nav class="subnav" id="subnav">
+  <div class="subnav-inner" id="subnav-inner">
+    <span class="subnav-group-label">Methods</span>
+    <!-- Pills injected by JS based on /api/methods -->
+  </div>
+</nav>
+
+<div class="error-banner" id="error-banner">
+  <strong>Backend not reachable.</strong> Start it with
+  <code>conda run -n quris python experiments/server/backend.py</code>
+  (port 5001) and refresh.
+</div>
+
+<!-- ────────── Page (method sections) ────────── -->
+<main class="page" id="page">
+  <!-- Method sections injected by JS -->
+</main>
+
+<!-- ────────── Modal ────────── -->
+<div class="modal-bg" id="mol-modal" onclick="if(event.target===this) closeMolModal();">
+  <div class="modal">
+    <button class="close" onclick="closeMolModal()" title="Close">&times;</button>
+    <div class="struct" id="mol-modal-struct"></div>
+    <div class="smiles-block" id="mol-modal-smiles"></div>
+    <div class="props" id="mol-modal-props"></div>
+  </div>
+</div>
+
+<footer class="footer">
+  Mol 1 generation report · Single-seed FiLMDelta anchor-mean over 280 ZAP70 training mols ·
+  <a href="javascript:location.reload()">refresh data</a>
+</footer>
+
+<!-- ────────── Scripts ────────── -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/datetime/1.5.3/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdn.datatables.net/searchbuilder/1.7.1/js/dataTables.searchBuilder.min.js"></script>
+<script>
+// Relative URLs so the same file works whether served from localhost or remote IP
+const BACKEND = "";
+
+// ── Heatmap classes ──
+function pic50Cls(v){if(v>=7)return 'heat-pic-good';if(v>=5)return 'heat-pic-mid';return 'heat-pic-bad';}
+function sasCls(v){if(v<3)return 'heat-sas-good';if(v<5)return 'heat-sas-mid';return 'heat-sas-bad';}
+function qedCls(v){if(v>0.6)return 'heat-qed-good';if(v<0.4)return 'heat-qed-bad';return '';}
+function mwCls(v){return v>500?'heat-mw-bad':'';}
+function tcCls(v){return v<0.2?'heat-tc-bad':'';}
+
+function fmt(v,nd){if(v==null||isNaN(v))return '—';return Number(v).toFixed(nd);}
+function n2k(n){return n.toLocaleString();}
+
+// Sort presets per method
+const SORT_PRESETS = {
+  potent: {label:'Most potent', cols:[['pIC50_film','desc'],['QED','desc']]},
+  syn:    {label:'Most synthesizable', cols:[['SAScore','asc'],['MW','asc']]},
+  drug:   {label:'Most drug-like', cols:[['QED','desc'],['SAScore','asc']]},
+};
+
+// Quick chip preset definitions (mirror backend)
+const CHIPS = [
+  {key:'lipinski', label:'Lipinski OK'},
+  {key:'leadlike', label:'Lead-like'},
+  {key:'drug_like', label:'Drug-like'},
+  {key:'potent', label:'Potent (≥7)'},
+  {key:'ultra_potent', label:'Ultra (≥8)'},
+  {key:'warhead_intact', label:'Warhead ✓'},
+  {key:'in_distribution', label:'Tc→train ≥0.3'},
+  {key:'synthesizable', label:'SAS<4'},
+  {key:'pains_clean', label:'PAINS-clean'},
+];
+
+// ── Modal ──
+function showMolModal(rowId, smi, propsObj){
+  fetch(`${BACKEND}/api/svg/${rowId}?w=480&h=380`).then(r=>r.text()).then(svg=>{
+    document.getElementById('mol-modal-struct').innerHTML = svg;
+    const s = document.querySelector('#mol-modal-struct svg');
+    if(s){s.removeAttribute('width');s.removeAttribute('height');}
+    document.getElementById('mol-modal-smiles').textContent = smi || '';
+    const props = document.getElementById('mol-modal-props');
+    props.innerHTML = '';
+    for(const [k,v] of Object.entries(propsObj||{})){
+      props.innerHTML += `<div class="l">${k}</div><div class="v">${v}</div>`;
+    }
+    document.getElementById('mol-modal').classList.add('show');
+  });
+}
+function closeMolModal(){document.getElementById('mol-modal').classList.remove('show');}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeMolModal();
+  if(e.key==='/' && document.activeElement.tagName!=='INPUT'){
+    e.preventDefault();
+    const inp = document.querySelector('.dt-search input');
+    if(inp){inp.focus();}
+  }
+});
+
+// ── Seed structure ──
+fetch(BACKEND + '/api/seed_svg?w=200&h=140').then(r=>r.ok ? r.text() : null).then(svg=>{
+  if(svg) document.getElementById('seed-svg').innerHTML = svg;
+}).catch(()=>{});
+
+// ── Render method tables ──
+function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMethodName=''){
+  const id = 'tbl-' + idx;
+  const slug = 'm' + idx;
+  // For sub-methods within a tier (Tier 3), show a smaller h3 + sub-tagline
+  // For single-method tiers (Tier 1, 2), don't repeat — the tier header already has it
+  const subHeader = (!isSingleMethod && subMethodName) ? `
+        <div style="margin:32px 0 8px;padding-top:24px;border-top:1px dashed var(--neutral-200);">
+          <h3 style="font-size:18px;font-weight:600;margin:0 0 6px;color:var(--neutral-900);">${subMethodName}</h3>
+          ${subTagline ? `<p style="font-size:13px;color:var(--neutral-700);margin:0 0 8px;max-width:80ch;">${subTagline}</p>` : ''}
+        </div>
+      ` : '';
+  return `
+    <section class="method" id="${slug}">
+      ${subHeader}
+
+      <div class="filterbar">
+        <div class="filter-row">
+          <button class="advanced-btn" onclick="toggleAdvanced(${idx})">+ Filter</button>
+          <span class="active-pills" id="${id}-pills"></span>
+          <span class="count-bar" id="${id}-count"><strong>—</strong> / ${n2k(method.n)}</span>
+        </div>
+        <div class="advanced-panel" id="${id}-adv">
+          <!-- SearchBuilder rendered by DataTables -->
+        </div>
+      </div>
+
+      <table id="${id}" class="display compact" style="width:100%;">
+        <thead><tr>
+          <th>#</th><th>Structure</th>
+          <th>pIC50 (mean ± std)</th><th>Δ vs Mol1</th>
+          <th>direct δ from Mol1</th>
+          <th>wins /280</th><th>wins ≥7</th>
+          <th>SAS</th><th>MW</th><th>RotB</th>
+          <th>Tc→Mol1</th><th>max Tc→train</th>
+          <th>shape Tc</th><th>ESP-Sim</th><th>warhead Δ°</th>
+          <th>PAINS</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  `;
+}
+
+// SearchBuilder column definitions (numeric — indices in current header order)
+const SB_COLUMNS = [2,3,4,5,6,7,8,9,10,11,12,13,14,15];
+const COL_NAMES = ['row_id','smiles',
+                   'pIC50_mean','delta_vs_mol1','direct_delta_from_mol1',
+                   'anchor_wins','anchor_wins_ge7',
+                   'SAScore','MW','RotBonds',
+                   'Tc_to_Mol1','max_Tc_train',
+                   'shape_Tc_seed','esp_sim_seed','warhead_dev_deg',
+                   'PAINS_alerts'];
+
+function buildTable(method, idx){
+  const id = 'tbl-' + idx;
+  const tableState = {
+    method: method.name,
+    activeChips: new Set(),
+    activePreset: null,
+  };
+
+  const dt = $('#'+id).DataTable({
+    serverSide: true,
+    processing: true,
+    pageLength: 10,
+    lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]],
+    order: [[2, 'desc']],
+    dom: 'Qrtp',  // Q for SearchBuilder, r processing, t table, p pagination — drop 'i' info (we show our own count-bar)
+    searchBuilder: {depthLimit: 2, columns: SB_COLUMNS},
+    scrollX: true,
+    ajax: function(data, callback){
+      const orderCol = data.order && data.order.length>0 ? COL_NAMES[data.order[0].column] : 'pIC50_film';
+      const orderDir = data.order && data.order.length>0 ? data.order[0].dir : 'desc';
+      const sb = data.searchBuilder || null;
+
+      const payload = {
+        draw: data.draw,
+        start: data.start,
+        length: data.length,
+        method: tableState.method,
+        order_col: orderCol,
+        order_dir: orderDir,
+        chips: Array.from(tableState.activeChips).join(','),
+      };
+      if(sb && sb.criteria && sb.criteria.length>0) payload.searchBuilder = JSON.stringify(sb);
+
+      $.ajax({
+        url: BACKEND + '/api/data',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        timeout: 20000,
+        success: function(resp){
+          $('#'+id+'-count').html('<strong>'+n2k(resp.recordsFiltered)+'</strong> / '+n2k(resp.recordsTotal));
+          updateActivePills(idx, tableState, sb);
+          callback(resp);
+        },
+        error: function(xhr){
+          // Silent failure for individual table loads — per-method ajax may legitimately
+          // return empty for sub-methods with 0 rows. The hero already loaded so the banner
+          // showing here is misleading.
+          console.warn('table ajax error for method', tableState.method, xhr);
+          callback({draw:data.draw, recordsTotal:0, recordsFiltered:0, data:[]});
+        }
+      });
+    },
+    columns: [
+      {data:'row_id', orderable:false, render:(d,t,r,m)=>m.row+1+m.settings._iDisplayStart},
+      {data:'row_id', orderable:false, render:(d,t,r)=>{
+        const props = {
+          'pIC50 (mean ± std)': `${fmt(r.pIC50_mean!=null?r.pIC50_mean:r.pIC50_film,3)} ± ${fmt(r.pIC50_std,3)}`,
+          'Δ vs Mol1': fmt(r.delta_vs_mol1, 3),
+          'direct δ from Mol1': fmt(r.direct_delta_from_mol1, 3),
+          'wins /280': r.anchor_wins!=null?Math.round(r.anchor_wins):'—',
+          'wins ≥7': r.anchor_wins_ge7!=null?Math.round(r.anchor_wins_ge7):'—',
+          SAS: fmt(r.SAScore, 2),
+          MW: fmt(r.MW, 0),
+          QED: fmt(r.QED, 2),
+          LogP: fmt(r.LogP, 2),
+          TPSA: fmt(r.TPSA, 1),
+          'Rot. bonds': fmt(r.RotBonds, 0),
+          'HBA / HBD': `${fmt(r.HBA,0)} / ${fmt(r.HBD,0)}`,
+          'Tc→Mol1': fmt(r.Tc_to_Mol1, 3),
+          'max Tc→train': fmt(r.max_Tc_train, 3),
+          'mean top10 Tc→train': fmt(r.mean_top10_Tc_train, 3),
+          PAINS: r.PAINS_alerts > 0 ? `⚠ ${r.PAINS_alerts}` : '0',
+        };
+        return `<img src="${BACKEND}/api/svg/${d}?w=140&h=100" class="thumb" `+
+               `onclick='showMolModal(${d}, ${JSON.stringify(r.smiles)}, ${JSON.stringify(props)})' `+
+               `onerror="this.style.display='none'"/>`;
+      }},
+      {data:null, render:(d,t,r)=>{
+        if(t==='display'){
+          const m = r.pIC50_mean!=null ? r.pIC50_mean : r.pIC50_film;
+          const s = r.pIC50_std;
+          if(m==null||isNaN(m)) return '—';
+          const stdStr = (s!=null && !isNaN(s)) ? ` <span style="color:#78756F">± ${fmt(s,3)}</span>` : '';
+          return `<span class="heat ${pic50Cls(m)}">${fmt(m,3)}</span>${stdStr}`;
+        }
+        return r.pIC50_mean!=null ? r.pIC50_mean : r.pIC50_film;
+      }, name:'pIC50_mean'},
+      {data:'delta_vs_mol1', className:'num', render:(d,t)=>{
+        if(d==null||isNaN(d)) return '—';
+        const sign = d>=0 ? '+' : '';
+        const color = d>=0 ? '#0E9F6E' : '#DC2626';
+        return t==='display' ? `<span style="color:${color}">${sign}${fmt(d,3)}</span>` : d;
+      }},
+      {data:'direct_delta_from_mol1', className:'num', render:(d,t)=>{
+        if(d==null||isNaN(d)) return '—';
+        const sign = d>=0 ? '+' : '';
+        return t==='display' ? `${sign}${fmt(d,3)}` : d;
+      }},
+      {data:'anchor_wins', className:'num', render:d=>{
+        if(d==null||isNaN(d)) return '—';
+        return Math.round(d) + '/280';
+      }},
+      {data:'anchor_wins_ge7', className:'num', render:d=>{
+        if(d==null||isNaN(d)) return '—';
+        return Math.round(d) + '/30';
+      }},
+      {data:'SAScore', render:(d,t)=>t==='display'?`<span class="heat ${sasCls(d)}">${fmt(d,2)}</span>`:d},
+      {data:'MW', render:(d,t)=>t==='display'?`<span class="heat ${mwCls(d)}">${fmt(d,0)}</span>`:d},
+      {data:'RotBonds', className:'num', render:d=>fmt(d,0)},
+      {data:'Tc_to_Mol1', className:'num', render:d=>fmt(d,3)},
+      {data:'max_Tc_train', render:(d,t)=>t==='display'?`<span class="heat ${tcCls(d)}">${fmt(d,3)}</span>`:d},
+      {data:'shape_Tc_seed', className:'num', render:d=>fmt(d,3)},
+      {data:'esp_sim_seed', className:'num', render:d=>fmt(d,3)},
+      {data:'warhead_dev_deg', className:'num', render:d=>fmt(d,1)},
+      {data:'PAINS_alerts', className:'num', render:d=>d>0?`<span style="color:#DC2626">⚠ ${d}</span>`:'0'},
+    ],
+  });
+
+  return dt;
+}
+
+function toggleAdvanced(idx){
+  $('#tbl-'+idx+'-adv').toggleClass('show');
+}
+
+// Move SearchBuilder UI into our advanced panel right after DataTable init
+function attachSearchBuilder(idx){
+  const sb = $('#tbl-'+idx+'_wrapper .dtsb-searchBuilder').first();
+  if(sb.length && !$('#tbl-'+idx+'-adv').children().length){
+    $('#tbl-'+idx+'-adv').append(sb);
+  }
+}
+
+function updateActivePills(idx, state, sbCriteria){
+  const pills = $('#tbl-'+idx+'-pills');
+  pills.empty();
+  state.activeChips.forEach(c=>{
+    const label = (CHIPS.find(x=>x.key===c)||{}).label || c;
+    pills.append(`<span class="active-pill">${label}<button onclick="removeChip(${idx},'${c}')">&times;</button></span>`);
+  });
+  if(sbCriteria && sbCriteria.criteria){
+    sbCriteria.criteria.forEach(crit=>{
+      pills.append(`<span class="active-pill">${crit.data} ${crit.condition} ${crit.value}</span>`);
+    });
+  }
+  if(state.activeChips.size > 0 || (sbCriteria && sbCriteria.criteria && sbCriteria.criteria.length>0)){
+    pills.append('<button class="clear-btn" onclick="clearAll('+idx+')">Clear all</button>');
+  }
+}
+function removeChip(idx, c){
+  const dt = window.dts[idx];
+  if(!dt) return;
+  // Find the table state via the chip button
+  $('button.chip[data-method="'+idx+'"][data-chip="'+c+'"]').click();
+}
+function clearAll(idx){
+  $('button.chip[data-method="'+idx+'"][aria-pressed="true"]').click();
+  // Clear SearchBuilder if any
+  const dt = window.dts[idx];
+  if(dt && dt.searchBuilder){
+    dt.searchBuilder.rebuild({criteria:[],logic:'AND'});
+  }
+}
+
+// ── Init ──
+window.dts = {};
+async function init(){
+  try {
+    const res = await fetch(BACKEND + '/api/methods');
+    if(!res.ok) throw new Error('Backend down');
+    const data = await res.json();
+
+    document.getElementById('hero-total').textContent = n2k(data.total);
+    document.getElementById('stat-total').textContent = n2k(data.total);
+    let pot7=0, pot8=0;
+    data.methods.forEach(m=>{ pot7 += m.n_potent_7||0; pot8 += m.n_potent_8||0; });
+    document.getElementById('stat-pot7').textContent = n2k(pot7);
+    document.getElementById('stat-pot8').textContent = n2k(pot8);
+
+    // ── 3-Tier grouping ──
+    const TIERS = [
+      {
+        title: "Tier 1 — Medchem Rules",
+        tagline: "Deterministic SMARTS-based transformations on the binder side: methyl/halogen scans, imidazole C2/C5 + N1 substituent swaps, isoindoline ring tweaks (gem-dimethyl, gem-difluoro, ring-expand to THIQ), amide-linker bioisosteres (sulfonamide, urea, oxadiazole, +CH2 spacer), 1-substituted isoindoline (stereocenter), aza-isoindoline. Every output preserves the acrylamide warhead by construction.",
+        methods: ["Medchem Rules"],
+      },
+      {
+        title: "Tier 2 — Amine Replacements",
+        tagline: "<b>What we did:</b> Mol 1 is made by joining two halves through an amide bond — a warhead-bearing piece (acrylamide–isoindoline–carboxylic acid, called <i>Frag A</i>) and an amine partner (in Mol 1, 4-amino-1-isopropyl-imidazole). This tier keeps Frag A fixed and swaps in a different amine. Every product is therefore one HATU/T3P amide-coupling step away from a real lab synthesis. <b>How we got 499K:</b> we mined the entire ChEMBL 35 release (~2.5M unique molecules) for compounds containing a primary or secondary amine usable in amide coupling and with molecular weight ≤ 500. That gave ~500K candidate amines. We then enumerated the amide-coupling product of <i>each</i> amine + Frag A in silico, validated, and deduplicated → 499,196 unique products. The acrylamide warhead is preserved by construction because Frag A never changes.",
+        methods: ["Amine Replacements"],
+      },
+      {
+        title: "Tier 3 — Constrained Generative",
+        tagline: "RL fine-tuning of pretrained molecular language models with a hard warhead-preservation constraint. Each sub-method below uses a different generation strategy (scaffold-decoration / molecule-to-molecule / de-novo) with the warhead enforced either by <b>scaffold-locking</b> (the warhead is baked into a fixed scaffold and only attachment points vary) or by a <b>substructure gate</b> in the reward function that multiplicatively zeroes out the geometric-mean reward if the warhead is missing. Reward components: 3-seed FiLMDelta ensemble (predicted pIC50) + QED (drug-likeness) + structural-alert filters (+ Tanimoto-to-Mol-1 anchor for the de-novo variant).",
+        methods: [
+          "Tier 3 v3 — LibInvent locked",
+          "Tier 3 v3 — Mol2Mol + warhead gate",
+          "Tier 3 v3 — De Novo + warhead gate",
+          "Tier 3 v2 — Constrained Generative (single-seed)",
+        ],
+        sub_taglines: {
+          "Tier 3 v3 — LibInvent locked": "Scaffold-decoration RL with the warhead baked into the scaffold (only the [*:1] attachment point varies). 3-seed FiLMDelta ensemble scoring.",
+          "Tier 3 v3 — Mol2Mol + warhead gate": "Molecule-to-molecule RL seeded on Mol 1 with hard warhead gate (geometric-mean reward → 0 if warhead missing). 3-seed FiLMDelta ensemble scoring.",
+          "Tier 3 v3 — De Novo + warhead gate": "From-scratch RL generation with warhead gate + Tanimoto-to-Mol-1 reward + 3-seed ensemble. Most exploratory of the warhead-preserving methods.",
+          "Tier 3 v2 — Constrained Generative (single-seed)": "Earlier version with single-seed FiLMDelta scoring (rather than 3-seed ensemble). Same warhead constraints, kept for comparison.",
+        },
+      },
+    ];
+
+    // Build sub-nav pills (one per tier)
+    const subnav = document.getElementById('subnav-inner');
+    subnav.innerHTML = '<span class="subnav-group-label">Tiers</span>';
+    TIERS.forEach((tier, ti) => {
+      const tierAnchor = 'tier-' + ti;
+      const totalN = tier.methods.reduce((s, mn) => {
+        const m = data.methods.find(x=>x.name===mn);
+        return s + (m ? m.n : 0);
+      }, 0);
+      const pill = document.createElement('a');
+      pill.href = '#' + tierAnchor;
+      pill.className = 'subnav-pill';
+      pill.innerHTML = `${tier.title} <span class="count">${n2k(totalN)}</span>`;
+      pill.onclick = (e)=>{
+        e.preventDefault();
+        document.getElementById(tierAnchor).scrollIntoView({behavior:'smooth', block:'start'});
+      };
+      subnav.appendChild(pill);
+    });
+
+    // Render tier sections + method tables
+    const page = document.getElementById('page');
+    let methodIdx = 0;
+    const allMethodsRendered = [];
+
+    TIERS.forEach((tier, ti) => {
+      const tierAnchor = 'tier-' + ti;
+      const totalN = tier.methods.reduce((s, mn) => {
+        const m = data.methods.find(x=>x.name===mn);
+        return s + (m ? m.n : 0);
+      }, 0);
+      let maxP = -Infinity, p7 = 0, p8 = 0, wh = 0;
+      tier.methods.forEach(mn => {
+        const m = data.methods.find(x=>x.name===mn);
+        if(!m) return;
+        if(m.max_pIC50 != null) maxP = Math.max(maxP, m.max_pIC50);
+        p7 += m.n_potent_7 || 0;
+        p8 += m.n_potent_8 || 0;
+        wh += m.n_warhead || 0;
+      });
+      const tierStatsHTML = `
+        <div class="stats">
+          <div class="stat"><div class="label">Total</div><div class="value">${n2k(totalN)}</div></div>
+          <div class="stat"><div class="label">Max pIC50</div><div class="value">${isFinite(maxP)?maxP.toFixed(2):'—'}</div></div>
+          <div class="stat"><div class="label">≥ 7.0</div><div class="value">${n2k(p7)}</div></div>
+          <div class="stat"><div class="label">≥ 8.0</div><div class="value">${n2k(p8)}</div></div>
+        </div>`;
+
+      page.insertAdjacentHTML('beforeend', `
+        <section class="tier-section" id="${tierAnchor}" style="padding:48px 0;border-top:1px solid var(--neutral-200);scroll-margin-top:80px;">
+          <div class="eyebrow">Tier ${ti+1} of ${TIERS.length}</div>
+          <h2 style="font-size:32px;margin:0 0 12px;">${tier.title}</h2>
+          <p class="tagline" style="max-width:80ch;font-size:15px;color:var(--neutral-700);margin:0 0 24px;">${tier.tagline}</p>
+          ${tierStatsHTML}
+        </section>
+      `);
+
+      tier.methods.forEach(mn => {
+        const m = data.methods.find(x=>x.name===mn);
+        if(!m) return;
+        const subTagline = (tier.sub_taglines && tier.sub_taglines[mn]) || '';
+        const isSingleMethod = tier.methods.length === 1;
+        page.insertAdjacentHTML('beforeend', renderTableHTML(m, methodIdx, isSingleMethod, subTagline, mn));
+        allMethodsRendered.push({m, idx: methodIdx, methodName: mn});
+        methodIdx++;
+      });
+    });
+
+    // Init DataTables for each method
+    setTimeout(()=>{
+      allMethodsRendered.forEach(({m, idx, methodName})=>{
+        // Override method name in state to be the actual sub-method (so backend filter is correct)
+        window.dts[idx] = buildTable({...m, name: methodName}, idx);
+        // Move the SearchBuilder UI into our advanced panel after init completes
+        setTimeout(()=>attachSearchBuilder(idx), 200);
+      });
+    }, 100);
+
+    // IntersectionObserver for active pill highlighting (on tier sections)
+    const observer = new IntersectionObserver((entries)=>{
+      entries.forEach(e=>{
+        if(e.isIntersecting){
+          const id = e.target.id;
+          $('.subnav-pill').attr('aria-current', 'false');
+          $(`.subnav-pill[href="#${id}"]`).attr('aria-current', 'true');
+        }
+      });
+    }, {rootMargin:'-30% 0px -65% 0px'});
+    document.querySelectorAll('.tier-section').forEach(el=>observer.observe(el));
+
+  } catch(e){
+    console.error(e);
+    $('#error-banner').addClass('show');
+  }
+}
+init();
+</script>
+
+</body>
+</html>
