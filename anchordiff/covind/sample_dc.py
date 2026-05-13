@@ -44,18 +44,10 @@ from anchordiff.covind.cov_adapter import (
 from anchordiff.covind.covalent_token import build_token, TOKEN_DIM
 from anchordiff.covind.dataset import F_A
 
-WARHEAD_GEOM = {
-    "Michael Acceptor":   {"d": 1.85, "angle": 107.0},
-    "Halohydrocarbon":    {"d": 1.85, "angle": 180.0},
-    "Vinyl Sulfone":      {"d": 1.85, "angle": 107.0},
-    "Beta Lactam":        {"d": 1.82, "angle": 100.0},
-    "Epoxide":            {"d": 1.85, "angle": 180.0},
-    "Disulfide":          {"d": 2.05, "angle": 103.0},
-    "Aldehyde":           {"d": 1.85, "angle": 107.0},
-    "Carbonyl":           {"d": 1.85, "angle": 107.0},
-    "Nitrile":            {"d": 1.85, "angle": 107.0},
-    "Sulfonyl Fluorine":  {"d": 1.85, "angle": 180.0},
-}
+# Import WARHEAD_GEOM from curate.py to avoid drift (2026-05-13 fix).
+# Previously this module had its own (incomplete) dict; missing classes
+# silently fell back to Michael Acceptor.
+from anchordiff.covind.curate import WARHEAD_GEOM
 
 
 def collect_cys_context_resnames(pocket_residues):
@@ -146,9 +138,25 @@ def main():
     if adapter is not None:
         ctx = collect_cys_context_resnames(pocket_residues)
         geom = WARHEAD_GEOM.get(args.warhead_class, WARHEAD_GEOM["Michael Acceptor"])
+        # Map our per-warhead-class mechanism string to a CovInDB2 `Reaction`
+        # vocabulary entry so the token's mechanism axis matches the training
+        # distribution. (QA fix 2026-05-13: without this, inference defaults
+        # to OTHER which the trained model never associates with the warhead.)
+        _MECH_MAP = {
+            "addition":       "Michael Addition",
+            "sn2":            "Nucleophilic Substitution",
+            "disulfide":      "Disulfide Formation",
+            "hemithioacetal": "Nucleophilic Addition",
+            "thioimidate":    "Nucleophilic Addition",
+            "sn2_at_S":       "Sulfonylation",
+            "sulfonylation":  "Sulfonylation",
+            "transesterification": "Nucleophilic Substitution",
+        }
+        reaction_mech = _MECH_MAP.get(geom.get("mechanism"), "OTHER")
         token = build_token(d_canonical=geom["d"], theta_canonical=geom["angle"],
                             warhead_class=args.warhead_class,
-                            cys_context_residues=ctx)
+                            cys_context_residues=ctx,
+                            reaction_mechanism=reaction_mech)
         token_t = torch.from_numpy(token).float().to(device)
         pkt_oh_before = pocket["one_hot"].detach().clone()
         with torch.no_grad():

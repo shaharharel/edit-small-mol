@@ -168,7 +168,8 @@ class CovIndDataset(Dataset):
         token = build_token(d_canonical=r["warhead_canonical_d"],
                             theta_canonical=r["warhead_canonical_angle"],
                             warhead_class=r["warhead_class"],
-                            cys_context_residues=ctx)
+                            cys_context_residues=ctx,
+                            reaction_mechanism=r.get("reaction_type"))
         return {
             "record_id": r["record_id"],
             "warhead_class": r["warhead_class"],
