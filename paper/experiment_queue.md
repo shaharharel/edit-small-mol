@@ -41,11 +41,13 @@ Every experiment has a **Why** so we know months later what we wanted to learn.
 | B1 | Clean FiLMDelta retrain (mol-disjoint val) | The cached `reinvent4_film_model.pt` used pair-row-level val split, which leaked the target molecule across train/val. Need a true molecule-disjoint baseline to validate the wet-lab nomination. | ✅ done |
 | B2 | 30-Trial Stability — clean | Confirm whether the 19-mol ranking holds under mol-disjoint val. If Spearman(leaky, clean) < 0.8, the leaderboard is invalid. | ✅ Spearman 0.981, ranking validated |
 | B3 | 20-Seed Uncertainty — clean | Per-candidate pIC50 uncertainty bands under mol-disjoint val. | ✅ Spearman 0.954 vs leaky |
-| B4 | 30-Trial Stability — clean **+ kinase pretrain** | Test whether 32K-kinase MMP pretrain stabilizes ranking. Pretrain may rescue rare-warhead chemistries and shift top mol — currently Mol-7 dominating in early seeds with KP, was Mol-18 without. | running locally |
-| B5 | 20-Seed Uncertainty — clean **+ kinase pretrain** | Same as B4 but with the full mol-disjoint val (28 held-out). Will refresh `top1000_manifest` combined_score. | running locally |
+| B4 | 30-Trial Stability — clean **+ kinase pretrain** | Test whether 32K-kinase MMP pretrain stabilizes ranking. Pretrain may rescue rare-warhead chemistries and shift top mol. | ✅ done (162 min) — top-5 = [1, 15, 7, 18, 11] vs no-KP [18, 1, 9, 4, 7] |
+| B5 | 20-Seed Uncertainty — clean **+ kinase pretrain** | Same as B4 but with the full mol-disjoint val (28 held-out). Will refresh `top1000_manifest` combined_score. | ✅ done (101 min) — val MAE 0.623→0.564; Mol-1 → #1, Mol-15 jumps #11→#2 (Δpred +0.42) |
 | B6 | Simple-classifier baseline | Critical sanity check: does pairs training beat a trivial Ridge regression on Morgan FP? **Finding**: Ridge ρ=0.90 vs FiLMDelta on 19 mols — pairs training adds little for single-target small-N. Validates the paper's multi-target framing. | ✅ done |
 | B7 | Stability comparison (leaky vs clean) | Documented headline + the Mol-1/Mol-4/Mol-7 rank flip. | ✅ md/csv |
-| B8 | Stability comparison (clean vs clean+KP) | What does kinase pretrain change? Hypothesis: rescues mols whose warhead is rare in ZAP70 alone but common in the kinase corpus. | pending B4/B5 |
+| B8 | Stability comparison (clean vs clean+KP) | What does kinase pretrain change? Hypothesis: rescues mols whose warhead is rare in ZAP70 alone but common in the kinase corpus. | ✅ done — `results/paper_evaluation/19mol_clean_vs_kp_comparison.txt`. Anchor-corpus contamination check: 0 ZAP70 pairs and 5/280 (1.8%) anchor SMILES in pretrain — headline finding is real. |
+| B9 | C+D v2 generative sampling (4 pockets) | Sample 100 mols × {ZAP70, BTK, KRAS, EGFR} from C+D v2 ep29 ckpt. Compare against vanilla DiffSBDD and DiffSBDD inpaint where day-1 baselines exist. | ✅ done — `results/cd_v2_vs_baselines_summary.md`. **100% acrylamide retention vs 0% vanilla. BTK Tc 0.41 hit (vs 0.28 baselines). MW under-generated (170-240, under-conditioned pocket). B2 fix (reference ligand) recommended for v3.** |
+| B10 | COValid Boltz-mPAE alignment smoke test | 82 cofolds across 9 COValid sites (5 act + 5 dec each). Confirms our Boltz-2 stack reproduces London's directional signal. | ✅ done — `results/covalid/covalid_d2_summary.md`. **All 9 targets: actives have LOWER mPAE than decoys. Mean Δ = 1.06 Å.** |
 
 ---
 
@@ -121,6 +123,33 @@ Each running experiment has a dedicated QA agent watching for:
 | D2 (Boltz cofold backlog) | not yet dispatched | TODO |
 
 QA dispatch happening next.
+
+---
+
+## I — Dataset growth (covind v2.x)
+
+CovInDB2 has 3,598 cocrystal records but we use only 1,212 (33%). Most loss: 57% to non-Cys nucleophiles (Ser/Lys/His/Thr/Tyr), 15% to resolution ≤2.5 Å, ~8% to warhead-class filter. The activity-only side (`CovInDB_All.csv`, 17,774 records, 8,293 unique inhibitors with activity but no pose) is unused.
+
+| ID | What | Why | Expected size | Status |
+|---|---|---|---:|---|
+| I1 | **Relax res 2.5→3.0 + 7 more warhead classes** (Boronic Acid, Carbamate, Urea carbonyl, Phosphonate, Sulfide, Lactone, alpha-acyloxymethyl_Ketone) | Cheapest win. Trade slight crystal-geom noise for +40% data. Boronic Acid (~157) and Phosphonate (~468) are real covalent chemistry we're ignoring. | ~1700 (+40%) | NOT STARTED |
+| I2 | **Multi-nucleophile**: add SER + HIS + LYS + THR + TYR | Covalent Ser/Lys are real (e.g., Sotorasib's Lys117 acyl, β-lactam serine proteases). Doubles dataset and forces the D-arm to handle multiple nucleophile frames. Requires per-nucleophile frame definition (Sγ→Oγ for Ser, Sγ→Nε for His). Mechanism vocab expansion needed. | ~3500 (+190%) | NOT STARTED |
+| I3 | **Pose generation for 8,293 activity-only inhibitors** via Boltz cofold | The big flagship. Activity records have SMILES + warhead + Cys position + target but no crystal pose. Generate poses via Boltz-2 cofold with `_struct_conn` covalent bond constraint. Quality filter on iPTM + Sγ-C distance. ~50 GPU-h on A100. | ~9200 (+660%) | NOT STARTED |
+| I4 | **External covalent crystals**: PDBbind-cov + DUDE-cov + literature mining (e.g., Schiffer Lab IRAK4 sets, AbbVie covalent BTK series) | Mine PDB for covalent cocrystals not in CovInDB2. Use a SMARTS-based covalent-bond detector against the PDB chemical-bond table. | +500-1000 | NOT STARTED |
+
+---
+
+## J — C-arm & D-arm refinements (covind v2.x)
+
+The C-arm currently delivers mean \|Δ\|=0.026 on pocket one-hots (effectively no-op — adapter scale 0.25 + tanh squashes the signal). The D-arm currently pins 2 warhead atoms at exact canonical positions (no rotational tolerance). Both have known capacity-headroom.
+
+| ID | What | Why | Status |
+|---|---|---|---|
+| **J1** | **C+D v2.5** — learnable adapter scale + warhead Morgan FP (256-d replaces 18-d one-hot) + token dropout p=0.1 | Three minimal C-arm enhancements as one combined ablation. Learnable scale removes the 0.25 ceiling; warhead Morgan FP gives the model fine warhead chemistry (α-substituent effects) instead of class collapse; token dropout encourages backbone robustness so the model can't ignore the token. Same dataset, same backbone, ~50 min V100. | **running on ai-gpu2 (V100), env install in progress** |
+| J2 | **C+D v2.6** — ESM-2 pocket residue embedding (1280-d) replaces 20-d residue counts | Side-chain context beats bag-of-residues. ESM-2-650M mean-pooled over pocket residues within 8 Å of Cβ. Captures pocket-family signatures (kinase Lys vs protease His vs nuclear-receptor aromatics) at residue resolution. Token grows to ~1550-d; adapter grows to `Linear(1550→128)→ReLU→Linear(128→10)×scale` (~200K params, still tiny vs 1M backbone). | NOT STARTED — queued after J1 |
+| J3 | **D-arm soft positioning** | The current D-arm pins (attacked C, companion C) at exact `(0,0,1.85)` and angle θ. Real prereactive complexes wobble: ±0.1 Å in d, ±10° in θ (Bürgi-Dunitz envelope). Add Gaussian jitter at training time (`σ_d=0.1 Å, σ_θ=5°`) and/or a soft quadratic penalty `λ((d-1.85)² + (θ-107°)²)` on predicted positions — replace hard pinning with soft constraint. The diffusion model learns a *distribution* around canonical, not a point. | NOT STARTED — queued after J2 |
+| J4 | **C-arm ablations** (separate from J1's combined test) | If J1 wins, dissect: (a) scale-only (does the 0.026 ceiling fix already do most of the lift?), (b) warhead SMILES-only, (c) token-dropout-only, (d) drop residue counts entirely. Cheap to run, each ~50 min on V100. | NOT STARTED — depends on J1 outcome |
+| J5 | **Spatially-resolved C-arm injection** | Current adapter broadcasts the same bias to every pocket atom. The covalent token is *intrinsically local* — bias atoms near Sγ more than distal atoms. `bias_i = adapter(token) × exp(-d_i_to_Sγ / 4Å)`. Equivariance preserved (only modifies scalar features). | NOT STARTED |
 
 ---
 

@@ -2,14 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Mol 1 — Generation Methods Report</title>
+<title>Mol 1 — Generation Methods Report (v10-top20-combined)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <link rel="preconnect" href="https://rsms.me/">
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/searchbuilder/1.7.1/css/searchBuilder.dataTables.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.5.3/css/dataTables.dateTime.min.css">
 
 <style>
 :root{
@@ -77,6 +75,10 @@ code{font-family:var(--font-mono);font-size:0.9em;background:var(--neutral-100);
 .seed-card .smiles{font-family:var(--font-mono);font-size:11px;
   color:var(--neutral-700);margin-top:var(--s-2);max-width:280px;
   word-break:break-all;line-height:1.4;}
+.seed-3d-btn{margin-top:var(--s-3);height:30px;padding:0 14px;
+  background:var(--primary-500);color:white;border:none;border-radius:var(--radius-sm);
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;}
+.seed-3d-btn:hover{background:var(--primary-600);}
 
 /* ── Sticky sub-nav ────────────────────────────────────────────────── */
 .subnav{position:sticky;top:0;z-index:30;background:rgba(250,250,249,0.95);
@@ -130,9 +132,66 @@ code{font-family:var(--font-mono);font-size:0.9em;background:var(--neutral-100);
   font-variant-numeric:tabular-nums;margin-top:2px;line-height:1.2;}
 .stat .sub{font-size:11px;color:var(--neutral-500);margin-top:2px;}
 
-/* ── Filter bar ──────────────────────────────────────────────────── */
+/* ── Filter bar (v6 rebuild) ──────────────────────────────────────── */
 .filterbar{background:var(--neutral-0);border:1px solid var(--neutral-200);
-  border-radius:var(--radius);padding:var(--s-4);margin-bottom:var(--s-4);}
+  border-radius:var(--radius);padding:var(--s-3) var(--s-4);margin-bottom:var(--s-4);}
+.flt-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s-2);}
+.flt-toggle{height:30px;padding:0 14px;background:var(--neutral-0);color:var(--neutral-700);
+  border:1px solid var(--neutral-200);border-radius:var(--radius-sm);
+  font:inherit;font-size:13px;font-weight:500;cursor:pointer;transition:all 120ms;
+  display:inline-flex;align-items:center;gap:4px;}
+.flt-toggle:hover{background:var(--neutral-100);border-color:var(--neutral-300);}
+.flt-toggle[aria-expanded="true"]{background:var(--primary-50);color:var(--primary-600);border-color:var(--primary-500);}
+.flt-count-badge{font-size:13px;color:var(--neutral-700);font-variant-numeric:tabular-nums;margin-left:auto;}
+.flt-count-badge strong{color:var(--neutral-900);font-weight:600;}
+
+.flt-chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  margin-top:var(--s-2);min-height:0;}
+.flt-chip{display:inline-flex;align-items:center;gap:6px;
+  background:var(--primary-50);color:var(--primary-600);
+  padding:4px 4px 4px 10px;border-radius:999px;font-size:12px;font-weight:500;
+  border:1px solid transparent;font-variant-numeric:tabular-nums;}
+.flt-chip-x{background:rgba(79,70,229,0.15);border:none;color:var(--primary-600);
+  cursor:pointer;width:18px;height:18px;border-radius:50%;font-size:12px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;padding:0;
+  transition:background 120ms;}
+.flt-chip-x:hover{background:var(--error-500);color:#fff;}
+
+.flt-panel{display:none;margin-top:var(--s-3);padding-top:var(--s-3);
+  border-top:1px dashed var(--neutral-200);}
+.flt-panel.show{display:block;}
+.flt-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:var(--s-3);}
+.flt-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.flt-row select,.flt-row input{font:inherit;font-size:12px;height:30px;
+  border:1px solid var(--neutral-200);border-radius:var(--radius-sm);
+  padding:0 8px;background:var(--neutral-0);color:var(--neutral-900);
+  font-variant-numeric:tabular-nums;}
+.flt-row select:focus,.flt-row input:focus{outline:2px solid var(--primary-500);outline-offset:1px;}
+.flt-row .flt-col{flex:0 0 180px;}
+.flt-row .flt-op{flex:0 0 110px;}
+.flt-row .flt-val{flex:0 0 120px;}
+.flt-row .flt-and{font-size:11px;color:var(--neutral-500);padding:0 2px;}
+.flt-row .flt-rm{height:30px;width:30px;border-radius:var(--radius-sm);
+  border:1px solid var(--neutral-200);background:var(--neutral-0);color:var(--neutral-500);
+  cursor:pointer;font-size:14px;line-height:1;display:inline-flex;align-items:center;
+  justify-content:center;transition:all 120ms;}
+.flt-row .flt-rm:hover{background:var(--error-50);color:var(--error-500);border-color:var(--error-500);}
+
+.flt-actions{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;}
+.flt-add{height:30px;padding:0 12px;border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-700);border:1px dashed var(--neutral-300);
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;transition:all 120ms;}
+.flt-add:hover{background:var(--neutral-100);border-color:var(--neutral-500);}
+.flt-apply{height:30px;padding:0 16px;border-radius:var(--radius-sm);
+  background:var(--primary-500);color:#fff;border:1px solid var(--primary-500);
+  font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all 120ms;}
+.flt-apply:hover{background:var(--primary-600);border-color:var(--primary-600);}
+.flt-clear{height:30px;padding:0 12px;border-radius:var(--radius-sm);
+  background:transparent;color:var(--neutral-500);border:1px solid transparent;
+  font:inherit;font-size:12px;font-weight:500;cursor:pointer;}
+.flt-clear:hover{color:var(--neutral-900);}
+.flt-hint{font-size:11px;color:var(--neutral-500);margin-left:auto;font-style:italic;}
+
 .filter-row{display:flex;align-items:center;gap:var(--s-2);flex-wrap:wrap;
   margin-bottom:var(--s-3);}
 .filter-row:last-child{margin-bottom:0;}
@@ -252,6 +311,28 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
   background:var(--neutral-100) !important;}
 
 /* ── Modal ──────────────────────────────────────────────────────────── */
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--neutral-200);margin-bottom:var(--s-4);}
+.mt-tab{background:none;border:none;padding:8px 16px;font:inherit;font-size:13px;font-weight:500;
+  color:var(--neutral-500);cursor:pointer;border-bottom:2px solid transparent;transition:all 120ms;}
+.mt-tab:hover{color:var(--neutral-900);}
+.mt-tab.active{color:var(--primary-600);border-bottom-color:var(--primary-500);}
+.mt-pane{}
+.pose-meta{display:flex;flex-wrap:wrap;gap:var(--s-3);font-size:12px;
+  margin-bottom:var(--s-3);padding:var(--s-3);background:var(--neutral-50);
+  border:1px solid var(--neutral-200);border-radius:var(--radius);font-variant-numeric:tabular-nums;}
+.pose-meta .badge{padding:2px 8px;border-radius:999px;font-weight:500;}
+.pose-meta .badge-good{background:var(--success-50);color:var(--success-500);}
+.pose-meta .badge-mid{background:var(--warning-50);color:var(--warning-500);}
+.pose-meta .badge-bad{background:var(--error-50);color:var(--error-500);}
+.pose-controls{display:flex;flex-wrap:wrap;gap:var(--s-3);font-size:12px;
+  margin-bottom:var(--s-3);align-items:center;}
+.pose-controls label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;}
+.pose-controls button{height:28px;padding:0 12px;border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-700);border:1px solid var(--neutral-200);
+  font:inherit;font-size:12px;cursor:pointer;}
+.pose-controls button:hover{background:var(--neutral-100);}
+.pose-controls button.active{background:var(--primary-500);color:white;border-color:var(--primary-500);}
+#mol-modal-card.modal-wide{width:880px;}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(26,25,23,0.6);
   backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;}
 .modal-bg.show{display:flex;}
@@ -285,21 +366,6 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
 .error-banner.show{display:block;}
 .error-banner code{background:rgba(220,38,38,0.08);}
 
-/* ── SearchBuilder restyle ──────────────────────────────────────────── */
-div.dtsb-searchBuilder{background:var(--neutral-50);padding:var(--s-3);
-  border-radius:var(--radius);border:1px solid var(--neutral-200) !important;
-  font-size:12px;}
-div.dtsb-searchBuilder button.dtsb-button{
-  font:inherit;font-size:12px !important;background:var(--neutral-0) !important;
-  border:1px solid var(--neutral-200) !important;color:var(--neutral-700) !important;
-  border-radius:var(--radius-sm) !important;padding:4px 10px !important;}
-div.dtsb-searchBuilder select,div.dtsb-searchBuilder input{
-  font:inherit;font-size:12px !important;
-  border:1px solid var(--neutral-200) !important;border-radius:var(--radius-sm) !important;
-  padding:4px 8px !important;background:var(--neutral-0) !important;}
-div.dtsb-criteria{background:var(--neutral-0) !important;
-  border:1px solid var(--neutral-200) !important;border-radius:var(--radius-sm) !important;}
-
 /* ── Footer ─────────────────────────────────────────────────────────── */
 .footer{padding:var(--s-12) var(--s-16);text-align:center;
   font-size:12px;color:var(--neutral-500);border-top:1px solid var(--neutral-200);
@@ -327,8 +393,8 @@ div.dtsb-criteria{background:var(--neutral-0) !important;
           <div class="value" id="stat-pot8">—</div></div>
       </div>
     </div>
-    <div class="seed-card">
-      <div class="label">Seed: Mol 1</div>
+    <div class="seed-card" onclick="showSeedMolModal()" style="cursor:pointer">
+      <div class="label">Seed: Mol 1 <span style="color:var(--primary-500);font-size:10px;">(click for 3D)</span></div>
       <div id="seed-svg"></div>
       <div class="smiles">C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1</div>
     </div>
@@ -377,6 +443,32 @@ div.dtsb-criteria{background:var(--neutral-0) !important;
   </details>
 </section>
 
+<!-- ────────── Top-20 by combined score ────────── -->
+<section class="page leaderboard-section" id="leaderboard">
+  <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px;">
+    <h2 style="font-size:24px;font-weight:600;margin:0;">Top 20 — Combined Boltz × FiLMDelta</h2>
+    <span style="font-size:12px;color:var(--neutral-500);">
+      Ranked by  z(pIC50_FiLMDelta) − z(mPAE_Boltz) + 0.5·z(iptm_Boltz) over the 997 cofolded MW&lt;400 candidates.
+    </span>
+  </div>
+  <p style="font-size:13px;color:var(--neutral-700);max-width:80ch;margin:0 0 16px;">
+    Each row: pIC50 says <i>how potent</i> FiLMDelta predicts the molecule. Boltz says <i>how confident the cofolded binding pose is</i>. The combined score rewards molecules that are predicted potent <b>and</b> have a clean, well-anchored pose in the ATP-pocket / Cys560 region. Click any row to inspect the 3D pose.
+  </p>
+  <div id="leaderboard-loading" style="font-size:13px;color:var(--neutral-500);">Loading…</div>
+  <table id="leaderboard-table" class="display compact" style="width:100%;display:none;font-size:12px;">
+    <thead><tr>
+      <th>#</th><th>Structure</th><th>Method</th>
+      <th>pIC50</th><th>MW</th>
+      <th title="Boltz min PAE — pose confidence">mPAE</th>
+      <th title="Interface confidence">iptm</th>
+      <th>pLDDT</th>
+      <th>Combined</th>
+      <th>row_id</th>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
 <!-- ────────── Page (method sections) ────────── -->
 <main class="page" id="page">
   <!-- Method sections injected by JS -->
@@ -384,11 +476,29 @@ div.dtsb-criteria{background:var(--neutral-0) !important;
 
 <!-- ────────── Modal ────────── -->
 <div class="modal-bg" id="mol-modal" onclick="if(event.target===this) closeMolModal();">
-  <div class="modal">
+  <div class="modal" id="mol-modal-card">
     <button class="close" onclick="closeMolModal()" title="Close">&times;</button>
-    <div class="struct" id="mol-modal-struct"></div>
-    <div class="smiles-block" id="mol-modal-smiles"></div>
-    <div class="props" id="mol-modal-props"></div>
+    <div class="modal-tabs" id="mol-modal-tabs">
+      <button class="mt-tab active" data-tab="2d">2D Structure</button>
+      <button class="mt-tab" data-tab="3d" id="mol-modal-3d-tab" style="display:none">3D Pocket (Boltz)</button>
+    </div>
+    <div class="mt-pane mt-pane-2d" id="mt-pane-2d">
+      <div class="struct" id="mol-modal-struct"></div>
+      <div class="smiles-block" id="mol-modal-smiles"></div>
+      <div class="props" id="mol-modal-props"></div>
+    </div>
+    <div class="mt-pane mt-pane-3d" id="mt-pane-3d" style="display:none">
+      <div class="pose-meta" id="pose-meta"></div>
+      <div class="pose-controls" id="pose-controls">
+        <label><input type="checkbox" id="pc-cartoon" checked> Cartoon</label>
+        <label><input type="checkbox" id="pc-pocket" checked> Pocket surface</label>
+        <label><input type="checkbox" id="pc-cys560" checked> Highlight Cys560</label>
+        <label><input type="checkbox" id="pc-hbonds"> H-bonds (4Å)</label>
+        <button id="pc-measure" type="button">Measure tool</button>
+        <button id="pc-reset" type="button">Reset view</button>
+      </div>
+      <div id="pose-viewer" style="width:100%;height:480px;position:relative;background:#fff;border:1px solid var(--neutral-200);border-radius:var(--radius);"></div>
+    </div>
   </div>
 </div>
 
@@ -400,8 +510,7 @@ div.dtsb-criteria{background:var(--neutral-0) !important;
 <!-- ────────── Scripts ────────── -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/datetime/1.5.3/js/dataTables.dateTime.min.js"></script>
-<script src="https://cdn.datatables.net/searchbuilder/1.7.1/js/dataTables.searchBuilder.min.js"></script>
+<script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
 <script>
 // Relative URLs so the same file works whether served from localhost or remote IP
 const BACKEND = "";
@@ -437,7 +546,18 @@ const CHIPS = [
 ];
 
 // ── Modal ──
+let _poseViewer = null;
+let _poseRowId = null;
+let _poseMeasureMode = false;
+let _poseMeasureFirst = null;
+const POCKET_RADIUS = 5.0;
+
 function showMolModal(rowId, smi, propsObj){
+  _poseRowId = rowId;
+  // Default to 2D tab
+  _activateTab('2d');
+  document.getElementById('mol-modal-card').classList.remove('modal-wide');
+
   fetch(`${BACKEND}/api/svg/${rowId}?w=480&h=380`).then(r=>r.text()).then(svg=>{
     document.getElementById('mol-modal-struct').innerHTML = svg;
     const s = document.querySelector('#mol-modal-struct svg');
@@ -450,8 +570,243 @@ function showMolModal(rowId, smi, propsObj){
     }
     document.getElementById('mol-modal').classList.add('show');
   });
+  // Probe whether a 3D pose is available for this row_id
+  fetch(`${BACKEND}/api/pose/${rowId}`).then(r=>r.json()).then(d=>{
+    const tab = document.getElementById('mol-modal-3d-tab');
+    if(d.available){
+      tab.style.display = 'inline-block';
+      tab._poseData = d;  // cache for tab-switch
+    } else {
+      tab.style.display = 'none';
+    }
+  });
 }
-function closeMolModal(){document.getElementById('mol-modal').classList.remove('show');}
+function closeMolModal(){
+  document.getElementById('mol-modal').classList.remove('show');
+  if(_poseViewer){ try { _poseViewer.clear(); } catch(_){} _poseViewer = null; }
+  _poseMeasureMode = false; _poseMeasureFirst = null;
+}
+
+function showSeedPocket(){
+  // legacy alias kept for any old onclick handler
+  showSeedMolModal();
+}
+
+let _seedPoseVariant = 'v1';
+
+function showSeedMolModal(){
+  // Open the same modal used for table rows, but populated with seed Mol 1 data.
+  const seedSmi = 'C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1';
+  const seedProps = {
+    'pIC50 (Mol 1, ChEMBL2803)': '6.77',
+    'MW': '314',
+    'SAScore': '2.59',
+    'PAINS': '0',
+    'Tc → Mol1': '1.000',
+    'max Tc → train': '0.464',
+    Note: 'Seed candidate; this is what we are enriching.',
+  };
+  _seedPoseVariant = 'v1';
+  _activateTab('2d');
+  document.getElementById('mol-modal-card').classList.remove('modal-wide');
+  document.getElementById('mol-modal-struct').innerHTML = '';
+  fetch(`${BACKEND}/api/seed_svg?w=480&h=380`).then(r => r.text()).then(svg => {
+    document.getElementById('mol-modal-struct').innerHTML = svg;
+    const s = document.querySelector('#mol-modal-struct svg');
+    if(s){ s.removeAttribute('width'); s.removeAttribute('height'); }
+    document.getElementById('mol-modal-smiles').textContent = seedSmi;
+    const props = document.getElementById('mol-modal-props');
+    props.innerHTML = '';
+    for(const [k,v] of Object.entries(seedProps)){
+      props.innerHTML += `<div class="l">${k}</div><div class="v">${v}</div>`;
+    }
+    document.getElementById('mol-modal').classList.add('show');
+  });
+  _loadSeedPose('v1');
+}
+
+function _loadSeedPose(variant){
+  _seedPoseVariant = variant;
+  fetch(`${BACKEND}/api/pose_seed?variant=${variant}`).then(r => r.json()).then(d => {
+    const tab = document.getElementById('mol-modal-3d-tab');
+    if(d.available){
+      tab.style.display = 'inline-block';
+      // Annotate variant in the meta strip
+      d.metadata = d.metadata || {};
+      d.metadata.pose_name = variant === 'v2'
+        ? 'Mol 1 v2 — pocket-constrained (hinge binding, no covalent)'
+        : 'Mol 1 v1 — unconstrained (covalent bond formed, no hinge H-bonds)';
+      tab._poseData = d;
+      // If 3D tab is currently active, re-render
+      if(document.getElementById('mt-pane-3d').style.display !== 'none'){
+        _renderPose();
+        // Re-add the variant switcher (re-rendered metadata wipes it)
+        _addSeedVariantSwitcher();
+      }
+    }
+  });
+}
+
+function _addSeedVariantSwitcher(){
+  // Append a v1/v2 toggle to pose-meta if this is the seed Mol 1 view
+  const meta = document.getElementById('pose-meta');
+  if(!meta || meta.querySelector('.seed-variant-toggle')) return;
+  const sw = document.createElement('div');
+  sw.className = 'seed-variant-toggle';
+  sw.style.cssText = 'display:flex;gap:6px;margin-left:auto;align-items:center;';
+  sw.innerHTML = `
+    <span style="font-size:11px;color:var(--neutral-500);">pose mode:</span>
+    <button type="button" data-v="v1" class="${_seedPoseVariant==='v1'?'active':''}">v1: covalent</button>
+    <button type="button" data-v="v2" class="${_seedPoseVariant==='v2'?'active':''}">v2: pocket+hinge</button>
+  `;
+  sw.querySelectorAll('button').forEach(b => {
+    b.style.cssText = 'height:24px;padding:0 10px;font-size:11px;border-radius:4px;cursor:pointer;border:1px solid var(--neutral-200);background:var(--neutral-0);';
+    if(b.classList.contains('active')) b.style.cssText += 'background:var(--primary-500);color:white;border-color:var(--primary-500);';
+    b.addEventListener('click', () => _loadSeedPose(b.dataset.v));
+  });
+  meta.appendChild(sw);
+}
+
+function _activateTab(which){
+  document.querySelectorAll('#mol-modal-tabs .mt-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === which);
+  });
+  document.getElementById('mt-pane-2d').style.display = which === '2d' ? 'block' : 'none';
+  document.getElementById('mt-pane-3d').style.display = which === '3d' ? 'block' : 'none';
+  if(which === '3d'){
+    document.getElementById('mol-modal-card').classList.add('modal-wide');
+    _renderPose();
+    // For seed Mol 1, add the v1/v2 variant switcher
+    const tab = document.getElementById('mol-modal-3d-tab');
+    if(tab && tab._poseData && tab._poseData.metadata
+       && /^Mol 1 v/.test(tab._poseData.metadata.pose_name || '')){
+      _addSeedVariantSwitcher();
+    }
+  } else {
+    document.getElementById('mol-modal-card').classList.remove('modal-wide');
+  }
+}
+document.addEventListener('click', (e) => {
+  if(e.target.classList && e.target.classList.contains('mt-tab')){
+    _activateTab(e.target.dataset.tab);
+  }
+});
+
+function _renderPose(){
+  const tab = document.getElementById('mol-modal-3d-tab');
+  if(!tab || !tab._poseData) return;
+  const d = tab._poseData;
+  const meta = d.metadata || {};
+  // Confidence badge (use Boltz iptm; convert mPAE to relative goodness label)
+  let badge = '';
+  if(typeof meta.iptm === 'number'){
+    const klass = meta.iptm > 0.85 ? 'badge-good' : (meta.iptm > 0.75 ? 'badge-mid' : 'badge-bad');
+    badge = `<span class="badge ${klass}">iptm ${meta.iptm.toFixed(3)}</span>`;
+  }
+  document.getElementById('pose-meta').innerHTML =
+    `<strong>${meta.pose_name || ''}</strong>` +
+    `<span>mPAE: <b>${(meta.mPAE||0).toFixed(2)} Å</b></span>` +
+    `<span>conf: <b>${(meta.confidence_score||0).toFixed(3)}</b></span>` +
+    `<span>ligand iptm: <b>${(meta.ligand_iptm||0).toFixed(3)}</b></span>` +
+    `<span>plddt: <b>${(meta.complex_plddt||0).toFixed(3)}</b></span>` +
+    badge +
+    `<span style="color:var(--neutral-500)">(Boltz-2 cofold, A100 40GB)</span>`;
+  // Build viewer
+  const el = document.getElementById('pose-viewer');
+  el.innerHTML = '';
+  _poseViewer = $3Dmol.createViewer(el, {backgroundColor: 'white'});
+  _poseViewer.addModel(d.cif, 'cif');
+  _applyPoseStyles();
+  _poseViewer.zoomTo({chain: 'B'});
+  _poseViewer.zoom(0.7);
+  _poseViewer.render();
+}
+
+function _applyPoseStyles(){
+  if(!_poseViewer) return;
+  const showCart = document.getElementById('pc-cartoon').checked;
+  const showPocket = document.getElementById('pc-pocket').checked;
+  const showCys560 = document.getElementById('pc-cys560').checked;
+  const showHbonds = document.getElementById('pc-hbonds').checked;
+
+  _poseViewer.setStyle({}, {});
+  if(showCart){
+    _poseViewer.setStyle({chain:'A'}, {cartoon:{color:'spectrum', opacity:0.85}});
+  }
+  // Pocket residues (within POCKET_RADIUS Å of any ligand atom) as thin sticks
+  _poseViewer.addStyle({chain:'A', byres:true, within:{distance: POCKET_RADIUS, sel:{chain:'B'}}},
+    {stick:{radius:0.12, colorscheme:'whiteCarbon'}});
+  // Ligand sticks
+  _poseViewer.setStyle({chain:'B'}, {stick:{colorscheme:'magentaCarbon', radius:0.18}});
+  // Cys560 highlight
+  if(showCys560){
+    _poseViewer.addStyle({chain:'A', resi:560},
+      {stick:{colorscheme:'cyanCarbon', radius:0.22}, sphere:{radius:0.45, hidden:false}});
+    _poseViewer.addLabel('Cys560', {position:{x:0,y:0,z:0}, useScreen:false,
+      backgroundColor:'rgba(0,180,200,0.85)', fontColor:'white', fontSize:11},
+      {chain:'A', resi:560, atom:'CA'});
+  }
+  // Pocket surface (semi-transparent)
+  _poseViewer.removeAllSurfaces();
+  if(showPocket){
+    _poseViewer.addSurface($3Dmol.SurfaceType.SAS,
+      {opacity:0.45, color:'#cccccc'},
+      {chain:'A', byres:true, within:{distance: POCKET_RADIUS, sel:{chain:'B'}}});
+  }
+  // H-bond lines (heuristic: any A-N/A-O within 3.5Å of a B-N/B-O)
+  if(showHbonds){
+    const m = _poseViewer.getModel();
+    const protAtoms = m.selectedAtoms({chain:'A', elem:['N','O']});
+    const ligAtoms = m.selectedAtoms({chain:'B', elem:['N','O']});
+    for(const a of protAtoms){
+      for(const b of ligAtoms){
+        const d = Math.hypot(a.x-b.x, a.y-b.y, a.z-b.z);
+        if(d > 2.5 && d < 3.5){
+          _poseViewer.addCylinder({start:{x:a.x,y:a.y,z:a.z}, end:{x:b.x,y:b.y,z:b.z},
+            radius:0.04, dashed:true, fromCap:1, toCap:1, color:'orange'});
+        }
+      }
+    }
+  }
+  _poseViewer.render();
+}
+
+document.addEventListener('change', (e) => {
+  if(e.target.matches && e.target.matches('#pose-controls input[type=checkbox]')){
+    _applyPoseStyles();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  if(e.target.id === 'pc-reset' && _poseViewer){
+    _poseViewer.zoomTo({chain:'B'});
+    _poseViewer.zoom(0.7);
+    _poseViewer.render();
+  }
+  if(e.target.id === 'pc-measure' && _poseViewer){
+    _poseMeasureMode = !_poseMeasureMode;
+    _poseMeasureFirst = null;
+    e.target.classList.toggle('active', _poseMeasureMode);
+    _poseViewer.setClickable({}, _poseMeasureMode, function(atom){
+      if(!_poseMeasureMode) return;
+      if(!_poseMeasureFirst){
+        _poseMeasureFirst = atom;
+        _poseViewer.addLabel(`#1 ${atom.atom||atom.elem}`,
+          {position:{x:atom.x,y:atom.y,z:atom.z}, fontSize:10, backgroundColor:'red'});
+      } else {
+        const a = _poseMeasureFirst, b = atom;
+        const d = Math.hypot(a.x-b.x, a.y-b.y, a.z-b.z);
+        _poseViewer.addCylinder({start:{x:a.x,y:a.y,z:a.z}, end:{x:b.x,y:b.y,z:b.z},
+          radius:0.05, dashed:true, color:'red'});
+        const mx = (a.x+b.x)/2, my = (a.y+b.y)/2, mz = (a.z+b.z)/2;
+        _poseViewer.addLabel(`${d.toFixed(2)} Å`,
+          {position:{x:mx,y:my,z:mz}, fontSize:11, backgroundColor:'red', fontColor:'white'});
+        _poseMeasureFirst = null;
+      }
+      _poseViewer.render();
+    });
+  }
+});
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape') closeMolModal();
   if(e.key==='/' && document.activeElement.tagName!=='INPUT'){
@@ -482,14 +837,20 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
     <section class="method" id="${slug}">
       ${subHeader}
 
-      <div class="filterbar">
-        <div class="filter-row">
-          <button class="advanced-btn" onclick="toggleAdvanced(${idx})">+ Filter</button>
-          <span class="active-pills" id="${id}-pills"></span>
-          <span class="count-bar" id="${id}-count"><strong>—</strong> / ${n2k(method.n)}</span>
+      <div class="filterbar" id="${id}-filterbar" data-idx="${idx}">
+        <div class="flt-toolbar">
+          <button type="button" class="flt-toggle" id="${id}-toggle" aria-expanded="false">+ Filter</button>
+          <div class="flt-chips" id="${id}-chips"></div>
+          <span class="flt-count-badge" id="${id}-count"><strong>—</strong> / ${n2k(method.n)}</span>
         </div>
-        <div class="advanced-panel" id="${id}-adv">
-          <!-- SearchBuilder rendered by DataTables -->
+        <div class="flt-panel" id="${id}-panel">
+          <div class="flt-rows" id="${id}-rows"></div>
+          <div class="flt-actions">
+            <button type="button" class="flt-add" id="${id}-add">+ Add Filter</button>
+            <button type="button" class="flt-apply" id="${id}-apply">Apply</button>
+            <button type="button" class="flt-clear" id="${id}-clearall">Clear All</button>
+            <span class="flt-hint">Press Enter to apply</span>
+          </div>
         </div>
       </div>
 
@@ -503,6 +864,9 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
           <th>Tc→Mol1</th><th>max Tc→train</th>
           <th>shape Tc</th><th>ESP-Sim</th><th>warhead Δ°</th>
           <th>PAINS</th>
+          <th title="Boltz cofold min PAE protein↔ligand. Lower = more confident pose.">mPAE</th>
+          <th title="Boltz interface predicted TM-score. Higher = pocket binding more confident.">iptm</th>
+          <th title="Combined: z(pIC50) − z(mPAE) + 0.5·z(iptm)">Combined</th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -510,23 +874,71 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
   `;
 }
 
-// SearchBuilder column definitions (numeric — indices in current header order)
-const SB_COLUMNS = [2,3,4,5,6,7,8,9,10,11,12,13,14];
+// Symbolic op codes → backend conditions. We use codes (not raw <,>,=) anywhere
+// in HTML attribute values to avoid any HTML attribute-value parser surprises.
+const OP_TO_BACKEND = {lt:'<', lte:'<=', gt:'>', gte:'>=', eq:'=', between:'between'};
+const OP_OPTIONS = [
+  {code:'lt',      label:'<'},
+  {code:'lte',     label:'≤'},
+  {code:'gt',      label:'>'},
+  {code:'gte',     label:'≥'},
+  {code:'eq',      label:'='},
+  {code:'between', label:'between'},
+];
+const FILTER_COLS = [
+  {key:'pIC50_mean',     label:'pIC50 (mean)'},
+  {key:'delta_vs_mol1',  label:'Δ vs Mol1'},
+  {key:'anchor_wins',    label:'wins /280'},
+  {key:'anchor_wins_ge7',label:'wins ≥7'},
+  {key:'SAScore',        label:'SAS'},
+  {key:'MW',             label:'MW'},
+  {key:'Tc_to_Mol1',     label:'Tc → Mol1'},
+  {key:'max_Tc_train',   label:'max Tc → train'},
+  {key:'shape_Tc_seed',  label:'shape Tc'},
+  {key:'esp_sim_seed',   label:'ESP-Sim'},
+  {key:'warhead_dev_deg',label:'warhead Δ°'},
+  {key:'PAINS_alerts',   label:'PAINS'},
+];
+function colLabel(key){
+  const c = FILTER_COLS.find(x=>x.key===key);
+  return c ? c.label : key;
+}
+function opLabel(code){
+  const o = OP_OPTIONS.find(x=>x.code===code);
+  return o ? o.label : code;
+}
+
+// Build the searchBuilder JSON payload from applied filter state. Symbolic op
+// codes (lt/lte/...) are converted to backend operators (</<=/...) ONLY here.
+function buildSearchBuilderPayload(appliedFilters){
+  if(!appliedFilters || !appliedFilters.length) return null;
+  const criteria = appliedFilters.map(f => {
+    const cond = OP_TO_BACKEND[f.op] || f.op;
+    if(f.op === 'between'){
+      return {data:f.col, condition:'between', value:[String(f.val), String(f.val2)]};
+    }
+    return {data:f.col, condition:cond, value:[String(f.val)]};
+  });
+  return JSON.stringify({criteria, logic:'AND'});
+}
+
+// Column index → backend column key (DataTables order index)
 const COL_NAMES = ['row_id','smiles',
                    'pIC50_mean','delta_vs_mol1','direct_delta_from_mol1',
                    'anchor_wins','anchor_wins_ge7',
                    'SAScore','MW',
                    'Tc_to_Mol1','max_Tc_train',
                    'shape_Tc_seed','esp_sim_seed','warhead_dev_deg',
-                   'PAINS_alerts'];
+                   'PAINS_alerts',
+                   'mPAE','iptm','combined_score'];
 
 function buildTable(method, idx){
   const id = 'tbl-' + idx;
-  const tableState = {
-    method: method.name,
-    activeChips: new Set(),
-    activePreset: null,
-  };
+  // Single source of truth for this table's filter state.
+  // appliedFilters: [{col, op, val, val2}] where op is a SYMBOLIC code (lt/lte/...).
+  const tableState = { method: method.name, appliedFilters: [] };
+  window.dtStates = window.dtStates || {};
+  window.dtStates[idx] = tableState;
 
   const dt = $('#'+id).DataTable({
     serverSide: true,
@@ -534,14 +946,14 @@ function buildTable(method, idx){
     pageLength: 10,
     lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]],
     order: [[2, 'desc']],
-    dom: 'Qrtp',  // Q for SearchBuilder, r processing, t table, p pagination — drop 'i' info (we show our own count-bar)
-    searchBuilder: {depthLimit: 2, columns: SB_COLUMNS},
+    dom: 'rtp',
     scrollX: true,
     ajax: function(data, callback){
       const orderCol = data.order && data.order.length>0 ? COL_NAMES[data.order[0].column] : 'pIC50_film';
       const orderDir = data.order && data.order.length>0 ? data.order[0].dir : 'desc';
-      const sb = data.searchBuilder || null;
 
+      // State-driven: ALWAYS read from tableState.appliedFilters, never from DOM.
+      const sbPayload = buildSearchBuilderPayload(tableState.appliedFilters);
       const payload = {
         draw: data.draw,
         start: data.start,
@@ -549,9 +961,10 @@ function buildTable(method, idx){
         method: tableState.method,
         order_col: orderCol,
         order_dir: orderDir,
-        chips: Array.from(tableState.activeChips).join(','),
       };
-      if(sb && sb.criteria && sb.criteria.length>0) payload.searchBuilder = JSON.stringify(sb);
+      if(sbPayload){ payload.searchBuilder = sbPayload; }
+
+      console.log('SB payload:', payload.searchBuilder);
 
       $.ajax({
         url: BACKEND + '/api/data',
@@ -561,14 +974,10 @@ function buildTable(method, idx){
         timeout: 20000,
         success: function(resp){
           $('#'+id+'-count').html('<strong>'+n2k(resp.recordsFiltered)+'</strong> / '+n2k(resp.recordsTotal));
-          updateActivePills(idx, tableState, sb);
           callback(resp);
         },
         error: function(xhr){
-          // Silent failure for individual table loads — per-method ajax may legitimately
-          // return empty for sub-methods with 0 rows. The hero already loaded so the banner
-          // showing here is misleading.
-          console.warn('table ajax error for method', tableState.method, xhr);
+          console.warn('ajax error for', tableState.method, xhr.status, xhr.statusText);
           callback({draw:data.draw, recordsTotal:0, recordsFiltered:0, data:[]});
         }
       });
@@ -635,57 +1044,273 @@ function buildTable(method, idx){
       {data:'esp_sim_seed', className:'num', render:d=>fmt(d,3)},
       {data:'warhead_dev_deg', className:'num', render:d=>fmt(d,1)},
       {data:'PAINS_alerts', className:'num', render:d=>d>0?`<span style="color:#DC2626">⚠ ${d}</span>`:'0'},
+      {data:'mPAE', className:'num', render:(d,t)=>{
+        if(d==null||isNaN(d)) return '—';
+        const c = d<3.5?'#0E9F6E' : d<4.5?'#D97706' : '#DC2626';
+        return t==='display' ? `<span style="color:${c}">${(+d).toFixed(2)}</span>` : d;
+      }},
+      {data:'iptm', className:'num', render:(d,t)=>{
+        if(d==null||isNaN(d)) return '—';
+        const c = d>0.85?'#0E9F6E' : d>0.7?'#D97706' : '#DC2626';
+        return t==='display' ? `<span style="color:${c}">${(+d).toFixed(3)}</span>` : d;
+      }},
+      {data:'combined_score', className:'num', render:(d,t)=>{
+        if(d==null||isNaN(d)) return '—';
+        return t==='display' ? `<strong>${(+d).toFixed(2)}</strong>` : d;
+      }},
     ],
+  });
+
+  // Build the option HTML for column / operator dropdowns.
+  function colOptionsHTML(selected){
+    return FILTER_COLS.map(c =>
+      `<option value="${c.key}"${c.key===selected?' selected':''}>${c.label}</option>`
+    ).join('');
+  }
+  function opOptionsHTML(selected){
+    return OP_OPTIONS.map(o =>
+      `<option value="${o.code}"${o.code===selected?' selected':''}>${o.label}</option>`
+    ).join('');
+  }
+
+  // Render the panel rows from a "draft" array. The draft is an in-memory mirror
+  // of what's currently shown in the panel inputs — separate from appliedFilters.
+  // Initialized from appliedFilters when the panel is first opened or after Apply.
+  let draft = [];
+  function rowHTML(r, i){
+    const isBetween = r.op === 'between';
+    return `
+      <div class="flt-row" data-row="${i}">
+        <select class="flt-col" data-role="col">${colOptionsHTML(r.col)}</select>
+        <select class="flt-op" data-role="op">${opOptionsHTML(r.op)}</select>
+        <input class="flt-val" type="number" step="any" data-role="val" placeholder="value" value="${r.val ?? ''}">
+        ${isBetween ? `<span class="flt-and">and</span>
+          <input class="flt-val" type="number" step="any" data-role="val2" placeholder="value" value="${r.val2 ?? ''}">` : ''}
+        <button type="button" class="flt-rm" data-role="rm" title="Remove">✕</button>
+      </div>
+    `;
+  }
+  function renderRows(){
+    const $rows = $('#'+id+'-rows');
+    if(!draft.length){
+      // Always show at least one empty row so the user has a starting point.
+      draft = [{col:'MW', op:'lt', val:'', val2:''}];
+    }
+    $rows.html(draft.map((r,i)=>rowHTML(r,i)).join(''));
+  }
+
+  // Render the chips (read from appliedFilters — the committed state).
+  function renderChips(){
+    const $chips = $('#'+id+'-chips');
+    if(!tableState.appliedFilters.length){ $chips.empty(); return; }
+    $chips.html(tableState.appliedFilters.map((f,i)=>{
+      const valTxt = f.op === 'between'
+        ? `${f.val} and ${f.val2}`
+        : f.val;
+      return `<span class="flt-chip">${colLabel(f.col)} ${opLabel(f.op)} ${valTxt}`+
+        `<button type="button" class="flt-chip-x" data-chip-idx="${i}" title="Remove">✕</button></span>`;
+    }).join(''));
+  }
+
+  // Read the panel DOM into the draft array (called only on Apply).
+  function readDraftFromDOM(){
+    const out = [];
+    $('#'+id+'-rows .flt-row').each(function(){
+      const $row = $(this);
+      const col = $row.find('[data-role="col"]').val();
+      const op  = $row.find('[data-role="op"]').val();
+      const val = $row.find('[data-role="val"]').val();
+      const val2 = op === 'between' ? $row.find('[data-role="val2"]').val() : '';
+      // Skip rows that are missing a value
+      if(val === '' || val == null) return;
+      if(op === 'between' && (val2 === '' || val2 == null)) return;
+      out.push({col, op, val, val2});
+    });
+    return out;
+  }
+
+  // Commit point: read draft → write to appliedFilters → reload. Only Apply,
+  // Enter, or chip-✕ ever calls this. Never on keystroke.
+  function applyDraftAndReload(){
+    draft = readDraftFromDOM();
+    tableState.appliedFilters = draft.slice();
+    renderChips();
+    renderRows();
+    dt.ajax.reload(null, true);
+  }
+
+  // Wire it up.
+  const $bar = $('#'+id+'-filterbar');
+  const $panel = $('#'+id+'-panel');
+  const $toggle = $('#'+id+'-toggle');
+
+  // Initialize draft from any pre-applied filters (none on first build).
+  draft = tableState.appliedFilters.length
+    ? tableState.appliedFilters.map(f=>({...f}))
+    : [];
+  renderRows();
+  renderChips();
+
+  // + Filter toggle
+  $toggle.on('click', function(){
+    const open = $panel.hasClass('show');
+    if(open){
+      $panel.removeClass('show');
+      $toggle.attr('aria-expanded', 'false');
+    } else {
+      // Re-seed draft from applied filters when opening (so panel reflects state)
+      draft = tableState.appliedFilters.length
+        ? tableState.appliedFilters.map(f=>({...f}))
+        : [];
+      renderRows();
+      $panel.addClass('show');
+      $toggle.attr('aria-expanded', 'true');
+    }
+  });
+
+  // + Add Filter row
+  $bar.on('click', '#'+id+'-add', function(){
+    // Capture current panel state so we don't lose what the user typed
+    const current = readDraftFromDOM();
+    // Also include incomplete rows (so adding doesn't drop empty ones the user is editing)
+    const all = current.slice();
+    all.push({col:'MW', op:'lt', val:'', val2:''});
+    draft = all;
+    renderRows();
+  });
+
+  // ✕ Remove a row inside the panel
+  $bar.on('click', '.flt-rm', function(){
+    const i = parseInt($(this).closest('.flt-row').data('row'), 10);
+    // Capture current state before mutating
+    const current = [];
+    $('#'+id+'-rows .flt-row').each(function(){
+      const $row = $(this);
+      current.push({
+        col:  $row.find('[data-role="col"]').val(),
+        op:   $row.find('[data-role="op"]').val(),
+        val:  $row.find('[data-role="val"]').val(),
+        val2: $row.find('[data-role="val2"]').val() || '',
+      });
+    });
+    current.splice(i, 1);
+    draft = current.length ? current : [];
+    renderRows();
+  });
+
+  // Switching the operator may toggle the between-mode second input. Re-render.
+  $bar.on('change', '.flt-row [data-role="op"]', function(){
+    const current = [];
+    $('#'+id+'-rows .flt-row').each(function(){
+      const $row = $(this);
+      current.push({
+        col:  $row.find('[data-role="col"]').val(),
+        op:   $row.find('[data-role="op"]').val(),
+        val:  $row.find('[data-role="val"]').val(),
+        val2: $row.find('[data-role="val2"]').val() || '',
+      });
+    });
+    draft = current;
+    renderRows();
+  });
+
+  // Apply button — single commit point
+  $bar.on('click', '#'+id+'-apply', function(){
+    applyDraftAndReload();
+  });
+
+  // Enter on any input in the panel — same as Apply
+  $bar.on('keydown', '.flt-row input', function(e){
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      applyDraftAndReload();
+    }
+  });
+
+  // Clear All — wipes all rows and re-fetches with no filters
+  $bar.on('click', '#'+id+'-clearall', function(){
+    draft = [];
+    tableState.appliedFilters = [];
+    renderRows();
+    renderChips();
+    dt.ajax.reload(null, true);
+  });
+
+  // Chip ✕ — remove this filter and re-fetch immediately
+  $bar.on('click', '.flt-chip-x', function(){
+    const i = parseInt($(this).data('chip-idx'), 10);
+    if(isNaN(i)) return;
+    tableState.appliedFilters.splice(i, 1);
+    // Keep draft in sync for next panel open
+    draft = tableState.appliedFilters.map(f=>({...f}));
+    renderChips();
+    renderRows();
+    dt.ajax.reload(null, true);
   });
 
   return dt;
 }
 
-function toggleAdvanced(idx){
-  $('#tbl-'+idx+'-adv').toggleClass('show');
-}
-
-// Move SearchBuilder UI into our advanced panel right after DataTable init
-function attachSearchBuilder(idx){
-  const sb = $('#tbl-'+idx+'_wrapper .dtsb-searchBuilder').first();
-  if(sb.length && !$('#tbl-'+idx+'-adv').children().length){
-    $('#tbl-'+idx+'-adv').append(sb);
-  }
-}
-
-function updateActivePills(idx, state, sbCriteria){
-  const pills = $('#tbl-'+idx+'-pills');
-  pills.empty();
-  state.activeChips.forEach(c=>{
-    const label = (CHIPS.find(x=>x.key===c)||{}).label || c;
-    pills.append(`<span class="active-pill">${label}<button onclick="removeChip(${idx},'${c}')">&times;</button></span>`);
-  });
-  if(sbCriteria && sbCriteria.criteria){
-    sbCriteria.criteria.forEach(crit=>{
-      pills.append(`<span class="active-pill">${crit.data} ${crit.condition} ${crit.value}</span>`);
-    });
-  }
-  if(state.activeChips.size > 0 || (sbCriteria && sbCriteria.criteria && sbCriteria.criteria.length>0)){
-    pills.append('<button class="clear-btn" onclick="clearAll('+idx+')">Clear all</button>');
-  }
-}
-function removeChip(idx, c){
-  const dt = window.dts[idx];
-  if(!dt) return;
-  // Find the table state via the chip button
-  $('button.chip[data-method="'+idx+'"][data-chip="'+c+'"]').click();
-}
-function clearAll(idx){
-  $('button.chip[data-method="'+idx+'"][aria-pressed="true"]').click();
-  // Clear SearchBuilder if any
-  const dt = window.dts[idx];
-  if(dt && dt.searchBuilder){
-    dt.searchBuilder.rebuild({criteria:[],logic:'AND'});
-  }
-}
-
 // ── Init ──
 window.dts = {};
+window.dtStates = {};
+
+// ── Top-20 leaderboard ──
+async function loadLeaderboard(){
+  try {
+    const r = await fetch(BACKEND + '/api/top_combined?n=20');
+    if(!r.ok) throw new Error('top_combined fetch failed');
+    const d = await r.json();
+    const tbody = document.querySelector('#leaderboard-table tbody');
+    tbody.innerHTML = '';
+    (d.rows||[]).forEach((m, i) => {
+      const tr = document.createElement('tr');
+      tr.style.cursor = 'pointer';
+      tr.onclick = () => {
+        const props = {
+          'pIC50 (FiLMDelta rank score)': fmt(m.rank_score, 3),
+          'pIC50_method': fmt(m.pIC50_method, 3),
+          'pIC50_mean (ensemble)': m.pIC50_mean!=null ? fmt(m.pIC50_mean, 3) : '— (only top-1k per method scored)',
+          MW: fmt(m.MW, 0),
+          method: m.method,
+          'Boltz mPAE': fmt(m.mPAE, 3),
+          'Boltz iptm': fmt(m.iptm, 3),
+          'Boltz pLDDT': fmt(m.complex_plddt, 3),
+          'Combined score': fmt(m.combined_score, 3),
+          'Tc → Mol1': fmt(m.Tc_to_Mol1, 3),
+          'max Tc → train': fmt(m.max_Tc_train, 3),
+        };
+        showMolModal(m.row_id, m.smiles, props);
+      };
+      tr.innerHTML = `
+        <td class="num">${i+1}</td>
+        <td><img src="${BACKEND}/api/svg/${m.row_id}?w=110&h=80" class="thumb" style="width:110px;height:80px;"
+                onerror="this.style.display='none'"/></td>
+        <td style="font-size:11px;">${(m.method||'').replace('Tier 3 v3 — ','T3 ').replace('Tier 3 v2 — ','T3v2 ')}</td>
+        <td class="num">${(m.rank_score||0).toFixed(2)}</td>
+        <td class="num">${(m.MW||0).toFixed(0)}</td>
+        <td class="num"><span style="color:${m.mPAE<3.5?'#0E9F6E':m.mPAE<4.5?'#D97706':'#DC2626'}">${(m.mPAE||0).toFixed(2)}</span></td>
+        <td class="num"><span style="color:${m.iptm>0.85?'#0E9F6E':m.iptm>0.7?'#D97706':'#DC2626'}">${(m.iptm||0).toFixed(3)}</span></td>
+        <td class="num">${(m.complex_plddt||0).toFixed(2)}</td>
+        <td class="num"><strong>${(m.combined_score||0).toFixed(2)}</strong></td>
+        <td class="num" style="color:var(--neutral-500);">${m.row_id}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('leaderboard-loading').style.display = 'none';
+    document.getElementById('leaderboard-table').style.display = 'table';
+    $('#leaderboard-table').DataTable({
+      paging: false, info: false, searching: false,
+      order: [[8, 'desc']],
+      destroy: true,
+    });
+  } catch(e) {
+    console.warn('leaderboard load error', e);
+    document.getElementById('leaderboard-loading').textContent =
+      'No combined-score data available yet (Boltz cofolds not deployed).';
+  }
+}
+
 async function init(){
   try {
     const res = await fetch(BACKEND + '/api/methods');
@@ -802,8 +1427,6 @@ async function init(){
       allMethodsRendered.forEach(({m, idx, methodName})=>{
         // Override method name in state to be the actual sub-method (so backend filter is correct)
         window.dts[idx] = buildTable({...m, name: methodName}, idx);
-        // Move the SearchBuilder UI into our advanced panel after init completes
-        setTimeout(()=>attachSearchBuilder(idx), 200);
       });
     }, 100);
 
@@ -825,6 +1448,7 @@ async function init(){
   }
 }
 init();
+loadLeaderboard();
 </script>
 
 </body>

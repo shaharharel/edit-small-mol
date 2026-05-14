@@ -34,7 +34,7 @@ from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem, Draw
 RDLogger.DisableLog('rdApp.*')
 
-DATA_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "all_methods_bulk_scored_v3.csv"
+DATA_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "all_methods_bulk_scored_v4.csv"
 LEGACY_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "aichem_tier2_scaled" / "products_scored_full.csv"
 
 app = Flask(__name__)
@@ -97,6 +97,34 @@ if "pIC50_method" in DF.columns and "pIC50_film" not in DF.columns:
     DF["pIC50_film"] = DF["pIC50_method"]
 elif "pIC50_film" not in DF.columns and "pIC50_method" in DF.columns:
     DF["pIC50_film"] = DF["pIC50_method"]
+
+# ── Merge Boltz cofold metrics ──────────────────────────────────────────────
+# Pre-2026-05-09: previous Cys560-targeted cofolds were deprecated after a QA
+# audit found Cys346 (P-loop, GxGxxG motif) is the literature-validated
+# ZAP70 covalent target (PMID 33845236, 37594408), not Cys560. Old data is
+# under _DEPRECATED_cys560_*; we wait for the Cys346 redo to repopulate
+# the Boltz columns. Until then, the columns are simply NaN.
+TOP1000_MAN = PROJECT_ROOT / "data" / "boltz_poses" / "top1000_manifest__zap70_cys346.json"
+if TOP1000_MAN.exists():
+    _b = json.loads(TOP1000_MAN.read_text())
+    boltz_rows = []
+    for rid_str, m in _b.items():
+        boltz_rows.append({
+            "row_id": int(rid_str),
+            "mPAE": m["mPAE"],
+            "iptm": m["iptm"],
+            "ligand_iptm": m["ligand_iptm"],
+            "boltz_plddt": m["complex_plddt"],
+            "boltz_pde": m["complex_pde"],
+            "boltz_confidence": m["confidence_score"],
+            "combined_score": m["combined_score"],
+        })
+    boltz_df = pd.DataFrame(boltz_rows)
+    DF = DF.merge(boltz_df, on="row_id", how="left")
+    n_with = DF["mPAE"].notna().sum()
+    print(f"Merged Cys346 Boltz cofold metrics for {n_with} of {len(DF)} rows")
+else:
+    print(f"No Cys346 cofold manifest yet at {TOP1000_MAN.name}; Boltz columns will be NaN until cofold redo completes")
 
 NUMERIC_COLS = [c for c in DF.columns if pd.api.types.is_numeric_dtype(DF[c])]
 print(f"Numeric columns: {NUMERIC_COLS}")
@@ -202,6 +230,10 @@ def api_data():
         payload = request.get_json() or request.form.to_dict() or {}
     else:
         payload = request.args.to_dict()
+    # DEBUG: log non-trivial payload keys to find SearchBuilder integration bug
+    _interesting = {k: v for k, v in payload.items() if k not in ("draw", "start", "length")}
+    if _interesting:
+        print(f"[REQ] keys={list(payload.keys())} interesting={_interesting}", flush=True)
     # Standard DataTables params
     draw = int(payload.get("draw", 1))
     start = int(payload.get("start", 0))
@@ -228,7 +260,10 @@ def api_data():
     if sb_str:
         try:
             sb = json.loads(sb_str) if isinstance(sb_str, str) else sb_str
+            print(f"[SB] method={method_filter!r} payload={sb}", flush=True)
+            before = len(df)
             df = apply_searchbuilder(df, sb)
+            print(f"[SB] {before} -> {len(df)}", flush=True)
         except Exception as e:
             print(f"SB parse error: {e}")
 
@@ -248,13 +283,145 @@ def api_data():
     # Pagination
     df_page = df.iloc[start:start + length]
 
-    # Build response
+    # CRITICAL: replace NaN with None — Python's json.dumps emits literal `NaN`
+    # tokens which are invalid JSON; browsers' JSON.parse rejects them and
+    # jQuery routes the response to the error handler, causing the table to
+    # render "No data available" even on a 200 OK with valid filtered data.
+    df_page = df_page.astype(object).where(df_page.notna(), None)
     rows = df_page.to_dict(orient="records")
     return jsonify({
         "draw": draw,
         "recordsTotal": n_total,
         "recordsFiltered": n_filtered,
         "data": rows,
+    })
+
+
+# ── Boltz / AlphaFold cofolded poses (Cys346 cohort) ──────────────────────
+# Old Cys560-targeted poses are under _DEPRECATED_cys560_* and explicitly
+# NOT loaded here. Cys346 manifests will populate when the redo completes.
+MEDCHEM10_ROOT = PROJECT_ROOT / "data" / "boltz_poses" / ("medchem_top10__zap70_cys346")
+TOP1000_ROOT   = PROJECT_ROOT / "data" / "boltz_poses" / ("boltz_results_top1000__zap70_cys346") / "predictions"
+
+POSES_MANIFEST = {}
+_man = MEDCHEM10_ROOT / "manifest.json"
+if _man.exists():
+    POSES_MANIFEST.update(json.loads(_man.read_text()))
+    print(f"Loaded {len(POSES_MANIFEST)} medchem-top10 poses (Cys346)")
+else:
+    print(f"No Cys346 medchem-top10 manifest yet")
+
+TOP1000_MANIFEST = {}
+if TOP1000_MAN.exists():
+    TOP1000_MANIFEST = json.loads(TOP1000_MAN.read_text())
+    print(f"Loaded {len(TOP1000_MANIFEST)} top-1000 Cys346 cofold poses")
+
+
+def _resolve_pose(row_id: int):
+    """Return (cif_text, metadata) for the given row_id, or (None, None)."""
+    key = str(row_id)
+    # Prefer top-1000 (newer + has full Boltz metrics)
+    if key in TOP1000_MANIFEST:
+        m = TOP1000_MANIFEST[key]
+        cif = TOP1000_ROOT / m["yaml_name"] / f"{m['yaml_name']}_model_0.cif"
+        if cif.exists():
+            meta = dict(m)
+            meta["pose_name"] = m["yaml_name"]
+            meta["pose_source"] = "top1000_boltz"
+            return cif.read_text(), meta
+    # Fallback: medchem10 batch
+    if key in POSES_MANIFEST:
+        m = POSES_MANIFEST[key]
+        cif = MEDCHEM10_ROOT / "predictions" / m["pose_name"] / f"{m['pose_name']}_model_0.cif"
+        if cif.exists():
+            meta = dict(m)
+            meta["pose_source"] = "medchem10_boltz"
+            return cif.read_text(), meta
+    return None, None
+
+
+@app.route("/api/pose/<int:row_id>")
+def api_pose(row_id: int):
+    """Return the cofolded protein-ligand mmCIF + metadata for row_id."""
+    cif, meta = _resolve_pose(row_id)
+    if cif is None:
+        return jsonify({"available": False, "row_id": row_id})
+    return jsonify({"available": True, "row_id": row_id, "cif": cif, "metadata": meta})
+
+
+@app.route("/api/poses_index")
+def api_poses_index():
+    """Return all row_ids that have cofolded poses available."""
+    keys = set(POSES_MANIFEST.keys()) | set(TOP1000_MANIFEST.keys())
+    return jsonify({"row_ids": sorted(int(k) for k in keys)})
+
+
+@app.route("/api/top_combined")
+def api_top_combined():
+    """Top-N candidates ranked by combined_score (FiLMDelta pIC50 + Boltz confidence)."""
+    n = int(request.args.get("n", 20))
+    rows = list(TOP1000_MANIFEST.values())
+    rows.sort(key=lambda r: r.get("combined_score", -1e9), reverse=True)
+    return jsonify({
+        "n_total": len(rows),
+        "rows": rows[:n],
+    })
+
+
+# ── Seed Mol 1 cofold (Cys346) — pending redo ──────────────────────────
+# Old Cys560-targeted seed poses are deprecated. New Cys346 versions will
+# populate at data/boltz_poses/mol1__zap70_cys346/ when ready.
+SEED_POSE_DIR = PROJECT_ROOT / "data" / "boltz_poses" / "mol1__zap70_cys346"
+SEED_POSE_META = None
+_seed_meta_path = SEED_POSE_DIR / "mol1_manifest.json"
+if _seed_meta_path.exists():
+    SEED_POSE_META = json.loads(_seed_meta_path.read_text()).get("mol1")
+    print(f"Loaded seed Mol 1 cofold pose (Cys346)")
+else:
+    print(f"No Cys346 seed Mol 1 cofold yet")
+
+
+@app.route("/api/pose_seed")
+def api_pose_seed():
+    """Return the cofolded Mol 1 (seed) protein-ligand mmCIF + metadata.
+
+    Query param `variant`:
+      - 'v1' (default): no pocket constraint — covalent bond to Cys560 forms,
+        molecule sits at activation loop, NO hinge H-bonds
+      - 'v2': pocket constraint at hinge (Met414/Glu415/Met416) — molecule
+        binds canonically at ATP pocket with hinge H-bonds, but warhead can't
+        reach Cys560 so covalent bond is NOT formed
+    """
+    variant = request.args.get("variant", "v1")
+    if variant == "v2":
+        v2_dir = PROJECT_ROOT / "data" / "boltz_poses" / "mol1_v2" / "mol1_v2_pocket"
+        cif_path = v2_dir / "mol1_v2_pocket_model_0.cif"
+        conf_path = v2_dir / "confidence_mol1_v2_pocket_model_0.json"
+        if not cif_path.exists():
+            return jsonify({"available": False})
+        meta = {
+            "pose_name": "mol1_v2_pocket",
+            "smiles": "C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1",
+            "method": "Seed (Mol 1) — pocket-constrained",
+            "variant": "v2",
+            **(json.loads(conf_path.read_text()) if conf_path.exists() else {}),
+        }
+        return jsonify({
+            "available": True,
+            "cif": cif_path.read_text(),
+            "metadata": meta,
+        })
+
+    # default: v1
+    cif_path = SEED_POSE_DIR / "mol1" / "mol1_model_0.cif"
+    if not cif_path.exists() or SEED_POSE_META is None:
+        return jsonify({"available": False})
+    meta = dict(SEED_POSE_META)
+    meta["variant"] = "v1"
+    return jsonify({
+        "available": True,
+        "cif": cif_path.read_text(),
+        "metadata": meta,
     })
 
 
