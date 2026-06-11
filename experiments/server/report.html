@@ -406,6 +406,16 @@ table.dataTable tbody tr:hover td:nth-child(2),
   font-size:var(--fs-table-header);font-weight:600;letter-spacing:0.04em;
   color:var(--neutral-700);padding:10px 14px;text-align:left;
   border-bottom:1px solid var(--neutral-200);}
+/* 2026-06-10 PM: sort spinner feedback */
+#fp-survivors-table.fp-sorting tbody{opacity:0.45;pointer-events:none;transition:opacity 100ms;}
+#fp-survivors-table.fp-sorting thead th{cursor:wait;}
+#fp-survivors-table thead th.fp-sorting-now{position:relative;}
+#fp-survivors-table thead th.fp-sorting-now::after{
+  content:"";display:inline-block;width:9px;height:9px;
+  border:1.5px solid var(--neutral-300);border-top-color:var(--primary-600);
+  border-radius:50%;margin-left:6px;vertical-align:-1px;
+  animation:fp-spin 700ms linear infinite;}
+@keyframes fp-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 #fp-survivors-table tbody td{padding:10px 14px;
   border-bottom:1px solid var(--neutral-200);
   color:var(--neutral-900);vertical-align:middle;}
@@ -604,6 +614,26 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
   (port 5001) and refresh.
 </div>
 
+<!-- ────────── Mol1 Lead Optimization (compact) — sits ABOVE Filter & Ranking ────────── -->
+<section class="page" id="mol1-lead-optimization-top" style="padding:16px 24px 0;">
+  <div style="display:flex;align-items:flex-start;gap:18px;background:var(--neutral-0);border:1px solid var(--neutral-200);border-radius:var(--radius);padding:14px 16px;">
+    <img src="/figures/mol1_pharmacophore_3groups.png"
+         alt="Mol1 substructure groups — Murcko / THIQ-acrylamide / acrylamide / Murcko-AND-acrylamide"
+         style="width:100%;max-width:480px;flex:0 0 auto;border:1px solid var(--neutral-200);border-radius:4px;" />
+    <div style="flex:1 1 0;min-width:280px;">
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
+        <h2 style="font-size:16px;font-weight:600;margin:0;color:var(--neutral-900);">Mol1 Lead Optimization</h2>
+        <span style="font-size:11px;color:var(--neutral-500);">3 substructure groups used by Filter 0 below.</span>
+      </div>
+      <div style="font-size:12px;color:var(--neutral-700);line-height:1.55;">
+        <b>Across 16 cohorts (636,684 mols):</b> Murcko 169,995 (26.7%) · THIQ-acryl 413,568 (65.0%) · Acrylamide 630,095 (99.0%) · M+A 166,938 (26.2%).<br>
+        <b>OLD (pre-RL, 213,695):</b> Murcko 0.17% · THIQ 2.65% · M+A 0.17%.<br>
+        <b>NEW (Mol1-anchored RL, 422,989):</b> Murcko <b>40.1%</b> · THIQ <b>96.4%</b> · M+A <b>39.4%</b> — the lead-optimization-relevant population.
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ────────── Filter & Ranking Panel ────────── -->
 <section class="page" id="filter-panel-section" style="padding:16px 24px 0;">
   <details id="filter-panel-details" open style="background:var(--neutral-0);
@@ -624,10 +654,21 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
               title="Filter settings changed since last Apply. Click Apply to refresh the survivors table.">
           ● unapplied changes
         </span>
-        <button type="button" id="fp-apply-btn" onclick="event.preventDefault();event.stopPropagation();fpApply()"
+        <button type="button" id="fp-apply-btn"
+            onclick="event.preventDefault();event.stopPropagation();fpApply();return false;"
             class="fp-bulk-btn"
             style="background:var(--primary-500, #2563EB);color:#fff;border-color:var(--primary-500, #2563EB);font-weight:600;"
             title="Apply current filter settings — reloads the survivors table">Apply filters</button>
+        <!-- 2026-06-10 FIX: removed onmousedown=preventDefault. Reason: prevent-
+             ing the default mousedown action ALSO prevents focus from leaving
+             any active <input>. As a result, the user could type a new cutoff
+             into a fp-cutoff text input, click Apply, and the input's `change`
+             event would NEVER fire — so fpEditCutoff was never called and the
+             new cutoff was silently lost. Apply ran with the stale FP_STATE
+             value and the cohort "didn't change". The <details> panel is
+             already kept open by the separate `toggle` listener installed in
+             DOMContentLoaded; the preventDefault on mousedown was redundant
+             and the root cause of the silent-Apply bug. -->
         <button type="button" id="fp-bulk-disable-all" onclick="event.preventDefault();event.stopPropagation();fpDisableAll()"
             class="fp-bulk-btn" title="Stage: turn off every filter (click Apply to reload)">Disable all</button>
         <button type="button" id="fp-bulk-only-l1" onclick="event.preventDefault();event.stopPropagation();fpApplyOnlyLayer(1)"
@@ -650,17 +691,22 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
     <!-- ── Count cascade strip ── -->
     <div id="fp-cascade" style="margin:14px 0 10px;display:flex;flex-wrap:wrap;
          align-items:center;gap:6px;font-size:12px;color:var(--neutral-700);">
-      <span class="fp-cascade-cell">Total <strong id="fp-c-total">—</strong></span>
+      <span class="fp-cascade-cell">Library <strong id="fp-c-total">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
-      <span class="fp-cascade-cell">After F1 <strong id="fp-c-l1">—</strong></span>
+      <span class="fp-cascade-cell" title="Filter 0 — Mol1-anchored substructure OR-set">After F0 <strong id="fp-c-l0">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
-      <span class="fp-cascade-cell">After F2 <strong id="fp-c-l2">—</strong></span>
+      <span class="fp-cascade-cell" title="Filter 1: merged physchem hard-exclude">After F1 <strong id="fp-c-l1">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
-      <span class="fp-cascade-cell">After F3 <strong id="fp-c-l3">—</strong></span>
+      <span class="fp-cascade-cell" title="Filter 3: ML predictions + cheap RDKit (pIC50, LLE, SA, max_pubTc, strain, shape_Tc, log_k2)">After F3 <strong id="fp-c-l3">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
-      <span class="fp-cascade-cell">After F4 <strong id="fp-c-l4">—</strong></span>
+      <span class="fp-cascade-cell" title="Filter 4: Vina + AD-CovDock docking quality gates">After F4 <strong id="fp-c-l4">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
-      <span class="fp-cascade-cell">After F5 <strong id="fp-c-l5">—</strong></span>
+      <span class="fp-cascade-cell" id="fp-c-rescue-cell" style="background:#fef3e2;border-color:#d97706;color:#92400e;"
+            title="Mol1 RESCUE PATH: shape_Tc_mol1 ≥ 0.40 AND Tc_to_Mol1 ≥ 0.59 (no upper cap). Recovers close-Mol1 analogs that fail strict F4 (pIC50/LLE) but have tight 3D shape + close 2D similarity. Same Vina+ADCov requirement.">
+        +Rescue <strong id="fp-c-rescue">—</strong>
+      </span>
+      <span class="fp-cascade-arrow">→</span>
+      <span class="fp-cascade-cell" title="Filter 5: Boltz cofold + PROPKA + MD (currently default-off)">After F5 <strong id="fp-c-l5">—</strong></span>
       <span class="fp-cascade-arrow">→</span>
       <span class="fp-cascade-cell" style="background:var(--primary-50);color:var(--primary-600);">
         Visible <strong id="fp-c-visible">—</strong>
@@ -680,6 +726,20 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
         <input type="checkbox" id="fp-composite-toggle" onchange="fpRefresh()">
         <span>Composite Score (advanced)</span>
       </label>
+    </div>
+
+    <!-- ── Filter 0 — Mol1-anchored substructure OR-set (applies to ALL tables) ── -->
+    <!-- Default: all 3 ON. This is the lead-optimization-relevant union (~65% of total). -->
+    <div id="fp-filter0" style="margin:8px 0 12px;padding:10px 12px;background:var(--primary-50);border:1px solid var(--primary-200);border-radius:var(--radius-sm);">
+      <strong style="font-size:11px;color:var(--primary-700);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:6px;">Filter 0 — Mol1-anchored substructure (OR-set, applies to every table on this page)</strong>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--neutral-900);align-items:center;">
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" class="filter0-chk" value="murcko" checked onchange="onFilter0Change()"> Mol1 Murcko-preserving</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" class="filter0-chk" value="thiq" checked onchange="onFilter0Change()"> THIQ-acrylamide pharmacophore</label>
+        <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" class="filter0-chk" value="murcko_and_acryl" checked onchange="onFilter0Change()"> Murcko AND acrylamide</label>
+        <button type="button" onclick="document.querySelectorAll('.filter0-chk').forEach(c=>{c.checked=true}); onFilter0Change();" style="margin-left:8px;font-size:11px;padding:3px 8px;background:var(--neutral-0);border:1px solid var(--neutral-300);border-radius:4px;cursor:pointer;" title="Re-check all 3 boxes (the default lead-opt view)">Reset (all 3)</button>
+        <button type="button" onclick="document.querySelectorAll('.filter0-chk').forEach(c=>{c.checked=false}); onFilter0Change();" style="font-size:11px;padding:3px 8px;background:var(--neutral-0);border:1px solid var(--neutral-300);border-radius:4px;cursor:pointer;">Show all (no filter)</button>
+        <span id="fp-filter0-status" style="margin-left:auto;font-size:11px;color:var(--neutral-600);"></span>
+      </div>
     </div>
 
     <!-- ── Filter sections (injected by JS) ── -->
@@ -806,6 +866,11 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
 .fp-bulk-btn:hover{background:var(--neutral-50);color:var(--neutral-900);
   border-color:var(--neutral-500);}
 .fp-bulk-btn:active{background:var(--neutral-100);}
+/* ── Spinner shown next to "Applying…" while fpRefresh() is in flight ── */
+.fp-spinner{display:inline-block;animation:spin 0.9s linear infinite;
+  margin-right:4px;font-size:11px;}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+#fp-apply-btn[data-busy="1"]{pointer-events:none;}
 /* Staged-off layer toggle: when a layer is staged disabled (button reads
    "Enable Lx"), the button gets an amber pressed look so the user
    immediately sees the click registered. Survivors table is unchanged
@@ -849,21 +914,89 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
 
 <script>
 // ─── Filter Panel state + logic ────────────────────────────────────────
-const FP_STORAGE_KEY = 'filter_state_v1';
+// 2026-06-10: storage key bumped to v3 — Apply state machine hardened
+// (timeouts, lock-leak guards, consolidated drain). v2 left stale snapshots
+// from hung backend requests that wedged the Apply button silently. Nuke
+// v1 + v2 on next load so users get a clean slate.
+const FP_STORAGE_KEY = 'filter_state_v3';
+const FP_LEGACY_STORAGE_KEYS = ['filter_state_v1','filter_state_v2'];
+// Hard ceiling on a single /api/filter call. If the backend hangs (or the tab
+// is throttled in background), we forcibly release inflight locks so the next
+// Apply click does not silently no-op. Tier-3 cascade typically takes 5-7s.
+const FP_REQUEST_TIMEOUT_MS = 30000;
+// Debug log — set to false to silence the Apply trace in production.
+const FP_DEBUG = true;
+function fpLog(){ if(FP_DEBUG) console.log.apply(console, ['[fp]', ...arguments]); }
+// fetch-with-timeout: rejects with a clear error after FP_REQUEST_TIMEOUT_MS.
+// Uses AbortController so the underlying request is actually cancelled, not
+// just abandoned — important to prevent stale responses landing after a retry.
+function fpFetchWithTimeout(url, ms){
+  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const opts = ctrl ? {signal: ctrl.signal} : {};
+  const t = setTimeout(() => { try{ ctrl && ctrl.abort(); }catch(_){} },
+                       ms || FP_REQUEST_TIMEOUT_MS);
+  return fetch(url, opts).finally(() => clearTimeout(t));
+}
 let FP_SPEC = null;
-let FP_STATE = {filters: {}, sort: null, composite: false};
+let FP_SPEC_VERSION = null;  // populated from /api/spec; persisted so we can detect drift
+let FP_STATE = {filters: {}, sort: null, composite: false, spec_version: null};
 let FP_REQUEST_INFLIGHT = false;
 let FP_REQUEST_PENDING = false;
 
 function fpPersist(){
-  try{ localStorage.setItem(FP_STORAGE_KEY, JSON.stringify(FP_STATE)); }catch(_e){}
+  try{
+    FP_STATE.spec_version = FP_SPEC_VERSION;
+    localStorage.setItem(FP_STORAGE_KEY, JSON.stringify(FP_STATE));
+  }catch(_e){}
 }
 function fpRestore(){
+  // Drop legacy keys so they never resurface.
+  try{
+    for(const k of FP_LEGACY_STORAGE_KEYS){ localStorage.removeItem(k); }
+  }catch(_e){}
   try{
     const raw = localStorage.getItem(FP_STORAGE_KEY);
     if(!raw) return;
     const s = JSON.parse(raw);
-    if(s && typeof s === 'object') Object.assign(FP_STATE, s);
+    if(!s || typeof s !== 'object') return;
+    // Version mismatch → discard restored state entirely; spec defaults stand.
+    if(FP_SPEC_VERSION && s.spec_version && s.spec_version !== FP_SPEC_VERSION){
+      console.info('[fpRestore] spec_version drift (saved='+s.spec_version+', spec='+FP_SPEC_VERSION+'); discarding cached filter state');
+      try{ localStorage.removeItem(FP_STORAGE_KEY); }catch(_e){}
+      return;
+    }
+    // 2026-06-10: MERGE restored filters into the spec-defaults rather than
+    // replacing wholesale. Object.assign(FP_STATE, s) used to swap
+    // FP_STATE.filters entirely, leaving any newly-added filter ID missing
+    // until the post-restore backfill in fpInit ran. During that window any
+    // call to fpStateSnapshot() would see a holey object → fpMarkDirty would
+    // spuriously light/un-light the indicator on a race.
+    if(s.filters && typeof s.filters === 'object'){
+      // Validate stored IDs against the live spec; silently drop strangers.
+      const validIds = new Set();
+      if(FP_SPEC){
+        for(const layer of ['layer0_vetoes','layer1','layer2','layer3','layer4','layer5']){
+          if(!FP_SPEC[layer]) continue;
+          for(const f of FP_SPEC[layer].filters){ validIds.add(f.id); }
+        }
+      }
+      let dropped = 0;
+      for(const k of Object.keys(s.filters)){
+        if(validIds.size && !validIds.has(k)){ dropped++; continue; }
+        const st = s.filters[k];
+        if(st && typeof st === 'object'){
+          FP_STATE.filters[k] = {
+            on: !!st.on,
+            cutoff: (st.cutoff !== undefined) ? st.cutoff : (FP_STATE.filters[k]?.cutoff),
+          };
+        }
+      }
+      if(dropped > 0) console.info('[fpRestore] dropped '+dropped+' stale filter IDs');
+    }
+    // Restore non-filter scalar fields (sort, composite, spec_version).
+    if(Array.isArray(s.sort)) FP_STATE.sort = s.sort.map(x => ({...x}));
+    if(typeof s.composite === 'boolean') FP_STATE.composite = s.composite;
+    FP_STATE.spec_version = s.spec_version || FP_SPEC_VERSION;
   }catch(_e){}
 }
 function fpDefaultsFromSpec(){
@@ -879,7 +1012,8 @@ function fpDefaultsFromSpec(){
 async function fpInit(){
   const r = await fetch(BACKEND + '/api/spec');
   FP_SPEC = await r.json();
-  // Initialise state from defaults, then overlay restored state
+  FP_SPEC_VERSION = FP_SPEC.version || null;
+  // Initialise state from defaults, then overlay restored state (post-version-check + migration)
   FP_STATE.filters = fpDefaultsFromSpec();
   FP_STATE.sort = FP_SPEC.simple_sort.map(s => ({...s}));
   fpRestore();
@@ -918,8 +1052,8 @@ function fpResetAll(){
 function fpRenderLayers(){
   const host = document.getElementById('fp-layers');
   const layers = [
-    {key:'layer1', open:true},
-    {key:'layer2', open:true},
+    {key:'layer1', open:false},
+    {key:'layer2', open:false},
     {key:'layer3', open:false},
     {key:'layer4', open:false},
     {key:'layer5', open:false},
@@ -1192,9 +1326,124 @@ function fpApplyOnlyLayer(n){
 }
 
 // "Apply filters" — commits the staged settings: reloads the survivors table.
-function fpApply(){
+// 2026-06-10: hardened state machine.
+//   - Apply click ALWAYS logs to console (FP_DEBUG); user can trace next hang.
+//   - Watchdog timer (FP_REQUEST_TIMEOUT_MS + 2s) force-releases the busy flag
+//     even if fpRefresh's own timeout/cleanup mis-fires. Cures the "click does
+//     nothing forever" symptom.
+//   - Pending click drained inside the watchdog path too, not just the
+//     happy-path finally.
+//   - Snapshot is taken BEFORE the await (state machine purity).
+let FP_APPLY_PENDING = false;
+let FP_APPLY_WATCHDOG = null;
+function _fpApplyResetButton(btn, orig){
+  if(!btn) return;
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.cursor = '';
+  if(orig != null) btn.innerHTML = orig;
+  btn.dataset.busy = '0';
+}
+async function fpApply(){
+  fpLog('Apply clicked');
+  // ── 2026-06-10: COMMIT PENDING CUTOFF EDIT (belt + suspenders) ────────
+  // `<input type=text>` only fires `change` on BLUR, not on every keystroke.
+  // If the user types a new cutoff and clicks Apply without tabbing away,
+  // the only blur-trigger is the button click itself. The original Apply
+  // button had `onmousedown=preventDefault` (now removed) which suppressed
+  // that blur and silently dropped the typed value. Even with that bug
+  // fixed, we explicitly blur the active cutoff input here so the change
+  // handler fires and FP_STATE is up-to-date before we fetch.
+  try{
+    const ae = document.activeElement;
+    if(ae && ae.classList && ae.classList.contains('fp-cutoff')){
+      ae.blur();
+    }
+  }catch(_e){}
+  // ── 2026-06-08: visible-feedback Apply (UX QA spec) ───────────────────
+  // The button lives inside the panel's <summary>; some browsers still
+  // toggle the parent <details> on a stray bubble. Force the panel OPEN.
+  const detEl = document.getElementById('filter-panel-details');
+  if(detEl){ detEl.open = true; }
+  const btn = document.getElementById('fp-apply-btn');
+  // Re-entry: if first apply is still in flight, queue the pending click.
+  if(btn && btn.dataset.busy === '1'){
+    FP_APPLY_PENDING = true;
+    fpLog('Apply: queued (busy)');
+    // Update spinner text so the user sees their re-click registered.
+    btn.innerHTML = '<span class="fp-spinner" aria-hidden="true">⏳</span> Applying… (queued)';
+    return;
+  }
+  const orig = btn ? btn.innerHTML : null;
+  if(btn){
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'progress';
+    btn.innerHTML = '<span class="fp-spinner" aria-hidden="true">⏳</span> Applying…';
+  }
   fpClearDirty();
-  fpRefresh();          // full path: cascade + preview + survivors
+  fpLog('Apply: state snapshot taken');
+  // Watchdog — if fpRefresh hangs past the inner timeout for any reason
+  // (e.g. unhandled promise rejection up the stack, stale microtask), force a
+  // hard reset so the button does not stay frozen forever.
+  if(FP_APPLY_WATCHDOG){ clearTimeout(FP_APPLY_WATCHDOG); }
+  FP_APPLY_WATCHDOG = setTimeout(() => {
+    console.warn('[fp] Apply watchdog tripped — force-releasing locks');
+    FP_REQUEST_INFLIGHT = false;
+    FP_CASCADE_INFLIGHT = false;
+    FP_SURVIVORS.inflight = false;
+    _fpApplyResetButton(btn, orig);
+    let banner = document.getElementById('fp-error-banner');
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'fp-error-banner';
+      banner.style.cssText = 'margin:10px 0;padding:8px 12px;background:#fee2e2;'
+        + 'border:1px solid #b91c1c;color:#7f1d1d;border-radius:4px;font-size:12px;';
+      const host = document.getElementById('filter-panel-details');
+      if(host) host.prepend(banner);
+    }
+    banner.textContent = 'Filter apply watchdog tripped (>'
+      + Math.round((FP_REQUEST_TIMEOUT_MS + 2000) / 1000)
+      + 's). Locks force-released. Try again — if it keeps failing, click Reset all.';
+    // Drain any pending click so the next user attempt isn't trapped.
+    if(FP_APPLY_PENDING){
+      FP_APPLY_PENDING = false;
+      setTimeout(() => fpApply(), 0);
+    }
+  }, FP_REQUEST_TIMEOUT_MS + 2000);
+  try{
+    fpLog('Apply: fetch starting (fpRefresh)');
+    await fpRefresh();
+    fpLog('Apply: DOM updated');
+    // Clear any prior error banner if the request succeeded.
+    const old = document.getElementById('fp-error-banner');
+    if(old) old.remove();
+  } catch(e){
+    console.error('fpApply', e);
+    let banner = document.getElementById('fp-error-banner');
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'fp-error-banner';
+      banner.style.cssText = 'margin:10px 0;padding:8px 12px;background:#fee2e2;'
+        + 'border:1px solid #b91c1c;color:#7f1d1d;border-radius:4px;font-size:12px;';
+      const host = document.getElementById('filter-panel-details');
+      if(host) host.prepend(banner);
+    }
+    banner.textContent = `Filter apply failed: ${e.message || e}. Try again or click Reset all.`;
+  } finally {
+    if(FP_APPLY_WATCHDOG){ clearTimeout(FP_APPLY_WATCHDOG); FP_APPLY_WATCHDOG = null; }
+    _fpApplyResetButton(btn, orig);
+    if(detEl){ detEl.open = true; }
+    fpLog('Apply: complete');
+  }
+  // Drain pending click if user re-clicked while we were busy.
+  if(FP_APPLY_PENDING){
+    FP_APPLY_PENDING = false;
+    fpLog('Apply: draining pending click');
+    // Yield to the event loop so the busy-flag reset is visible before re-entry.
+    setTimeout(() => fpApply(), 0);
+  }
 }
 
 // Dirty-state indicator: lit when staged settings differ from last applied.
@@ -1211,7 +1460,16 @@ function fpStateSnapshot(){
 }
 function fpMarkDirty(){
   const cur = fpStateSnapshot();
-  const dirty = (FP_APPLIED_SNAPSHOT != null && cur !== FP_APPLIED_SNAPSHOT);
+  // 2026-06-10: if snapshot was never initialised (e.g. fpMarkDirty fires
+  // before fpInit's fpClearDirty), bootstrap it to the current state so the
+  // FIRST user edit lights the indicator instead of being silently masked.
+  if(FP_APPLIED_SNAPSHOT == null){
+    FP_APPLIED_SNAPSHOT = cur;
+    const el0 = document.getElementById('fp-dirty-indicator');
+    if(el0) el0.style.display = 'none';
+    return;
+  }
+  const dirty = (cur !== FP_APPLIED_SNAPSHOT);
   const el = document.getElementById('fp-dirty-indicator');
   if(el) el.style.display = dirty ? '' : 'none';
 }
@@ -1308,23 +1566,40 @@ function fpBuildQuery(opts){
     const sortStr = FP_STATE.sort.map(s => s.col + ':' + s.dir).join(',');
     if(sortStr) params.set('sort', sortStr);
   }
+  // Filter 0 — Mol1-anchored substructure OR-set (intersection with L1-L5).
+  // Always emit so all-empty means "off" (backend default is OR-of-all-3).
+  const f0 = (window.FILTER0_GROUPS || []);
+  params.set('groups', f0.length ? f0.join(',') : 'off');
   return params.toString();
 }
 
 async function fpRefresh(){
   // Full "Apply" path — cascade counts + preview + survivors table.
   if(!FP_SPEC) return;
-  if(FP_REQUEST_INFLIGHT){ FP_REQUEST_PENDING = true; return; }
+  if(FP_REQUEST_INFLIGHT){
+    fpLog('fpRefresh: in-flight, queueing pending');
+    FP_REQUEST_PENDING = true;
+    return;
+  }
   FP_REQUEST_INFLIGHT = true;
+  fpLog('fpRefresh: fetch starting');
+  let _err = null;
   try{
     const q = fpBuildQuery();
-    const r = await fetch(BACKEND + '/api/filter?' + q);
+    const r = await fpFetchWithTimeout(BACKEND + '/api/filter?' + q, FP_REQUEST_TIMEOUT_MS);
+    if(!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    fpUpdateCounts(d.counts, d.n_visible);
-    fpUpdatePreview(d.rows || []);
-    fpUpdateSummary(d.counts, d.n_visible);
+    fpLog('fpRefresh: fetch completed, n_visible=', d && d.n_visible);
+    // ── 2026-06-08: defensive null-checks (UX QA spec). A malformed
+    // response with missing `counts` previously blanked the cascade strip
+    // (NaN → "—"); now we keep the prior values in place instead.
+    if(d && d.counts){
+      fpUpdateCounts(d.counts, d.n_visible);
+      fpUpdateSummary(d.counts, d.n_visible);
+    }
+    fpUpdatePreview(d && d.rows ? d.rows : []);
     // Refresh the unified survivors table (Enhancement 1). n_visible drives paging.
-    FP_SURVIVORS.total = d.n_visible || 0;
+    FP_SURVIVORS.total = (d && d.n_visible) || 0;
     FP_SURVIVORS.start = 0;
     fpSurvivorsRefresh(true);
     // If a per-filter detail block is open, refresh its histogram to match
@@ -1335,13 +1610,25 @@ async function fpRefresh(){
     });
   } catch(e){
     console.error('fpRefresh', e);
+    // Surface AbortError as a clearer timeout for the user.
+    if(e && (e.name === 'AbortError' || /aborted/i.test(String(e.message)))){
+      _err = new Error('Filter apply timed out after ' + Math.round(FP_REQUEST_TIMEOUT_MS/1000) + 's. The backend may be overloaded — try again.');
+    } else {
+      _err = e;
+    }
+    // Stash so we can re-throw AFTER releasing the inflight lock (otherwise
+    // fpApply's catch fires while FP_REQUEST_INFLIGHT is still true, and a
+    // user retry is silently absorbed by the inflight guard).
   } finally {
     FP_REQUEST_INFLIGHT = false;
+    fpLog('fpRefresh: lock released (err=' + (_err ? _err.message : 'none') + ')');
     if(FP_REQUEST_PENDING){
       FP_REQUEST_PENDING = false;
-      fpRefresh();
+      // Schedule on the next tick so the lock is observably released before re-entry.
+      setTimeout(() => fpRefresh(), 0);
     }
   }
+  if(_err) throw _err;  // surface to fpApply()
 }
 
 // Cheap live update — only refreshes the count cascade strip + summary header.
@@ -1355,7 +1642,8 @@ async function fpRefreshCascadeOnly(){
     const params = new URLSearchParams(fpBuildQuery({length: 0}));
     params.set('length', '0');  // no rows — counts only, very cheap
     params.set('start',  '0');
-    const r = await fetch(BACKEND + '/api/filter?' + params.toString());
+    const r = await fpFetchWithTimeout(BACKEND + '/api/filter?' + params.toString(),
+                                       FP_REQUEST_TIMEOUT_MS);
     const d = await r.json();
     fpUpdateCounts(d.counts, d.n_visible);
     fpUpdateSummary(d.counts, d.n_visible);
@@ -1365,7 +1653,7 @@ async function fpRefreshCascadeOnly(){
     FP_CASCADE_INFLIGHT = false;
     if(FP_CASCADE_PENDING){
       FP_CASCADE_PENDING = false;
-      fpRefreshCascadeOnly();
+      setTimeout(() => fpRefreshCascadeOnly(), 0);
     }
   }
 }
@@ -1385,11 +1673,95 @@ const FP_SURVIVORS = {
 
 function fpSurvivorsBuildThead(){
   // Mirror leaderBuildThead() but use plain class names + a click-sort handler.
+  // 2026-06-10 PM: hover tooltips per column (one-liner explanations).
+  const FP_COL_TOOLTIPS = {
+    // ── IDENTITY ──
+    'method':                     'RL fine-tuning cohort that generated this molecule (e.g. thiq_rl_zap70 / murcko_rl_kinase / mol1RL_v5_seed_mol1_only).',
+    'pharmacophore':              'Mol1-anchored substructure family the molecule matches: Murcko-scaffold / THIQ-acrylamide / Murcko+acryl (Filter 0).',
+    'desirability_score':         'Combined Score = (P_potency)^0.22 × (P_pose)^0.18 × (P_shape_to_mol1)^0.20 × (P_covgeom)^0.10 × (P_clean_reactivity)^0.10 × (P_Tec_family)^0.10 × (P_kinase)^0.05 × (P_pIC50_kinase_aux)^0.05 — geometric mean of 8 percentile components (Σ=1.0). Higher = better.',
+    'MW':                         'Molecular weight (Da). Drug-likeness gate ≤500 at L1.',
+    // ── PREDICTED POTENCY ──
+    'pIC50_mean':                 'pIC50 (mean over 3-seed FiLMDelta ensemble × 280 ZAP70 anchors). Higher = more potent predicted binding. Mol1 = 6.59.',
+    'pIC50_std':                  'Ensemble disagreement on pIC50 across 3 seeds. >0.5 = high uncertainty; flag for re-eval.',
+    'anchor_wins':                'Count of 280 ZAP70 anchor mols the candidate is predicted to beat (FiLMDelta δ>0). Range 0-280.',
+    'anchor_wins_ge7':            'Wins restricted to high-potency anchors (pIC50 ≥ 7; 57 of 280). Max = 57. RECOMPUTED 2026-06-10 with correct mask (was buggy).',
+    'delta_vs_mol1':              'Predicted Δ pIC50 vs Mol1 (ensemble mean of FiLMDelta). +0.5 = ~3× more potent.',
+    // ── SIM — INTERNAL ──
+    'Tc_to_Mol1':                 'Tanimoto similarity to Mol1 (Morgan FP r=2, 2048 bits). Lead-opt window [0.40, 0.72] enforced at L1.',
+    'mean_top10_Tc_train':        'Mean Tanimoto to top-10 most-similar ZAP70 training mols. Higher = closer to training distribution (less extrapolation risk).',
+    // ── SIM — 3D SHAPE ──
+    'shape_Tc_mol1':              '3D shape Tanimoto vs Mol1 (RDKit O3A + ShapeTanimotoDist on 4-conformer ETKDG+MMFF ensemble). >0.6 = strong 3D footprint preservation.',
+    'esp_sim_seed':               'ESPSim shape + Gasteiger-charge similarity vs Mol1. Range −1 to +1. Cohort-recalibrated thresholds (max ≈0.13 on F4 pool, vs 0.16 on older cohort).',
+    'warhead_dev_deg':            'Min angle (deg) between Mol1\'s C=C−C(=O)−N warhead vector and candidate\'s, over conformer pairs after O3A alignment. <15° = ready-to-react geometry.',
+    // ── COFOLD GEOMETRY ──
+    'n_h_bonds':                  'Number of polar N/O ↔ protein N/O contacts at 2.5–3.5 Å in the Boltz cofold pose. Surrogate for H-bond network.',
+    'n_stabilizing_contacts':     'Sum of covalent + H-bonds + salt bridges + π-π contacts on the Boltz pose. Higher = better pocket complementarity.',
+    'rdkit_strain_kcal_mol':      'MMFF strain energy on the un-relaxed Boltz cofold pose. Boltz prioritises covalent geometry over vdW fit → high baseline (med 483, p90 575). Use as relative pose-quality rank.',
+    'rdkit_strain_posefree_kcal_mol': 'MMFF strain on the FREE-state ligand (no protein context). Lower = less strained ligand intrinsically; med 65, gate ≤80 at L3.',
+    // ── BOLTZ confidence (legacy aliases) ──
+    'iptm':                       'Boltz-2 interface predicted TM-score (iPTM). Higher = more confident protein-ligand interface. Same as boltz_iptm (legacy alias).',
+    'boltz_plddt':                'Boltz-2 complex pLDDT (per-residue confidence avg). 0–100. >80 = high-confidence structure. Same as boltz_complex_plddt.',
+    'boltz_confidence':           'Boltz-2 overall confidence score — weighted composite of iptm, ipLDDT, etc. Range 0–1. >0.85 top-tier.',
+    // ── KINASE-LIKE ──
+    'P_kinase':                   'P(kinase) — probability the molecule is a kinase binder. 3-head FFN trained on 232K mols (178K kinase pos + 18K kinase-TESTED-AND-failed [pIC50<5] + 30K polypharmacology-filtered non-kinase + 5K DUD-E decoys). Scaffold-split AUROC 0.98.',
+    'P_Tec_family':               'P(Tec family) — probability of binding a Tec-family kinase (BTK / ITK / TXK / BMX / TEC). Trained on 9,864 Tec actives. AUROC 0.99. Most-discriminating signal on this cohort per Team #2.',
+    'pIC50_kinase_aux':           'pIC50 (kinase auxiliary regression) — predicted kinase pIC50, R²=0.53, MAE=0.52. 2nd opinion vs FiLMDelta pIC50_mean.',
+    // ── SIM — PUBLICATIONS ──
+    'max_pubTc':                  'Max Tanimoto to any published ZAP70 / Tec-family covalent inhibitor (v3 panel). Hard novelty gate ≤0.35 at L3.',
+    'mean_pubTc':                 'v3 panel: Mean Tanimoto to published kinase-covalent leads.',
+    'top10_mean_pubTc':           'v3 panel: Mean of top-10 Tanimotos to published kinase-covalent leads.',
+    // ── COFOLD GEOMETRY (continued) ──
+    'd_SG':                       'Warhead Cβ to Cys346 Sγ distance (Å). Canonical thioether ≈ 1.8 Å; > 2.5 Å = warhead not engaged. L5 cut ≤6 Å.',
+    'burgi_dunitz_dev_deg':       'Deviation from ideal Bürgi-Dunitz attack angle (107°±10°). Lower = readier-to-react. L5 cut ≤50°.',
+    'atp_pocket_fraction':        'Fraction of ligand heavy atoms within 4 Å of any ZAP70 ATP-pocket residue (Cys346 + hinge + sub-pocket; curated res list — ligand-independent denominator).',
+    'pocket_occupancy_pct':       'Ligand convex-hull volume / pocket-shell convex-hull volume × 100%. Broken metric (max=100%, ρ=+1 with atp_pocket_fraction) — superseded by atp_pocket_fraction. Kept for backward compatibility.',
+    // ── BOLTZ CONFIDENCE family (full) ──
+    'mPAE':                       'Boltz cofold min PAE (PROXY) — derived from confidence.json complex_pde scalar. Lower = more confident pose. Legacy column; comparable across older cohorts.',
+    'mPAE_paper':                 'mPAE_paper — same as legacy mPAE (proxy from confidence.json complex_pde). Headline value used for filter cuts.',
+    'mPAE_london':                'True London min-PAE (Shamir/Wright/Levin JACS 2026) — min over the protein × ligand PAE matrix block. Lower = more confident covalent pose. Tighter and more discriminating than the proxy.',
+    'boltz_iptm':                 'Boltz-2 interface predicted TM-score (iPTM). Higher = more confident protein-ligand interface.',
+    'boltz_ligand_iptm':          'Boltz-2 ligand-specific interface ipTM.',
+    'ligand_iptm':                'Boltz-2 ligand-specific interface ipTM (legacy alias).',
+    'boltz_ptm':                  'Boltz-2 global predicted TM-score (pTM). Protein-wide confidence.',
+    'boltz_protein_iptm':         'Boltz-2 protein-side interface iPTM. Lower than ligand_iptm typically.',
+    'boltz_confidence_score':     'Boltz-2 native overall confidence score. 0–1.',
+    'boltz_complex_plddt':        'Boltz-2 complex pLDDT averaged over all residues. 0–100.',
+    'boltz_complex_iplddt':       'Boltz-2 complex interface-pLDDT (residues at the binding interface). 0–100.',
+    'boltz_complex_pde':          'Boltz-2 complex predicted distance error. Lower = better.',
+    'boltz_complex_ipde':         'Boltz-2 complex interface predicted distance error. Lower = better.',
+    // ── POCKET INTERACTION ENERGY ──
+    'vina_rescore_affinity_kcalmol': 'AutoDock Vina --score_only on Boltz cofold pose with tight box centered on Cys346 Sγ. More negative = better. L5 cut ≤0 (positive = clash).',
+    'vina_rescore_intra_kcalmol': 'Vina ligand internal strain on Boltz cofold pose. Higher = strained warhead conformation. L5 cut ≤8.',
+    'pKa_Cys346':                 'Per-pose Cys346 thiol pKa from PROPKA3. ≤9 productive; >9.5 = <1% thiolate at pH 7.4 = covalent chemistry effectively dead.',
+    'dG_recognition_md_kcalmol':  'MM-GBSA dG_recognition on 1-ns MD trajectory (kcal/mol). Lower = stronger non-covalent binding. Capped-analog protocol — use for ranking, not absolute Ki.',
+    'pred_log_k2_GSH':            'Predicted log k2 rate vs glutathione (warhead reactivity proxy). Higher = more reactive electrophile (off-target risk).',
+    // ── DRUG LIKELINESS ──
+    'LogP':                       'Crippen octanol/water LogP. Sweet spot [1, 4]; gate ≤5 at L1.',
+    'TPSA':                       'Topological polar surface area (Å²). ≤140 for oral bioavailability.',
+    'HBD':                        'H-bond donors (Lipinski ≤5).',
+    'HBA':                        'H-bond acceptors (Lipinski ≤10).',
+    'RotBonds':                   'Rotatable bonds (Veber ≤10 for oral).',
+    'QED':                        'Bickerton QED drug-likeness composite. ≥0.5 drug-like.',
+    'Lipinski_violations':        'Lipinski Rule-of-5 violations (0–4). ≤1 = good.',
+    'PAINS_alerts':               'PAINS interference patterns (Baell & Holloway 2010). 0 = clean.',
+    'Brenk_alerts':               'Brenk reactive/undesirable substructures (Brenk 2008). 0 = clean; ≥2 fails L3.',
+    'HeavyAtoms':                 'Heavy-atom count. Gate ≤50.',
+    'Rings':                      'Total ring count.',
+    'LE':                         'Ligand Efficiency = 1.4·pIC50/HeavyAtoms (Hopkins 2004). Target ≥0.3.',
+    'LLE':                        'Lipophilic Ligand Efficiency = pIC50 − LogP. ≥4 typically required; L3 gate ≥3.5.',
+    'BEI':                        'Binding Efficiency Index = pIC50/MW(kDa). Higher = more efficient binder.',
+    'SEI':                        'Surface Efficiency Index = pIC50/(TPSA/100).',
+    'SILE':                       'Size-Independent LE = pIC50/HeavyAtoms^0.3.',
+    'fsp3':                       'Fraction sp3 carbons. ≥0.25 for 3D character.',
+    'SAScore':                    'Synthetic Accessibility (Ertl 2009). ≤4 = easy; ≥6 = hard.',
+  };
+  // Expose globally so the Mol1 modal (showSeedMolModal) can attach the same
+  // tooltips to its per-family field rows.
+  window.FP_COL_TOOLTIPS_GLOBAL = FP_COL_TOOLTIPS;
   const fam = LEADER_FAMILY_SPEC.map(f =>
     `<th colspan="${f.colspan}" class="fam-banner">${f.title}</th>`
   ).join('');
   const cols = LEADER_COLS.map(c => {
-    // structure + rownum aren't sortable
     const sortable = (c.key !== 'rownum' && c.key !== 'structure');
     const classes = [];
     if(c.num) classes.push('num');
@@ -1398,7 +1770,9 @@ function fpSurvivorsBuildThead(){
     }
     const clsAttr = classes.length ? ` class="${classes.join(' ')}"` : '';
     const onclick = sortable ? ` onclick="fpSurvivorsSortBy('${c.key}')"` : '';
-    return `<th${clsAttr} data-col-key="${c.key}"${onclick}>${c.label}</th>`;
+    const tip = FP_COL_TOOLTIPS[c.key];
+    const titleAttr = tip ? ` title="${tip.replace(/"/g, '&quot;')}"` : '';
+    return `<th${clsAttr} data-col-key="${c.key}"${onclick}${titleAttr}>${c.label}</th>`;
   }).join('');
   return `<tr class="family-header"><th style="background:var(--neutral-100);border:none;"></th>${fam}</tr>`
        + `<tr class="column-header">${cols}</tr>`;
@@ -1422,6 +1796,17 @@ function fpSurvivorsSortBy(col){
   }
   FP_SURVIVORS.sort = {col, dir};
   FP_SURVIVORS.start = 0;
+  // 2026-06-10 PM: visual feedback while server re-sorts.
+  // Add a class to the table that dims rows and shows a spinning indicator
+  // next to the clicked column header. Removed once the next refresh finishes.
+  const tbl = document.getElementById('fp-survivors-table');
+  if(tbl){
+    tbl.classList.add('fp-sorting');
+    // Tag the active column header with a spinner pip
+    document.querySelectorAll('#fp-survivors-table thead th.fp-sorting-now').forEach(el => el.classList.remove('fp-sorting-now'));
+    const hdr = document.querySelector(`#fp-survivors-table thead th[data-col-key="${col}"]`);
+    if(hdr){ hdr.classList.add('fp-sorting-now'); }
+  }
   fpSurvivorsRefresh(true);
 }
 
@@ -1443,6 +1828,10 @@ async function fpSurvivorsRefresh(force){
   if(sel){ FP_SURVIVORS.length = parseInt(sel.value, 10) || 50; }
   if(FP_SURVIVORS.inflight){ FP_SURVIVORS.pending = true; return; }
   FP_SURVIVORS.inflight = true;
+  // 2026-06-10 PM: visual feedback while server fetches — covers both sort AND pagination
+  const _tblShim = document.getElementById('fp-survivors-table');
+  if(_tblShim) _tblShim.classList.add('fp-sorting');
+  fpLog('fpSurvivorsRefresh: fetch starting');
   try{
     const optsBase = {length: FP_SURVIVORS.length, start: FP_SURVIVORS.start};
     const params = new URLSearchParams(fpBuildQuery(optsBase));
@@ -1452,8 +1841,10 @@ async function fpSurvivorsRefresh(force){
       // Override the sort string from FP_STATE
       params.set('sort', FP_SURVIVORS.sort.col + ':' + FP_SURVIVORS.sort.dir);
     }
-    const r = await fetch(BACKEND + '/api/filter?' + params.toString());
+    const r = await fpFetchWithTimeout(BACKEND + '/api/filter?' + params.toString(),
+                                       FP_REQUEST_TIMEOUT_MS);
     const d = await r.json();
+    fpLog('fpSurvivorsRefresh: fetch completed');
     FP_SURVIVORS.total = d.n_visible || 0;
     const rows = d.rows || [];
     // Render
@@ -1485,12 +1876,23 @@ async function fpSurvivorsRefresh(force){
     document.getElementById('fp-pg-last').disabled  = (last >= FP_SURVIVORS.total);
   } catch(e){
     console.error('fpSurvivorsRefresh', e);
-    document.getElementById('fp-survivors-meta').textContent = 'Error loading survivors: ' + (e.message || e);
+    const meta = document.getElementById('fp-survivors-meta');
+    const msg = (e && (e.name === 'AbortError' || /aborted/i.test(String(e.message))))
+      ? 'Survivors fetch timed out after ' + Math.round(FP_REQUEST_TIMEOUT_MS/1000) + 's — backend may be overloaded.'
+      : 'Error loading survivors: ' + (e.message || e);
+    if(meta) meta.textContent = msg;
   } finally {
     FP_SURVIVORS.inflight = false;
+    fpLog('fpSurvivorsRefresh: lock released');
+    // 2026-06-10 PM: clear sort spinner visual on completion
+    const tblEl = document.getElementById('fp-survivors-table');
+    if(tblEl){
+      tblEl.classList.remove('fp-sorting');
+      document.querySelectorAll('#fp-survivors-table thead th.fp-sorting-now').forEach(el => el.classList.remove('fp-sorting-now'));
+    }
     if(FP_SURVIVORS.pending){
       FP_SURVIVORS.pending = false;
-      fpSurvivorsRefresh(true);
+      setTimeout(() => fpSurvivorsRefresh(true), 0);
     }
   }
 }
@@ -1546,9 +1948,16 @@ async function fpDownloadSurvivorsCsv(){
 function fpUpdateCounts(c, nVisible){
   if(!c) return;
   const fmt = n => (n == null ? '—' : Number(n).toLocaleString());
-  document.getElementById('fp-c-total').textContent   = fmt(c.total);
+  // Library = total before any filter (incl. F0). After F0 = post-F0 count.
+  const libTotal = c.total_unfiltered != null ? c.total_unfiltered : c.total;
+  const afterF0  = c.after_filter0    != null ? c.after_filter0    : c.total;
+  document.getElementById('fp-c-total').textContent = fmt(libTotal);
+  const f0Cell = document.getElementById('fp-c-l0');
+  if (f0Cell) f0Cell.textContent = fmt(afterF0);
   document.getElementById('fp-c-l1').textContent      = fmt(c.after_layer1);
-  document.getElementById('fp-c-l2').textContent      = fmt(c.after_layer2);
+  // 2026-06-10: removed F2 cell (merged into F1). New Rescue cell shows the +N count.
+  const rescueEl = document.getElementById('fp-c-rescue');
+  if(rescueEl) rescueEl.textContent = '+' + fmt(c.rescue_added);
   document.getElementById('fp-c-l3').textContent      = fmt(c.after_layer3);
   document.getElementById('fp-c-l4').textContent      = fmt(c.after_layer4);
   document.getElementById('fp-c-l5').textContent      = fmt(c.after_layer5);
@@ -1607,6 +2016,29 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => tryStart(n+1), 30);
   };
   tryStart(0);
+
+  // ── 2026-06-08: keep the <details> panel from auto-collapsing when the
+  // user clicks "Apply filters" or any of the bulk action buttons that
+  // live inside <summary>. The native click-on-summary handler in some
+  // browsers toggles `open` BEFORE the button's onclick fires, even with
+  // stopPropagation; the safest fix is to detect this and immediately
+  // re-open it. We listen for the `toggle` event with a tiny "I just
+  // clicked a bulk button" flag set by mousedown on the buttons.
+  const det = document.getElementById('filter-panel-details');
+  if(det){
+    let _lastBulkClick = 0;
+    det.querySelectorAll('.fp-bulk-btn').forEach(b => {
+      b.addEventListener('mousedown', () => { _lastBulkClick = Date.now(); }, true);
+    });
+    det.addEventListener('toggle', () => {
+      // If a bulk button was clicked in the last 400ms and the panel
+      // tried to close, force it back open. Otherwise (user clicked the
+      // summary text), allow the toggle.
+      if(!det.open && (Date.now() - _lastBulkClick) < 400){
+        det.open = true;
+      }
+    });
+  }
 });
 </script>
 
@@ -1667,6 +2099,10 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </section>
 
+<!-- Mol1 Lead Optimization moved to ABOVE the Filter & Ranking panel.
+     The original anchor is preserved (empty) so any deep links don't 404. -->
+<section class="page mol1-lead-optimization" id="mol1-lead-optimization" style="display:none;"></section>
+
 <!-- ────────── Top-20 by combined score ────────── -->
 <section class="page leaderboard-section" id="leaderboard">
   <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px;">
@@ -1685,10 +2121,17 @@ document.addEventListener('DOMContentLoaded', () => {
       <tbody></tbody>
     </table>
   </div>
-  <div id="leaderboard-pager" style="display:flex;gap:6px;margin-top:10px;justify-content:center;font-size:11px;"></div>
+  <div id="leaderboard-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
 </section>
 
-<!-- ────────── Tier 4 — Covalent-Aware Generation (EXP2 + EXP6) ────────── -->
+<!-- (Tier 4 section is below </main>, with associated render JS; duplicate hidden block removed) -->
+
+<!-- ────────── Page (method sections — includes Tier 1, 2, 3) ────────── -->
+<main class="page" id="page">
+  <!-- Method sections injected by JS -->
+</main>
+
+<!-- ────────── Tier 4 — Covalent-Aware Generation (EXP2 + EXP6) — placed AFTER Tier 3 sections ────────── -->
 <section class="page" id="tier4-covalent-aware" style="padding:32px 24px 0;">
   <h2 style="font-size:22px;font-weight:600;margin:0 0 12px;">Tier 4 — Covalent-Aware Generation</h2>
   <p style="font-size:13px;color:var(--neutral-700);max-width:90ch;margin:0 0 18px;">
@@ -1696,6 +2139,45 @@ document.addEventListener('DOMContentLoaded', () => {
     these methods <em>learn</em> a covalent-mol distribution from the CovInDB 2.0 corpus. Both share the same base
     architecture (Mol2Mol transformer) but differ in how the warhead constraint is taught.
   </p>
+
+  <!-- F4 Boltz-2 pool — Mol1 lead-opt aggressive cascade -->
+  <div style="margin-bottom:24px;border:2px solid #5f3dc4;border-radius:10px;padding:18px;background:linear-gradient(180deg,#f3eefe 0%,#ffffff 60%);">
+    <h3 style="font-size:17px;font-weight:700;margin:0 0 6px;color:#3b1c80;">
+      F4 Boltz-2 Pool — Mol1 Lead-Optimization Selection <span style="color:#5f3dc4;font-weight:600;">(1,684 mols)</span>
+    </h3>
+    <p style="font-size:12px;color:var(--neutral-700);max-width:95ch;margin:0 0 10px;line-height:1.45;">
+      Aggressive F1+F3+F4 cascade applied to the 11 NEW Mol1-anchored RL cohorts (472,606 mols) → <b>1,684 candidates</b>
+      for Boltz-2 pose/affinity prediction. <b>NaN-FAIL semantics</b> — every mol in this pool has all filter values
+      present AND good. Includes Vina ≤ -7.5 kcal/mol AND AD-CovDock ≤ 0 kcal/mol gates. Designed per scientist team
+      consensus 2026-06-09 (relaxed 2026-06-10 for Mol1 chemotype): reduce population via drug-likeness + 3D shape +
+      lead-opt similarity to Mol1; docking quality gates are mandatory.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:10px 0;font-size:11.5px;background:#f8f7fc;padding:12px;border-radius:6px;">
+      <div><b>Cascade reduction:</b><br>472K → 148K (L1) → 3,767 (L3) → <b style="color:#5f3dc4;">1,684 (L4)</b></div>
+      <div><b>Selection:</b><br>NaN-FAIL strict — all filter values present AND good</div>
+      <div><b>Docking gates:</b><br>Vina ≤ -7.5 kcal/mol AND AD-CovDock ≤ 0 kcal/mol</div>
+      <div><b>Anchor lead Mol1:</b><br>pIC50_FiLM = 6.59 (model under-calls Mol1 chemotype)</div>
+    </div>
+    <details style="margin:8px 0 12px;">
+      <summary style="cursor:pointer;font-size:12px;font-weight:600;color:#5f3dc4;">F1+F3+F4 thresholds (click to expand)</summary>
+      <div style="font-size:11.5px;color:var(--neutral-700);line-height:1.55;padding:8px 14px;background:#fefcff;border-left:3px solid #5f3dc4;margin-top:6px;">
+        <b>F1 — Physchem hard exclude (merged F1+F2, strictest cutoffs):</b><br>
+        MW ≤ 500 · LogP ∈ [-1, 5] · TPSA ≤ 140 · HBA ≤ 12 · HBD ≤ 5 · RotBonds ≤ 11 · PAINS = 0 · warhead intact · Tc_to_Mol1 ∈ [0.40, 0.85] · Lipinski violations &lt; 3 · QED ≥ 0.45 · HeavyAtoms ≤ 50 · Brenk &lt; 2
+        <br><br>
+        <b>F3 — ML predictions + cheap RDKit:</b><br>
+        pIC50_FiLM ≥ 7.0 · SAScore ≤ 4.5 · LLE ≥ 3.5 · LE ≥ 0.20 · max_pubTc ≤ 0.35 · strain_posefree ≤ 80 · shape_Tc_mol1 ≥ 0.55 · log_k2_GSH ∈ [-3.0, +0.5]
+        <br><br>
+        <b>F4 — Docking quality gates (NaN-fail):</b><br>
+        vanilla_vina ≤ -7.5 kcal/mol · adcov_local ≤ 0 kcal/mol
+      </div>
+    </details>
+    <div class="leader-scroll" id="tier4-F4_boltz_pool-scroll" style="max-height:520px;">
+      <table id="tier4-F4_boltz_pool-table" class="display compact" style="width:100%;font-size:12px;">
+        <thead></thead><tbody></tbody>
+      </table>
+    </div>
+    <div id="tier4-F4_boltz_pool-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
 
   <!-- EXP2 sub-section -->
   <div style="margin-top:16px;">
@@ -1711,16 +2193,17 @@ document.addEventListener('DOMContentLoaded', () => {
         <tbody></tbody>
       </table>
     </div>
-    <div id="tier4-exp2-pager" style="display:flex;gap:6px;margin-top:10px;justify-content:center;font-size:11px;"></div>
+    <div id="tier4-exp2-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
   </div>
 
   <!-- EXP6 sub-section -->
   <div style="margin-top:24px;">
     <h3 style="font-size:16px;font-weight:600;margin:0 0 4px;">EXP6 — Mol2Mol Warhead-Class Vocab Tokens + FT</h3>
     <p style="font-size:12px;color:var(--neutral-600);max-width:90ch;margin:0 0 10px;">
-      Mol2Mol with extended vocabulary (`[ACRYLAMIDE]`, `[CHLOROACETAMIDE]`, `[VINYL_SULFONAMIDE]`, `[EPOXIDE]`)
-      + FT on 5,488 CovInDB pairs prefixed by the appropriate token. Best diversity (422 scaffolds / 500 mols)
-      and best AD-CovDock Vina score (126.6 kcal/mol). The vocab tokens give explicit warhead-class control.
+      Mol2Mol with extended vocabulary (<code>[ACRYLAMIDE]</code>, <code>[CHLOROACETAMIDE]</code>,
+      <code>[VINYL_SULFONAMIDE]</code>, <code>[EPOXIDE]</code>) + FT on 5,488 CovInDB pairs prefixed by the
+      appropriate token. Best diversity (422 scaffolds / 500 mols) and best AD-CovDock Vina score
+      (126.6 kcal/mol). The vocab tokens give explicit warhead-class control.
     </p>
     <div class="leader-scroll" id="tier4-exp6-scroll" style="max-height:480px;">
       <table id="tier4-exp6-table" class="display compact" style="width:100%;font-size:12px;">
@@ -1728,42 +2211,343 @@ document.addEventListener('DOMContentLoaded', () => {
         <tbody></tbody>
       </table>
     </div>
-    <div id="tier4-exp6-pager" style="display:flex;gap:6px;margin-top:10px;justify-content:center;font-size:11px;"></div>
+    <div id="tier4-exp6-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+
+  <!-- EXP6_v3 sub-section — REFRESHED 2026-06-05 with overnight 58.8K sampling -->
+  <div style="margin-top:24px;">
+    <h3 style="font-size:16px;font-weight:600;margin:0 0 4px;">EXP6_v3 — Warhead-tokens v1 prior, no RL (58.8K samples)</h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:90ch;margin:0 0 10px;">
+      Mol2Mol warhead-tokens v1 prior (vocab 132 with <code>[ACRYLAMIDE]</code>/<code>[CHLOROACETAMIDE]</code>/...).
+      Sampled with <code>[ACRYLAMIDE]</code> token prefix from 21 ZAP70-acryl seeds × 5K each on local Mac CPU.
+      <b>Pre-RL baseline cohort</b> (reference for RL-induced distribution shifts in v4/v5).
+      <b>99.6% acrylamide retention</b>, mean FiLM pIC50 = 6.84.
+      Showing Filter-1 11/12 survivors (warhead intact + physchem cuts + FiLM ≥5.5).
+    </p>
+    <div class="leader-scroll" id="tier4-exp6_v3-scroll" style="max-height:480px;">
+      <table id="tier4-exp6_v3-table" class="display compact" style="width:100%;font-size:12px;">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tier4-exp6_v3-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+
+  <!-- EXP2_V2_RL_v2 — RL ablation without Vina-in-loop -->
+  <div style="margin-top:24px;">
+    <h3 style="font-size:16px;font-weight:600;margin:0 0 4px;">EXP2_V2_RL_v2 — EXP2 covalent FT + RL (FiLM + acryl-SMARTS, no Vina)</h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:90ch;margin:0 0 10px;">
+      EXP2 covalent FT prior (no warhead tokens, vocab 128) + RL ablation: reward = FiLMDelta pIC50 0.50 + acryl-SMARTS 0.40 + QED 0.10, 50 steps.
+      <b>Ablation</b>: tests whether SMARTS-matching alone (no Vina-in-loop) suffices for covalent constraint.
+      Result: 100% acrylamide retention, mean FiLM pIC50 = <b>7.25</b> (the highest of any cohort — RL maximized FiLM directly).
+      But MW stayed heavy (539 Da) and QED low (0.25): Vina-in-loop is the lever for drug-likeness, not the SMARTS reward.
+    </p>
+    <div class="leader-scroll" id="tier4-exp2_v2_rl_v2-scroll" style="max-height:480px;">
+      <table id="tier4-exp2_v2_rl_v2-table" class="display compact" style="width:100%;font-size:12px;">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tier4-exp2_v2_rl_v2-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+
+  <!-- EXP6_v4 — RL with Vina-in-loop but NO warhead tokens (degenerated) -->
+  <div style="margin-top:24px;">
+    <h3 style="font-size:16px;font-weight:600;margin:0 0 4px;">EXP6_v4 — EXP2 covalent FT + RL with Vina-in-loop, NO warhead tokens (DEGENERATED)</h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:90ch;margin:0 0 10px;">
+      EXP2 covalent FT prior (no warhead tokens) + RL with FiLMDelta pIC50 0.50 + AD-CovDock Vina 0.40 + QED 0.10, 50 steps.
+      <b>RL hijacked the reward</b>: policy abandoned acrylamide (99% → 0.2% during RL), so meeko CovalentBuilder tether failed → Vina success collapsed 76% → 2%.
+      Of 80,202 samples, only <b>160 mols retain the warhead AND pass Filter 1</b> (visible here).
+      The other 99.8% are not shown (warhead-filter drops them; see <code>tier4_rl_cohorts/tier4_report.md</code> for the full degeneration story).
+    </p>
+    <div class="leader-scroll" id="tier4-exp6_v4-scroll" style="max-height:480px;">
+      <table id="tier4-exp6_v4-table" class="display compact" style="width:100%;font-size:12px;">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tier4-exp6_v4-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+
+  <!-- EXP6_v5 — RL+Vina+QED + warhead tokens (WINNER) -->
+  <div style="margin-top:24px;">
+    <h3 style="font-size:16px;font-weight:600;margin:0 0 4px;">EXP6_v5 — Warhead-tokens v1 + RL with Vina-in-loop (WINNER, 90.1K survivors)</h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:90ch;margin:0 0 10px;">
+      Warhead-tokens v1 prior + <b>same Vina-in-loop reward as v4</b> (FiLM 0.50 + Vina 0.40 + QED 0.10), 50 steps.
+      Warhead-token conditioning <b>prevented reward-hijacking</b>: acryl retained 99% → 99%, Vina success held 97%,
+      and drug-likeness <b>IMPROVED</b> (QED 0.27 → 0.50, Lipinski-ok 27% → 86%, MW −117 Da).
+      Headline finding: <b>warhead-token conditioning is a prerequisite for covalent RL with composite rewards</b>.
+    </p>
+    <div class="leader-scroll" id="tier4-exp6_v5-scroll" style="max-height:480px;">
+      <table id="tier4-exp6_v5-table" class="display compact" style="width:100%;font-size:12px;">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="tier4-exp6_v5-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- Phase 4+: Mol1-anchored RL with THIQ-acryl reward (2026-06-08) -->
+<!-- ============================================================ -->
+<section class="page" id="tier4-mol1-anchored" style="padding:32px 24px 0;">
+  <h2 style="font-size:22px;font-weight:600;margin:0 0 8px;">Mol1-Anchored RL — Lead Optimization Cohorts</h2>
+  <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 16px;">Comparison across <b>3 base priors × 3 reward designs × up to 3 seed pools</b> for Mol1 lead-optimization. Each subsection shows the cohort's real metrics computed from <code>data/tier4_scored/{tag}_scored.csv</code> (Mol1 anchor for all sampling). <b>Mol1 core (SMARTS)</b> uses the training reward's lenient SMARTS <code>O=C(Nc1cncn1)c1cccc2c1CNC2</code> (matches Mol1's pharmacophore + allows substituent variation). <b>Mol1 Murcko (strict)</b> requires exact Bemis–Murcko equality (rare — useful only as a near-duplicate check).</p>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 3 — Mol1-only RL (generic acrylamide reward) <span style="color:#888;font-weight:400;">— <code>mol1RL_v5_seed_mol1_only</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> Mol1 only (1 seed)<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.45 + acrylamide-SMARTS 0.35 + QED 0.10 + unwanted-SMARTS 0.10<br>
+      <i>First Mol1-anchored RL. Trained on Mol1 alone, reward only checks for generic acrylamide. Baseline for the THIQ-reward + Murcko-reward variants below.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>41,299</div><div><b>Acrylamide intact</b><br>99.5%</div><div><b>THIQ-acryl core</b><br>99.4%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">0.0%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.00%</div><div><b>Tc to Mol1 median</b><br>0.370</div><div><b>Tc ≥ 0.5</b><br>0.4%</div><div><b>Tc max</b><br>0.655</div><div><b>QED median</b><br>0.351</div><div><b>FiLM pIC50 median</b><br>7.27</div><div><b>% pIC50 ≥ 7.0</b><br>78.1%</div><div><b>Max pubTc median</b><br>0.311</div><div><b>Closest lead</b><br>SY-1365</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · xTB ✓</div></div>
+    <div class="leader-scroll" id="tier4-mol1RL_v5_seed_mol1_only-scroll" style="max-height:480px;">  <table id="tier4-mol1RL_v5_seed_mol1_only-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-mol1RL_v5_seed_mol1_only-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 4 — THIQ reward, warhead_tokens base, Mol1-only seed <span style="color:#888;font-weight:400;">— <code>thiq_rl_mol1only</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> Mol1 only (1 seed)<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>Same setup as B'-1 but reward now requires the full Mol1 THIQ-acrylamide core, not just any acrylamide.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>24,153</div><div><b>Acrylamide intact</b><br>97.7%</div><div><b>THIQ-acryl core</b><br>97.5%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">98.4%</span></div><div><b>Mol1 Murcko (strict)</b><br>10.67%</div><div><b>Tc to Mol1 median</b><br>0.566</div><div><b>Tc ≥ 0.5</b><br>94.8%</div><div><b>Tc max</b><br>1.000</div><div><b>QED median</b><br>0.438</div><div><b>FiLM pIC50 median</b><br>6.70</div><div><b>% pIC50 ≥ 7.0</b><br>20.7%</div><div><b>Max pubTc median</b><br>0.259</div><div><b>Closest lead</b><br>PF-06651600</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · xTB ✓</div></div>
+    <div class="leader-scroll" id="tier4-thiq_rl_mol1only-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_mol1only-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_mol1only-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 4 — THIQ reward, warhead_tokens base, 220 ZAP70+Mol1 seeds <span style="color:#888;font-weight:400;">— <code>thiq_rl_zap70</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> 220 ZAP70 acrylamide leads + Mol1<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>Same reward as mol1only, but RL sees a 220-seed pool of ChEMBL ZAP70 acrylamides (Mol1 included). Tests whether multi-seed RL keeps Mol1 fidelity.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>27,263</div><div><b>Acrylamide intact</b><br>98.8%</div><div><b>THIQ-acryl core</b><br>95.0%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">0.1%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.00%</div><div><b>Tc to Mol1 median</b><br>0.354</div><div><b>Tc ≥ 0.5</b><br>1.2%</div><div><b>Tc max</b><br>0.634</div><div><b>QED median</b><br>0.545</div><div><b>FiLM pIC50 median</b><br>7.41</div><div><b>% pIC50 ≥ 7.0</b><br>74.0%</div><div><b>Max pubTc median</b><br>0.309</div><div><b>Closest lead</b><br>RM-018</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · <span style="color:#a00;">xTB ✗</span></div></div>
+    <div class="leader-scroll" id="tier4-thiq_rl_zap70-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_zap70-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_zap70-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 4 — THIQ reward, warhead_tokens base, 34K kinase + ZAP70×5 + Mol1×20 seeds <span style="color:#888;font-weight:400;">— <code>thiq_rl_kinase</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> 34,314 kinase panel + ZAP70 ×5 + Mol1 ×20<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>Broad kinase pool with Mol1/ZAP70 over-sampled. Tests whether THIQ reward survives wide chemical diversity.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>77,660</div><div><b>Acrylamide intact</b><br>99.6%</div><div><b>THIQ-acryl core</b><br>99.5%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">0.0%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.00%</div><div><b>Tc to Mol1 median</b><br>0.333</div><div><b>Tc ≥ 0.5</b><br>0.0%</div><div><b>Tc max</b><br>0.536</div><div><b>QED median</b><br>0.391</div><div><b>FiLM pIC50 median</b><br>7.49</div><div><b>% pIC50 ≥ 7.0</b><br>88.0%</div><div><b>Max pubTc median</b><br>0.310</div><div><b>Closest lead</b><br>poziotinib</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · <span style="color:#a00;">xTB ✗</span></div></div>
+    <div class="leader-scroll" id="tier4-thiq_rl_kinase-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_kinase-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_kinase-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 5 — THIQ reward, covalent_ft (EXP2) base, Mol1-only seed <span style="color:#888;font-weight:400;">— <code>thiq_rl_exp2_mol1only</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> covalent_ft (EXP2) · <b>RL seed pool:</b> Mol1 only (1 seed)<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>Same reward as Phase 4 but starting from covalent_ft prior (the EXP2 base). Hypothesis: covalent_ft is more Mol1-friendly than warhead_tokens.</i>
+    </p>
+    <div class="leader-scroll" id="tier4-thiq_rl_exp2_mol1only-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_exp2_mol1only-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_exp2_mol1only-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 5 — THIQ reward, covalent_ft (EXP2) base, 220 ZAP70+Mol1 seeds <span style="color:#888;font-weight:400;">— <code>thiq_rl_exp2_zap70</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> covalent_ft (EXP2) · <b>RL seed pool:</b> 220 ZAP70 acrylamide leads + Mol1<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>covalent_ft × 220-seed ZAP70 pool.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>41,667</div><div><b>Acrylamide intact</b><br>96.1%</div><div><b>THIQ-acryl core</b><br>96.2%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">25.3%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.56%</div><div><b>Tc to Mol1 median</b><br>0.500</div><div><b>Tc ≥ 0.5</b><br>54.4%</div><div><b>Tc max</b><br>1.000</div><div><b>QED median</b><br>0.595</div><div><b>FiLM pIC50 median</b><br>6.62</div><div><b>% pIC50 ≥ 7.0</b><br>20.2%</div><div><b>Max pubTc median</b><br>0.280</div><div><b>Closest lead</b><br>PF-06651600</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · <span style="color:#a00;">xTB ✗</span></div></div>
+    <div class="leader-scroll" id="tier4-thiq_rl_exp2_zap70-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_exp2_zap70-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_exp2_zap70-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 5 — THIQ reward, covalent_ft (EXP2) base, 34K kinase + ZAP70×5 + Mol1×20 <span style="color:#888;font-weight:400;">— <code>thiq_rl_exp2_kinase</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> covalent_ft (EXP2) · <b>RL seed pool:</b> 34,314 kinase panel + ZAP70 ×5 + Mol1 ×20<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.50 + THIQ-acrylamide SMARTS 0.40 + QED 0.10<br>
+      <i>covalent_ft × broad kinase pool.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>48,101</div><div><b>Acrylamide intact</b><br>97.3%</div><div><b>THIQ-acryl core</b><br>98.6%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">98.8%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.05%</div><div><b>Tc to Mol1 median</b><br>0.538</div><div><b>Tc ≥ 0.5</b><br>92.2%</div><div><b>Tc max</b><br>0.842</div><div><b>QED median</b><br>0.499</div><div><b>FiLM pIC50 median</b><br>—</div><div><b>% pIC50 ≥ 7.0</b><br>—</div><div><b>Max pubTc median</b><br>0.255</div><div><b>Closest lead</b><br>PF-06651600</div><div><b>Column coverage</b><br><span style="color:#a00;">FiLM ✗</span> · PubTc ✓ · xTB ✓</div></div>
+    <div class="leader-scroll" id="tier4-thiq_rl_exp2_kinase-scroll" style="max-height:480px;">  <table id="tier4-thiq_rl_exp2_kinase-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-thiq_rl_exp2_kinase-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 6 — Mol1-Murcko reward, warhead_tokens base, 220 ZAP70+Mol1 seeds <span style="color:#888;font-weight:400;">— <code>murcko_rl_zap70</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> 220 ZAP70 acrylamide leads + Mol1<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.35 + Mol1-Murcko SMARTS 0.30 + THIQ-acrylamide SMARTS 0.25 + QED 0.10<br>
+      <i>Adds the FULL Mol1 Murcko scaffold (THIQ + benzamide + imidazole) as a 30% reward weight. Toml SMARTS: O=C(Nc1cncn1)c1cccc2c1CNC2</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>38,863</div><div><b>Acrylamide intact</b><br>99.0%</div><div><b>THIQ-acryl core</b><br>86.2%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">0.0%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.00%</div><div><b>Tc to Mol1 median</b><br>0.365</div><div><b>Tc ≥ 0.5</b><br>4.6%</div><div><b>Tc max</b><br>0.657</div><div><b>QED median</b><br>0.678</div><div><b>FiLM pIC50 median</b><br>6.76</div><div><b>% pIC50 ≥ 7.0</b><br>38.5%</div><div><b>Max pubTc median</b><br>0.309</div><div><b>Closest lead</b><br>RM-018</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · xTB ✓</div></div>
+    <div class="leader-scroll" id="tier4-murcko_rl_zap70-scroll" style="max-height:480px;">  <table id="tier4-murcko_rl_zap70-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-murcko_rl_zap70-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 6 — Mol1-Murcko reward, warhead_tokens base, 34K kinase pool <span style="color:#888;font-weight:400;">— <code>murcko_rl_kinase</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> warhead_tokens · <b>RL seed pool:</b> 34,314 kinase panel + ZAP70 ×5 + Mol1 ×20<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.35 + Mol1-Murcko SMARTS 0.30 + THIQ-acrylamide SMARTS 0.25 + QED 0.10<br>
+      <i>Murcko reward + broad kinase pool.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>32,947</div><div><b>Acrylamide intact</b><br>95.8%</div><div><b>THIQ-acryl core</b><br>96.7%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">97.8%</span></div><div><b>Mol1 Murcko (strict)</b><br>3.37%</div><div><b>Tc to Mol1 median</b><br>0.560</div><div><b>Tc ≥ 0.5</b><br>93.2%</div><div><b>Tc max</b><br>1.000</div><div><b>QED median</b><br>0.468</div><div><b>FiLM pIC50 median</b><br>—</div><div><b>% pIC50 ≥ 7.0</b><br>—</div><div><b>Max pubTc median</b><br>—</div><div><b>Closest lead</b><br>—</div><div><b>Column coverage</b><br><span style="color:#a00;">FiLM ✗</span> · <span style="color:#a00;">PubTc ✗</span> · <span style="color:#a00;">xTB ✗</span></div></div>
+    <div class="leader-scroll" id="tier4-murcko_rl_kinase-scroll" style="max-height:480px;">  <table id="tier4-murcko_rl_kinase-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-murcko_rl_kinase-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 6 — Mol1-Murcko reward, covalent_ft (EXP2) base, 220 ZAP70+Mol1 seeds <span style="color:#888;font-weight:400;">— <code>murcko_rl_exp2_zap70</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> covalent_ft (EXP2) · <b>RL seed pool:</b> 220 ZAP70 acrylamide leads + Mol1<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.35 + Mol1-Murcko SMARTS 0.30 + THIQ-acrylamide SMARTS 0.25 + QED 0.10<br>
+      <i>covalent_ft + Murcko reward.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>12,001</div><div><b>Acrylamide intact</b><br>75.3%</div><div><b>THIQ-acryl core</b><br>86.7%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">85.6%</span></div><div><b>Mol1 Murcko (strict)</b><br>15.88%</div><div><b>Tc to Mol1 median</b><br>0.583</div><div><b>Tc ≥ 0.5</b><br>84.5%</div><div><b>Tc max</b><br>1.000</div><div><b>QED median</b><br>0.641</div><div><b>FiLM pIC50 median</b><br>6.58</div><div><b>% pIC50 ≥ 7.0</b><br>14.5%</div><div><b>Max pubTc median</b><br>0.262</div><div><b>Closest lead</b><br>PF-06651600</div><div><b>Column coverage</b><br>FiLM ✓ · PubTc ✓ · xTB ✓</div></div>
+    <div class="leader-scroll" id="tier4-murcko_rl_exp2_zap70-scroll" style="max-height:480px;">  <table id="tier4-murcko_rl_exp2_zap70-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-murcko_rl_exp2_zap70-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
+  </div>
+  <div style="margin-bottom:24px;border:1px solid var(--neutral-200);border-radius:8px;padding:14px;">
+    <h3 style="font-size:15px;font-weight:600;margin:0 0 4px;">Phase 6 — Mol1-Murcko reward, covalent_ft (EXP2) base, 34K kinase pool <span style="color:#888;font-weight:400;">— <code>murcko_rl_exp2_kinase</code></span></h3>
+    <p style="font-size:12px;color:var(--neutral-600);max-width:95ch;margin:0 0 6px;">
+      <b>Prior:</b> covalent_ft (EXP2) · <b>RL seed pool:</b> 34,314 kinase panel + ZAP70 ×5 + Mol1 ×20<br>
+      <b>Reward:</b> FiLMDelta pIC50 0.35 + Mol1-Murcko SMARTS 0.30 + THIQ-acrylamide SMARTS 0.25 + QED 0.10<br>
+      <i>covalent_ft + Murcko reward + broad kinase pool.</i>
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;background:#f8f8fb;padding:10px;border-radius:6px;"><div><b>N mols</b><br>45,393</div><div><b>Acrylamide intact</b><br>98.8%</div><div><b>THIQ-acryl core</b><br>99.6%</div><div><b>Mol1 core (SMARTS)</b><br><span style="font-weight:600;color:#5f3dc4;">99.8%</span></div><div><b>Mol1 Murcko (strict)</b><br>0.10%</div><div><b>Tc to Mol1 median</b><br>0.531</div><div><b>Tc ≥ 0.5</b><br>88.9%</div><div><b>Tc max</b><br>0.768</div><div><b>QED median</b><br>0.457</div><div><b>FiLM pIC50 median</b><br>—</div><div><b>% pIC50 ≥ 7.0</b><br>—</div><div><b>Max pubTc median</b><br>0.257</div><div><b>Closest lead</b><br>PF-06651600</div><div><b>Column coverage</b><br><span style="color:#a00;">FiLM ✗</span> · PubTc ✓ · <span style="color:#a00;">xTB ✗</span></div></div>
+    <div class="leader-scroll" id="tier4-murcko_rl_exp2_kinase-scroll" style="max-height:480px;">  <table id="tier4-murcko_rl_exp2_kinase-table" class="display compact" style="width:100%;font-size:12px;">    <thead></thead><tbody></tbody>  </table></div><div id="tier4-murcko_rl_exp2_kinase-pager" style="display:flex;gap:4px;margin-top:10px;justify-content:center;font-size:11px;flex-wrap:wrap;max-width:100%;"></div>
   </div>
 </section>
 
 <script>
-// Tier 4 cohort tables — same render path as leaderboard
-async function loadTier4Cohort(tag, sourcePath){
+// Tier 4 cohort tables — same render path as the Top-20 leaderboard so the look
+// matches the rest of the report (sticky structure col, advisor columns, hover, etc.).
+// All Tier-4 cohort tags currently rendered on the report. refreshAllTier4Tables()
+// iterates this list; loadTier4Cohort() is also called individually at init.
+window.TIER4_TAGS = [
+  'F4_boltz_pool',
+  'exp2','exp6','exp6_v3','exp2_v2_rl_v2','exp6_v4','exp6_v5',
+  'mol1RL_v5_seed_mol1_only','thiq_rl_mol1only','thiq_rl_zap70','thiq_rl_kinase',
+  'thiq_rl_exp2_zap70','thiq_rl_exp2_kinase','thiq_rl_exp2_mol1only',
+  'murcko_rl_zap70','murcko_rl_kinase','murcko_rl_exp2_zap70','murcko_rl_exp2_kinase'
+];
+// Filter 0 — Mol1-anchored substructure OR-set. window.FILTER0_GROUPS is the
+// canonical state; the helper appends "&groups=…" to every server-side fetch
+// (cohort_smis, top_combined, methods, data, filter). Default = OR-of-all-3
+// (lead-optimization-relevant union), matching the backend's default.
+window.FILTER0_GROUPS = window.FILTER0_GROUPS
+  || ['murcko','thiq','murcko_and_acryl'];
+
+function filter0QueryString(prefix){
+  const g = (window.FILTER0_GROUPS || []);
+  // Always emit the param — even when all-3 (same as backend default) — so the
+  // request is self-describing, AND emit groups=off when the user unchecks
+  // every box (otherwise the backend would re-apply the default and the
+  // intent "show me everything" would silently break).
+  if (g.length === 0) return (prefix || '&') + 'groups=off';
+  return (prefix || '&') + 'groups=' + encodeURIComponent(g.join(','));
+}
+
+// Triggered by checkbox onchange. Re-fetch every Filter-0-aware table.
+function onFilter0Change(){
+  const checks = document.querySelectorAll('.filter0-chk');
+  const sel = [];
+  checks.forEach(c => { if (c.checked) sel.push(c.value); });
+  window.FILTER0_GROUPS = sel;
+  const status = document.getElementById('fp-filter0-status');
+  if (status) {
+    status.textContent = sel.length
+      ? `Filter 0: ${sel.length} group${sel.length>1?'s':''} (OR) — ${sel.join(' / ')}`
+      : 'Filter 0: off (showing all rows)';
+  }
+  refreshAllTables();
+}
+
+// Re-fetch every table on the page that honors Filter 0.
+async function refreshAllTables(){
+  try { (window.TIER4_TAGS || []).forEach(t => loadTier4Cohort(t)); } catch(e){ console.warn('refresh tier4', e); }
+  try { if (typeof loadLeaderboard === 'function') loadLeaderboard(); } catch(e){ console.warn('refresh leader', e); }
   try {
-    const r = await fetch(BACKEND + `/api/cohort_smis?cohort=${encodeURIComponent(tag)}`);
-    if(!r.ok) throw new Error('cohort fetch failed');
+    // Reload every DataTable instance built from /api/data; each one carries
+    // its dt object on the table element via $().DataTable() lookup.
+    if (typeof $ !== 'undefined') {
+      $('table.method-table').each(function(){
+        const dt = $.fn.dataTable && $.fn.dataTable.isDataTable(this) ? $(this).DataTable() : null;
+        if (dt) dt.ajax.reload(null, false);
+      });
+    }
+  } catch(e){ console.warn('refresh method tables', e); }
+  // /api/filter — Filter Panel survivors table + cascade counts. The cascade
+  // shows "Library → After F0 → After F1 → … → Visible", with F0 now wired
+  // as the first stage. The Library number stays constant; F0 is where the
+  // OR-set filter actually moves.
+  try { if (typeof fpRefresh === 'function') fpRefresh(); } catch(e){ console.warn('refresh fp', e); }
+  // Note: /api/mol1_anchor returns Mol1 itself which matches every group, so
+  // no refresh needed there. The hero counter is set once at init() and stays
+  // at the unfiltered library size — Filter 0 only affects table contents.
+}
+
+// 2026-06-08 perf fix: each cohort_smis call without limit returns the FULL
+// (40K–80K rows, ~90 MB JSON) → 5–13 s per request. When 11 mol1-anchored
+// cohorts + 6 EXP cohorts all fire concurrently they stomp the backend and
+// most time out. The page only renders the first 500 rows anyway (psize=5
+// × Math.min(npages, 20) = 100 visible, +slack), so request limit=500 and
+// trust /api/methods (window.__tier4_method_totals, populated by init()) for
+// the cohort-pill total. Drops per-request cost from ~10 s → ~0.1 s.
+async function loadTier4Cohort(tag){
+  try {
+    const qs = filter0QueryString('&');
+    const r = await fetch(BACKEND + `/api/cohort_smis?cohort=${encodeURIComponent(tag)}&limit=500${qs}`);
+    if(!r.ok) throw new Error('cohort fetch failed: ' + r.status);
     const d = await r.json();
     const rows = (d.rows || []).slice(0, 500);
     window['__tier4_' + tag + '_rows'] = rows;
     window['__tier4_' + tag + '_page'] = 0;
+    // Prefer the authoritative library count from /api/methods (cached by init()
+    // into window.__tier4_method_totals); fall back to the (post-limit) n_rows.
+    const totals = window.__tier4_method_totals || {};
+    window['__tier4_' + tag + '_n_total'] = totals[tag] ?? d.n_rows ?? rows.length;
     renderTier4Page(tag);
   } catch(e) {
     console.warn('tier4 load error', tag, e);
+    const tbody = document.querySelector(`#tier4-${tag}-table tbody`);
+    if (tbody) tbody.innerHTML = `<tr><td colspan="40" style="padding:18px;color:#b91c1c;text-align:center;">Load failed: ${e.message}</td></tr>`;
   }
+}
+
+// Throttled forEach: only `pool` requests in flight at once so we don't stomp
+// the backend (the DataTables /api/data POSTs for Tier 1/2/3 also share the
+// connection pool — see 2026-06-08 fix).
+async function _loadTier4Throttled(tags, pool){
+  pool = pool || 4;
+  let idx = 0;
+  async function worker(){
+    while (idx < tags.length){
+      const my = idx++;
+      try { await loadTier4Cohort(tags[my]); } catch(e){ /* logged inside */ }
+    }
+  }
+  await Promise.all(Array.from({length: Math.min(pool, tags.length)}, () => worker()));
+}
+
+// Legacy name kept so existing call sites (init) still work.
+function refreshAllTier4Tables(){
+  _loadTier4Throttled(window.TIER4_TAGS || [], 4);
 }
 function renderTier4Page(tag){
   const rows = window['__tier4_' + tag + '_rows'] || [];
   const page = window['__tier4_' + tag + '_page'] || 0;
-  const psize = 10;
+  const psize = 5;
   const thead = document.querySelector(`#tier4-${tag}-table thead`);
   const tbody = document.querySelector(`#tier4-${tag}-table tbody`);
-  if(!thead) return;
+  if(!thead || !tbody) { console.warn('tier4 table not found', tag); return; }
+  if (typeof leaderBuildThead !== 'function' || typeof leaderRenderRow !== 'function') {
+    console.warn('tier4: leader render funcs not ready, retrying', tag);
+    setTimeout(() => renderTier4Page(tag), 200);
+    return;
+  }
   thead.innerHTML = leaderBuildThead();
   const slice = rows.slice(page*psize, (page+1)*psize);
-  tbody.innerHTML = slice.map((m, i) =>
-    leaderRenderRow(m, page*psize + i + 1, {rowIdForSvg: m.row_id || `T4_${tag}_${page*psize+i}`})
-  ).join('');
+  tbody.innerHTML = slice.map((m, i) => {
+    // Force SVG to render via SMILES query param (Tier 4 row_ids are
+    // strings like "exp2_0", not integers indexed into the DF).
+    const sid = encodeURIComponent(m.row_id || `T4_${tag}_${page*psize+i}`);
+    const sm = encodeURIComponent(m.smiles || '');
+    let html = leaderRenderRow(m, page*psize + i + 1, {rowIdForSvg: sid});
+    html = html.replace(/\/api\/svg\/[^?"]+(\?[^"]*)?/, `/api/svg/${sid}?w=110&h=80&smi=${sm}`);
+    return html;
+  }).join('');
   const pager = document.getElementById(`tier4-${tag}-pager`);
   if(pager){
     const npages = Math.max(1, Math.ceil(rows.length / psize));
     pager.innerHTML = '';
-    for(let p = 0; p < npages; p++){
+    for(let p = 0; p < Math.min(npages, 20); p++){
       const btn = document.createElement('button');
       btn.textContent = `Page ${p+1}`;
       btn.className = 'fp-bulk-btn';
@@ -1774,10 +2558,23 @@ function renderTier4Page(tag){
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize Filter 0 status text + checkboxes from the canonical default.
+  const sel = (window.FILTER0_GROUPS || []);
+  document.querySelectorAll('.filter0-chk').forEach(c => { c.checked = sel.includes(c.value); });
+  const status = document.getElementById('fp-filter0-status');
+  if (status) {
+    status.textContent = sel.length
+      ? `Filter 0: ${sel.length} group${sel.length>1?'s':''} (OR) — ${sel.join(' / ')}`
+      : 'Filter 0: off (showing all rows)';
+  }
   const tryLoad = (n) => {
     if (typeof BACKEND !== 'undefined') {
-      loadTier4Cohort('exp2');
-      loadTier4Cohort('exp6');
+      // Iterate canonical TIER4_TAGS list so adding a new cohort needs only
+      // ONE edit in the report — Filter 0's refreshAllTier4Tables() uses the
+      // same list, so the two stay perfectly in sync. Throttled to 4 in
+      // flight to avoid stomping the backend (which also serves the
+      // Tier 1/2/3 DataTables ajax POSTs concurrently).
+      _loadTier4Throttled(window.TIER4_TAGS || [], 4);
       return;
     }
     if (n > 100) return;
@@ -1787,10 +2584,47 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<!-- ────────── Page (method sections) ────────── -->
-<main class="page" id="page">
-  <!-- Method sections injected by JS -->
-</main>
+<!-- Match #leaderboard-table styling for the Tier 4 tables (sticky cols, hover, padding).
+     Attribute selector `[id^="tier4-"][id$="-table"]` auto-includes every cohort table
+     (exp2, exp6, exp6_v3, exp2_v2_rl_v2, exp6_v4, exp6_v5, and any future ones). -->
+<style>
+[id^="tier4-"][id$="-table"]{border-collapse:separate;border-spacing:0;
+  font-size:var(--fs-table);background:var(--neutral-0);border:none;border-radius:0;}
+[id^="tier4-"][id$="-table"] thead th{background:var(--neutral-100);
+  font-size:var(--fs-table-header);font-weight:600;letter-spacing:0.04em;
+  color:var(--neutral-700);padding:10px 14px;text-align:left;
+  border-bottom:1px solid var(--neutral-200);}
+[id^="tier4-"][id$="-table"] tbody td{padding:10px 14px;
+  border-bottom:1px solid var(--neutral-200);color:var(--neutral-900);vertical-align:middle;}
+[id^="tier4-"][id$="-table"] tbody tr:last-child td{border-bottom:none;}
+[id^="tier4-"][id$="-table"] tbody tr{transition:background 120ms;}
+[id^="tier4-"][id$="-table"] tbody tr:hover td{background:var(--neutral-50);}
+[id^="tier4-"][id$="-table"] td.num{text-align:right;
+  font-variant-numeric:tabular-nums;font-family:var(--font-mono);font-size:12.5px;}
+/* Sticky first two columns (rownum + structure) — match leaderboard */
+[id^="tier4-"][id$="-table"] thead tr.family-header th:nth-child(1),
+[id^="tier4-"][id$="-table"] thead tr.column-header th:nth-child(1),
+[id^="tier4-"][id$="-table"] tbody td:nth-child(1){
+  width:50px;min-width:50px;max-width:50px;box-sizing:border-box;
+  position:sticky;left:0;background:var(--neutral-0);z-index:4;
+  box-shadow:1px 0 0 var(--neutral-200);}
+[id^="tier4-"][id$="-table"] thead tr.family-header th:nth-child(2),
+[id^="tier4-"][id$="-table"] thead tr.column-header th:nth-child(2),
+[id^="tier4-"][id$="-table"] tbody td:nth-child(2){
+  width:170px;min-width:170px;max-width:170px;box-sizing:border-box;
+  position:sticky;left:50px;background:var(--neutral-0);z-index:4;
+  box-shadow:2px 0 4px -2px rgba(0,0,0,0.08);}
+[id^="tier4-"][id$="-table"] thead tr.family-header th:nth-child(1),
+[id^="tier4-"][id$="-table"] thead tr.family-header th:nth-child(2){background:var(--neutral-100);z-index:6;}
+[id^="tier4-"][id$="-table"] thead tr.column-header th:nth-child(1),
+[id^="tier4-"][id$="-table"] thead tr.column-header th:nth-child(2){background:var(--neutral-100);z-index:5;}
+#tier4-exp2-table tbody tr:hover td:nth-child(1),
+#tier4-exp2-table tbody tr:hover td:nth-child(2),
+#tier4-exp6-table tbody tr:hover td:nth-child(1),
+#tier4-exp6-table tbody tr:hover td:nth-child(2){background:var(--neutral-50) !important;}
+#tier4-exp2-scroll, #tier4-exp6-scroll{overflow-x:auto;overflow-y:auto !important;max-height:480px !important;
+  border:1px solid var(--neutral-200);border-radius:var(--radius);}
+</style>
 
 <!-- ────────── One-Liner Column Reference (bottom quick-scan table) ────────── -->
 <section class="page" id="column-oneliner-ref" style="padding:32px 24px 48px;">
@@ -1828,7 +2662,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <tr><td><code>delta_vs_mol1</code></td><td>Candidate pIC50_mean minus Mol-1 baseline (~6.77); ≥+1 is "10x better" zone.</td></tr>
       <tr><td><code>direct_delta_from_mol1</code></td><td>3-seed mean FiLMDelta with Mol 1 as anchor; cross-check on delta_vs_mol1.</td></tr>
       <tr><td><code>anchor_wins</code></td><td>Count of 280 ZAP70 anchors the candidate is predicted to beat (0-280).</td></tr>
-      <tr><td><code>anchor_wins_ge7</code></td><td>anchor_wins restricted to high-potency (pIC50≥7) anchors; strict bar, &gt;30 strong.</td></tr>
+      <tr><td><code>anchor_wins_ge7</code></td><td>anchor_wins restricted to high-potency anchors (pIC50≥7). 57 anchors qualify out of 280. Strict bar, &gt;36 (p90) is strong, max possible 57.</td></tr>
 
       <tr style="background:var(--neutral-50);font-weight:600;">
         <td colspan="2" style="padding:10px 8px 6px 8px;">SIMILARITY — INTERNAL</td>
@@ -2029,7 +2863,7 @@ const COL_DICT = [
   {section:"Predicted potency", name:"delta_vs_mol1", what:"Candidate's pIC50_mean minus Mol 1's baseline pIC50.", how:"compute_pairwise_for_topK.py:193,218: mean − mol1_baseline (≈6.77), where mol1_baseline is the same 3-seed × 280-anchor mean computed for Mol 1.", intuition:"Positive = predicted more potent than seed. ≥+1 = '10× better' on log-scale. Negative = worse than Mol 1."},
   {section:"Predicted potency", name:"direct_delta_from_mol1", what:"3-seed mean of FiLMDelta(anchor=Mol 1, target=candidate) — single-anchor prediction.", how:"compute_pairwise_for_topK.py:181,215. For each seed: run FiLMDelta with Mol 1 embedding as anchor and candidate embedding as target; average the 3 deltas.", intuition:"Noisier than delta_vs_mol1 (one anchor vs 280-anchor mean) but more interpretable: literally 'what Δ does the model predict from Mol 1 → candidate?'. Disagreement with delta_vs_mol1 ⇒ OOD."},
   {section:"Predicted potency", name:"anchor_wins", what:"Number of the 280 ZAP70 training anchors where FiLMDelta predicts the candidate beats the anchor.", how:"compute_pairwise_for_topK.py:190,216: (deltas > 0).sum(axis=2).mean(axis=0) — count positive deltas per seed, mean over 3 seeds.", intuition:"Range 0-280. Robust to single-anchor noise. >200 = predicted to outperform most of training; <50 = predicted worse than most."},
-  {section:"Predicted potency", name:"anchor_wins_ge7", what:"Same as anchor_wins but restricted to high-potency anchors (measured pIC50 ≥ 7; ~55 of the 280).", how:"compute_pairwise_for_topK.py:191,217: ((deltas > 0) & high_potency_mask).sum(axis=2).mean(axis=0).", intuition:"Strict bar. Range 0-~55. >30 = strong signal of beating actually-potent compounds. Most discriminating for low-Tc OOD candidates."},
+  {section:"Predicted potency", name:"anchor_wins_ge7", what:"Same as anchor_wins but restricted to high-potency anchors (measured pIC50 ≥ 7; 57 of the 280 — verified from FiLMDelta checkpoint anchor_pIC50).", how:"compute_pairwise_for_topK.py:191,217: ((deltas > 0) & high_potency_mask).sum(axis=2).mean(axis=0).", intuition:"Strict bar. Max possible 57. Cohort distribution: median 15, p90 36, max 52. >36 = strong signal of beating most actually-potent compounds."},
 
   // DRUG-LIKENESS
   {section:"Drug-likeness", name:"MW", what:"Molecular weight in Daltons.", how:"RDKit Descriptors.MolWt(mol) — sum of atomic masses including implicit Hs.", intuition:"Lipinski < 500; lead-like < 350. Our library spans up to ~700. >600 hurts oral bioavailability."},
@@ -2229,8 +3063,9 @@ const COLOR_RULES = {
   mean_pubTc:        v => v >= 0.18 ? 'green' : v >= 0.13 ? 'yellow' : 'red',
   top10_mean_pubTc:  v => v >= 0.30 ? 'green' : v >= 0.22 ? 'yellow' : 'red',
   // SIMILARITY - 3D SHAPE
+  shape_Tc_mol1:     v => v >= 0.6 ? 'green' : v >= 0.4 ? 'yellow' : 'red',
   shape_Tc_seed:     v => v >= 0.6 ? 'green' : v >= 0.4 ? 'yellow' : 'red',
-  esp_sim_seed:      v => v >= 0.6 ? 'green' : v >= 0.4 ? 'yellow' : 'red',
+  esp_sim_seed:      v => v >= 0.06 ? 'green' : v >= 0.02 ? 'yellow' : 'red',  // 2026-06-10 PM: recalibrated to cohort distribution. F4 pool median 0.003, p90 0.049, max 0.135. Old thresholds (≥0.6) were for the legacy cohort (median 0.165) — different seed/protonation reference. Cross-cohort diagnostic pending; for now color reflects relative rank within our F4 mols.
   warhead_dev_deg:   v => v <= 15 ? 'green' : v <= 30 ? 'yellow' : 'red',
   // COFOLD GEOMETRY
   d_SG:                   v => v <= 3.5 ? 'green' : v <= 4.5 ? 'yellow' : 'red',
@@ -2247,7 +3082,18 @@ const COLOR_RULES = {
   ligand_iptm:            v => v >= 0.85 ? 'green' : v >= 0.70 ? 'yellow' : 'red',
   boltz_plddt:            v => v >= 0.80 ? 'green' : v >= 0.65 ? 'yellow' : 'red',
   boltz_confidence:       v => v >= 0.75 ? 'green' : v >= 0.55 ? 'yellow' : 'red',
-  combined_score:         v => v >= 0.80 ? 'green' : v >= 0.60 ? 'yellow' : 'red',
+  combined_score:         v => v >= 0.80 ? 'green' : v >= 0.60 ? 'yellow' : 'red',  // legacy (kept for backward compatibility)
+  desirability_score:     v => v >= 0.60 ? 'green' : v >= 0.40 ? 'yellow' : 'red',  // 2026-06-10 PM: geometric-mean of percentile ranks; in [0,1] but max is typically ≤0.95. Calibrated to cohort distribution.
+  // Component breakdown columns (P_potency, P_pose, P_shape_to_mol1, P_covgeom, P_clean_reactivity) — each in [0,1]
+  P_potency:              v => v >= 0.66 ? 'green' : v >= 0.33 ? 'yellow' : 'red',
+  P_pose:                 v => v >= 0.66 ? 'green' : v >= 0.33 ? 'yellow' : 'red',
+  P_shape_to_mol1:        v => v >= 0.66 ? 'green' : v >= 0.33 ? 'yellow' : 'red',
+  P_covgeom:              v => v >= 0.66 ? 'green' : v >= 0.33 ? 'yellow' : 'red',
+  P_clean_reactivity:     v => v >= 0.66 ? 'green' : v >= 0.33 ? 'yellow' : 'red',
+  // 2026-06-10 PM: Kinase-likeness classifier colors
+  P_kinase:               v => v >= 0.80 ? 'green' : v >= 0.50 ? 'yellow' : 'red',
+  P_Tec_family:           v => v >= 0.50 ? 'green' : v >= 0.20 ? 'yellow' : 'red',
+  pIC50_kinase_aux:       v => v >= 7.0  ? 'green' : v >= 6.0  ? 'yellow' : 'red',
   // POCKET INTERACTION ENERGY (more-negative kcal/mol = better)
   vina_kcalmol:                   v => v <= -5 ? 'green' : v <= -2 ? 'yellow' : 'red',
   // Capped-analog MM-GBSA dG_recognition: empirical thresholds straddling the
@@ -2261,7 +3107,8 @@ const COLOR_RULES = {
   vina_inter_kcalmol:             v => v <= -5 ? 'green' : v <= -2 ? 'yellow' : 'red',
   vina_intra_kcalmol:             v => v <= 2 ? 'green' : v <= 5 ? 'yellow' : 'red',
   vdw_interaction_kcal_mol:       v => v <= -10 ? 'green' : v <= -3 ? 'yellow' : 'red',
-  rdkit_strain_kcal_mol:          v => v <= 5 ? 'green' : v <= 15 ? 'yellow' : 'red',
+  atp_pocket_fraction:            v => v >= 0.80 ? 'green' : v >= 0.60 ? 'yellow' : 'red',  // 2026-06-10 PM: ligand atoms within 4 Å of ATP-pocket residues. >0.80 = strong engagement; 0.60-0.80 = partial; <0.60 = ligand sits outside the pocket.
+  rdkit_strain_kcal_mol:          v => v <= 440 ? 'green' : v <= 575 ? 'yellow' : 'red',  // 2026-06-10 PM: recalibrated. These are MMFF single-point on unrelaxed Boltz cofold poses — covalent constraint forces high baseline. Cohort distribution on 838 survivors: min=354 / p10=411 / med=483 / p90=575 / max=694. Old thresholds (5/15) were for free-state strain in kcal/mol. New: ≤440 (top 25%) green; ≤575 (≤p90) yellow; >575 outlier red. L5 cut at 700.
   // Pose-free strain (single-conformer constitutional proxy) operates on a different
   // scale than the bound-free pose-aware strain — p10≈42, median≈70, p90≈102 in the
   // 500K cohort. Re-anchored to that distribution so the cell still discriminates.
@@ -2308,19 +3155,24 @@ const LEADER_FMT = {
   short:  v => (v == null || v === '') ? '—' : (String(v).length > 22 ? String(v).slice(0,19)+'…' : String(v)),
   signed3:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(3)),
   winsOf280: v => (v == null || isNaN(v)) ? '—' : `${Math.round(+v)}/280`,
-  winsOf30:  v => (v == null || isNaN(v)) ? '—' : `${Math.round(+v)}/30`,
+  // 2026-06-10 FIX: anchor_wins_ge7 values in cohort data go up to 279 — the
+  // scorer counts wins vs all 280 anchors masked by pIC50≥7, but the mask was
+  // lenient enough that max≈280. Use /280 to be honest about the math.
+  winsOf57:  v => (v == null || isNaN(v)) ? '—' : `${Math.round(+v)}/57`,  // 2026-06-10 PM: FIXED post-recompute. anchor_wins_ge7 max is now 40 (≤57 anchors at pIC50≥7).
 };
 const LEADER_COLS = [
   // ── IDENTITY (4 visible cells: rownum + structure + method + MW; row_id column removed 2026-05-28) ──
   {key:'rownum',    label:'#',         family:'identity', fmt:null /* injected */, num:true},
   {key:'structure', label:'Structure', family:'identity', fmt:null /* injected */, num:false},
   {key:'method',    label:'method',    family:'identity', fmt:LEADER_FMT.short,    num:false},
+  {key:'pharmacophore', label:'pharmacophore', family:'identity', fmt:(v) => v || '—', num:false},
+  {key:'desirability_score', label:'Combined Score', family:'identity', fmt:LEADER_FMT.f3, num:true, bold:true},  // 2026-06-10 PM (v3): 8-component formula. (P_potency)^0.22 × (P_pose)^0.18 × (P_shape_to_mol1)^0.20 × (P_covgeom)^0.10 × (P_clean_reactivity)^0.10 × (P_Tec_family)^0.10 × (P_kinase)^0.05 × (P_pIC50_kinase_aux)^0.05. ρ(pIC50_kinase_aux, P_potency) = -0.096 verified independent on 838. Higher = better.
   {key:'MW',        label:'MW',        family:'identity', fmt:LEADER_FMT.f0,       num:true},
   // ── PREDICTED POTENCY (5) ──
   {key:'pIC50_mean',      label:'pIC50 (mean)',  family:'potency', fmt:LEADER_FMT.f2,        num:true},
   {key:'pIC50_std',       label:'pIC50 (std)',   family:'potency', fmt:LEADER_FMT.f2,        num:true},
   {key:'anchor_wins',     label:'wins /280',     family:'potency', fmt:LEADER_FMT.winsOf280, num:true},
-  {key:'anchor_wins_ge7', label:'wins ≥7',       family:'potency', fmt:LEADER_FMT.winsOf30,  num:true},
+  {key:'anchor_wins_ge7', label:'wins ≥7 /57',  family:'potency', fmt:LEADER_FMT.winsOf57,  num:true},
   {key:'delta_vs_mol1',   label:'Δ vs Mol1',     family:'potency', fmt:LEADER_FMT.signed3,   num:true},
   // ── SIMILARITY — INTERNAL (2) ──
   {key:'Tc_to_Mol1',          label:'Tc→Mol1',           family:'sim_int', fmt:LEADER_FMT.f3, num:true},
@@ -2329,27 +3181,30 @@ const LEADER_COLS = [
   {key:'mean_pubTc',       label:'pub mean Tc',        family:'sim_pub', fmt:LEADER_FMT.f3, num:true},
   {key:'top10_mean_pubTc', label:'pub top10 mean Tc',  family:'sim_pub', fmt:LEADER_FMT.f3, num:true},
   // ── SIMILARITY — 3D SHAPE (3) ──
-  {key:'shape_Tc_seed',   label:'shape Tc seed', family:'sim_3d', fmt:LEADER_FMT.f3, num:true},
+  {key:'shape_Tc_mol1',   label:'shape Tc vs Mol1', family:'sim_3d', fmt:LEADER_FMT.f3, num:true},
+  // shape_Tc_seed dropped 2026-06-10 PM: redundant with shape_Tc_mol1 (same metric, just stricter ensemble version)
   {key:'esp_sim_seed',    label:'ESP-Sim seed',  family:'sim_3d', fmt:LEADER_FMT.f3, num:true},
   {key:'warhead_dev_deg', label:'warhead Δ°',    family:'sim_3d', fmt:LEADER_FMT.f1, num:true},
   // ── COFOLD GEOMETRY (10) ──
   {key:'d_SG',                   label:'d_SG (Å)',     family:'cofold', fmt:LEADER_FMT.f2,  num:true},
   {key:'n_h_bonds',              label:'n H-bonds',    family:'cofold', fmt:LEADER_FMT.int, num:true},
   {key:'n_stabilizing_contacts', label:'n contacts',   family:'cofold', fmt:LEADER_FMT.int, num:true},
-  {key:'pocket_occupancy_pct',   label:'pocket %',     family:'cofold', fmt:LEADER_FMT.f1,  num:true},
-  {key:'mPAE',                   label:'mPAE',         family:'cofold', fmt:LEADER_FMT.f2,  num:true},
+  // pocket_occupancy_pct DROPPED 2026-06-10 PM: broken metric (ceiling=100%, 21% of mols at ≥95%, MW-confounded, ρ=+1.000 with atp_pocket_fraction). Expert team recommendation: replace with atp_pocket_fraction (curated res list, ligand-independent denominator). See analyst notes 2026-06-10.
+  {key:'atp_pocket_fraction',    label:'ATP pocket frac',   family:'cofold', fmt:LEADER_FMT.f3,  num:true},
+  {key:'mPAE',                   label:'mPAE (proxy)', family:'cofold', fmt:LEADER_FMT.f2,  num:true},
+  {key:'mPAE_london',            label:'mPAE London',  family:'cofold', fmt:LEADER_FMT.f2,  num:true},
   {key:'iptm',                   label:'iptm',         family:'cofold', fmt:LEADER_FMT.f3,  num:true},
   {key:'ligand_iptm',            label:'ligand iptm',  family:'cofold', fmt:LEADER_FMT.f3,  num:true},
   {key:'boltz_plddt',            label:'boltz pLDDT',  family:'cofold', fmt:LEADER_FMT.f3,  num:true},
   {key:'boltz_confidence',       label:'boltz conf',   family:'cofold', fmt:LEADER_FMT.f3,  num:true},
-  {key:'combined_score',         label:'Combined',     family:'cofold', fmt:LEADER_FMT.f2,  num:true, bold:true},
+  // combined_score moved to identity section (after pharmacophore) per user 2026-06-10 PM
   // ── POCKET INTERACTION ENERGY (9) ──
-  {key:'vina_kcalmol',                   label:'Vina Free Energy',  family:'pocket', fmt:LEADER_FMT.f2, num:true},
+  // vina_kcalmol dropped 2026-06-10 PM (analyst rec): = vina_inter + vina_intra; on covalent-locked Boltz pose dynamic range collapses (Spearman with pIC50 ≈ 0.15). vina_rescore_affinity_kcalmol at L5 uses a tighter Cys346-Sγ box and is the canonical version.
   {key:'dG_recognition_md_kcalmol',      label:'MM-GBSA dG_recog',  family:'pocket', fmt:LEADER_FMT.f2, num:true},
   {key:'pKa_Cys346',                     label:'pKa Cys346',        family:'pocket', fmt:LEADER_FMT.f2, num:true},
-  {key:'vina_inter_kcalmol',             label:'Vina inter',        family:'pocket', fmt:LEADER_FMT.f2, num:true},
-  {key:'vina_intra_kcalmol',             label:'Vina intra',        family:'pocket', fmt:LEADER_FMT.f2, num:true},
-  {key:'vdw_interaction_kcal_mol',       label:'vdW',               family:'pocket', fmt:LEADER_FMT.f2, num:true},
+  // vina_inter_kcalmol dropped 2026-06-10 PM (analyst rec): superseded by vina_rescore_affinity_kcalmol (tighter box on the reactive Cys; Trott&Olson 2010 warns Vina scoring is box/grid-sensitive).
+  // vina_intra_kcalmol dropped 2026-06-10 PM (analyst rec): vina_rescore_intra_kcalmol at L5 covers the same signal (ligand internal strain on cofold pose).
+  // vdw_interaction_kcal_mol dropped 2026-06-10 PM (analyst rec): UFF LJ on Boltz pose has same constrained-pose pathology (Hawkins JCIM 2017 — single-point energies are dominated by pose noise on covalent docks).
   {key:'rdkit_strain_kcal_mol',          label:'RDKit strain',      family:'pocket', fmt:LEADER_FMT.f2, num:true},
   {key:'rdkit_strain_posefree_kcal_mol', label:'strain (posefree)', family:'pocket', fmt:LEADER_FMT.f2, num:true},
   {key:'pred_log_k2_GSH',                label:'log k2 (GSH)',      family:'pocket', fmt:LEADER_FMT.f2, num:true},
@@ -2365,16 +3220,24 @@ const LEADER_COLS = [
   {key:'RotBonds',            label:'RotBonds',         family:'druglike', fmt:LEADER_FMT.int, num:true},
   {key:'fsp3',                label:'fsp3',             family:'druglike', fmt:LEADER_FMT.f2,  num:true},
   {key:'SAScore',             label:'SA Score',         family:'druglike', fmt:LEADER_FMT.f2,  num:true},
+  // 2026-06-10 PM: Kinase-likeness classifier (Team #2 plan, V100-trained 3-head FFN).
+  // Dataset: 232K mols (178K kinase positives + 18K kinase-tested-and-FAILED negatives
+  // [pIC50<5 on a measured kinase target] + 30K polypharmacology-filtered non-kinase
+  // actives + 5K DUD-E decoys). Scaffold-split AUROC 0.98 / 0.99 (Tec) / R² 0.53 (aux).
+  {key:'P_kinase',          label:'P(kinase)',      family:'kinase_like', fmt:LEADER_FMT.f3, num:true},
+  {key:'P_Tec_family',      label:'P(Tec family)',  family:'kinase_like', fmt:LEADER_FMT.f3, num:true},
+  {key:'pIC50_kinase_aux',  label:'pIC50 kin (aux)', family:'kinase_like', fmt:LEADER_FMT.f2, num:true},
 ];
 const LEADER_FAMILY_SPEC = [
-  {family:'identity',      title:'IDENTITY',              colspan:4},   // structure + method + MW + (rownum is implicit first)
+  {family:'identity',      title:'IDENTITY',              colspan:5},   // structure + method + pharmacophore + desirability + MW + (rownum is implicit first) — 2026-06-10 PM: +desirability
   {family:'potency',       title:'Predicted Potency',     colspan:5},
   {family:'sim_int',       title:'Sim — Internal',        colspan:2},
   {family:'sim_pub',       title:'Sim — Publications',    colspan:2},
   {family:'sim_3d',        title:'Sim — 3D Shape',        colspan:3},
   {family:'cofold',        title:'Cofold Geometry',       colspan:10},
-  {family:'pocket',        title:'POCKET INTERACTION ENERGY', colspan:9},
+  {family:'pocket',        title:'POCKET INTERACTION ENERGY', colspan:5},  // 2026-06-10 PM: -4 (Vina free / inter / intra / vdW dropped per analyst)
   {family:'druglike',      title:'DRUG LIKELINESS',           colspan:11},
+  {family:'kinase_like',   title:'KINASE-LIKE PREDICTION',    colspan:3},  // NEW 2026-06-10 PM
 ];
 // Family banner: leading blank cell (over rownum) + 7 family banners. Sums to
 // 1 + 4+5+2+2+3+10+8 = 35 cells; column-header row has 34 cells (rownum +
@@ -2386,9 +3249,18 @@ function leaderBuildThead(){
   const fam = LEADER_FAMILY_SPEC.map(f =>
     `<th colspan="${f.colspan}" class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">${f.title}</th>`
   ).join('');
+  // 2026-06-10 PM: hover tooltips for every column header. Map key → one-liner explanation.
+  const COL_TOOLTIPS = {
+    'desirability_score': 'Combined Score = (P_potency)^0.22 × (P_pose)^0.18 × (P_shape_to_mol1)^0.20 × (P_covgeom)^0.10 × (P_clean_reactivity)^0.10 × (P_Tec_family)^0.10 × (P_kinase)^0.05 × (P_pIC50_kinase_aux)^0.05 — geometric mean of 8 percentile components (Σ=1.0). Higher = better. v3 2026-06-10 PM.',
+    'P_kinase':         'P(kinase) — probability the molecule is a kinase binder. 3-head FFN trained on 232K mols (178K kinase positives + 18K kinase-tested-AND-failed [measured pIC50 < 5] + 30K polypharmacology-filtered non-kinase + 5K DUD-E decoys). Scaffold-split AUROC 0.98.',
+    'P_Tec_family':     'P(Tec family) — probability of binding a Tec-family kinase (BTK / ITK / TXK / BMX / TEC). Trained on 9,864 Tec actives. Scaffold-split AUROC 0.99. The most-discriminating signal on this cohort per Team #2.',
+    'pIC50_kinase_aux': 'pIC50 (kinase auxiliary regression) — predicted kinase pIC50 from the same 3-head model. Trained on the kinase-positive subset. R² = 0.53, MAE = 0.52. Useful as a 2nd opinion vs FiLMDelta pIC50_mean.',
+  };
   const cols = LEADER_COLS.map(c => {
     const cls = c.num ? ' class="num"' : '';
-    return `<th data-col-key="${c.key}"${cls}>${c.label}</th>`;
+    const tip = COL_TOOLTIPS[c.key];
+    const tipAttr = tip ? ` title="${tip.replace(/"/g, '&quot;')}"` : '';
+    return `<th data-col-key="${c.key}"${cls}${tipAttr}>${c.label}</th>`;
   }).join('');
   return `
     <tr class="family-header">
@@ -2423,6 +3295,21 @@ function leaderRenderCell(col, rowObj, rowIdx, rowIdForSvg){
   let v = rowObj[col.key];
   if(col.key === 'pIC50_mean' && (v == null || (typeof v === 'number' && isNaN(v)))){
     v = rowObj.pIC50_method != null ? rowObj.pIC50_method : rowObj.pIC50_film;
+  }
+  // pharmacophore: derive from the three boolean substructure columns.
+  // A molecule may match multiple groups; show them as a slash-separated list.
+  // 2026-06-09: user request — "Mol1 Murcko-preserving / THIQ-acrylamide
+  // pharmacophore / Murcko AND acrylamide".
+  if(col.key === 'pharmacophore'){
+    const tags = [];
+    const isTrue = x => (x === true || x === 1 || x === '1' || x === 'true' || x === 'True');
+    const murcko = isTrue(rowObj.mol1_murcko_smarts_match);
+    const thiq   = isTrue(rowObj.thiq_core);
+    const acryl  = isTrue(rowObj.acryl_match);
+    if(murcko) tags.push('Mol1 Murcko');
+    if(thiq)   tags.push('THIQ-acryl');
+    if(murcko && acryl) tags.push('Murcko+acryl');
+    v = tags.length ? tags.join(' / ') : null;
   }
   const disp = col.fmt ? col.fmt(v) : (v == null ? '—' : String(v));
   const color = colorFor(col.key, v);
@@ -2659,30 +3546,132 @@ function showSeedPocket(){
 let _seedPoseVariant = 'v1';
 
 function showSeedMolModal(){
-  // Open the same modal used for table rows, but populated with seed Mol 1 data.
+  // 2026-06-11: pull the FULL Mol1 feature dict from /api/mol1_anchor so the
+  // modal shows every survivor-table column for Mol1 (Combined Score, FiLM
+  // pIC50_mean, anchor wins, vina_rescore, mPAE, kinase classifier, etc.).
+  // Falls back to the static stub if /api/mol1_anchor is unavailable.
   const seedSmi = 'C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1';
-  const seedProps = {
-    'pIC50 (Mol 1, ChEMBL2803)': '6.77',
-    'MW': '314',
-    'SAScore': '2.59',
-    'PAINS': '0',
-    'Tc → Mol1': '1.000',
-    'max Tc → train': '0.464',
-    Note: 'Seed candidate; this is what we are enriching.',
-  };
   _seedPoseVariant = 'v1';
   _activateTab('2d');
   document.getElementById('mol-modal-card').classList.remove('modal-wide');
   document.getElementById('mol-modal-struct').innerHTML = '';
-  fetch(`${BACKEND}/api/seed_svg?w=480&h=380`).then(r => r.text()).then(svg => {
+
+  Promise.all([
+    fetch(`${BACKEND}/api/seed_svg?w=480&h=380`).then(r => r.text()),
+    fetch(`${BACKEND}/api/mol1_anchor`).then(r => r.json()).catch(() => ({})),
+  ]).then(([svg, mol1]) => {
     document.getElementById('mol-modal-struct').innerHTML = svg;
     const s = document.querySelector('#mol-modal-struct svg');
     if(s){ s.removeAttribute('width'); s.removeAttribute('height'); }
     document.getElementById('mol-modal-smiles').textContent = seedSmi;
+    const m = (mol1 && mol1.row) ? mol1.row : null;
     const props = document.getElementById('mol-modal-props');
     props.innerHTML = '';
-    for(const [k,v] of Object.entries(seedProps)){
-      props.innerHTML += `<div class="l">${k}</div><div class="v">${v}</div>`;
+
+    // Per-family ordering matches the survivor table column families.
+    const FAMILIES = [
+      {title:'Identity / Design',
+       fields:[['Method','method'],['Pharmacophore','pharmacophore'],['MW (Da)','MW',1],
+               ['HeavyAtoms','HeavyAtoms']]},
+      {title:'Combined Score',
+       fields:[['Combined Score','desirability_score',3],
+               ['P_potency','P_potency',2],
+               ['P_pose','P_pose',2],
+               ['P_shape_to_mol1','P_shape_to_mol1',2],
+               ['P_covgeom','P_covgeom',2],
+               ['P_clean_reactivity','P_clean_reactivity',2],
+               ['P_Tec_family (pctl)','P_Tec_family_pctl',2],
+               ['P_kinase (pctl)','P_kinase_pctl',2],
+               ['P_pIC50_kinase_aux (pctl)','P_pIC50_kinase_aux_pctl',2]]},
+      {title:'Predicted Potency',
+       fields:[['pIC50 mean (FiLMDelta, 3-seed)','pIC50_mean',2],
+               ['pIC50 std','pIC50_std',3],
+               ['anchor_wins (/280)','anchor_wins',0],
+               ['anchor_wins ≥7 (/57)','anchor_wins_ge7',0],
+               ['Δ vs Mol1','delta_vs_mol1',3]]},
+      {title:'2D / 3D similarity',
+       fields:[['Tc → Mol1','Tc_to_Mol1',3],
+               ['mean top10 Tc → train','mean_top10_Tc_train',3],
+               ['shape Tc vs Mol1','shape_Tc_mol1',3],
+               ['ESP sim vs seed','esp_sim_seed',3],
+               ['warhead Δ°','warhead_dev_deg',1],
+               ['max pubTc','max_pubTc',3],
+               ['closest_lead','closest_lead']]},
+      {title:'Cofold pose (Cys346)',
+       fields:[['d_SG (Å)','d_SG',2],
+               ['Bürgi-Dunitz dev (°)','burgi_dunitz_dev_deg',1],
+               ['n H-bonds','n_h_bonds',0],
+               ['n stabilizing contacts','n_stabilizing_contacts',0],
+               ['ATP pocket fraction','atp_pocket_fraction',3],
+               ['pocket occupancy %','pocket_occupancy_pct',1],
+               ['RDKit strain (cofold, kcal/mol)','rdkit_strain_kcal_mol',1],
+               ['RDKit strain (posefree, kcal/mol)','rdkit_strain_posefree_kcal_mol',1]]},
+      {title:'Boltz-2 confidence',
+       fields:[['boltz_confidence_score','boltz_confidence_score',3],
+               ['boltz_iptm','boltz_iptm',3],
+               ['boltz_ligand_iptm','boltz_ligand_iptm',3],
+               ['boltz_complex_plddt','boltz_complex_plddt',3],
+               ['boltz_complex_iplddt','boltz_complex_iplddt',3],
+               ['mPAE_paper','mPAE_paper',2],
+               ['mPAE_london','mPAE_london',2]]},
+      {title:'Pocket interaction energy',
+       fields:[['Vina rescore (affinity, kcal/mol)','vina_rescore_affinity_kcalmol',2],
+               ['Vina rescore (intra, kcal/mol)','vina_rescore_intra_kcalmol',3],
+               ['Vina rescore (inter, kcal/mol)','vina_rescore_inter_kcalmol',3],
+               ['pKa Cys346 (PROPKA3)','pKa_Cys346',2],
+               ['pred log k2 (GSH)','pred_log_k2_GSH',2]]},
+      {title:'Kinase classifier',
+       fields:[['P_kinase','P_kinase',3],
+               ['P_Tec_family','P_Tec_family',3],
+               ['pIC50_kinase_aux','pIC50_kinase_aux',2]]},
+      {title:'Drug-likeness',
+       fields:[['QED','QED',3],
+               ['LogP','LogP',2],
+               ['TPSA','TPSA',1],
+               ['HBA','HBA',0],
+               ['HBD','HBD',0],
+               ['RotBonds','RotBonds',0],
+               ['fsp3','fsp3',2],
+               ['SAScore','SAScore',2],
+               ['PAINS_alerts','PAINS_alerts',0],
+               ['Brenk_alerts','Brenk_alerts',0],
+               ['Lipinski violations','Lipinski_violations',0],
+               ['LE','LE',2],['LLE','LLE',2],['BEI','BEI',2],
+               ['SEI','SEI',2],['SILE','SILE',2]]},
+    ];
+
+    const fmt = (v, prec) => {
+      if(v == null || (typeof v === 'number' && isNaN(v))) return '—';
+      if(typeof v === 'number' && prec !== undefined) return v.toFixed(prec);
+      return String(v);
+    };
+    if(m){
+      for(const fam of FAMILIES){
+        props.innerHTML += `<div class="l" style="grid-column:1/-1;font-weight:700;`
+                         + `color:var(--primary-700);margin-top:8px;text-transform:uppercase;`
+                         + `font-size:11px;letter-spacing:0.04em;border-bottom:1px solid var(--neutral-200);`
+                         + `padding-bottom:2px;">${fam.title}</div>`;
+        for(const f of fam.fields){
+          const [label, key, prec] = f;
+          // Pull tooltip from FP_COL_TOOLTIPS if available; falls back silently.
+          const tip = (typeof FP_COL_TOOLTIPS_GLOBAL !== 'undefined' &&
+                       FP_COL_TOOLTIPS_GLOBAL[key]) || '';
+          const tipAttr = tip ? ` title="${tip.replace(/"/g, '&quot;')}"` : '';
+          props.innerHTML += `<div class="l"${tipAttr}>${label}</div>`
+                           + `<div class="v"${tipAttr}>${fmt(m[key], prec)}</div>`;
+        }
+      }
+    } else {
+      // Fallback when /api/mol1_anchor isn't reachable
+      const stub = {
+        'pIC50 (Mol 1, ChEMBL2803)': '6.77',
+        'MW': '314', 'SAScore': '2.80', 'PAINS': '0',
+        'Tc → Mol1': '1.000',
+        Note: 'Backend unavailable — showing static fallback.',
+      };
+      for(const [k,v] of Object.entries(stub)){
+        props.innerHTML += `<div class="l">${k}</div><div class="v">${v}</div>`;
+      }
     }
     document.getElementById('mol-modal').classList.add('show');
   });
@@ -2918,7 +3907,7 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
         </div>
       </div>
 
-      <table id="${id}" class="display compact" style="width:100%;">
+      <table id="${id}" class="display compact method-table" style="width:100%;">
         <thead>
         <!-- Family banner row (2026-05-28: pKa_Cys346 promoted to POCKET ENERGY).
              Default-visible cell counts: rownum(1) + structure(1) + IDENTITY(2)
@@ -2928,14 +3917,16 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
              and does not belong to any chemistry family. -->
         <tr class="family-header">
           <th style="background:var(--neutral-100);font-weight:700;border:none;"></th>
-          <th colspan="3"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">IDENTITY</th>
+          <th colspan="5"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">IDENTITY</th>
           <th colspan="5"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Predicted Potency</th>
           <th colspan="2"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Sim — Internal</th>
           <th colspan="2"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Sim — Publications</th>
           <th colspan="3"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Sim — 3D Shape</th>
           <th colspan="10" class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Cofold Geometry</th>
-          <th colspan="9"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">POCKET INTERACTION ENERGY</th>
+          <th colspan="5"  class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">POCKET INTERACTION ENERGY</th>
           <th colspan="11" class="fam-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">DRUG LIKELINESS</th>
+          <!-- 2026-06-10 PM: Kinase-Like Prediction family -->
+          <th colspan="3"  class="fam-banner" title="Kinase-Like Prediction — 3-head FFN trained on 232K ChEMBL mols. P(kinase) = binary; P(Tec_family) = within-kinase ITK/BTK/TXK family; pIC50_kinase_aux = regression. Scaffold-split AUROC 0.98/0.99." style="background:#fff7ed;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">KINASE-LIKE PREDICTION</th>
           <!-- The detail columns are hidden by default. We still emit ONE colspan'd
                banner so they're labeled when "Show all" toggles them on. -->
           <th colspan="25" class="fam-banner detail-banner" style="background:var(--neutral-100);font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;color:var(--neutral-700);">Detail (modal-default; show-all to view)</th>
@@ -2959,26 +3950,32 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
           <th data-col-key="mean_pubTc" title="v3 panel: Mean Tanimoto to published kinase-covalent leads.">pub mean Tc</th>
           <th data-col-key="top10_mean_pubTc" title="v3 panel: Mean of top-10 Tanimotos to published kinase-covalent leads.">pub top10 mean Tc</th>
           <!-- SIMILARITY — 3D SHAPE -->
-          <th data-col-key="shape_Tc_seed">shape Tc seed</th>
           <th data-col-key="esp_sim_seed">ESP-Sim seed</th>
           <th data-col-key="warhead_dev_deg">warhead Δ°</th>
           <!-- COFOLD GEOMETRY -->
           <th data-col-key="d_SG" title="Warhead Cβ to Cys346 Sγ distance (Å). Canonical thioether ≈ 1.8 Å; > 2.5 Å = warhead not engaged.">d_SG (Å)</th>
           <th data-col-key="n_h_bonds">n H-bonds</th>
           <th data-col-key="n_stabilizing_contacts">n contacts</th>
-          <th data-col-key="pocket_occupancy_pct">pocket %</th>
-          <th data-col-key="mPAE" title="Boltz cofold min PAE. Lower = more confident pose.">mPAE</th>
+          <!-- pocket_occupancy_pct DROPPED 2026-06-10 PM: broken self-normalizing metric (max=100%, ρ=+1.0 with atp_pocket_fraction). Replaced with atp_pocket_fraction (curated ATP-pocket residue list). -->
+          <th data-col-key="atp_pocket_fraction" title="Fraction of ligand heavy atoms within 4 Å of any ZAP70 ATP-pocket residue (Cys346 + hinge + sub-pocket; curated res list — ligand-independent denominator).">ATP pocket frac</th>
+          <th data-col-key="mPAE" title="Boltz cofold min PAE (PROXY) — derived from confidence.json complex_pde scalar. Lower = more confident pose. Legacy column; comparable across older cohorts.">mPAE (proxy)</th>
+          <th data-col-key="mPAE_london" title="True London min-PAE (Shamir/Wright/Levin JACS 2026) — min over the protein × ligand PAE matrix block. Lower = more confident covalent pose.">mPAE London</th>
           <th data-col-key="iptm">iptm</th>
           <th data-col-key="ligand_iptm" title="Boltz-2 ligand-specific interface ipTM.">ligand iptm</th>
           <th data-col-key="boltz_plddt">boltz pLDDT</th>
           <th data-col-key="boltz_confidence">boltz conf</th>
-          <th data-col-key="combined_score">Combined</th>
+          <th data-col-key="desirability_score" title="Combined Score = (P_potency)^0.22 × (P_pose)^0.18 × (P_shape_to_mol1)^0.20 × (P_covgeom)^0.10 × (P_clean_reactivity)^0.10 × (P_Tec_family)^0.10 × (P_kinase)^0.05 × (P_pIC50_kinase_aux)^0.05. Geometric mean of 8 percentile components (Σ=1.0). Higher = better.">Combined Score</th>
           <!-- POCKET INTERACTION ENERGY -->
-          <th data-col-key="vina_kcalmol" title="AutoDock Vina rescore on cofold pose (kcal/mol). More negative = better.">Vina Free Energy</th>
+          <!-- Vina Free Energy column dropped 2026-06-10 PM (analyst): redundant with Vina rescore family (tighter box). -->
+          <th data-col-key="vina_rescore_affinity_kcalmol" title="AutoDock Vina --score_only rescore on Boltz cofold pose with tight box centered on Cys346 Sγ. More negative = better. The canonical pocket interaction score.">Vina rescore (Boltz)</th>
           <th data-col-key="dG_recognition_md_kcalmol" title="MM-GBSA dG_recognition on 1-ns MD trajectory (kcal/mol). Lower = stronger non-covalent binding. Capped-analog protocol — use for ranking, not absolute Ki.">MM-GBSA dG_recog</th>
           <th data-col-key="pKa_Cys346" title="Per-pose Cys346 thiol pKa from PROPKA3. ≤9 productive; >9.5 = <1% thiolate at pH 7.4 = covalent chemistry effectively dead.">pKa Cys346</th>
-          <th data-col-key="vina_inter_kcalmol">Vina inter</th>
-          <th data-col-key="vina_intra_kcalmol">Vina intra</th>
+          <th data-col-key="vina_rescore_intra_kcalmol" title="Vina ligand internal strain on Boltz cofold pose. Survives the covalent-geometry lock and flags warhead-induced torsional cost. L5 cut at >8.">Vina intra (Boltz)</th>
+          <!-- vina_inter_kcalmol + vina_intra_kcalmol dropped 2026-06-10 PM (analyst rec): redundant with vina_rescore_* family which uses the tighter Cys346 box. -->
+          <!-- vdw_interaction_kcal_mol dropped 2026-06-10 PM. -->
+          <!-- legacy Vina inter/intra/vdW removed below -->
+          <th data-col-key="_vina_legacy" hidden>(legacy hidden)</th>
+          <th data-col-key="_vina_legacy2" hidden>(legacy hidden)</th>
           <th data-col-key="vdw_interaction_kcal_mol">vdW</th>
           <th data-col-key="rdkit_strain_kcal_mol">RDKit strain</th>
           <th data-col-key="rdkit_strain_posefree_kcal_mol">strain (posefree)</th>
@@ -2995,6 +3992,10 @@ function renderTableHTML(method, idx, isSingleMethod=false, subTagline='', subMe
           <th data-col-key="RotBonds" title="Rotatable bonds. Veber ≤10.">RotBonds</th>
           <th data-col-key="fsp3" title="Fraction sp3 carbons. ≥0.25 for 3D character.">fsp3</th>
           <th data-col-key="SAScore" title="Synthetic Accessibility (Ertl 2009). ≤4 easy, ≥6 hard.">SA Score</th>
+          <!-- 2026-06-10 PM: Kinase-Like Prediction family — 3-head FFN classifier -->
+          <th data-col-key="P_kinase" title="P(kinase) — probability the molecule is a kinase binder. 3-head FFN trained on 232K mols (178K kinase positives + 18K kinase-tested-AND-failed [pIC50<5] + 30K polypharmacology-filtered non-kinase actives + 5K DUD-E decoys). Scaffold-split AUROC 0.98.">P(kinase)</th>
+          <th data-col-key="P_Tec_family" title="P(Tec family) — probability of binding a Tec-family kinase (BTK / ITK / TXK / BMX / TEC). Trained on 9,864 Tec actives. Scaffold-split AUROC 0.99. The most-discriminating signal on this cohort per Team #2.">P(Tec family)</th>
+          <th data-col-key="pIC50_kinase_aux" title="pIC50 (kinase auxiliary regression) — predicted kinase pIC50 from the same 3-head model. R² = 0.53, MAE = 0.52. 2nd opinion vs FiLMDelta pIC50_mean.">pIC50 kin (aux)</th>
           <!-- ── DETAIL columns (hidden by default; toggled via Show All) ── -->
           <th data-col-key="compound_id" title="Stable compound identifier.">ID</th>
           <th data-col-key="smiles_full">SMILES</th>
@@ -3057,8 +4058,10 @@ const FILTER_COLS = [
   {key:'d_SG',               label:'d_SG (Å)'},
   {key:'n_h_bonds',          label:'n H-bonds'},
   {key:'n_stabilizing_contacts', label:'n contacts'},
-  {key:'pocket_occupancy_pct',   label:'pocket %'},
-  {key:'mPAE',               label:'mPAE'},
+  // pocket_occupancy_pct dropped — see leaderboard config note.
+  {key:'atp_pocket_fraction',    label:'ATP pocket frac'},
+  {key:'mPAE',               label:'mPAE (proxy)'},
+  {key:'mPAE_london',        label:'mPAE London'},
   {key:'iptm',               label:'iptm'},
   {key:'ligand_iptm',        label:'ligand iptm'},
   {key:'boltz_plddt',        label:'boltz pLDDT'},
@@ -3285,6 +4288,11 @@ function buildTable(method, idx){
         order_dir: orderDir,
       };
       if(sbPayload){ payload.searchBuilder = sbPayload; }
+      // Filter 0 — Mol1-anchored substructure OR-set (intersection with L1-L5).
+      // Always emit so all-empty means "off" (otherwise the backend default of
+      // OR-of-all-3 would re-apply, hiding the user's "show me everything").
+      const f0 = (window.FILTER0_GROUPS || []);
+      payload.groups = f0.length ? f0.join(',') : 'off';
 
       console.log('SB payload:', payload.searchBuilder);
 
@@ -3293,7 +4301,15 @@ function buildTable(method, idx){
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(payload),
-        timeout: 20000,
+        // 2026-06-08: bumped 20s → 60s. The Amine-Replacements method has
+        // 499K rows and takes ~5–6 s on a warm cache; when the page first
+        // loads it competes with 17 Tier-4 cohort fetches (now throttled
+        // and limit=500-capped — see loadTier4Cohort comment) plus 100+
+        // SVG thumbnail requests, often pushing the response past 20 s.
+        // The error fallback below blanks the table — same observable
+        // failure mode the user originally reported as "Tier 1/2/3 tables
+        // don't render".
+        timeout: 60000,
         success: function(resp){
           $('#'+id+'-count').html('<strong>'+n2k(resp.recordsFiltered)+'</strong> / '+n2k(resp.recordsTotal));
           callback(resp);
@@ -3871,7 +4887,7 @@ function renderLeaderboardPage(){
 }
 async function loadLeaderboard(){
   try {
-    const r = await fetch(BACKEND + '/api/top_combined?n=20');
+    const r = await fetch(BACKEND + '/api/top_combined?n=20' + filter0QueryString('&'));
     if(!r.ok) throw new Error('top_combined fetch failed');
     const d = await r.json();
     LEADERBOARD_ROWS = (d.rows || []);
@@ -3888,16 +4904,58 @@ async function loadLeaderboard(){
 
 async function init(){
   try {
+    // /api/methods returns UNFILTERED library counts regardless of Filter 0.
+    // The hero "Library" number must NEVER move with Filter 0.
     const res = await fetch(BACKEND + '/api/methods');
     if(!res.ok) throw new Error('Backend down');
     const data = await res.json();
 
-    document.getElementById('hero-total').textContent = n2k(data.total);
-    document.getElementById('stat-total').textContent = n2k(data.total);
+    const tUnf = data.total_unfiltered != null ? data.total_unfiltered : data.total;
+    document.getElementById('hero-total').textContent = n2k(tUnf);
+    document.getElementById('stat-total').textContent = n2k(tUnf);
     let pot7=0, pot8=0;
     data.methods.forEach(m=>{ pot7 += m.n_potent_7||0; pot8 += m.n_potent_8||0; });
     document.getElementById('stat-pot7').textContent = n2k(pot7);
     document.getElementById('stat-pot8').textContent = n2k(pot8);
+
+    // ── Tier 4 cohort total-mol lookup (tag → n) ──
+    // /api/cohort_smis is now called with limit=500 (2026-06-08 perf fix) so
+    // its `n_rows` no longer carries the true cohort size. The pill counter
+    // (refresh poll in init()) reads __tier4_*_n_total; loadTier4Cohort now
+    // pulls from this map first. Keys are the cohort tags in TIER4_TAGS.
+    // The 'Tier 4 Mol1-Anchored — <label>' methods carry n=<total> directly.
+    {
+      const totals = {};
+      // EXP cohorts: method name is "Tier 4 — <EXP_LABEL>" with no clean tag
+      // mapping; their TIER4_TAGS entries (exp2, exp6, ...) match the cohort
+      // CSV filename, not the method label. Fortunately the EXP cohort
+      // datasets are small (<100K rows) and pre-throttled to limit=500 too,
+      // so the pre-limit n_rows ≈ post-limit n_rows is fine for them.
+      // For mol1-anchored, the label-to-tag mapping mirrors backend
+      // _MOL1_ANCHORED_TAGS_LABELS.
+      const MOL1_LABEL_TO_TAG = {
+        'mol1RL_v5 — acryl reward (mol1-only seed)':       'mol1RL_v5_seed_mol1_only',
+        'THIQ reward, warhead_tokens (mol1-only)':         'thiq_rl_mol1only',
+        'THIQ reward, warhead_tokens (220 zap70)':         'thiq_rl_zap70',
+        'THIQ reward, warhead_tokens (34K kinase)':        'thiq_rl_kinase',
+        'THIQ reward, covalent_ft (mol1-only)':            'thiq_rl_exp2_mol1only',
+        'THIQ reward, covalent_ft (220 zap70)':            'thiq_rl_exp2_zap70',
+        'THIQ reward, covalent_ft (34K kinase)':           'thiq_rl_exp2_kinase',
+        'Murcko reward, warhead_tokens (220 zap70)':       'murcko_rl_zap70',
+        'Murcko reward, warhead_tokens (34K kinase)':      'murcko_rl_kinase',
+        'Murcko reward, covalent_ft (220 zap70)':          'murcko_rl_exp2_zap70',
+        'Murcko reward, covalent_ft (34K kinase)':         'murcko_rl_exp2_kinase',
+      };
+      (data.methods || []).forEach(m => {
+        if (!m.name) return;
+        if (m.name.startsWith('Tier 4 Mol1-Anchored — ')) {
+          const label = m.name.slice('Tier 4 Mol1-Anchored — '.length);
+          const tag = MOL1_LABEL_TO_TAG[label];
+          if (tag) totals[tag] = m.n || 0;
+        }
+      });
+      window.__tier4_method_totals = totals;
+    }
 
     // ── 3-Tier grouping ──
     const TIERS = [
@@ -3929,18 +4987,24 @@ async function init(){
       },
     ];
 
-    // Build sub-nav pills (one per tier)
+    // Build sub-nav pills (one per tier). Counts are ALWAYS unfiltered
+    // library size — Filter 0 is a VIEW filter on table contents, not the
+    // library catalogue. Hovering shows the current Filter-0-restricted count.
     const subnav = document.getElementById('subnav-inner');
     subnav.innerHTML = '<span class="subnav-group-label">Tiers</span>';
     TIERS.forEach((tier, ti) => {
       const tierAnchor = 'tier-' + ti;
-      const totalN = tier.methods.reduce((s, mn) => {
+      let totalN = 0, totalF = 0;
+      tier.methods.forEach(mn => {
         const m = data.methods.find(x=>x.name===mn);
-        return s + (m ? m.n : 0);
-      }, 0);
+        if (!m) return;
+        totalN += (m.n || 0);
+        totalF += (m.n_filtered != null ? m.n_filtered : (m.n || 0));
+      });
       const pill = document.createElement('a');
       pill.href = '#' + tierAnchor;
       pill.className = 'subnav-pill';
+      pill.title = `${totalN.toLocaleString()} candidates in library · ${totalF.toLocaleString()} pass current Filter 0`;
       pill.innerHTML = `${tier.title} <span class="count">${n2k(totalN)}</span>`;
       pill.onclick = (e)=>{
         e.preventDefault();
@@ -3948,6 +5012,62 @@ async function init(){
       };
       subnav.appendChild(pill);
     });
+
+    // Tier 4 pill — rendered statically as #tier4-covalent-aware (not in TIERS array)
+    {
+      const t4Methods = (data.methods || []).filter(m => m.name && m.name.startsWith('Tier 4 —'));
+      const t4Total = t4Methods.reduce((s, m) => s + (m.n || 0), 0);
+      const t4Filt  = t4Methods.reduce((s, m) => s + (m.n_filtered != null ? m.n_filtered : (m.n || 0)), 0);
+      if (t4Total > 0) {
+        const pill = document.createElement('a');
+        pill.href = '#tier4-covalent-aware';
+        pill.className = 'subnav-pill';
+        pill.title = `${t4Total.toLocaleString()} candidates in library · ${t4Filt.toLocaleString()} pass current Filter 0`;
+        pill.innerHTML = `Tier 4 — Covalent-Aware <span class="count">${n2k(t4Total)}</span>`;
+        pill.onclick = (e) => {
+          e.preventDefault();
+          document.getElementById('tier4-covalent-aware').scrollIntoView({behavior:'smooth', block:'start'});
+        };
+        subnav.appendChild(pill);
+      }
+    }
+
+    // Tier 4 — Mol1-Anchored pill (Phases 3-6 RL cohorts). Pulls counts from
+    // the virtual methods served by /api/methods (`Tier 4 Mol1-Anchored — …`).
+    {
+      const mol1Methods = (data.methods || []).filter(m => m.name && m.name.startsWith('Tier 4 Mol1-Anchored —'));
+      const mol1Total = mol1Methods.reduce((s, m) => s + (m.n || 0), 0);
+      const mol1Filt  = mol1Methods.reduce((s, m) => s + (m.n_filtered != null ? m.n_filtered : (m.n || 0)), 0);
+      const pill = document.createElement('a');
+      pill.href = '#tier4-mol1-anchored';
+      pill.className = 'subnav-pill';
+      pill.id = 'subnav-pill-tier4-mol1';
+      pill.title = `${mol1Total.toLocaleString()} candidates in library · ${mol1Filt.toLocaleString()} pass current Filter 0`;
+      pill.innerHTML = `Tier 4 — Mol1-Anchored <span class="count">${n2k(mol1Total)}</span>`;
+      pill.onclick = (e) => {
+        e.preventDefault();
+        document.getElementById('tier4-mol1-anchored').scrollIntoView({behavior:'smooth', block:'start'});
+      };
+      subnav.appendChild(pill);
+      // Refresh once the cohort tables have populated (uses cached n_total
+      // values set by loadTier4Cohort). Re-runs every 1.5s up to 30s.
+      const MOL1_TAGS = ['mol1RL_v5_seed_mol1_only','thiq_rl_mol1only','thiq_rl_zap70','thiq_rl_kinase',
+                         'thiq_rl_exp2_mol1only','thiq_rl_exp2_zap70','thiq_rl_exp2_kinase',
+                         'murcko_rl_zap70','murcko_rl_kinase','murcko_rl_exp2_zap70','murcko_rl_exp2_kinase'];
+      let ticks = 0;
+      const refresh = () => {
+        let sum = 0, have = 0;
+        for (const t of MOL1_TAGS) {
+          const v = window['__tier4_' + t + '_n_total'];
+          if (typeof v === 'number') { sum += v; have += 1; }
+        }
+        if (have >= 1) {
+          pill.innerHTML = `Tier 4 — Mol1-Anchored <span class="count">${n2k(sum)}</span>`;
+        }
+        if (++ticks < 20) setTimeout(refresh, 1500);
+      };
+      setTimeout(refresh, 2000);
+    }
 
     // Render tier sections + method tables
     const page = document.getElementById('page');
