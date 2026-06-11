@@ -24,12 +24,18 @@
     <div class="progress-wrap">
       <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
       <div class="progress-count"><b id="pjudged">0</b> / <span id="ptotal">{{ total }}</span> judged</div>
+      <button class="undo-link" id="undoBtn" type="button" title="Undo your last judgment">&#8624; undo</button>
     </div>
 
     <div id="app">
       <div class="prompt">
         <h1>Which would you <em>advance</em>?</h1>
         <p>Same target, same lab, similar scaffolds. Judge on structure &amp; predicted pose — potency is hidden on purpose.</p>
+        <div class="pose-legend">
+          pose confidence:
+          <span class="lg"><i class="dot teal"></i> high</span>
+          <span class="lg"><i class="dot gold"></i> lower &mdash; predicted, unvalidated</span>
+        </div>
       </div>
 
       <div class="stage" id="stage">
@@ -97,6 +103,8 @@
       <div class="tally"><span id="doneCount">0</span> pairs judged</div>
     </div>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <!-- 3D modal -->
   <div class="modal-back" id="modalBack">

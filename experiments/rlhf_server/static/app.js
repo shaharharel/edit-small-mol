@@ -22,11 +22,13 @@ function confChip(node, conf) {
   node.title = `Boltz ligand-ipTM ${li.toFixed(2)} · pLDDT ${(conf.complex_plddt||0).toFixed(2)} — predicted, unvalidated`;
 }
 
-async function loadSvg(boxId, molId) {
+async function loadSvg(boxId, molId, refId) {
   const box = el(boxId);
   box.classList.add("loading"); box.textContent = "drawing…";
   try {
-    const r = await fetch(`/api/svg/${molId}?w=380&h=300`);
+    const ref = refId ? `&ref=${refId}` : "";
+    const r = await fetch(`/api/svg/${molId}?w=520&h=400${ref}`);
+    if (r.status === 401) { location.href = "/login"; return; }
     box.innerHTML = await r.text();
     box.classList.remove("loading");
   } catch { box.textContent = "could not render"; }
@@ -45,9 +47,10 @@ function renderPair(p) {
   submitBtn.disabled = true;
   el("pjudged").textContent = p.judged;
   el("ptotal").textContent = p.total;
-  el("pfill").style.width = `${(p.judged / p.total) * 100}%`;
-  loadSvg("molL", p.left.id);
-  loadSvg("molR", p.right.id);
+  el("pfill").style.width = `${p.total ? (p.judged / p.total) * 100 : 0}%`;
+  // left renders normally; right is aligned to left's scaffold for easy comparison
+  loadSvg("molL", p.left.id, null);
+  loadSvg("molR", p.right.id, p.left.id);
 }
 
 function showDone(n) {
@@ -59,9 +62,16 @@ function showDone(n) {
 // ---- flow ------------------------------------------------------------------
 async function nextPair() {
   stage.classList.add("swap");
-  const r = await fetch("/api/next_pair");
-  const data = await r.json();
-  if (data.done) { showDone(data.judged); return; }
+  let data;
+  try {
+    const r = await fetch("/api/next_pair");
+    if (r.status === 401) { location.href = "/login"; return; }
+    data = await r.json();
+  } catch {
+    busy = false; stage.classList.remove("swap");
+    return;
+  }
+  if (data.done) { busy = false; showDone(data.judged); return; }
   // brief swap animation
   setTimeout(() => { renderPair(data); stage.classList.remove("swap"); }, 180);
 }
@@ -76,25 +86,54 @@ function select(side) {
   submitBtn.disabled = false;
 }
 
+async function postJudgment(body) {
+  const r = await fetch("/api/submit", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (r.status === 401) { location.href = "/login"; return false; }
+  if (!r.ok) throw new Error("submit failed");
+  return true;
+}
+
 async function submit() {
   if (busy || !pair || !selected) return;
   busy = true;
   const chosen = selected === "left" ? pair.left.id : pair.right.id;
-  await fetch("/api/submit", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pair_id: pair.pair_id, chosen_id: chosen, action: "choice" }),
-  });
-  nextPair();
+  try {
+    if (await postJudgment({ pair_id: pair.pair_id, chosen_id: chosen, action: "choice" }))
+      await nextPair();
+  } catch { busy = false; flashError("Couldn't save — try again"); }
 }
 
 async function skip() {
   if (busy || !pair) return;
   busy = true;
-  await fetch("/api/submit", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ pair_id: pair.pair_id, chosen_id: null, action: "skip" }),
-  });
-  nextPair();
+  try {
+    if (await postJudgment({ pair_id: pair.pair_id, chosen_id: null, action: "skip" }))
+      await nextPair();
+  } catch { busy = false; flashError("Couldn't save — try again"); }
+}
+
+async function undoLast() {
+  if (busy) return;
+  busy = true;
+  try {
+    const r = await fetch("/api/undo", { method: "POST" });
+    if (r.status === 401) { location.href = "/login"; return; }
+    const d = await r.json();
+    if (d.empty) { busy = false; flashError("Nothing to undo"); return; }
+    el("done").style.display = "none";
+    el("app").style.display = "";
+    await nextPair();
+  } catch { busy = false; flashError("Undo failed"); }
+}
+
+function flashError(msg) {
+  const t = el("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
 }
 
 // ---- 3D modal --------------------------------------------------------------
@@ -103,6 +142,7 @@ const CYS_RESI = 346;             // catalytic cysteine in the anchor construct
 let viewer = null;                // ONE persistent viewer, bound to #glhost (never wiped)
 let curSide = "left";             // which molecule is loaded
 let curConf = {};
+let poseToken = 0;                // guards against fast tab/modal switch races
 const modalBack = el("modalBack");
 const loadingEl = el("poseLoading");
 
@@ -193,6 +233,7 @@ function applyPoseStyles() {
 
 async function renderPose(side) {
   if (!pair) return;
+  const my = ++poseToken;          // newest call wins
   curSide = side;
   const mol = side === "left" ? pair.left : pair.right;
   el("tabL").classList.toggle("active", side === "left");
@@ -201,6 +242,7 @@ async function renderPose(side) {
   loadingEl.classList.remove("hidden");
 
   const d = await getPose(mol.id);
+  if (my !== poseToken) return;    // a newer renderPose superseded us
   ensureViewer();
   viewer.clear();
   viewer.removeAllSurfaces();
@@ -246,6 +288,7 @@ el("pc-reset").addEventListener("click", () => {
 });
 submitBtn.addEventListener("click", submit);
 skipBtn.addEventListener("click", skip);
+el("undoBtn").addEventListener("click", undoLast);
 
 document.addEventListener("keydown", (e) => {
   if (modalBack.classList.contains("open")) {

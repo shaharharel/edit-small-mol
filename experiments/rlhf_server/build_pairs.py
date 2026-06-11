@@ -187,6 +187,8 @@ def main() -> None:
                 ordered.append(p)
                 idx += 1
 
+    # only molecules that appear in a SURVIVING pair (after cohort cap)
+    final_mols = {x for p in ordered for x in (p["mol_high_id"], p["mol_low_id"])}
     molecules = {
         m: {
             "chembl_id": m,
@@ -194,7 +196,7 @@ def main() -> None:
             "pose": poses[m]["cif"],
             "conf": poses[m]["conf"],
         }
-        for m in sorted(used_mols)
+        for m in sorted(final_mols)
     }
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
