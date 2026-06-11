@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · Edit RLHF</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="mark">Edit · RLHF</div>
+      <h1>Lead-optimization <em>preference</em> study</h1>
+      <p class="lead">You'll see two closely related ZAP70 inhibitors from the same lab.
+        Pick the one you'd carry forward. Your name keeps each call attributed.</p>
+
+      {% if error %}<div class="login-err">{{ error }}</div>{% endif %}
+
+      <form method="post" action="{{ url_for('login') }}">
+        <div class="field">
+          <label for="name">Your name</label>
+          <input id="name" name="name" type="text" autocomplete="name"
+                 placeholder="e.g. Dana Levin" autofocus required>
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email"
+                 placeholder="you@quris.ai" required>
+        </div>
+        <button class="btn primary" type="submit">Start labeling &rarr;</button>
+      </form>
+
+      <div class="login-foot">ZAP70 · CHEMBL2803 · same-lab matched pairs</div>
+    </div>
+  </div>
+</body>
+</html>

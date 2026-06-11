@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edit · RLHF — ZAP70 preference</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="mark">Edit · RLHF</span>
+        <span class="sub">ZAP70 / CHEMBL2803</span>
+      </div>
+      <div class="cohort" id="cohort">same lab · <b id="cohort-id">—</b></div>
+      <div class="userbox">
+        <span class="who">{{ name }}</span>
+        <a href="{{ url_for('logout') }}">sign out</a>
+      </div>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="pfill"></div></div>
+      <div class="progress-count"><b id="pjudged">0</b> / <span id="ptotal">{{ total }}</span> judged</div>
+    </div>
+
+    <div id="app">
+      <div class="prompt">
+        <h1>Which would you <em>advance</em>?</h1>
+        <p>Same target, same lab, similar scaffolds. Judge on structure &amp; predicted pose — potency is hidden on purpose.</p>
+      </div>
+
+      <div class="stage" id="stage">
+        <!-- LEFT -->
+        <div class="card" id="cardL" data-side="left" tabindex="0">
+          <div class="ribbon">A</div>
+          <div class="stamp">advance ✓</div>
+          <div class="cardhead">
+            <div class="ids">
+              <div class="chembl" id="idL">—</div>
+              <div class="conf-chip" id="confL"><span class="dot"></span><span>pose —</span></div>
+            </div>
+          </div>
+          <div class="molbox loading" id="molL">drawing…</div>
+          <div class="cardfoot">
+            <button class="btn3d" data-side="left" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+              View 3D pose
+            </button>
+            <span class="pick-hint">click to pick · <kbd>←</kbd></span>
+          </div>
+        </div>
+
+        <div class="vs"><div class="line"></div><div class="badge">vs</div><div class="line"></div></div>
+
+        <!-- RIGHT -->
+        <div class="card" id="cardR" data-side="right" tabindex="0">
+          <div class="ribbon">B</div>
+          <div class="stamp">advance ✓</div>
+          <div class="cardhead">
+            <div class="ids">
+              <div class="chembl" id="idR">—</div>
+              <div class="conf-chip" id="confR"><span class="dot"></span><span>pose —</span></div>
+            </div>
+          </div>
+          <div class="molbox loading" id="molR">drawing…</div>
+          <div class="cardfoot">
+            <button class="btn3d" data-side="right" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+              View 3D pose
+            </button>
+            <span class="pick-hint">click to pick · <kbd>→</kbd></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn ghost" id="skipBtn" type="button">Can't decide · skip</button>
+        <button class="btn primary" id="submitBtn" type="button" disabled>Confirm choice &rarr;</button>
+      </div>
+      <div class="keyhints">
+        <span><kbd>←</kbd> pick A</span>
+        <span><kbd>→</kbd> pick B</span>
+        <span><kbd>3</kbd> view 3D</span>
+        <span><kbd>↵</kbd> confirm</span>
+        <span><kbd>S</kbd> skip</span>
+      </div>
+    </div>
+
+    <!-- DONE -->
+    <div class="done" id="done" style="display:none">
+      <div class="glyph">✓</div>
+      <h2>That's the set — thank you.</h2>
+      <p>Every call you made is saved and attributed to you.</p>
+      <div class="tally"><span id="doneCount">0</span> pairs judged</div>
+    </div>
+  </div>
+
+  <!-- 3D modal -->
+  <div class="modal-back" id="modalBack">
+    <div class="modal">
+      <div class="mhead">
+        <h3>Predicted binding pose <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#bf8b2c;font-weight:400">· ZAP70 pocket</span></h3>
+        <button class="x" id="modalX" type="button">&times;</button>
+      </div>
+      <div class="mtabs">
+        <button class="mtab active" id="tabL" data-side="left">A · <span id="tabIdL">—</span></button>
+        <button class="mtab" id="tabR" data-side="right">B · <span id="tabIdR">—</span></button>
+      </div>
+      <div id="viewer3d"></div>
+      <div class="vhint">
+        <span class="vlegend"><i style="background:#7aa6c2"></i> protein</span>
+        <span class="vlegend"><i style="background:#d6432a"></i> ligand</span>
+        <span><b>drag</b> rotate · <b>scroll</b> zoom</span>
+        <span id="confLine" style="color:#8a857a">Boltz-2 prediction — confidence shown, experimentally unvalidated</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
