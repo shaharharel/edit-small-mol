@@ -46,6 +46,10 @@ DB_PATH = Path(os.environ.get("RLHF_DB_PATH", DATA_DIR / "rlhf.db"))
 # pair for later analysis.
 SHOW_PIC50 = False
 
+# Optional single shared team passcode. If set (env), the login form requires it.
+# Unset → no passcode (dev). Rotate by changing the env var + restart.
+ACCESS_CODE = os.environ.get("RLHF_ACCESS_CODE")
+
 app = Flask(__name__)
 # Session-cookie signing key. MUST be set via env in any real deployment
 # (export RLHF_SECRET_KEY=$(openssl rand -hex 32)); the fallback is dev-only.
@@ -124,10 +128,17 @@ def login_required(fn):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        if ACCESS_CODE and (request.form.get("code") or "").strip() != ACCESS_CODE:
+            return render_template(
+                "login.html", error="Incorrect access code.", require_code=True
+            )
         name = (request.form.get("name") or "").strip()
         email = (request.form.get("email") or "").strip().lower()
         if not name or not email:
-            return render_template("login.html", error="Name and email are required.")
+            return render_template(
+                "login.html", error="Name and email are required.",
+                require_code=bool(ACCESS_CODE),
+            )
         db = get_db()
         # email is the unique identity; the display name is just a label and is
         # refreshed on each login so a corrected name propagates.
@@ -146,7 +157,7 @@ def login():
         session["uid"] = uid
         session["name"] = name
         return redirect(url_for("index"))
-    return render_template("login.html", error=None)
+    return render_template("login.html", error=None, require_code=bool(ACCESS_CODE))
 
 
 @app.route("/logout")
