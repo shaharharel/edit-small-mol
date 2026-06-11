@@ -126,6 +126,8 @@ def login():
         if not name or not email:
             return render_template("login.html", error="Name and email are required.")
         db = get_db()
+        # email is the unique identity; the display name is just a label and is
+        # refreshed on each login so a corrected name propagates.
         row = db.execute("SELECT * FROM users WHERE email=?", (email,)).fetchone()
         if row is None:
             cur = db.execute(
@@ -135,6 +137,9 @@ def login():
             uid = cur.lastrowid
         else:
             uid = row["id"]
+            if name != row["name"]:
+                db.execute("UPDATE users SET name=? WHERE id=?", (name, uid))
+                db.commit()
         session["uid"] = uid
         session["name"] = name
         return redirect(url_for("index"))
