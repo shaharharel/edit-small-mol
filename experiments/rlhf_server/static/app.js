@@ -156,7 +156,7 @@ async function getPose(molId) {
 
 function ensureViewer() {
   if (!viewer) {
-    viewer = $3Dmol.createViewer(el("glhost"), { backgroundColor: "#0e0d0a" });
+    viewer = $3Dmol.createViewer(el("glhost"), { backgroundColor: "#ffffff" });
   }
   return viewer;
 }
@@ -178,17 +178,17 @@ function applyPoseStyles() {
   if (pocket)
     viewer.addStyle(
       { chain: "A", byres: true, within: { distance: POCKET_RADIUS, sel: { chain: "B" } } },
-      { stick: { radius: 0.12, colorscheme: "whiteCarbon" } }
+      { stick: { radius: 0.12, colorscheme: "default" } }   // grey C + colored heteroatoms on white
     );
   // ligand
   viewer.setStyle({ chain: "B" }, { stick: { colorscheme: "magentaCarbon", radius: 0.2 } });
-  // catalytic cysteine landmark
+  // catalytic cysteine landmark (solid gold to match the legend, visible on white)
   if (cys) {
     viewer.addStyle(
       { chain: "A", resi: CYS_RESI },
-      { stick: { colorscheme: "yellowCarbon", radius: 0.26 } }
+      { stick: { color: "#d99a17", radius: 0.26 } }
     );
-    viewer.addStyle({ chain: "A", resi: CYS_RESI, atom: "SG" }, { sphere: { radius: 0.5 } });
+    viewer.addStyle({ chain: "A", resi: CYS_RESI, atom: "SG" }, { sphere: { radius: 0.5, color: "#d99a17" } });
     viewer.addLabel(
       "Cys" + CYS_RESI,
       { backgroundColor: "rgba(242,192,55,0.9)", fontColor: "#1c1b17", fontSize: 11, inFront: true },
