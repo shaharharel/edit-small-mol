@@ -10,24 +10,57 @@ const submitBtn = el("submitBtn"), skipBtn = el("skipBtn");
 let pair = null;          // current pair payload
 let selected = null;      // 'left' | 'right'
 let busy = false;
+let showMore = false;     // expand the extra property stats
 const poseCache = {};     // mol_id -> {cif, conf}
 
-// ---- rendering -------------------------------------------------------------
-function confChip(node, conf) {
-  const li = conf && conf.ligand_iptm != null ? conf.ligand_iptm : null;
-  const span = node.querySelector("span:last-child");
-  if (li == null) { node.classList.add("warn"); span.textContent = "pose n/a"; return; }
-  node.classList.toggle("warn", li < 0.85);
-  span.textContent = `pose conf ${li.toFixed(2)}`;
-  node.title = `Boltz ligand-ipTM ${li.toFixed(2)} · pLDDT ${(conf.complex_plddt||0).toFixed(2)} — predicted, unvalidated`;
+// ---- property strip (potency + LE deliberately absent) ---------------------
+function fmtStrip(pr) {
+  if (!pr || pr.MW == null) return '<span class="pmuted">properties n/a</span>';
+  const cell = (lab, val) => `<span class="pstat"><i>${lab}</i><b>${val}</b></span>`;
+  const core = cell("MW", pr.MW) + cell("cLogP", pr.cLogP) + cell("TPSA", pr.TPSA) +
+    cell("HBD/HBA", `${pr.HBD}/${pr.HBA}`) + cell("RotB", pr.RotB);
+  const more = `<span class="pmore${showMore ? "" : " hidden"}">` +
+    cell("ArRings", pr.ArRings) + cell("fsp3", pr.fsp3) + cell("stereo", pr.stereo) + "</span>";
+  const alert = pr.alerts > 0
+    ? `<span class="palert warn">⚠ ${pr.alerts} alert${pr.alerts > 1 ? "s" : ""}</span>`
+    : `<span class="palert ok">✓ no alerts</span>`;
+  return core + more + alert;
 }
 
-async function loadSvg(boxId, molId, refId) {
+function renderProps(p) {
+  el("propL").innerHTML = fmtStrip(p.left.props);
+  el("propR").innerHTML = fmtStrip(p.right.props);
+  const a = p.left.props, b = p.right.props, db = el("deltabar");
+  if (!a || !b || a.MW == null) { db.innerHTML = ""; return; }
+  const d = (lab, va, vb, dec) => {
+    const diff = vb - va, s = diff > 0 ? "+" : "";
+    return `<span class="dchip"><i>Δ${lab}</i> ${s}${diff.toFixed(dec)}</span>`;
+  };
+  db.innerHTML = d("MW", a.MW, b.MW, 0) + d("cLogP", a.cLogP, b.cLogP, 2) +
+    d("TPSA", a.TPSA, b.TPSA, 0) + d("RotB", a.RotB, b.RotB, 0) +
+    `<button class="moretoggle" id="moreToggle" type="button">${showMore ? "fewer ▴" : "more ▾"}</button>`;
+  el("moreToggle").addEventListener("click", () => { showMore = !showMore; renderProps(pair); });
+}
+
+// ---- rendering -------------------------------------------------------------
+// Card shows only whether a predicted pose EXISTS — not its numeric confidence.
+// (Confidence ≠ affinity; surfacing it here would bias chemists to pick the
+// higher-confidence pose. The numbers live in the 3D modal as drill-down.)
+function confChip(node, conf) {
+  const has = conf && conf.ligand_iptm != null;
+  const span = node.querySelector("span:last-child");
+  node.classList.remove("warn");
+  if (!has) { node.classList.add("warn"); span.textContent = "no 3D pose"; return; }
+  span.textContent = "3D pose";
+  node.title = "Predicted Boltz pose available — open to inspect. Confidence ≠ affinity.";
+}
+
+async function loadSvg(boxId, molId, query) {
   const box = el(boxId);
   box.classList.add("loading"); box.textContent = "drawing…";
   try {
-    const ref = refId ? `&ref=${refId}` : "";
-    const r = await fetch(`/api/svg/${molId}?w=520&h=400${ref}`);
+    const qs = query ? `&${query}` : "";
+    const r = await fetch(`/api/svg/${molId}?w=520&h=400${qs}`);
     if (r.status === 401) { location.href = "/login"; return; }
     box.innerHTML = await r.text();
     box.classList.remove("loading");
@@ -48,9 +81,11 @@ function renderPair(p) {
   el("pjudged").textContent = p.judged;
   el("ptotal").textContent = p.total;
   el("pfill").style.width = `${p.total ? (p.judged / p.total) * 100 : 0}%`;
-  // left renders normally; right is aligned to left's scaffold for easy comparison
-  loadSvg("molL", p.left.id, null);
-  loadSvg("molR", p.right.id, p.left.id);
+  // left keeps its own layout (edit highlighted); right aligns to left's core
+  // (also edit-highlighted) so the changed substructure pops on both
+  loadSvg("molL", p.left.id, `hl=${p.right.id}`);
+  loadSvg("molR", p.right.id, `ref=${p.left.id}`);
+  renderProps(p);
 }
 
 function showDone(n) {
@@ -226,9 +261,9 @@ function applyPoseStyles() {
   viewer.render();
   const c = curConf || {};
   el("confLine").textContent =
-    `Boltz-2 · ligand-ipTM ${(c.ligand_iptm || 0).toFixed(2)} · pLDDT ${(c.complex_plddt || 0).toFixed(2)}` +
-    (hbonds ? ` · ${nHb} H-bond${nHb === 1 ? "" : "s"}` : "") +
-    ` — predicted, unvalidated`;
+    `Predicted pose (Boltz-2), experimentally unvalidated — confidence ≠ affinity.` +
+    (hbonds ? `  ${nHb} H-bond${nHb === 1 ? "" : "s"}.` : "") +
+    `  fold ipTM ${(c.ligand_iptm || 0).toFixed(2)} · pLDDT ${(c.complex_plddt || 0).toFixed(2)}`;
 }
 
 async function renderPose(side) {

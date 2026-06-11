@@ -32,9 +32,7 @@
         <h1>Which would you <em>advance</em>?</h1>
         <p>Same target, same lab, similar scaffolds. Judge on structure &amp; predicted pose — potency is hidden on purpose.</p>
         <div class="pose-legend">
-          pose confidence:
-          <span class="lg"><i class="dot teal"></i> high</span>
-          <span class="lg"><i class="dot gold"></i> lower &mdash; predicted, unvalidated</span>
+          <span class="lg">activity hidden on purpose · structures + predicted 3D pose · <i style="color:var(--gold);font-style:normal">amber</i> = the changed group</span>
         </div>
       </div>
 
@@ -50,6 +48,7 @@
             </div>
           </div>
           <div class="molbox loading" id="molL">drawing…</div>
+          <div class="propstrip" id="propL"></div>
           <div class="cardfoot">
             <button class="btn3d" data-side="left" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
@@ -72,6 +71,7 @@
             </div>
           </div>
           <div class="molbox loading" id="molR">drawing…</div>
+          <div class="propstrip" id="propR"></div>
           <div class="cardfoot">
             <button class="btn3d" data-side="right" type="button">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
@@ -81,6 +81,8 @@
           </div>
         </div>
       </div>
+
+      <div class="deltabar" id="deltabar"></div>
 
       <div class="actions">
         <button class="btn ghost" id="skipBtn" type="button">Can't decide · skip</button>

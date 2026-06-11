@@ -28,9 +28,48 @@ from pathlib import Path
 
 import pandas as pd
 from rdkit import Chem, DataStructs, RDLogger
-from rdkit.Chem import AllChem
+from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
+from rdkit.Chem.FilterCatalog import FilterCatalog, FilterCatalogParams
 
 RDLogger.DisableLog("rdApp.*")
+
+_ALERT_CATALOG = None
+
+
+def _alert_catalog():
+    """PAINS + Brenk structural-alert catalog (built once)."""
+    global _ALERT_CATALOG
+    if _ALERT_CATALOG is None:
+        params = FilterCatalogParams()
+        params.AddCatalog(FilterCatalogParams.FilterCatalogs.PAINS)
+        params.AddCatalog(FilterCatalogParams.FilterCatalogs.BRENK)
+        _ALERT_CATALOG = FilterCatalog(params)
+    return _ALERT_CATALOG
+
+
+def compute_props(smiles: str) -> dict:
+    """Physchem descriptors shown to chemists. NO potency / LE (those leak the
+    hidden activity signal). Deltas are computed client-side per pair."""
+    mol = Chem.MolFromSmiles(smiles)
+    if mol is None:
+        return {}
+    try:
+        n_stereo = rdMolDescriptors.CalcNumAtomStereoCenters(mol) + \
+            rdMolDescriptors.CalcNumUnspecifiedAtomStereoCenters(mol)
+    except Exception:
+        n_stereo = 0
+    return {
+        "MW": round(Descriptors.MolWt(mol), 1),
+        "cLogP": round(Descriptors.MolLogP(mol), 2),
+        "TPSA": round(Descriptors.TPSA(mol), 1),
+        "HBD": Lipinski.NumHDonors(mol),
+        "HBA": Lipinski.NumHAcceptors(mol),
+        "RotB": Lipinski.NumRotatableBonds(mol),
+        "ArRings": Lipinski.NumAromaticRings(mol),
+        "fsp3": round(rdMolDescriptors.CalcFractionCSP3(mol), 2),
+        "stereo": int(n_stereo),
+        "alerts": len(_alert_catalog().GetMatches(mol)),
+    }
 
 PROJECT = Path(__file__).resolve().parents[2]
 SRC_CSV = PROJECT / "data/overlapping_assays/molecule_pIC50_minimal.csv"
@@ -195,6 +234,7 @@ def main() -> None:
             "smiles": canon[m],
             "pose": poses[m]["cif"],
             "conf": poses[m]["conf"],
+            "props": compute_props(canon[m]),
         }
         for m in sorted(final_mols)
     }

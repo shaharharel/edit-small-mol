@@ -196,6 +196,7 @@ def _mol_public(mol_id: str, pair: dict, which: str) -> dict:
         "chembl_id": m["chembl_id"],
         "has_pose": bool(m.get("pose")),
         "conf": m.get("conf", {}),
+        "props": m.get("props", {}),
     }
     if SHOW_PIC50:
         out["pIC50"] = pair["pIC50_high"] if which == "high" else pair["pIC50_low"]
@@ -244,26 +245,21 @@ def _clamp_dim(v, default):
         return default
 
 
-def _aligned_coords(mol, ref_mol) -> None:
-    """Orient `mol` so its maximum common substructure with `ref_mol` shares the
-    same 2D layout — makes the matched pair visually comparable side by side."""
-    try:
-        res = rdFMCS.FindMCS(
-            [mol, ref_mol], timeout=2, completeRingsOnly=True,
-            ringMatchesRingOnly=True, bondCompare=rdFMCS.BondCompare.CompareOrderExact,
-        )
-        patt = Chem.MolFromSmarts(res.smartsString) if res.smartsString else None
-        if patt is None:
-            raise ValueError("no MCS")
-        ref_match = ref_mol.GetSubstructMatch(patt)
-        mol_match = mol.GetSubstructMatch(patt)
-        if not ref_match or not mol_match:
-            raise ValueError("no match")
-        conf = ref_mol.GetConformer()
-        coord_map = {mol_match[i]: conf.GetAtomPosition(ref_match[i]) for i in range(len(mol_match))}
-        AllChem.Compute2DCoords(mol, coordMap=coord_map)
-    except Exception:
-        AllChem.Compute2DCoords(mol)
+_EDIT_HL = (1.0, 0.80, 0.52)   # soft amber — marks the changed substructure
+
+
+def _mcs_against(mol, partner_mol):
+    """Return the set of `mol` atom indices that are NOT in the maximum common
+    substructure with partner_mol (i.e. the changed/edit atoms), plus the SMARTS
+    pattern. Returns (None, None) if no MCS."""
+    res = rdFMCS.FindMCS(
+        [mol, partner_mol], timeout=2, completeRingsOnly=True,
+        ringMatchesRingOnly=True, bondCompare=rdFMCS.BondCompare.CompareOrderExact,
+    )
+    patt = Chem.MolFromSmarts(res.smartsString) if res.smartsString else None
+    if patt is None:
+        return None, None
+    return set(mol.GetSubstructMatch(patt)), patt
 
 
 @app.route("/api/svg/<mol_id>")
@@ -274,31 +270,58 @@ def api_svg(mol_id: str):
         return "not found", 404
     w = _clamp_dim(request.args.get("w"), 360)
     h = _clamp_dim(request.args.get("h"), 300)
-    ref_id = request.args.get("ref")
-    cache_key = (mol_id, ref_id, w, h)
+    ref_id = request.args.get("ref")    # align to this partner + highlight edit
+    hl_id = request.args.get("hl")      # highlight edit vs this partner (no realign)
+    partner_id = ref_id or hl_id
+    cache_key = (mol_id, ref_id, hl_id, w, h)
     if cache_key in _svg_cache:
         return _svg_cache[cache_key], 200, {"Content-Type": "image/svg+xml"}
 
     mol = Chem.MolFromSmiles(m["smiles"])
     if mol is None:
         return "bad smiles", 400
-    ref = MOLECULES.get(ref_id) if ref_id else None
-    if ref:
-        ref_mol = Chem.MolFromSmiles(ref["smiles"])
-        if ref_mol is not None:
-            AllChem.Compute2DCoords(ref_mol)
-            _aligned_coords(mol, ref_mol)
+
+    changed = []
+    partner = MOLECULES.get(partner_id) if partner_id else None
+    pmol = Chem.MolFromSmiles(partner["smiles"]) if partner else None
+    if pmol is not None:
+        mol_in_mcs, patt = _mcs_against(mol, pmol)
+        if mol_in_mcs is not None:
+            changed = [a.GetIdx() for a in mol.GetAtoms() if a.GetIdx() not in mol_in_mcs]
+            if ref_id:  # align this molecule onto the partner's shared-core layout
+                try:
+                    AllChem.Compute2DCoords(pmol)
+                    ref_match = pmol.GetSubstructMatch(patt)
+                    mol_match = mol.GetSubstructMatch(patt)
+                    conf = pmol.GetConformer()
+                    coord_map = {mol_match[i]: conf.GetAtomPosition(ref_match[i])
+                                 for i in range(len(mol_match))}
+                    AllChem.Compute2DCoords(mol, coordMap=coord_map)
+                except Exception:
+                    AllChem.Compute2DCoords(mol)
+            else:
+                AllChem.Compute2DCoords(mol)
         else:
             AllChem.Compute2DCoords(mol)
     else:
         AllChem.Compute2DCoords(mol)
+
+    changed_set = set(changed)
+    hl_bonds = [b.GetIdx() for b in mol.GetBonds()
+                if b.GetBeginAtomIdx() in changed_set and b.GetEndAtomIdx() in changed_set]
 
     drawer = Draw.MolDraw2DSVG(w, h)
     opts = drawer.drawOptions()
     opts.bondLineWidth = 1.6
     opts.clearBackground = False
     opts.padding = 0.06
-    drawer.DrawMolecule(mol)
+    drawer.DrawMolecule(
+        mol,
+        highlightAtoms=changed,
+        highlightBonds=hl_bonds,
+        highlightAtomColors={i: _EDIT_HL for i in changed},
+        highlightBondColors={i: _EDIT_HL for i in hl_bonds},
+    )
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
     _svg_cache[cache_key] = svg
