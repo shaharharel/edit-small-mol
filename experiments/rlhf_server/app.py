@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -38,7 +39,7 @@ RDLogger.DisableLog("rdApp.*")
 
 PROJECT = Path(__file__).resolve().parents[2]
 DATA_DIR = PROJECT / "data/rlhf_demo"
-DB_PATH = DATA_DIR / "rlhf.db"
+DB_PATH = Path(os.environ.get("RLHF_DB_PATH", DATA_DIR / "rlhf.db"))
 
 # Hide numeric pIC50 during the choice so we capture genuine medchem preference
 # rather than "pick the bigger number". The values are still stored with every
@@ -46,7 +47,9 @@ DB_PATH = DATA_DIR / "rlhf.db"
 SHOW_PIC50 = False
 
 app = Flask(__name__)
-app.secret_key = "rlhf-zap70-demo-secret"  # internal demo only
+# Session-cookie signing key. MUST be set via env in any real deployment
+# (export RLHF_SECRET_KEY=$(openssl rand -hex 32)); the fallback is dev-only.
+app.secret_key = os.environ.get("RLHF_SECRET_KEY", "rlhf-zap70-dev-insecure-key")
 
 # ---- in-memory dataset -----------------------------------------------------
 MOLECULES: dict[str, dict] = json.loads((DATA_DIR / "molecules.json").read_text())
