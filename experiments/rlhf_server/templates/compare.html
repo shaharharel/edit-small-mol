@@ -109,12 +109,26 @@
         <button class="mtab active" id="tabL" data-side="left">A · <span id="tabIdL">—</span></button>
         <button class="mtab" id="tabR" data-side="right">B · <span id="tabIdR">—</span></button>
       </div>
-      <div id="viewer3d"></div>
+      <div class="pose-controls" id="poseControls">
+        <label><input type="checkbox" id="pc-cartoon" checked> Cartoon</label>
+        <label><input type="checkbox" id="pc-pocket" checked> Pocket residues</label>
+        <label><input type="checkbox" id="pc-surface" checked> Pocket surface</label>
+        <label><input type="checkbox" id="pc-cys" checked> Cys346</label>
+        <label><input type="checkbox" id="pc-hbonds" checked> H-bonds</label>
+        <button class="pc-btn" id="pc-reset" type="button">Reset view</button>
+      </div>
+      <div id="viewer3d">
+        <div id="glhost"></div>
+        <div class="pose-loading" id="poseLoading">loading pose…</div>
+      </div>
       <div class="vhint">
-        <span class="vlegend"><i style="background:#7aa6c2"></i> protein</span>
-        <span class="vlegend"><i style="background:#d6432a"></i> ligand</span>
+        <span class="vlegend"><i style="background:#5fa6d6"></i> protein</span>
+        <span class="vlegend"><i style="background:#cfcfcf"></i> pocket</span>
+        <span class="vlegend"><i style="background:#d6452a"></i> ligand</span>
+        <span class="vlegend"><i style="background:#f2c037"></i> Cys346</span>
+        <span class="vlegend"><i style="background:#e8a33d"></i> H-bond</span>
         <span><b>drag</b> rotate · <b>scroll</b> zoom</span>
-        <span id="confLine" style="color:#8a857a">Boltz-2 prediction — confidence shown, experimentally unvalidated</span>
+        <span id="confLine" style="color:#8a857a">Boltz-2 — predicted, experimentally unvalidated</span>
       </div>
     </div>
   </div>

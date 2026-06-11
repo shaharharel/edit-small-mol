@@ -98,8 +98,13 @@ async function skip() {
 }
 
 // ---- 3D modal --------------------------------------------------------------
-let viewer = null;
+const POCKET_RADIUS = 5;          // Å, pocket residues / surface around ligand
+const CYS_RESI = 346;             // catalytic cysteine in the anchor construct
+let viewer = null;                // ONE persistent viewer, bound to #glhost (never wiped)
+let curSide = "left";             // which molecule is loaded
+let curConf = {};
 const modalBack = el("modalBack");
+const loadingEl = el("poseLoading");
 
 async function getPose(molId) {
   if (poseCache[molId]) return poseCache[molId];
@@ -109,38 +114,116 @@ async function getPose(molId) {
   return d;
 }
 
+function ensureViewer() {
+  if (!viewer) {
+    viewer = $3Dmol.createViewer(el("glhost"), { backgroundColor: "#0e0d0a" });
+  }
+  return viewer;
+}
+
+// Report-style styling: cartoon + pocket sticks + ligand + Cys346 + surface + H-bonds.
+function applyPoseStyles() {
+  if (!viewer) return;
+  const cartoon = el("pc-cartoon").checked;
+  const pocket = el("pc-pocket").checked;
+  const surface = el("pc-surface").checked;
+  const cys = el("pc-cys").checked;
+  const hbonds = el("pc-hbonds").checked;
+
+  viewer.setStyle({}, {});
+  viewer.removeAllShapes();
+  viewer.removeAllLabels();
+
+  if (cartoon) viewer.setStyle({ chain: "A" }, { cartoon: { color: "spectrum", opacity: 0.78 } });
+  if (pocket)
+    viewer.addStyle(
+      { chain: "A", byres: true, within: { distance: POCKET_RADIUS, sel: { chain: "B" } } },
+      { stick: { radius: 0.12, colorscheme: "whiteCarbon" } }
+    );
+  // ligand
+  viewer.setStyle({ chain: "B" }, { stick: { colorscheme: "magentaCarbon", radius: 0.2 } });
+  // catalytic cysteine landmark
+  if (cys) {
+    viewer.addStyle(
+      { chain: "A", resi: CYS_RESI },
+      { stick: { colorscheme: "yellowCarbon", radius: 0.26 } }
+    );
+    viewer.addStyle({ chain: "A", resi: CYS_RESI, atom: "SG" }, { sphere: { radius: 0.5 } });
+    viewer.addLabel(
+      "Cys" + CYS_RESI,
+      { backgroundColor: "rgba(242,192,55,0.9)", fontColor: "#1c1b17", fontSize: 11, inFront: true },
+      { chain: "A", resi: CYS_RESI, atom: "CA" }
+    );
+  }
+  // pocket surface (semi-transparent, pocket-local for speed)
+  viewer.removeAllSurfaces();
+  if (surface) {
+    viewer.addSurface(
+      $3Dmol.SurfaceType.VDW,
+      { opacity: 0.4, color: "#9fb6c2" },
+      { chain: "A", byres: true, within: { distance: POCKET_RADIUS, sel: { chain: "B" } } }
+    );
+  }
+  // H-bonds: protein N/O <-> ligand N/O within 2.5–3.5 Å
+  let nHb = 0;
+  if (hbonds) {
+    const m = viewer.getModel();
+    const prot = m.selectedAtoms({ chain: "A", elem: ["N", "O"] });
+    const lig = m.selectedAtoms({ chain: "B", elem: ["N", "O"] });
+    for (const a of prot) {
+      for (const b of lig) {
+        const dd = Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+        if (dd > 2.5 && dd < 3.5) {
+          nHb++;
+          viewer.addCylinder({
+            start: { x: a.x, y: a.y, z: a.z }, end: { x: b.x, y: b.y, z: b.z },
+            radius: 0.05, dashed: true, fromCap: 1, toCap: 1, color: "#e8a33d",
+          });
+        }
+      }
+    }
+  }
+  viewer.render();
+  const c = curConf || {};
+  el("confLine").textContent =
+    `Boltz-2 · ligand-ipTM ${(c.ligand_iptm || 0).toFixed(2)} · pLDDT ${(c.complex_plddt || 0).toFixed(2)}` +
+    (hbonds ? ` · ${nHb} H-bond${nHb === 1 ? "" : "s"}` : "") +
+    ` — predicted, unvalidated`;
+}
+
 async function renderPose(side) {
+  if (!pair) return;
+  curSide = side;
   const mol = side === "left" ? pair.left : pair.right;
   el("tabL").classList.toggle("active", side === "left");
   el("tabR").classList.toggle("active", side === "right");
-  const host = el("viewer3d");
-  host.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8a857a;font-family:JetBrains Mono,monospace;font-size:12px">loading pose…</div>';
+  loadingEl.textContent = "loading pose…";
+  loadingEl.classList.remove("hidden");
+
   const d = await getPose(mol.id);
+  ensureViewer();
+  viewer.clear();
+  viewer.removeAllSurfaces();
   if (!d.available) {
-    host.innerHTML = '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8a857a;font-family:JetBrains Mono,monospace;font-size:12px">3D pose not available</div>';
+    loadingEl.textContent = "3D pose not available";
+    viewer.render();
     return;
   }
-  host.innerHTML = "";
-  if (!viewer) viewer = $3Dmol.createViewer(host, { backgroundColor: "#0e0d0a" });
-  viewer.clear();
+  curConf = d.conf || {};
   viewer.addModel(d.cif, "cif");
-  // protein cartoon, ligand sticks (hetero / non-polymer)
-  viewer.setStyle({}, { cartoon: { color: "#7aa6c2", opacity: 0.9 } });
-  viewer.setStyle({ hetflag: true }, { stick: { colorscheme: "default", radius: 0.18 } });
-  viewer.addStyle({ hetflag: true }, { sphere: { scale: 0.22 } });
-  // tint ligand carbons vermilion-ish by element default; emphasize via outline
-  viewer.zoomTo({ hetflag: true });
+  viewer.resize();
+  applyPoseStyles();
+  viewer.zoomTo({ chain: "B" });
   viewer.zoom(0.55);
   viewer.render();
-  const c = d.conf || {};
-  el("confLine").textContent =
-    `Boltz-2 · ligand-ipTM ${(c.ligand_iptm||0).toFixed(2)} · pLDDT ${(c.complex_plddt||0).toFixed(2)} — predicted, experimentally unvalidated`;
+  loadingEl.classList.add("hidden");
 }
 
 function openModal(side) {
   if (!pair) return;
   modalBack.classList.add("open");
-  renderPose(side);
+  // viewer must be created/resized while the modal is visible (correct sizing)
+  requestAnimationFrame(() => renderPose(side));
 }
 function closeModal() { modalBack.classList.remove("open"); }
 
@@ -155,6 +238,12 @@ el("tabL").addEventListener("click", () => renderPose("left"));
 el("tabR").addEventListener("click", () => renderPose("right"));
 el("modalX").addEventListener("click", closeModal);
 modalBack.addEventListener("click", (e) => { if (e.target === modalBack) closeModal(); });
+["pc-cartoon", "pc-pocket", "pc-surface", "pc-cys", "pc-hbonds"].forEach(id =>
+  el(id).addEventListener("change", applyPoseStyles));
+el("pc-reset").addEventListener("click", () => {
+  if (!viewer) return;
+  viewer.zoomTo({ chain: "B" }); viewer.zoom(0.55); viewer.render();
+});
 submitBtn.addEventListener("click", submit);
 skipBtn.addEventListener("click", skip);
 
