@@ -1,0 +1,12 @@
+% Discussion
+\section{Discussion}\label{sec:discussion}
+
+% Body of the discussion will be drafted in a later pass.
+
+\subsection{Future work}\label{sec:discussion:future}
+
+Two extensions of \covagen{} are immediate.
+
+First, a \emph{class-conditional} variant of the covalent prior that exposes four warhead-class control tokens (\texttt{[ACRYLAMIDE]}, \texttt{[CHLOROACETAMIDE]}, \texttt{[VINYL\_SULFONAMIDE]}, \texttt{[EPOXIDE]}) at sampling time would let downstream programs request a specific warhead class on demand. The construction and training recipe is sketched in Appendix~\ref{sec:appendix:warhead_tokens}; this lever is most useful for non-acrylamide programs, since Michael acceptors already dominate the unconditional covalent distribution.
+
+Second, a dedicated \emph{warhead-grafting} module that learns the local chemistry of replacing one warhead with another, conditioned on the pocket cysteine geometry, would let the pipeline handle lead-optimization tasks that explicitly change warhead class mid-program (e.g.\ acrylamide $\to$ chloroacetamide for selectivity tuning) rather than always preserving the parent chemotype.

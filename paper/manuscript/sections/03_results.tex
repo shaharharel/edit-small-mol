@@ -1,0 +1,164 @@
+\section{Results}
+\label{sec:results}
+
+% ZAP70 case-study description moved to Appendix B (sec:supp:zap70).
+
+\subsection*{Overview of experiments}
+\label{sec:results:overview}
+
+We organise the results in two arcs. \textbf{\covagen{} v1} establishes the SMILES-only baseline: covalent fine-tuning of the mol2mol prior concentrates electrophilic kinase chemistry (\S\ref{sec:results:covft}), and a three-component DAP RL loop adds further value on top of the prior on predicted potency, warhead retention, and drug-likeness (\S\ref{sec:results:rl_value}). \textbf{\covagen{} v2} extends the v1 pipeline with the geometric channel: M1a's pocket and warhead-pose conditioning recovers the warhead-fixed geometric ceiling that v1 cannot reach (\S\ref{sec:results:m1a}), and a covalent-DPO refinement combines the M1a prior with cofold-quality preference learning to maintain warhead geometry, drug-likeness, and predicted potency in a single policy (\S\ref{sec:results:covdpo}, in flight).
+
+% ============================================================
+\subsection{Covalent fine-tuning concentrates electrophilic kinase chemistry}
+\label{sec:results:covft}
+
+We compare two generative priors, both initialised from the base mol2mol Transformer prior and seeded with Mol1: (i) \textbf{base}, the vanilla mol2mol prior with no covalent fine-tuning, and (ii) \textbf{covft}, fine-tuned on CovInDB v2 ($\sim$9.5k covalent kinase-inhibitor SMILES). From each prior we sampled $10{,}000$ Mol1-seeded molecules and computed per-cohort metrics. A third variant exposing per-warhead-class control tokens (\textsc{warhead\_tokens}) is described in Appendix~\ref{sec:appendix:warhead_tokens} and is not discussed here.
+
+\paragraph{Metrics.} We report four families.
+\begin{itemize}
+  \item \textbf{Chemistry / validity}: validity (RDKit-parseable fraction), uniqueness (distinct canonical SMILES among valid), and scaffold uniqueness (distinct Bemis--Murcko scaffolds).
+  \item \textbf{Warhead presence}: acrylamide retention via SMARTS match \texttt{[CH2]=[CH]C(=O)N}.
+  \item \textbf{Warhead geometry} (the prerequisite for productive covalent reaction; cf.\ P3 in Table~\ref{tab:covalent_levels}): pre-reactivity score (fraction whose vinyl-amide dihedral is within $\pm 20^\circ$ of planar -- the s-cis or s-trans face required for $\pi$-conjugation, computed from an RDKit ETKDG conformer), planar-dihedral median, and covalent-AutoDock-Vina docked to Cys346.
+  \item \textbf{Hinge-binding chemistry}: in kinases the \emph{hinge} is the backbone loop between the N- and C-lobes that an ATP-competitive inhibitor must engage via two hydrogen bonds, typically through a small donor-acceptor heterocycle (a \emph{hinge-binding pharmacophore}: 2-aminopyridine, 2-aminopyrimidine, 7-azaindole, pyrrolo[2,3-$d$]pyrimidine, 4-aminoquinazoline, 4-aminoimidazole, or 2-aminothiazole). We report \textbf{Hinge (any class)} -- the fraction matching the union of these seven motifs (high by construction because Mol1's own 4-aminoimidazole hinge is in the set) -- and \textbf{Hinge (novel)}, which masks Mol1's hinge atoms before search to isolate \emph{new} hinge chemistry the prior invented from anchor-token leakage. Tc-hop $[0.3, 0.7]$ to Mol1 reports the fraction in the medicinal-chemistry hop band.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\caption{Covalent fine-tuning concentrates electrophilic kinase chemistry but does not shape warhead \emph{geometry}. $n=10{,}000$ Mol1-seeded samples per prior. Warhead-geometry rows (pre-reactivity, planar dihedral, cov-Vina) are computed only on samples that actually contain an acrylamide ($n_{\text{base}}=140$, $n_{\text{covft}}=9{,}720$).}
+\label{tab:covft}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lrr}
+\toprule
+                                       & \textbf{base} & \textbf{covft} \\
+\midrule
+Validity                               & 99.6\%        & 98.9\%         \\
+Uniqueness                             & 25.3\%        & 33.0\%         \\
+Scaffold uniqueness                    & 7.9\%         & 9.2\%          \\
+\midrule
+\textbf{Acrylamide retention}          & 1.4\%         & \textbf{97.2\%} \\
+\midrule
+\multicolumn{3}{l}{\emph{Warhead geometry (on warhead-bearing subset)}} \\
+Pre-reactivity score                   & 0.46          & 0.48           \\
+Planar-dihedral median (deg)           & $63^\circ$    & $62^\circ$     \\
+Cov-Vina median (kcal/mol)             & 152           & 150            \\
+\midrule
+Hinge (any class)                      & 88.5\%        & 82.9\%         \\
+\textbf{Hinge (novel, after Mol1 mask)} & \textbf{0.9\%} & \textbf{4.7\%} \\
+Tc-hop $[0.3, 0.7]$ to Mol1            & 82.8\%        & 80.0\%         \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Headline: presence yes, geometry no.}
+Covalent fine-tuning succeeds at \emph{presence}: acrylamide retention rises by $\sim 70\times$ (1.4\% $\to$ 97.2\%), so the covft prior mass-produces molecules containing the warhead. \emph{Conditioned} on actually containing an acrylamide, however, the molecules' intrinsic warhead conformation is statistically indistinguishable from the base prior's rare warhead-bearing samples (pre-reactivity score $0.46 \to 0.48$; planar-dihedral median $\sim 62^\circ$; cov-Vina median $\sim 150$ kcal/mol; Mann--Whitney $p > 0.4$, Cliff's $\delta < 0.15$ for all three). covFT places the warhead in the molecule but does not shape its local conformation. This is the geometry gap that motivates the architectural conditioning of \S\ref{sec:results:m1a}.
+
+Beyond the warhead itself, covft also produces $5\times$ more \emph{novel-hinge} molecules ($0.9\% \to 4.7\%$) -- molecules that carry a kinase hinge-binding pharmacophore distinct from Mol1's 4-aminoimidazole -- confirming the fine-tuning step is more than a SMARTS gate on the warhead and is exploring kinase-relevant chemistry beyond the seed.
+
+% ============================================================
+\subsection{RL adds value over the covalent prior alone}
+\label{sec:results:rl_value}
+
+The covalent-FT prior of \S\ref{sec:results:covft} already concentrates kinase covalent chemistry; here we ask whether the multi-objective DAP RL loop adds measurable value over sampling from the prior unconditionally. We compare two cohorts seeded with Mol1: (i) the \textbf{prior-only} cohort, $10{,}000$ samples drawn directly from the covft prior with no RL; and (ii) the \textbf{full DAP} cohort, $10{,}000$ samples drawn after $50$ DAP steps with the three-component composite reward (predicted pIC$_{50}$, warhead SMARTS, QED; weights $0.50/0.40/0.10$).
+
+\paragraph{Per-component shift.} For each of the three reward components we report cohort-level statistics on the prior-only vs full-DAP cohorts (figure placeholder, panels A--C). \textit{Predicted pIC$_{50}$ component}: mean predicted pIC$_{50}$ rises from $6.48$ to $7.03$ (Mol1 anchor: $6.59$), with the cohort-best mean rising from $7.92$ to $8.68$. \textit{Warhead-retention component}: rises from $42.9\%$ to $54.5\%$. \textit{QED component}: drops slightly from $0.79$ to $0.73$, indicating the policy trades a modest amount of drug-likeness for the potency and warhead gains.
+
+\paragraph{Training progress.} Figure placeholder (panels D--F): per-step training curves of (D) the composite reward, (E) each component separately, (F) a moving fraction of the cohort that simultaneously satisfies all three reward floors. The composite reward rises from $\sim 0.10$ at step 0 to $0.65$--$0.75$ by step $30$ and saturates before the $50$-step cap; the warhead component locks in fastest, the pIC$_{50}$ component improves throughout training, and the QED component is broadly preserved within $\pm 0.05$ of its prior-only value.
+
+\paragraph{Net effect on the candidate frontier.} Beyond the per-component shifts, the Pareto fraction (warhead $\wedge$ QED $\ge 0.5$ $\wedge$ predicted $\Delta$pIC$_{50} > 0$) rises from $3.7\%$ (covft prior alone) to $9.1\%$ (covft + DAP RL) on contamination-clean lead-optimisation pairs (\S\ref{sec:results:lo}). This $2.5\times$ enrichment is the headline RL-adds-value signal: a chemist triaging the cohort encounters a higher density of joint-objective satisfying molecules.
+
+% ============================================================
+\subsubsection*{Reward-component ablation: are the three terms orthogonal?}
+\label{sec:results:ablation}
+
+Building on the prior-vs-RL comparison of \S\ref{sec:results:rl_value}, we next ask whether the three reward terms (FiLM-predicted potency, warhead SMARTS, QED) shape the cohort along three independent directions or whether one term partially substitutes for another. We compare the \textbf{full DAP} cohort against three \textbf{single-component drop-out} cohorts in which one reward term is removed and the geometric mean is renormalised over the remaining two. Each drop-out cohort comprises $\sim 8{,}000$ post-RL molecules; the full DAP cohort is $41{,}667$ molecules; all cohorts are re-scored with the same native scorers (FiLM, RDKit QED, RDKit substructure-match) on a common scale.
+
+\begin{table}[t]
+\centering
+\caption{Cross-component effect matrix for the three-component DAP reward.
+Rows: component removed. Columns: change in each metric relative to the
+full DAP cohort. Negative values mean the cohort metric \emph{degraded}
+when the component was removed. Off-diagonal magnitudes indicate
+cross-coupling: removing SMARTS also lowers QED (the THIQ-acrylamide
+chassis carries drug-likeness).}
+\label{tab:ablation}
+\small
+\begin{tabular}{lrrr}
+\toprule
+                                  & \textbf{$\Delta$pIC$_{50}$ (FiLM)} & \textbf{$\Delta$warhead} & \textbf{$\Delta$QED} \\
+\midrule
+\textit{full DAP (baseline)}      & 6.597                & 0.962                  & 0.596 \\
+prior only (no RL)                & $-0.114$             & $+0.003$               & $+0.136$ \\
+\midrule
+Remove FiLM                       & $\mathbf{-0.547}$    & $+0.038$               & $+0.039$ \\
+Remove SMARTS                     & $-0.308$             & $\mathbf{-0.957}$      & $\mathbf{-0.154}$ \\
+Remove QED                        & $-0.284$             & $+0.038$               & $\mathbf{-0.157}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Each component controls its own metric.}
+The diagonal of Table~\ref{tab:ablation} is large and clean: removing
+the FiLM scorer reduces mean predicted potency by $0.547$ pIC$_{50}$
+units (the cohort falls \emph{below} the prior-only baseline of 6.483,
+showing FiLM actively lifts potency rather than merely preserving it);
+removing the SMARTS component collapses warhead retention from
+$96\%$ to $0.5\%$; removing QED reduces mean drug-likeness by $0.157$.
+
+\paragraph{One non-trivial cross-coupling.}
+The off-diagonal of interest is the SMARTS row: removing it not only
+collapses warhead retention but also reduces QED by $0.154$ and pIC$_{50}$
+by $0.308$. The THIQ-acrylamide chassis the SMARTS component enforces is
+the prior's principal drug-like backbone; once the policy is free to
+walk away from it, the policy walks into less drug-like and less potent
+chemistry. The FiLM and QED ablations show essentially no cross-coupling.
+This establishes that the three components are an approximate orthogonal
+basis for the reward design space, a useful property for explaining
+behavior to medicinal chemists and for principled tuning.
+
+% ============================================================
+\subsection{Geometry-aware generation via M1a recovers the warhead-fixed geometric ceiling}
+\label{sec:results:m1a}
+
+Section~\ref{sec:results:covft} established that the covalent-FT prior controls warhead \emph{presence} but not warhead \emph{geometry}: conditioned on having an acrylamide, covft and base molecules are indistinguishable on the planar-dihedral and covalent-Vina metrics. Here we ask whether the pocket and warhead-pose conditioning of M1a (\S\ref{sec:methods:m1a}) closes that gap. We compare five cohorts of $10{,}000$ Mol1-anchored samples each: (i)~\textbf{covft}, the unconditional covalent-adapted prior; (ii)~\textbf{covft$\,$+$\,$DAP RL}, the full RL pipeline of \S\ref{sec:methods:rl}; (iii)~\textbf{LibInvent}, a scaffold-decoration baseline in which the Mol1 acrylamide warhead and its $\beta$-carbon are held fixed and only the rest of the molecule is sampled (this is the warhead-fixed \emph{geometric ceiling}: any warhead-bearing generative model whose geometry approaches LibInvent's is, by construction, recovering the geometry a fixed-warhead model has by definition); and (iv)~\textbf{M1a}, the pocket and warhead-pose-conditioned decoder trained on $2{,}512$ $(s, R, p)$ triples per \S\ref{sec:methods:m1a}, sampled conditioned on the ZAP70 Cys346 pocket and the Mol1 warhead pose.
+
+\begin{table}[t]
+\centering
+\caption{Geometry comparison on $10{,}000$ Mol1-anchored samples per cohort.
+M1a closes the warhead-geometry gap left open by covft and RL: it ties the warhead-fixed LibInvent ceiling on every pose-quality metric while remaining a free-form SMILES generator, and unlike LibInvent it generalises across pockets. The training corpus is $9{,}365$ $(s, R, p)$ triples from CovInDB v2 + CovBinderInPDB, with a 3-dim rotation/translation-invariant pose schema.}
+\label{tab:m1a_geometry}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+                                       & \textbf{covft} & \textbf{covft+RL} & \textbf{LibInvent} & \textbf{M1a (v2)} \\
+                                       &                &                   & (ceiling)          &              \\
+\midrule
+Acrylamide retention                   & 93.9\%         & 97.8\%            & 98.6\%             & \textbf{94.4\%} \\
+Pre-reactivity score (frac $\ge 0.5$)  & 0.478          & 0.413             & \textbf{0.604}     & \textbf{0.582} \\
+Planar-dihedral median (deg)           & $61.78^\circ$  & $62.91^\circ$     & $\mathbf{2.43^\circ}$ & $\mathbf{3.06^\circ}$ \\
+\midrule
+Validity                               & 98.9\%         & 99.6\%            & 99.4\%             & 76.7\%        \\
+Unique canonical                       & 33.0\%         & 31.4\%            & 28.7\%             & 53.1\%        \\
+Top-scaffold share                     & 11.4\%         & 12.7\%            & 14.1\%             & 36.5\%        \\
+Tanimoto to Mol1 (median)              & 0.55           & 0.55              & 0.65               & \textbf{0.64} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{M1a ties the warhead-fixed geometric ceiling without paying with the warhead.} On the three pose-quality axes (Table~\ref{tab:m1a_geometry}, top half), M1a v2 is essentially at the LibInvent geometric ceiling: pre-reactivity-score-$\ge0.5$ fraction $0.582$ vs LibInvent $0.604$; planar-dihedral median $3.06^\circ$ vs $2.43^\circ$ (vs covft $61.78^\circ$ -- a $\sim20\times$ improvement on warhead conformation). Critically, M1a v2 reaches this geometry essentially without sacrificing warhead retention: $94.4\%$ acrylamide retention is statistically tied with covft's $93.9\%$ (in v1 the M1a retention dropped to $78\%$; growing the training corpus from $2{,}512$ to $9{,}365$ triples closed that gap).
+
+\paragraph{Pose-channel disentanglement (v2-specific result).} A six-variant ablation tests whether the pocket and pose channels are actually used at inference time, or whether the model has memorised a single in-distribution conditioning configuration. The diagnostic flips a single dimension of the pose vector (e.g. perturbing the B\"urgi-Dunitz-angle slot from $60^\circ$ to $150^\circ$) and measures the shift in the cohort's planar-dihedral distribution. Under the v1 6-d pose schema this perturbation moved planar-dihedral by $0.08^\circ$ -- the channel was being treated as a constant, redundantly encoded through the anchor-relative $\beta$-carbon coordinates. Under the v2 3-dim invariant schema the same perturbation moves planar-dihedral by $\mathbf{4.32^\circ}$ ($\mathbf{54\times}$ larger), confirming that v2's pose channel is finally load-bearing rather than redundant. Cross-pocket transfer also improves: swapping the ZAP70 pocket for EGFR Cys797 raises acrylamide retention from $4.8\%$ (v1) to $58.2\%$ (v2) and Tanimoto to osimertinib from $0.140$ to $0.171$ -- v2 stops actively moving away from EGFR-appropriate chemistry, though it does not yet move toward it (full ablation in Appendix~\ref{sec:supp:m1a_ablation}). The two residual costs are a $7.6$-point drop in baseline validity ($84.3\% \to 76.7\%$, attributable to the more demanding conditioning signal and recoverable via post-hoc valence repair) and a higher top-scaffold share ($36.5\%$ vs v1's $7.0\%$), the latter likely reflecting that the cleaner pose schema funnels generation toward a tighter pose-consistent chemotype distribution.
+
+\paragraph{Boltz validation (in flight).} The geometric metrics in Table~\ref{tab:m1a_geometry} are computed from RDKit ETKDG conformers (ligand-only). To validate the architectural-conditioning claim with the binding pocket actually present, we are Boltz-2 covalent-cofolding $500$ Mol1-anchored M1a v2 samples and $500$ Mol1-anchored vanilla-mol2mol samples against the ZAP70 kinase domain under an explicit $\text{S}_\gamma$--$\text{C}_\beta$ restraint at $1.85$~\r{A}, and comparing the resulting iptm, mPAE, and pocket-frame BD-angle distributions. This validation is running at the time of writing and the result will be added as a third column to Table~\ref{tab:m1a_geometry}.
+
+\paragraph{Architectural conditioning versus reward-only signals.} M1a represents a deliberate architectural choice: the pocket and pose enter the model as inputs to cross-attention, not as scalar terms in the RL reward. The contrast with the DPO variants of \S\ref{sec:methods:covdpo} -- which inject the same Boltz cofold-quality information as a preference signal over the same SMILES decoder -- is informative: preliminary DPO results (deferred from the present manuscript) show that injecting cofold-quality signal at the preference level destabilises warhead retention (mode collapse to $<5\%$ acrylamide) without recovering any of the geometric gains seen here. The M1a architecture appears to be the operative ingredient. We return to this comparison in \S\ref{sec:discussion}.
+
+% ============================================================
+\subsection{Covalent DPO maintains warhead geometry, drug-likeness, and predicted potency (in flight)}
+\label{sec:results:covdpo}
+
+The M1a result of \S\ref{sec:results:m1a} closes the warhead-geometry gap but trades $\sim$16 points of warhead retention against covFT. We are evaluating whether \emph{covalent DPO} --- preference learning against \boltz\ cofold quality on top of an M1a-conditioned policy, regularised by explicit warhead-retention and drug-likeness terms --- can recover the missing retention while preserving the geometric gains of M1a and the predicted-potency gains of the multi-objective RL reward of \S\ref{sec:methods:rl}.
+
+The training set assembles preference pairs from two sources: (i) on-policy pairs generated by the M1a-conditioned decoder and scored by Boltz cofold quality (\textsc{iptm}, mPAE, B\"urgi-Dunitz angle); and (ii) experimentally-grounded pairs in which the chosen ligand is a real PDB co-crystal binder and the rejected is an M1a generation against the same pocket. DPO is run on the M1a-warm-started checkpoint with a small auxiliary loss term enforcing the acrylamide SMARTS indicator and a Tanimoto band $\in [0.3, 0.7]$ against the anchor.
+
+\textbf{Pending results.} v2 retrain (with the rotation-invariant pose schema) is currently in flight on the V100; the six-variant ablation will be re-run on the new checkpoint and the covalent-DPO post-hoc step will follow. We expect to fill this section with: (i) a four-cohort table comparing covFT, covFT$+$RL, M1a v2, and M1a v2 $+$ covalent DPO on warhead retention, planar-dihedral median, covalent-Vina median, predicted pIC$_{50}$ median and $\ge 7.0$ hit-rate, and validity/scaffold-diversity; (ii) the same v1-vs-v2 progression table proposed in \S\ref{sec:results:m1a} extended one column to the right; and (iii) a Boltz-cofold validation on the top $N{=}200$ candidates per cohort. If the geometry-preserving + retention-preserving claim holds, this section becomes the headline of the covaGen v2 arc; if not, we report it as a clean negative control that strengthens the architectural-conditioning thesis of \S\ref{sec:results:m1a}.

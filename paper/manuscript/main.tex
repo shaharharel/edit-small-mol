@@ -1,0 +1,62 @@
+\documentclass[11pt]{article}
+
+% --- Packages ---
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}   % \toprule \midrule \bottomrule \cmidrule (used in tables)
+\usepackage{float}      % provides [H] placement to pin tables/figures in source order
+\usepackage{hyperref}
+\usepackage{xcolor}
+% Try natbib for numbered citations. If natbib not installed, the providecommand below renders \cite{key} as [key].
+\IfFileExists{natbib.sty}{%
+  \usepackage[numbers,sort&compress]{natbib}%
+}{%
+  \providecommand{\cite}[1]{[#1]}%
+  \providecommand{\citep}[1]{[#1]}%
+  \providecommand{\citet}[1]{[#1]}%
+}
+
+% --- Math + notation ---
+\newcommand{\Rb}{\mathbb{R}}
+\newcommand{\Nb}{\mathbb{N}}
+\newcommand{\Eb}{\mathbb{E}}
+\newcommand{\indicator}[1]{\mathbb{1}\left[#1\right]}
+\newcommand{\smileset}{\mathcal{S}}
+\newcommand{\molset}{\mathcal{M}}
+\newcommand{\poseset}{\mathcal{P}}
+\newcommand{\modeltheta}{\pi_\theta}
+\newcommand{\prior}{\pi_0}
+\newcommand{\reward}{R}
+\newcommand{\sigm}{\sigma}
+\newcommand{\filmdelta}{\textsc{FiLMDelta}}
+\newcommand{\boltz}{\textsc{Boltz-2}}
+\newcommand{\propka}{\textsc{PROPKA3}}
+\newcommand{\covagen}{\textsc{CovaCraft}}
+
+% --- Theorem environments ---
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+% --- Hyperref colors ---
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue}
+
+\title{Generative Covalent Hit-to-Lead with Warhead-Aware Reinforcement Learning}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\input{sections/01_introduction.tex}
+\input{sections/02_methods.tex}
+\input{sections/03_results.tex}
+\input{sections/04_discussion.tex}
+
+\appendix
+\input{sections/A1_warhead_tokens.tex}
+\input{sections/A2_supplementary_methods.tex}
+
+\bibliographystyle{abbrvnat}
+\bibliography{refs}
+
+\end{document}
