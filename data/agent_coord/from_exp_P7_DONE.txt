@@ -1,0 +1,26 @@
+# Exp-P7 COMPLETE — 2026-07-29 21:02 UTC
+
+## Summary
+4-way Boltz-2 cofold on ZAP70 (CYS346, acryl-Cβ constraint) × 4 methods:
+- mol2mol_baseline: 142/142 cofolds (capped by upstream SMILES pool)
+- P5-1v2_base: 300/300
+- P6-POSENOISE_s03: 299/300 (1 persistent-fail: uid _0203)
+- RL_GEOMEAN: 300/300
+Total: 1041/1042 (99.9%)
+
+## Machines
+- ai-gpu-a100 (us-central1-a): STOPPED (rsync complete: 442 cofolds, 13GB local)
+- ai-gpu-a100-b (us-central1-b): STOPPED (selective rsync: 599 cofolds, 1.1GB local)
+
+## Results
+- data/exp_P7/results_a/results/ — full batch_a artifacts (13GB)
+- data/exp_P7/results_b_selective/ — batch_b (confidence + PAE + CIF only, 1.1GB)
+- data/exp_P7/per_mol_metrics.csv — 1041 mols × 22 metrics
+- data/exp_P7/per_method_summary.csv — per-method count/median/mean/std
+- data/exp_P7/ks_pairwise.csv — pairwise KS tests
+
+## Winner story
+- Boltz cofold quality (iptm, mPAE): P6-POSENOISE_s03 wins (iptm 0.962, mPAE_min 0.899). All pairs KS p<1e-6.
+- Drug-likeness + pocket fit: RL_GEOMEAN wins (QED 0.85, pocket occupancy 95.5%). MW 309 (leanest).
+- Baseline: mol2mol_baseline uncompetitive on all Boltz metrics.
+- Tradeoff: RL_GEOMEAN has better pocket occupancy but WORSE Boltz iptm than POSENOISE — RL may over-optimize local reward at cost of global structural coherence.
