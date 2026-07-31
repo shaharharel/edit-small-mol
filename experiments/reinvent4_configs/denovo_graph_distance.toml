@@ -1,0 +1,101 @@
+# REINVENT4 de novo with FiLMDelta + warhead gate + warhead-hinge graph distance
+# Target: ZAP70 covalent inhibitors (Cys346 attack, Met414 hinge H-bond).
+# Goal of this config: bias the RNN agent toward molecules whose acrylamide Cβ
+# sits 6-8 bonds away from a hinge nitrogen.
+
+run_type = "staged_learning"
+device = "cpu"
+tb_logdir = "tb_graph_distance"
+json_out_config = "_denovo_graph_distance.json"
+
+[parameters]
+summary_csv_prefix = "denovo_graph_distance"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "priors/reinvent.prior"
+agent_file = "priors/reinvent.prior"
+
+batch_size = 64
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+### Single stage: target both potency and warhead-hinge geometry
+[[stage]]
+chkpt_file = "denovo_graph_distance.chkpt"
+termination = "simple"
+max_score = 0.75
+min_steps = 50
+max_steps = 250
+
+[stage.scoring]
+type = "geometric_mean"
+
+# 1) Warhead-intact gate (multiplicative — geom mean → if any 0, total is 0)
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "warhead"
+weight = 0.30
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_warhead_scorer.py"
+params.property = "warhead"
+
+# 2) FiLMDelta anchor-based pIC50 prediction
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.30
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 8.0
+transform.low = 5.5
+transform.k = 0.5
+
+# 3) NEW: warhead-Cβ → hinge-N graph distance (this experiment's contribution)
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "graph_distance"
+weight = 0.20
+params.executable = "__CONDA_PATH__"
+params.args = "run --no-capture-output -n quris python __PROJECT_ROOT__/experiments/reinvent4_graph_distance_scorer.py"
+params.property = "graph_distance"
+
+# 4) QED drug-likeness
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.10
+
+# 5) Custom alerts (filter unwanted moieties)
+[[stage.scoring.component]]
+[stage.scoring.component.custom_alerts]
+[[stage.scoring.component.custom_alerts.endpoint]]
+name = "Unwanted SMARTS"
+weight = 0.10
+params.smarts = [
+    "[*;r{8-17}]",
+    "[#8][#8]",
+    "[#6;+]",
+    "[#16][#16]",
+    "[#7;!n][S;!$(S(=O)=O)]",
+    "[#7;!n][#7;!n]",
+    "C#C",
+    "C(=[O,S])[O,S]",
+]

@@ -1,86 +1,98 @@
 % Methods
 \section{Methods}\label{sec:methods}
 
-The pipeline composes (i) a covalent-adapted chemical language model (\S\ref{sec:methods:clm}), (ii) a multi-objective RL objective using an off-the-shelf pair-trained pIC$_{50}$ oracle (\S\ref{sec:methods:rl}), (iii) a pocket and warhead-pose conditioning module on the decoder (M1a, \S\ref{sec:methods:m1a}), and (iv) an optional preference-learning variant grounded in cofold quality (\S\ref{sec:methods:covdpo}). We develop each component in turn.
+\covagen{} builds up covalent H2L generation in two complexity steps, each of which is itself refined in two phases.
+
+\textbf{v1 - SMILES-only.} The first step establishes a covalent generative distribution over SMILES. We start from a pretrained mol2mol prior and (i) bias it toward covalent-inhibitor chemotypes via transfer learning on the public CovInDB v2 corpus; this shifts the sampling distribution toward warhead-bearing molecules. We then (ii) optimize this distribution along the axes: predicted potency, warhead retention, and drug-likeness,  with a three-component reinforcement learning objective.
+
+\textbf{v2 - geometry-aware.} The second step adds a 3D geometric channel: neither the v1 prior nor its RL sees the binding pocket or the warhead's target pose, so warhead \emph{presence} is controlled but its \emph{geometry} is not. We again proceed in two phases. First (i) we add a pocket + warhead-pose conditioning module to the decoder's cross-attention so that the model can produce SMILES whose intrinsic conformer places the electrophile at the geometry the target cysteine requires. Second (ii) on top of \Cvcond{} we re-run the same three-component RL for potency, warhead, and drug-likeness. The remainder of this section develops each arm in that order.
 
 \subsection{Notation and problem statement}\label{sec:methods:notation}
 
-Let $\smileset$ denote the space of SMILES strings; $\molset \subset \smileset$ the subset that parse to a chemically valid molecule (we use RDKit \cite{landrum_rdkit} to define $\molset$). The chemical language model defines a probability distribution $\prior(s)$ over $s \in \smileset$. Given an anchor molecule $m_0 \in \molset$ (Mol1), the lead-optimization problem is to find a policy $\modeltheta(s \mid m_0)$ that maximizes the expected reward
+Let $\smileset$ denote the space of SMILES strings; $\molset \subset \smileset$ the subset that parse to a chemically valid molecule. The chemical language model defines a probability distribution $\prior(s)$ over $s \in \smileset$. Given an anchor molecule $m_0 \in \molset$ (Mol1), the Hit2Lead problem is to find a policy $\modeltheta(s \mid m_0)$ that maximizes the expected reward
 \[
 J(\theta) \;=\; \Eb_{s \sim \modeltheta(\cdot \mid m_0)} \bigl[ R(s, m_0) \bigr]
 \]
-where $R(\cdot, m_0): \smileset \times \molset \to \Rb_{\geq 0}$ encodes the multi-objective design goal (\S\ref{sec:methods:rl}).
+where $R(\cdot, m_0): \smileset \times \molset \to \Rb_{\geq 0}$ encodes the multi-objective design goal.
 
 \subsection{Covalent-adapted chemical language model}\label{sec:methods:clm}
 
-We start from the mol2mol \texttt{mol2mol\_medium\_similarity} prior \cite{loeffler2024reinvent4,blaschke2020reinvent2}, a Transformer encoder--decoder trained on ChEMBL with a Tanimoto-$[0.5, 1.0]$ pair sampler. The mol2mol formulation models the conditional distribution
+We start from the mol2mol prior \cite{loeffler2024reinvent4,blaschke2020reinvent2}, a Transformer encoder--decoder trained on ChEMBL similar pairs. The mol2mol formulation models the conditional distribution
 \[
 \prior(s \mid m_0) \;=\; \prod_{t=1}^{T} p\bigl(s_t \mid s_{<t}, \mathrm{enc}(m_0)\bigr)
 \]
-where $\mathrm{enc}(\cdot)$ is the SMILES Transformer encoder and the decoder is sampled autoregressively. We bias this prior toward covalent inhibitor chemotypes by transfer learning on the public \textbf{CovInDB v2} corpus, which after deduplication and standardisation yields $\sim$$9{,}500$ unique covalent-inhibitor SMILES. Because mol2mol transfer learning operates on \emph{pairs}, we expand the corpus by enumerating all within-set pairs at Tanimoto $\ge 0.5$ ($8{,}087$ training + $439$ validation pairs). The resulting fine-tuned prior preserves mol2mol's similarity-conditioned behaviour while shifting the unconditional sample distribution toward warhead-bearing chemotypes; together with the downstream RL pipeline of \S\ref{sec:methods:rl} we refer to it as \covagen{}. A class-conditional variant exposing per-warhead control tokens is described in Appendix~\ref{sec:appendix:warhead_tokens}.
+where $\mathrm{enc}(\cdot)$ is the SMILES Transformer encoder and the decoder is sampled autoregressively. We bias this prior toward covalent inhibitor chemotypes by transfer learning on the public \textbf{CovInDB v2} corpus, which after deduplication and standardisation yields $\sim$$9{,}500$ unique covalent-inhibitor SMILES. Because hit-to-lead (and mol2mol) operates on \emph{pairs}, we expand the corpus by enumerating all within-set pairs at Tanimoto $\ge 0.5$ ($8{,}087$ training + $439$ validation pairs). The resulting fine-tuned prior preserves mol2mol's similarity-conditioned behaviour while shifting the sample distribution toward warhead-bearing chemotypes.
 
 \subsection{Multi-objective reinforcement learning}\label{sec:methods:rl}
 
-Given the covalent-adapted prior of \S\ref{sec:methods:clm}, we bias the policy toward candidates that are simultaneously potent, warhead-bearing, and drug-like via reinforcement learning. The policy is updated by Difference-in-Augmented-Probability (DAP) staged learning \cite{olivecrona2017reinvent,blaschke2020reinvent2}, in which each sampled batch is scored under a composite reward $R$ and the policy is pulled toward an augmented log-likelihood that adds a reward-weighted boost on top of the prior. Formally, at each step $\modeltheta$ is updated toward
+Given the covalent-adapted prior of \S\ref{sec:methods:clm}, we bias the policy toward candidates that are simultaneously potent, warhead-bearing, and drug-like via reinforcement learning. We use Difference-in-Augmented-Probability (DAP) policy optimization \cite{olivecrona2017reinvent,blaschke2020reinvent2}. Let $\prior$ denote the frozen covalent-adapted prior of \S\ref{sec:methods:clm} (never updated during DAP), and let $\agent := \modeltheta$ denote the trainable agent policy, initialised from $\prior$. DAP defines a reward-augmented target log-density built from the frozen prior,
 \[
-\log \pi^{\text{aug}}(s) \;=\; \log \prior(s) \;+\; \sigma \cdot R(s, m_0)
+\log \pi^{\text{aug}}(s) \;=\; \log \prior(s) \;+\; \sigma \cdot R(s, m_0),
 \]
-by minimising the on-policy squared difference
+and pulls the agent toward it by minimising the on-policy squared log-density gap
 \[
-\mathcal{L}_{\text{DAP}}(\theta) \;=\; \Eb_{s \sim \modeltheta(\cdot \mid m_0)} \!\left[ \bigl(\log \modeltheta(s) - \log \pi^{\text{aug}}(s) \bigr)^2 \right].
+\mathcal{L}_{\text{DAP}}(\theta) \;=\; \Eb_{s \sim \agent(\cdot \mid m_0)} \!\left[ \bigl(\log \agent(s) - \log \pi^{\text{aug}}(s) \bigr)^2 \right] \;=\; \Eb_{s \sim \agent} \!\left[ \bigl( \log \tfrac{\agent(s)}{\prior(s)} - \sigma R(s, m_0) \bigr)^2 \right].
 \]
-We use $\sigma = 128$, learning rate $10^{-4}$, batch size $B = 16$, minimum 15 and maximum 50 steps, with early termination when the rolling per-batch maximum reward exceeds $0.7$ (training budget $\le 50 \times 16 = 800$ scored candidates).
+DAP pulls the agent--prior log-ratio toward the reward-scaled target $\sigma R$. We use $\sigma = 128$, learning rate $10^{-4}$, batch size $B = 16$.
 
 \paragraph{Reward.} The composite reward is a weighted geometric mean,
 \[
-R(s, m_0) \;=\; R_{\text{pIC}_{50}}(s)^{w_1} \cdot R_{\text{wh}}(s)^{w_2} \cdot R_{\text{QED}}(s)^{w_3}, \quad (w_1, w_2, w_3) = (0.50, 0.40, 0.10),
+R(s, m_0) \;=\; R_{\text{pIC}_{50}}(s)^{w_1} \cdot R_{\text{wh}}(s)^{w_2} \cdot R_{\text{QED}}(s)^{w_3}, (w_1, w_2, w_3) = (0.50, 0.40, 0.10)
 \]
 with all components in $[0, 1]$:
 \begin{itemize}
-  \item $R_{\text{pIC}_{50}}$: \emph{is the molecule predicted potent?} A sigmoid window on absolute pIC$_{50}$ from an off-the-shelf within-assay $\Delta$pIC$_{50}$ regressor (Appendix~\ref{sec:supp:scorer}).
-  \item $R_{\text{wh}}$: \emph{does the molecule retain a covalent warhead?} A binary SMARTS indicator for the parent acrylamide.
+  \item $R_{\text{pIC}_{50}}$: \emph{is the molecule predicted potent?} A sigmoid window on the predicted pIC$_{50}$, trained on CheMBL ZAP70 within-assay exmaples.
+  \item $R_{\text{wh}}$: \emph{does the molecule retain a covalent warhead?} A graded SMARTS indicator equal to $1.0$ when the parent acrylamide is present and $0.5$ when absent (a soft floor rather than a binary $\{0, 1\}$ gate).
   \item $R_{\text{QED}}$: \emph{is the molecule drug-like?} The Bickerton quantitative estimate of drug-likeness \cite{bickerton2012qed}.
 \end{itemize}
-The geometric mean drives $R \to 0$ whenever any factor is zero, so warhead-absent trajectories carry no \emph{positive} reward; the prior's covalent bias rather than a hard symbolic floor is empirically the dominant control on warhead retention.
+Under the geometric mean, a warhead-absent SMILES receives a significant multiplicative discount on the composite reward to push against warhead loss. This push acts in the same direction as the covalent-adapted prior's already warhead-heavy sample distribution; empirically the combination sustains warhead retention through RL fine-tuning without imposing a hard SMARTS gate.
 
-REINVENT4 plumbing (\texttt{randomize\_smiles} re-rooting, the \texttt{IdenticalMurckoScaffold} diversity filter \cite{bemis1996murcko}, and the TOML configuration) is documented in Appendix~\ref{sec:supp:rl_plumbing}.
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{fig/diagram_v2_architecture.pdf}
+\caption{\Cvcond{} architecture: anchor-SMILES sequence, pocket, and warhead-pose channels are combined into a single cross-attention memory that conditions the decoder.}
+\label{fig:v2_architecture}
+\end{figure}
 
-\subsection{Geometry-aware generation via pocket and warhead-pose conditioning (M1a)}\label{sec:methods:m1a}
+\subsection{Geometry-aware generation via pocket and warhead-pose conditioning }\label{sec:methods:m1a}
 
-The pipeline of \S\ref{sec:methods:clm}--\S\ref{sec:methods:rl} operates entirely on SMILES: neither the prior nor the RL loop has access to the binding pocket or the warhead's 3D pose, so warhead \emph{presence} is controlled but warhead \emph{geometry} is not. M1a addresses this by feeding two extra conditioning vectors into the decoder's existing cross-attention, alongside the anchor SMILES encoder output.
+The pipeline of \S\ref{sec:methods:clm}--\S\ref{sec:methods:rl} operates entirely on SMILES: neither the prior nor the RL loop has access to the binding pocket or the warhead's 3D pose, so warhead \emph{presence} is controlled but warhead \emph{geometry} is not. V2 addresses this by feeding two extra conditioning vectors into the decoder's existing cross-attention, alongside the anchor SMILES encoder output.
 
 \paragraph{Architecture.}
-The standard mol2mol encoder turns the anchor SMILES $m_0$ into a sequence of $K$ vectors of dimension $d_{\text{model}}{=}256$ (one per SMILES token, where $K$ depends on the tokenised length of the anchor). M1a prepends two additional vectors to this sequence, producing a memory of $K{+}2$ vectors that the decoder cross-attends to:
+Fig.~\ref{fig:v2_architecture} sketches the \Cvcond{} decoder-conditioning architecture. The standard mol2mol encoder turns the anchor SMILES $m_0$ into a sequence of $K$ vectors of dimension $d_{\text{model}}{=}256$ (one per SMILES token). \Cvcond{} prepends two additional vectors to this sequence, producing a memory of $K{+}2$ vectors that the decoder cross-attends to:
 \begin{itemize}
-  \item $\mathbf{h}_{[\text{POCKET}]} \in \mathbb{R}^{256}$, a learned summary of the pocket. The pocket is the set of $n$ residues whose C$_\alpha$ lies within $6$~\r{A} of the warhead $\beta$-carbon (in our corpus $n \in [4, 18]$, median $10$); each residue is represented by its $320$-d ESM-2 embedding \cite{lin2023esm2}, giving an $(n, 320)$ matrix. The matrix is linearly projected to $(n, 256)$, a single learnable $256$-d readout token is prepended (giving $(n{+}1, 256)$), and the resulting sequence is passed through a 3-layer Transformer self-attention encoder (4 heads, $d_{\text{ff}}{=}1024$). Cross-position self-attention lets the readout pool information from each residue; the output at the readout position is taken as $\mathbf{h}_{[\text{POCKET}]}$. This is the standard BERT/ViT [CLS] pattern -- the model learns end-to-end how the readout summarises the residue set via gradient descent on the decoder cross-entropy.
-  \item $\mathbf{h}_{[\text{POSE}]} \in \mathbb{R}^{256}$, the warhead pose embedding. The pose $p = (d_{\text{S}\gamma\text{-}\text{C}\beta},\; \theta_{\text{BD}},\; \phi_{\text{planar}})$ is a 3-dim rotation/translation-invariant geometric descriptor -- distance from warhead $\beta$-carbon to the nucleophilic Cys sulphur, B\"urgi-Dunitz approach angle, and vinyl-amide planar dihedral. $p$ is z-scored using corpus statistics and passed through a $3 \to 64 \to 256$ MLP; the output \emph{is} $\mathbf{h}_{[\text{POSE}]}$ (the MLP directly produces the summary, so no readout token is needed on this side).
+  \item $\mathbf{h}_{[\text{POCKET}]} \in \mathbb{R}^{256}$, a learned summary of the pocket. The pocket is the set of $n$ residues whose C$_\alpha$ lies within $6$~\r{A} of the warhead $\beta$-carbon (in our corpus $n \in [4, 18]$, median $10$); each residue is represented by its $320$-d ESM-2 embedding \cite{lin2023esm2}, giving an $(n, 320)$ matrix. The matrix is linearly projected to $(n, 256)$, a single learnable $256$-d token is prepended (giving $(n{+}1, 256)$), and the resulting sequence is passed through a 3-layer Transformer self-attention encoder (4 heads, $d_{\text{ff}}{=}1024$). Cross-position self-attention lets the readout pool information from each residue; the output is $\mathbf{h}_{[\text{POCKET}]}$.
+  \item $\mathbf{h}_{[\text{POSE}]} \in \mathbb{R}^{256}$, the warhead pose embedding. The pose $p = (d_{\text{S}\gamma\text{-}\text{C}\beta},\; \theta_{\text{BD}},\; \phi_{\text{planar}})$ is a 3-dim rotation/translation-invariant geometric descriptor -- distance from warhead $\beta$-carbon to the nucleophilic Cys sulphur, B\"urgi-Dunitz approach angle, and vinyl-amide planar dihedral. $p$ is z-scored using corpus statistics and passed through a $3 \to 64 \to 256$ MLP; the output \emph{is} $\mathbf{h}_{[\text{POSE}]}$.
 \end{itemize}
-$\mathbf{h}_{[\text{POCKET}]}$ and $\mathbf{h}_{[\text{POSE}]}$ are inserted as additional rows in the cross-attention memory matrix at positions before the $K$ anchor-SMILES vectors; they are not added to the SMILES tokenizer vocabulary, so the tokenizer, embedding table, and SMILES-decoding loop are unchanged. The decoder weights and attention heads are inherited from the covalent-adapted prior of \S\ref{sec:methods:clm} verbatim; the new parameters introduced by M1a are the pocket Transformer (3 layers), the pocket input projection (320$\to$256), the learnable $[\text{POCKET}]$ readout token (a single 256-d vector), and the pose MLP, $\sim$$2.47$M parameters total on top of the $\sim$$30$M base decoder.
+$\mathbf{h}_{[\text{POCKET}]}$ and $\mathbf{h}_{[\text{POSE}]}$ are inserted as additional rows in the cross-attention memory matrix at positions before the $K$ anchor-SMILES vectors. The decoder weights and attention heads are initialised from the covalent-adapted prior of \S\ref{sec:methods:clm}. the new parameters introduced by V2 are the pocket Transformer (3 layers), the pocket input projection (320$\to$256), the learnable $[\text{POCKET}]$ readout token (a single 256-d vector), and the pose MLP, $\sim$$2.47$M parameters total on top of the $\sim$$30$M base decoder.
 
 \paragraph{Input/output policy.}
-The M1a policy models the conditional distribution
+The \Cvcond{} policy models the conditional distribution
 \[
 \modeltheta(s \mid m_0, R, p) \;=\; \prod_{t=1}^{T} p\bigl(s_t \mid s_{<t},\; \mathrm{enc}_{\text{SMILES}}(m_0),\; \mathbf{h}_{[\text{POCKET}]}(R),\; \mathbf{h}_{[\text{POSE}]}(p) \bigr).
 \]
 At inference time, $R$ and $p$ may come from either a co-crystal structure or a \boltz\ cofold of any reference covalent inhibitor against the target.
 
-\paragraph{Training data.}
-We assemble $9{,}365$ $(s, R, p)$ triples from CovInDB v2 PDB extraction ($2{,}612$, $\sim$$2{,}600$ unique PDBs across multiple kinase and protease families) and the CovBinderInPDB release ($5{,}658$); the remaining $1{,}095$ are \boltz\ ZAP70 cofolds of Mol1-anchored generations from the covalent-adapted prior. Pocket residues, pose vector, and ESM-2 embeddings are precomputed and cached. Loss is standard SMILES decoder cross-entropy; the geometry signal enters via the conditioning input, not the supervision target.
+\paragraph{Training data.} We assemble $\sim$$9{,}400$ (SMILES, pocket, warhead-pose) triples spanning $\sim$3.4k unique PDB structures across multiple kinase and protease families, drawn from CovInDB v2 PDB extraction, the CovBinderInPDB release \cite{liu2023covbinderinpdb}, and \boltz\ ZAP70 cofolds of Mol1-anchored generations from the covalent-adapted prior. Loss is standard SMILES decoder cross-entropy.
 
-\paragraph{Optimization.}
-$50$ epochs, batch size $16$, AdamW with learning rate $10^{-4}$, NVIDIA V100. The base decoder weights are warm-started from the covalent-adapted prior of \S\ref{sec:methods:clm}; only the pocket Transformer (including its input projection and learnable readout token) and the pose MLP are trained from random initialisation.
+\subsection{\Cvdpo{}: preference-learning refinement on top of \Cvcond{}}\label{sec:methods:covdpo}
 
-\subsection{Covalent preference learning (DPO from Boltz cofold quality)}\label{sec:methods:covdpo}
-
-As an alternative to the architectural conditioning of \S\ref{sec:methods:m1a}, we evaluate whether \boltz~cofold quality can be injected into the policy via preference learning, without changing the decoder architecture. We collect cofold-scored pairs from the covalent-adapted prior, score each cofold by a composite pose-quality function $q(s)$, and apply Direct Preference Optimization (DPO) \cite{rafailov2023dpo} on the resulting preference set. Given chosen and rejected SMILES $(s^+, s^-)$ with $q(s^+) > q(s^-)$, the DPO update minimises
+\Cvcond{} addresses warhead geometry architecturally but still needs steering on the hit-to-lead axes: predicted potency, warhead retention, and drug-likeness, plus a pose--pocket refinement signal beyond what architectural conditioning alone provides. In addition to the DAP objective of \S\ref{sec:methods:rl}, and in an attempt to further improve pose--pocket geometry, we add preference learning to teach the policy to distinguish productive from unproductive ligand--pocket matches. Preference pairs are drawn from two sources:
+\begin{itemize}
+  \item \textbf{Experimentally-grounded pairs.} $s^+ = $ PDB co-crystal binder; $s^- = $ \Cvcond{} generation against the same pocket, taken from the low-$q$ tail as a hard negative.
+  \item \textbf{Model-sampled \boltz-scored pairs.} Both $s^+$ and $s^-$ are sampled from \Cvcond{}, covalent-cofolded and scored by a composite pose-quality function $q(s) \in [0, 1]$; within-anchor pairs are formed with $q(s^+) - q(s^-) \ge \Delta_q$.
+\end{itemize}
+Where $q(s)$ is a combination of three normalised pose-quality signals (confidence of the cofold, pairwise-alignment error, and B\"urgi--Dunitz approach angle deviation from the ideal $105^\circ$):
+{\footnotesize
 \[
-\mathcal{L}_{\text{DPO}}\bigl(s^+, s^-\bigr) \;=\; -\log \sigm\!\left( \beta\bigl[\log \modeltheta(s^+) - \log \prior(s^+) - \log \modeltheta(s^-) + \log \prior(s^-)\bigr] \right),
-\]
-where $\prior$ is the frozen covalent-FT$\,$+$\,$RL'd reference policy and $\sigm(\cdot)$ is the logistic function. We instantiate the composite pose-quality function as
+q(s) = w_{\textsc{ip}}\,\bar{s}\bigl(\textsc{iptm}(s)\bigr) + w_{\text{mPAE}}\,\bar{s}\bigl(-\textsc{mPAE}(s)\bigr) + w_{\text{BD}}\,\bar{s}\bigl(-\lvert \theta_{\text{BD}}(s)-105^\circ \rvert\bigr),
+\]}
+where $\bar{s}(\cdot)$ is a monotone map to $[0,1]$ and the weights $w \succeq 0$, $\sum w = 1$ are set to reflect our relative confidence in each signal.
+
+\paragraph{Joint objective.} The loss combines a DPO term over $q$-ranked pairs with a DAP term against the composite reward $R$ (predicted pIC$_{50}$, warhead SMARTS, QED; weights $0.50/0.40/0.10$):
+{\footnotesize
 \[
-q(s) \;=\; 0.40 \cdot \sigm\!\left(\frac{\textsc{iptm}(s) - 0.78}{0.05}\right)
-       \;+\; 0.30 \cdot \sigm\!\left(\frac{2.0 - \textsc{mPAE}(s)}{1.0}\right)
-       \;+\; 0.30 \cdot \exp\!\left(-\frac{(\theta_{\text{BD}}(s) - 105^\circ)^2}{2 \cdot (8^\circ)^2}\right),
-\]
-covering \boltz~complex confidence, ligand-pocket predicted alignment error, and the Bürgi--Dunitz planar-approach angle of the bound warhead respectively. The covalent-restraint distance $d_{\text{S}\gamma\text{-}\text{C}\beta}$ is clamped to $1.85$~\r{A} by the cofold protocol and is therefore not informative as a preference axis. We test the composite quality as one preference signal and the BD-angle term alone as a second, harder-to-game variant. Training: $\beta=0.1$, lr $5 \times 10^{-5}$, $5$ epochs on V100. Results for this method are deferred to a follow-up reporting cycle and are not the subject of the present manuscript.
+\mathcal{L}(\theta) = -\log \sigm\!\Bigl(\beta\bigl[\log \modeltheta(s^+) - \log \prior(s^+) - \log \modeltheta(s^-) + \log \prior(s^-)\bigr]\Bigr) \;+\; \lambda \cdot \mathcal{L}_{\text{DAP}}\bigl(\theta;\, s,\, R(s, m_0)\bigr),
+\]}
+where the first term is standard DPO \cite{rafailov2023dpo} with $\prior$ the frozen \Cvcond{} reference; $\beta=0.1$, lr $5\times 10^{-5}$, $5$ epochs.
 

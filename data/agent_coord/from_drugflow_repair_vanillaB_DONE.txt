@@ -1,0 +1,42 @@
+STATUS: DONE
+TIMESTAMP: 2026-07-19T11:55:08Z
+WALL_SECONDS: 9828
+
+Report: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/drugflow_repair_vanillaB/final_report.md
+Cohort summaries: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/drugflow_repair_vanillaB/phase_c/*_summary.json
+Fukui summaries: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/drugflow_repair_vanillaB/phase_c/*_fukui_summary.json
+
+=== Head-to-head extract ===
+# Stream 2 — DrugFlow Prior Repair Final Report
+
+Generated: 2026-07-19T11:55:08.041123+00:00Z
+
+## Head-to-head cohort summary
+
+| tag | N_total | N_valid | single_frag_fraction (95% CI) | acryl_on_largest (95% CI) | acryl_anywhere | joint (LF x Conn) | QED med | MW med | medchem_accept | ro5_pass | vina_median | vina<=-7_frac | unique_scaf/conn | BD d_SG med | BD |angle-107| med |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| inpaint_v2_baseline | 500 | 206 | 2.800 [1.400, 4.200]% | 12.200 [9.400, 15.200]% | 0.410 | 0.003 | 0.379 | 299.1 | 0.156 | 0.262 | 125.70 | 0.000 | 1.000 | 2.449 | 21.880 |
+| inpaint_v2_baseline | n/a | n/a | n/a% | n/a% | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| v2G_baseline_may26 | 500 | 210 | 6.000 [4.000, 8.200]% | 15.600 [12.595, 18.800]% | 0.418 | 0.009 | 0.264 | 304.1 | 0.126 | 0.228 | 121.94 | 0.000 | 1.000 | 2.331 | 22.954 |
+| v2G_baseline_may26 | n/a | n/a | n/a% | n/a% | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| vanillaB_v2G_pin | 500 | 93 | 1.000 [0.200, 2.000]% | 13.400 [10.400, 16.400]% | 0.186 | 0.001 | 0.346 | 269.5 | n/a | n/a | n/a | n/a | 1.000 | 2.510 | 27.233 |
+| vanilla_M0_baseline | 500 | 356 | 10.600 [8.000, 13.400]% | 2.000 [0.800, 3.200]% | 0.022 | 0.002 | 0.388 | 289.3 | 0.274 | 0.464 | 56.98 | 0.000 | 0.961 | 34.776 | 36.857 |
+| vanilla_M0_baseline | n/a | n/a | n/a% | n/a% | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+
+## Interpretation
+
+- **Headline metric**: `acryl_on_largest_frag_pct` — measures acrylamide bonded to the scaffold's largest fragment (fixes the anywhere-SMARTS bug from `inpaint_v2_warhead_retention_caveat`).
+- **Connectivity metric**: `single_frag_fraction` — Phase A target was 15% → ≥60%.
+- **Joint gate**: `acryl_on_largest × single_frag` — only connected molecules with bonded warheads count.
+- **Mode-collapse guard**: `unique_scaf/conn` — scaffold uniqueness among connected molecules. v2_G dropped from ~87% to 66% at N=500; target here is to hold ≥70%.
+- **BD geometry**: `d_SG` should be ~1.85 Å (canonical Bürgi-Dunitz) and angle should be ~107°.
+
+## Files
+
+- `inpaint_v2_baseline`: `/home/shaharh_quris_ai/results/drugflow_inpaint_v2_500/samples.sdf` — per-mol CSV: `inpaint_v2_baseline_per_mol.csv`, summary JSON: `inpaint_v2_baseline_summary.json`
+- `inpaint_v2_baseline`: `?` — per-mol CSV: `inpaint_v2_baseline_per_mol.csv`, summary JSON: `inpaint_v2_baseline_summary.json`
+- `v2G_baseline_may26`: `/home/shaharh_quris_ai/results/drugflow_dc_winner_500/samples.sdf` — per-mol CSV: `v2G_baseline_may26_per_mol.csv`, summary JSON: `v2G_baseline_may26_summary.json`
+- `v2G_baseline_may26`: `?` — per-mol CSV: `v2G_baseline_may26_per_mol.csv`, summary JSON: `v2G_baseline_may26_summary.json`
+- `vanillaB_v2G_pin`: `/home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/drugflow_repair_vanillaB/phase_c/vanillaB_v2G_pin.sdf` — per-mol CSV: `vanillaB_v2G_pin_per_mol.csv`, summary JSON: `vanillaB_v2G_pin_summary.json`
+- `vanilla_M0_baseline`: `/home/shaharh_quris_ai/results/drugflow_m0_500/samples.sdf` — per-mol CSV: `vanilla_M0_baseline_per_mol.csv`, summary JSON: `vanilla_M0_baseline_summary.json`
+- `vanilla_M0_baseline`: `?` — per-mol CSV: `vanilla_M0_baseline_per_mol.csv`, summary JSON: `vanilla_M0_baseline_summary.json`

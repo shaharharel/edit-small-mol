@@ -18,7 +18,7 @@ smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/zap70_top_actives_clea
 sample_strategy = "multinomial"
 distance_threshold = 100
 
-batch_size = 64
+batch_size = 16
 unique_sequences = true
 randomize_smiles = true
 
@@ -62,7 +62,7 @@ transform.k = 0.5
 [[stage.scoring.component.MatchingSubstructure.endpoint]]
 name = "Acrylamide retained"
 weight = 0.35
-params.smarts = ["[CH2]=[CH]C(=O)N"]
+params.smarts = "[CH2]=[CH]C(=O)N"
 params.use_chirality = false
 
 [[stage.scoring.component]]
@@ -116,7 +116,7 @@ transform.k = 0.5
 [[stage.scoring.component.MatchingSubstructure.endpoint]]
 name = "Acrylamide retained"
 weight = 0.30
-params.smarts = ["[CH2]=[CH]C(=O)N"]
+params.smarts = "[CH2]=[CH]C(=O)N"
 params.use_chirality = false
 
 [[stage.scoring.component]]

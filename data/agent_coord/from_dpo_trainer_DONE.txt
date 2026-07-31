@@ -1,0 +1,26 @@
+DPO Campaign DONE: 2026-07-11T21:19:07Z
+
+3 cohorts trained, sampled to 400 valid+unique+acryl_lf+Tc>=0.35 mols each, and uploaded.
+
+GCS: gs://quris-shahar-dev/boltz_dpo_campaign/
+
+Cohorts:
+  C2 boltz_geom_dpo_only         val_acc=0.735  KL=-7.98  ready
+  C3 boltz_geom_dpo_plus_dap     val_acc=0.745  KL=+3.78  ready
+  C4 boltz_geom_dpo_regularized  val_acc=0.745  KL=+3.78  ready (strict Tc>=0.4 filter)
+
+Base prior:  reinvent4_mol2mol_covalent_ft.prior (covFT)
+Anchor:      C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1
+Pairs:       5016 preference pairs (build details in pairs_geom.summary.json)
+Training:    V100 SXM2 16GB, ~5 min train + ~1.5 min sample per cohort (~30 min total wall)
+
+Coord files per cohort:
+  data/agent_coord/from_dpo_trainer_boltz_geom_dpo_only_READY.txt
+  data/agent_coord/from_dpo_trainer_boltz_geom_dpo_plus_dap_READY.txt
+  data/agent_coord/from_dpo_trainer_boltz_geom_dpo_regularized_READY.txt
+
+Notes:
+  - C3 and C4 checkpoints identical training trajectory (guardrail loss was dormant
+    because pairs already passed guardrails); differ in sample delivery filter.
+  - All 3 cohorts share same base covFT prior but produce DISTINCT sample sets
+    (1620 vs 2027 vs 2027 unique before filtering).

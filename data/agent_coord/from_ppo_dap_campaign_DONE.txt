@@ -1,0 +1,20 @@
+PPO+DAP campaign — DONE (with RED FLAG).
+
+Timestamp: 2026-07-12
+Machine: ai-gpu-a100-b (us-central1-b)
+Remote report: ~/edit-small-mol/data/paper_pair_training/ppo_dap_campaign/report.md
+Remote panel: ~/edit-small-mol/data/paper_pair_training/ppo_dap_campaign/surrogate_panel.csv
+Remote lift:  ~/edit-small-mol/data/paper_pair_training/ppo_dap_campaign/diff_lift.json
+Surrogate:    ~/edit-small-mol/models/geometry_surrogate/mlp.pkl (+ summary.json)
+
+Executed phases:
+  Phase 0 — GPU wait: elapsed ~0 min (Boltz DPO c4 driver dead; 278/400 harvested; joined tracks c1-c4 = 1444 valid Boltz cofolds).
+  Phase 1 — Surrogate distillation: RED FLAG — best val R² = 0.033 (angle) / 0.044 (distance), threshold 0.15. Test Spearman ~0.25-0.30 is real but weak. Signal is present, but not strong enough to drive PPO.
+  Phase 2-4 — SKIPPED per RED FLAG rule. Additionally BLOCKED by architectural mismatch: no M1a v2 REINVENT4 prior on disk (M1a is a diffusion decoder, not autoregressive prior). All DPO checkpoints derive from covFT baseline — no true A vs B contrast is possible.
+  Phase 5 (alt) — Ran differential-lift on the existing 4-cohort boltz_dpo_campaign (real Boltz geometry, not surrogate) as the closest available analog. Result: adding DAP-pIC50 to Boltz-geometry DPO reduced BD-window fraction by 1.5pp (from 2.0% to 0.5%); all 95% CIs overlap zero.
+  Phase 5 (expert panel) — Synthesized skeptic + ML architecture + gen-chem perspectives inline (Task tool not available in this environment). Discussion in report.md.
+  Phase 6 — This file.
+
+Verdict (one sentence): The differential-lift claim as specified is not winnable with existing infrastructure — the M1a v2 REINVENT4 prior does not exist, the SMILES→Boltz-geometry surrogate is too noisy (val R² ≈ 0) to drive PPO reliably, and the closest available real-data proxy (4-cohort DPO campaign) shows DAP-pIC50 addition *decreased* BD-window fraction rather than lifting it, with all 95% CIs overlapping zero.
+
+GPU state: idle at completion. Instance NOT stopped (per plan).

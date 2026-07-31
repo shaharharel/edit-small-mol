@@ -259,6 +259,11 @@ def main():
         n_a = int(protomers.label.values[valid].sum()); n_d = int(valid.sum()) - n_a
         elapsed = time.time() - t1
         print(f"    adj_LogAUC = {adj_pct:.1f}%  raw_AUC = {raw_auc:.3f}  (n_act={n_a}, n_dec={n_d})  ({elapsed:.0f}s)")
+        # Build per-mol records for downstream D3 combiner
+        per_mol = []
+        for i, (smi, lbl) in enumerate(zip(protomers.protomer_smiles.values, protomers.label.values)):
+            if i < len(scores) and not np.isnan(scores[i]):
+                per_mol.append({'smiles': str(smi), 'label': int(lbl), 'score': float(scores[i])})
         results[target_label] = {
             'chembl_id': chembl,
             'n_actives': n_a, 'n_decoys': n_d,
@@ -266,6 +271,7 @@ def main():
             'raw_AUC': float(raw_auc),
             'val_mae': val_mae,
             'n_train_pairs': len(target_pairs),
+            'per_mol': per_mol,
         }
         gc.collect()
 
@@ -276,7 +282,10 @@ def main():
         'avg_adj_logAUC_pct': float(np.mean([v['adj_logAUC_pct'] for v in results.values()])) if results else 0,
         'london_avg_adj_logAUC_pct': 71.8,
     }
-    json.dump(out, open(OUT_DIR / "covalid_d1_filmdelta_ranking.json", 'w'), indent=2)
+    # Two outputs: aggregate (no per-mol — smaller) and full per-mol for D3
+    aggregate = {**out, 'per_target': {k: {kk: vv for kk, vv in v.items() if kk != 'per_mol'} for k, v in results.items()}}
+    json.dump(aggregate, open(OUT_DIR / "covalid_d1_filmdelta_ranking.json", 'w'), indent=2)
+    json.dump(results, open(OUT_DIR / "covalid_d1_per_mol_scores.json", 'w'), indent=2)
     print(f"\n=== SUMMARY ===")
     print(f"avg adj_LogAUC over {len(results)} targets: {out['avg_adj_logAUC_pct']:.1f}%  (London: 71.8%)")
     print(f"Total: {(time.time() - t0) / 60:.1f} min")

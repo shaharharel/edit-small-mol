@@ -1,0 +1,36 @@
+pose_sweep_diagnostic DONE — 2026-07-14
+
+VERDICT: [POSE] is behaviorally COSMETIC / EXTRAPOLATION-TRIGGERED at inference.
+
+Layer breakdown:
+- Phase 1 (log-prob): [POSE] IS used at scoring. NLL varies 22-24 nats across
+  one-dim sweeps; null-pose is +8 nats worse than reference pose; random val
+  poses have std=9.4 nats. Decoder registers pose input.
+- Phase 2 (free sampling, N=100/cohort, 4 poses):
+  * d=2.5 vs d=5.0 (same theta,phi): 0/6 features KS-significant
+  * d=2.5 vs zeroed (some vs none): 0/6 significant
+  * d=2.5 vs shuffled (extreme theta=156, phi=-168, ~2sigma): 3/6 significant
+  Within plausible pose range, sampling does NOT respond to pose content.
+- Phase 3 (GT vs permuted, both N=100):
+  * Permuted pose is 2.98sigma from GT (also in extrapolation tail)
+  * 4/6 features KS-significant, scaffold Jaccard=0.034, %acryl 50->86
+  * This mirrors the "shuffled" phase-2 cohort — same extrapolation-blowup regime
+
+Interpretation:
+The pose channel is scoring-visible (log-prob) but sampling-invisible
+inside training-support. Only extreme extrapolation triggers sample shift,
+consistent with distribution-shift artifact, not pose-conditional generation.
+
+Practical implication:
+v2_curriculum_clean CANNOT be used to steer generation toward specific
+warhead-pocket geometries at inference by manipulating [POSE]. Pose was
+learned as a validation-loss regularizer, not a generation controller.
+
+Files:
+- Report: data/paper_pair_training/pose_sweep_diagnostic/pose_sweep_report.md
+- Phase 1 results: data/paper_pair_training/pose_sweep_diagnostic/phase1_logprob.json
+- Phase 2 results: data/paper_pair_training/pose_sweep_diagnostic/phase2_free_sampling.json
+- Phase 3 results: data/paper_pair_training/pose_sweep_diagnostic/phase3_permutation_null.json
+- Phase 2 CSVs: data/paper_pair_training/pose_sweep_diagnostic/phase2_samples_{d_2.5,d_5.0,shuffled,zeroed}.csv
+- Phase 3 CSVs: data/paper_pair_training/pose_sweep_diagnostic/phase3_samples_{gt_pose,perm_pose}.csv
+- Scripts: experiments/pose_sweep_diagnostic/{phase1_logprob_sweep,phase2_free_sampling,phase3_permutation_null,build_report}.py

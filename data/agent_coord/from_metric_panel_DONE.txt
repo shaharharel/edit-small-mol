@@ -1,0 +1,25 @@
+Covalent Metric Panel — 3-arm comparison DONE (2026-07-14 UTC)
+
+VERDICT: NO WIN
+v1_clean does not significantly beat BOTH baselines on any of the 5 covalent-competency metrics
+after Bonferroni correction (α = 0.05 / 15 = 3.3e-3).
+
+Headline signals:
+- E_LUMO_eV: v1_clean (median -7.30 eV) vs mol2mol (-7.22 eV) Bonferroni p=4.4e-06 (SIG),
+  but v1_clean vs covFT p=1.00 (NOT SIG) — v1_clean matches covFT, does not exceed it.
+- max_shape_tc: mol2mol (0.302) HIGHEST, v1_clean (0.287) and covFT (0.288) equivalent.
+- f_pre_reactive: all 3 arms at median 0.000 — non-covalent Vina cannot orient β-C to Cys346-Sγ.
+- f_plus_beta_C: mol2mol vs covFT p=2.6e-03 (SIG), v1_clean vs neither is SIG.
+- d_beta_min_top3: no pairs significant.
+
+Calibration: positive controls (afatinib/ibrutinib/sotorasib/dacomitinib) show expected
+Fukui f+(β-C) in 0.019-0.029 range and higher shape-Tc (0.72 median) than negative controls
+(imatinib/gefitinib/erlotinib: Tc 0.51 median, no β-C). All 3 sanity checks PASS.
+
+Artifacts at data/paper_pair_training/covalent_metric_panel/:
+- metric_panel_report.md    — full report with per-arm tables + KS/Wasserstein/Bonferroni
+- metric_panel_summary.json — per-metric structured results
+- xtb_fukui_results.csv     — 573 arm mols, f+(β-C) + E_LUMO
+- vina_pre_reactive.csv     — 573 arm mols, non-cov Vina + d(β,Sγ) + SASA + f_pre_reactive
+- rocs_shape_sim.csv        — 573 arm mols, 3D shape Tc vs 4 covalent-drug refs
+- controls_all_metrics.csv  — 4 POS + 3 NEG controls, all metrics

@@ -25,13 +25,19 @@
 \newcommand{\molset}{\mathcal{M}}
 \newcommand{\poseset}{\mathcal{P}}
 \newcommand{\modeltheta}{\pi_\theta}
-\newcommand{\prior}{\pi_0}
+\newcommand{\prior}{\pi_{\text{prior}}}
+\newcommand{\agent}{\pi_{\text{agent}}}
 \newcommand{\reward}{R}
 \newcommand{\sigm}{\sigma}
 \newcommand{\filmdelta}{\textsc{FiLMDelta}}
 \newcommand{\boltz}{\textsc{Boltz-2}}
 \newcommand{\propka}{\textsc{PROPKA3}}
 \newcommand{\covagen}{\textsc{CovaCraft}}
+% --- Arm/method names (edit here to rename across manuscript) ---
+\newcommand{\Cvcovaft}{\covagen-v1-covaFT}
+\newcommand{\Cvdap}{\covagen-v1-DAP}
+\newcommand{\Cvcond}{\covagen-v2-cond}
+\newcommand{\Cvdpo}{\covagen-v2-DPO}
 
 % --- Theorem environments ---
 \newtheorem{proposition}{Proposition}
@@ -40,7 +46,7 @@
 % --- Hyperref colors ---
 \hypersetup{colorlinks=true, linkcolor=black, citecolor=blue, urlcolor=blue}
 
-\title{Generative Covalent Hit-to-Lead with Warhead-Aware Reinforcement Learning}
+\title{\covagen{}: Geometry-Guided Covalent Hit-to-Lead Design}
 \author{}
 \date{}
 
@@ -50,11 +56,11 @@
 \input{sections/01_introduction.tex}
 \input{sections/02_methods.tex}
 \input{sections/03_results.tex}
-\input{sections/04_discussion.tex}
-
-\appendix
-\input{sections/A1_warhead_tokens.tex}
-\input{sections/A2_supplementary_methods.tex}
+% Discussion and Supplementary Methods hidden for this advisor pass — restore when ready.
+% \input{sections/04_discussion.tex}
+% \appendix
+% \input{sections/A1_warhead_tokens.tex}
+% \input{sections/A2_supplementary_methods.tex}
 
 \bibliographystyle{abbrvnat}
 \bibliography{refs}

@@ -1,0 +1,25 @@
+v6 DPO FIXED pipeline COMPLETE (QA #8 fixes applied).
+
+Fix summary:
+  1. save_film_model + train ckpt now persists base_network_state
+     (17.46M transformer weights that receive DPO gradients).
+  2. build_dpo_pairs_from_vina defaults to strategy=global with
+     winner_quantile=0.40, loser_quantile=0.60, min_gap=10 kcal/mol
+     -> ~2000 pairs (vs original 338).
+
+Report:  /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/cfg_retrieval_v6_dpo/cfg_retrieval_report_v6_dpo_FIXED.md
+Summary: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/cfg_retrieval_v6_dpo/cfg_retrieval_report_v6_dpo_FIXED_summary.csv
+Effects: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/cfg_retrieval_v6_dpo/cfg_retrieval_report_v6_dpo_FIXED_effects.csv
+
+Panels (FIXED-suffixed to preserve audit trail of original buggy run):
+  covalent_metric_panel_v6_FIXED.csv
+  covalent_xtb_panel_v6_FIXED.csv
+  covalent_vina_cov_panel_v6_FIXED.csv
+  covalent_vina_local_panel_v6_FIXED.csv
+
+Training pairs: /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/cfg_retrieval_v6_dpo/dpo_pairs_FIXED.csv (2000 pairs)
+Training log:   /home/shaharh_quris_ai/edit-small-mol/data/paper_pair_training/cfg_retrieval_v6_dpo/train_log_FIXED.csv
+Model: /home/shaharh_quris_ai/edit-small-mol/models/cfg_retrieval_v6_dpo_FIXED/dpo_final.ckpt
+
+Original (buggy) files preserved (unsuffixed) for audit:
+  cfg_retrieval_report_v6_dpo.md, samples_dpo_*.csv, etc.

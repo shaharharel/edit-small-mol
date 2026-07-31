@@ -1,0 +1,72 @@
+v4 PER-LAYER FiLM PIPELINE COMPLETE (2026-07-19).
+
+VERDICT: FiLM ACTIVE BUT HARMFUL — only CI-significant shifts are in the
+wrong direction (validity drops of -0.07 to -0.09 pp across FiLM/retrieval
+combinations).  Conditioning-based approach for mol2mol appears
+fundamentally dead for pocket/pose-mediated steering on ZAP70/Mol1.
+
+FiLM TRAINING SIGNALS ARE REAL (not a null model):
+  - val_loss: 17.28 -> 8.12 nat (FiLM enabled path)
+  - val_loss_film_off: 17.47 -> 10.63 nat (identical decoder, FiLM disabled)
+  - val_film_gap: 0.19 -> 2.51 nat (FiLM contributes 2.5 nat of teacher-
+    forcing likelihood improvement over its own zero-FiLM path)
+
+WHAT FiLM ACTUALLY DID AT SAMPLING:
+  - Novelty COLLAPSED from 0.754 (baseline) to 0.370 (FiLM_on retrieval_off)
+    and 0.394 (FiLM_on retrieval_on).  Model repeats a smaller set of
+    canonical SMILES.  This is a mode-seeking behaviour, opposite of the
+    diversity-seeking we hoped for.
+  - Validity dropped 8-9 pp (CI excludes zero) — FiLM steers into
+    lower-likelihood regions that produce more invalid SMILES.
+  - Fukui f+ shifts marginal (+0.001, CI crosses zero at s=1 magnitude).
+  - Vina cov score (--score_only) medians all identical at 119.491
+    (tether-clash artefact; not discriminating; QA #6 called this out).
+
+TOP-25 CELL RESULTS (--local_only, absolute affinities):
+  cell                     | median | best
+  film_off_retrieval_off   |  -0.94 | -4.99
+  film_off_retrieval_on    |  -0.34 | -6.99  <-- BEST across 4-cell top cohort
+  film_on_retrieval_off    |  -0.88 | -4.88
+  film_on_retrieval_on     |  -1.20 | -5.63
+
+  Best absolute mol: -6.99 kcal/mol (film_off_retrieval_on).
+  Overall median across 100 mols: -0.88 kcal/mol.
+  63/100 negative.
+
+  (For reference: v3 best was -7.67 kcal/mol from cfg_s2_retrieval_on_v2.
+   v4 doesn't beat v3 in absolute best-mol affinity.)
+
+ARCHITECTURAL CONCLUSION:
+  Both v3 (CFG-token, encoder-memory only) and v4 (per-layer FiLM +
+  memory-token) fail to steer generation toward better electrophilicity or
+  better docking on this target.  The training loss clearly encodes the
+  pocket/pose signal (val_loss drops from 17 -> 8 in both), but at
+  sampling the decoder ignores it or steers into pathological regions.
+
+  This is now a two-architecture proof that conditioning-based steering of
+  the mol2mol autoregressive decoder does NOT translate into sampling-time
+  behavior change on ZAP70/Mol1.  Next steps should pivot away from this
+  family:
+    - Retrieval-augmented generation without any FiLM/CFG (retrieval alone
+      showed the only real +0.135 validity effect in v3 at s=1.5).
+    - Direct RL / DPO on Vina cov score of samples.
+    - Different scaffold: DrugFlow (3D) inpaint already showed +0 validity
+      hits but is a different generative family.
+
+FILES:
+  Report:  data/paper_pair_training/cfg_retrieval_v4_film/cfg_retrieval_report_v4_film.md
+  Summary: cfg_retrieval_report_v4_film_summary.csv
+  Effects: cfg_retrieval_report_v4_film_effects.csv
+
+  Panels (all real, no proxies):
+    covalent_metric_panel_v4.csv      (800 rows, 2D metrics)
+    covalent_xtb_panel_v4.csv         (real xTB Fukui f+ per sample)
+    covalent_vina_cov_panel_v4.csv    (real AD-CovDock --score_only)
+    covalent_vina_local_panel_v4.csv  (top-25/cell --local_only affinities)
+
+  Training log: train_log.csv (10 rows, step 0 -> 3945)
+  Model:       models/cfg_retrieval_v4_film/film_final.ckpt
+
+REPRODUCIBILITY:
+  Training launched with print(args) at top of train_m1a_v2_film.py.
+  args echoed in train.log line 1: film_layers=6, gamma/beta zero-init verified.

@@ -42,7 +42,16 @@ from anchordiff.covind.cov_adapter import (
     CovalentConditioningAdapter, inject_into_pocket_oh,
 )
 from anchordiff.covind.covalent_token import build_token, TOKEN_DIM
+from anchordiff.covind.covalent_token_v2_5 import build_token_v2_5, TOKEN_DIM_V2_5
 from anchordiff.covind.dataset import F_A
+# Variant-aware adapter (used for v2.5/J3/J4/J5 ablation ckpts)
+try:
+    from anchordiff.covind.cov_adapter_ablation import (
+        AblationAdapter, inject_into_pocket_oh_spatial,
+    )
+    _ABLATION_ADAPTER_AVAILABLE = True
+except ImportError:
+    _ABLATION_ADAPTER_AVAILABLE = False
 
 # Import WARHEAD_GEOM from curate.py to avoid drift (2026-05-13 fix).
 # Previously this module had its own (incomplete) dict; missing classes
@@ -103,13 +112,56 @@ def main():
     model.eval()
     print(f"  model+adapter loaded from epoch {ck.get('epoch', '?')}")
 
-    # 2. Load adapter (unless --no_carm)
+    # 2. Detect variant from ckpt + load adapter (unless --no_carm)
+    # variant = v2 (default) | v2_5 | j4a | j4b | j4c | j3 | j5
+    # Detection order:
+    #   (a) ck["variant"] (set by train_dc_ablation)
+    #   (b) ck["token_variant"] == "v2_5" (set by train_dc_v2_5)
+    #   (c) adapter_state shape: "log_scale" + "mlp.0.weight" → v2.5 architecture
+    variant = ck.get("variant", "v2")
+    if variant == "v2":
+        if ck.get("token_variant") == "v2_5":
+            variant = "v2_5"
+        elif "adapter_state" in ck:
+            ak = set(ck["adapter_state"].keys())
+            if "log_scale" in ak and "mlp.0.weight" in ak:
+                variant = "v2_5"
+    saved_args = ck.get("args", {}) if variant != "v2" else {}
+    # Token dim per variant
+    if variant in ("v2_5",) or saved_args.get("token_variant") == "v2_5":
+        token_dim_for_variant = TOKEN_DIM_V2_5
+        token_builder = build_token_v2_5
+    else:
+        token_dim_for_variant = TOKEN_DIM
+        token_builder = build_token
+    use_spatial_injection = saved_args.get("spatial_decay_lambda", 0.0) > 0
+    print(f"  detected variant: {variant!r}  token_dim={token_dim_for_variant}  "
+          f"spatial={'on' if use_spatial_injection else 'off'}")
+
     adapter = None
     if not args.no_carm:
-        adapter = CovalentConditioningAdapter(token_dim=TOKEN_DIM, feat_dim=F_A).to(device)
+        if variant in ("j4a", "j4b", "j4c", "j3", "j5") and _ABLATION_ADAPTER_AVAILABLE:
+            adapter = AblationAdapter(
+                token_dim=token_dim_for_variant,
+                feat_dim=F_A,
+                scale_init=saved_args.get("scale_init", 0.25),
+                scale_learnable=saved_args.get("scale_learnable", False),
+                hidden_dim=saved_args.get("hidden_dim", 0),
+                token_dropout_p=saved_args.get("token_dropout_p", 0.0),
+                spatial_decay_lambda=saved_args.get("spatial_decay_lambda", 0.0),
+            ).to(device)
+        elif variant == "v2_5":
+            # v2.5 uses CovalentConditioningAdapterV25 (2-layer MLP, learnable scale)
+            from anchordiff.covind.cov_adapter_v2_5 import CovalentConditioningAdapterV25
+            adapter = CovalentConditioningAdapterV25(
+                token_dim=TOKEN_DIM_V2_5, feat_dim=F_A,
+            ).to(device)
+        else:
+            adapter = CovalentConditioningAdapter(token_dim=TOKEN_DIM, feat_dim=F_A).to(device)
         adapter.load_state_dict(ck["adapter_state"])
         adapter.eval()
-        print(f"  C-arm adapter loaded ({sum(p.numel() for p in adapter.parameters())} params)")
+        print(f"  C-arm adapter loaded ({sum(p.numel() for p in adapter.parameters())} params)  "
+              f"scale={float(adapter.scale) if hasattr(adapter, 'scale') and not callable(adapter.scale) else float(getattr(adapter, 'scale', 0.25)):.3f}")
     else:
         print("  C-arm DISABLED (--no_carm)")
 
@@ -153,14 +205,18 @@ def main():
             "transesterification": "Nucleophilic Substitution",
         }
         reaction_mech = _MECH_MAP.get(geom.get("mechanism"), "OTHER")
-        token = build_token(d_canonical=geom["d"], theta_canonical=geom["angle"],
-                            warhead_class=args.warhead_class,
-                            cys_context_residues=ctx,
-                            reaction_mechanism=reaction_mech)
+        token = token_builder(d_canonical=geom["d"], theta_canonical=geom["angle"],
+                              warhead_class=args.warhead_class,
+                              cys_context_residues=ctx,
+                              reaction_mechanism=reaction_mech)
         token_t = torch.from_numpy(token).float().to(device)
         pkt_oh_before = pocket["one_hot"].detach().clone()
         with torch.no_grad():
-            pocket["one_hot"] = inject_into_pocket_oh(pocket["one_hot"], token_t, adapter)
+            if use_spatial_injection and _ABLATION_ADAPTER_AVAILABLE:
+                pocket["one_hot"] = inject_into_pocket_oh_spatial(
+                    pocket["one_hot"], token_t, adapter, pocket["x"])
+            else:
+                pocket["one_hot"] = inject_into_pocket_oh(pocket["one_hot"], token_t, adapter)
         print(f"  C-arm bias mean|Δ|={float((pocket['one_hot'] - pkt_oh_before).abs().mean()):.4f}")
 
     # 5. Fixed warhead atoms (DiffSBDD's own loader)

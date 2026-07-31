@@ -1,0 +1,14 @@
+# Exp 2 — supplementary warhead_tokens sample to reach >=5k unique valid SMILES.
+# First run produced ~1120 unique valid from 10k. Sample 45k more.
+run_type = "sampling"
+json_out_config = "_sample_warhead_tokens_a100_extra.json"
+
+[parameters]
+model_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_warhead_tokens_v2.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_mol1_only.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "/home/shaharh_quris_ai/edit-small-mol/data/exp_rl_value/baseline_warhead_tokens_samples_extra.csv"
+num_smiles = 45000
+unique_molecules = false
+randomize_smiles = true

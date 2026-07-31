@@ -1,0 +1,49 @@
+# Exp-P6 INTERIM BRIEFING (as of 22:15 UTC 2026-07-27)
+
+## Streams launched tonight
+
+### ai-chem (STOPPED after tasks done):
+- Cov-Vina on 10 methods × 500 Mol1 — DONE (see data/exp_P5/covvina/)
+- Fukui f+ on 10 methods × 500 Mol1 — DONE (see data/exp_P5/fukui/)
+
+### ai-gpu (V100, running):
+- RL_MINSTRICT (250 steps) from P5-1-v2 base — DONE + sampled Mol1
+- P6-POSENOISE (σ=0.3) from Exp-N base — DONE + sampled Mol1
+- OVERNIGHT CHAIN running (bg): RL-SHORT (100 steps), RL-GEOMEAN, POSENOISE-σ=0.5, POSENOISE-σ=1.0
+
+### Crons active:
+- 77599824 — 10-min self-monitor (fixes + restarts + stops idle VMs)
+- 0835d265 — 30-min QA agent (independent verification)
+
+## Key preliminary findings
+
+**Fukui f+ winners (β-C electrophilicity)**:
+- Highest: mol2mol_baseline / P5-4 / HYBRID / denoise ≈ 0.033
+- Lowest: P5-CROSSPDB (0.027) / P5-A (0.028) — geometry-improvement pairs trade off electrophilicity
+
+**Cov-Vina all clustered** at median −0.5 to −1.24 kcal/mol. Best dockability: v2_cond_denoise (73% mols pass tethered docking).
+
+**Phase-1 winner (updated after tonight's runs)**:
+| Method | valid% | acryl% | anchor_Tc | unique% |
+|---|---|---|---|---|
+| **P6-POSENOISE @T=1.0** | **78** | **93** | **0.35** | **68** |
+| P5-1-v2 base | 68-73 | 87-90 | 0.33 | 68-70 |
+| mol2mol_baseline | 89 | 62 | 0.30 | 73 |
+
+P6-POSENOISE = clean Phase-1 win — +6pp acryl over P5-1-v2 base, similar diversity/QED.
+
+**Phase-2 RL MODE COLLAPSE warning**:
+- RL_MINSTRICT hit 99.8% acryl + 100% valid + Tc 0.42 (all metric wins) BUT only **2.2% unique molecules** (11/500).
+- Higher T=1.5 helped marginally (8.4% unique). Still unusable.
+- Overnight chain tests: shorter RL (100 steps), geometric-mean aggregation.
+
+## Machine state
+- ai-chem: STOPPED (cost-saving)
+- ai-chem2: STOPPED
+- ai-gpu: RUNNING (V100, overnight chain in progress)
+- ai-gpu2: STOPPED (staging → will stop after next check)
+
+## Next
+- Overnight chain will finish ~4 more variants + sample + score
+- 10-min cron monitors + stops idle VMs
+- 30-min QA cron verifies code + results independently

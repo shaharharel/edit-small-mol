@@ -65,6 +65,10 @@ Top-20 visible per page. <strong>Filter and sort apply over the full 498K datase
 top-20 of whatever survives the filter, sorted by your chosen column. Backend is at <code>http://localhost:5001</code>;
 ensure it's running (<code>conda run -n quris python experiments/server/backend.py</code>) before using this page.
 </p>
+<p class="note" style="margin-top:8px;">
+<a href="/" target="_blank" style="font-weight:600;">Column Reference (full dictionary, 74 columns)</a> —
+opens the main report and click the "Column Reference (full dictionary)" button in the hero.
+</p>
 
 <div class="error-box" id="error-box">
   <b>Cannot reach backend</b>: Start it with
@@ -91,37 +95,106 @@ Click chips to toggle (multiple combine with AND). The ✕ on each filter pill b
 For more granular conditions (e.g., <code>0.4 ≤ QED ≤ 0.7</code>) use the <b>Add Condition</b> button below.
 </p>
 
+<!-- Advisor-view column toggle (Tier 2 SCALED).
+     The full 498K cohort is pose-free (no Boltz/MM-GBSA/Vina/pKa); the headline
+     subset here is the pose-free intersection of the medchem 11-column spec:
+     ID + pIC50 + LLE + LE + SAScore + MW + structure. Everything else lives
+     behind the toggle. -->
+<div style="display:flex;align-items:center;gap:12px;margin:8px 0 12px;
+     padding:8px 12px;background:#f9fafb;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+  <strong style="color:#555;text-transform:uppercase;letter-spacing:.04em;font-size:11px;">Column view</strong>
+  <button type="button" id="advisor-view-toggle"
+          aria-pressed="false"
+          style="height:28px;padding:0 12px;font-size:12px;font-weight:500;
+          background:white;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;">
+    Show all columns
+  </button>
+  <span id="advisor-view-status" style="color:#555;">
+    Headline view — ID, pIC50, LLE, LE, SAScore, MW. Detail columns hidden.
+  </span>
+</div>
+
 <table id="t2scaled" class="dt-table display compact" style="width:100%;">
-  <thead><tr>
-    <th>#</th>
-    <th>Structure</th>
-    <th>SMILES</th>
-    <th>pIC50 (anchor-mean)</th>
-    <th>SAScore</th>
-    <th>MW</th>
-    <th>QED</th>
-    <th>LogP</th>
-    <th>TPSA</th>
-    <th>HBA</th>
-    <th>HBD</th>
-    <th>RotBonds</th>
-    <th>Tc→Mol1</th>
-    <th>max Tc→train</th>
-    <th>mean top10 Tc→train</th>
-    <th>PAINS</th>
-    <th>WH intact</th>
-  </tr></thead>
+  <thead>
+  <!-- Family banner row (2026-05-26 reorg, mirrors report.html).
+       Tier 2 SCALED is pose-free, so cofold/pocket families are omitted here.
+       Counts: rownum(1) + IDENTITY(structure+SMILES+MW=3) + PREDICTED(pIC50_film+pIC50_mean+pIC50_std+pIC50_method+delta_vs_mol1+direct_delta_from_mol1=6)
+              + DRUG-LIKE(LLE+LE+SAScore+QED+LogP+TPSA+HBA+HBD+RotBonds+HeavyAtoms+Rings+fsp3+Lipinski_violations+BEI+SEI+SILE+PAINS_alerts+warhead_intact=18)
+              + SIM-INT(Tc_to_Mol1+max_Tc_train+mean_top10_Tc_train=3)
+              + SIM-PUB(mean_pubTc+top10_mean_pubTc=2)
+              + STRAIN(rdkit_strain_posefree_kcal_mol=1)
+              = 1+3+6+18+3+2+1 = 34 cells -->
+  <tr class="family-header">
+    <th style="background:#f3f4f6;border:none;"></th>
+    <th colspan="3"  style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">IDENTITY</th>
+    <th colspan="6"  style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">Predicted Potency</th>
+    <th colspan="18" style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">Drug-likeness &amp; Efficiency</th>
+    <th colspan="3"  style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">Sim — Internal</th>
+    <th colspan="2"  style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">Sim — Publications (v3)</th>
+    <th colspan="1"  style="background:#f3f4f6;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:10px;color:#374151;">Strain</th>
+  </tr>
+  <tr class="column-header">
+    <th data-col-key="rownum">#</th>
+    <!-- IDENTITY -->
+    <th data-col-key="structure">Structure</th>
+    <th data-col-key="smiles">SMILES</th>
+    <th data-col-key="MW">MW</th>
+    <!-- PREDICTED POTENCY -->
+    <th data-col-key="pIC50_film">pIC50 (anchor-mean)</th>
+    <th data-col-key="pIC50_mean">pIC50 (mean)</th>
+    <th data-col-key="pIC50_std">pIC50 (std)</th>
+    <th data-col-key="pIC50_method">pIC50_method</th>
+    <th data-col-key="delta_vs_mol1">Δ vs Mol1</th>
+    <th data-col-key="direct_delta_from_mol1">direct δ from Mol1</th>
+    <!-- DRUG-LIKENESS & EFFICIENCY -->
+    <th data-col-key="LLE" title="Lipophilic Ligand Efficiency = pIC50 − LogP (Leeson &amp; Springthorpe 2007). Target ≥ 5 for kinase leads.">LLE</th>
+    <th data-col-key="LE"  title="Ligand Efficiency = 1.4·pIC50 / n_heavy_atoms (Hopkins 2004). Target ≥ 0.3.">LE</th>
+    <th data-col-key="SAScore">SAScore</th>
+    <th data-col-key="QED">QED</th>
+    <th data-col-key="LogP">LogP</th>
+    <th data-col-key="TPSA">TPSA</th>
+    <th data-col-key="HBA">HBA</th>
+    <th data-col-key="HBD">HBD</th>
+    <th data-col-key="RotBonds">RotBonds</th>
+    <th data-col-key="HeavyAtoms">Heavy atoms</th>
+    <th data-col-key="Rings">Rings</th>
+    <th data-col-key="fsp3" title="Fraction sp3 carbons.">fsp3</th>
+    <th data-col-key="Lipinski_violations">Lipinski viol.</th>
+    <th data-col-key="BEI" title="Binding Efficiency Index = pIC50 / (MW in kDa).">BEI</th>
+    <th data-col-key="SEI" title="Surface Efficiency Index = pIC50 / (TPSA / 100).">SEI</th>
+    <th data-col-key="SILE" title="Size-Independent Ligand Efficiency.">SILE</th>
+    <th data-col-key="PAINS_alerts">PAINS</th>
+    <th data-col-key="warhead_intact">WH intact</th>
+    <!-- SIMILARITY — INTERNAL -->
+    <th data-col-key="Tc_to_Mol1">Tc→Mol1</th>
+    <th data-col-key="max_Tc_train">max Tc→train</th>
+    <th data-col-key="mean_top10_Tc_train">mean top10 Tc→train</th>
+    <!-- SIMILARITY — PUBLICATIONS (v3 panel) -->
+    <th data-col-key="mean_pubTc" title="v3 panel: Mean Tanimoto to published kinase-covalent leads.">pub mean Tc</th>
+    <th data-col-key="top10_mean_pubTc" title="v3 panel: Mean of top-10 Tanimotos to published kinase-covalent leads. (May be — until v3 backend lands.)">pub top10 mean Tc</th>
+    <!-- STRAIN -->
+    <th data-col-key="rdkit_strain_posefree_kcal_mol" title="Pose-free RDKit conformational strain (kcal/mol).">strain (posefree)</th>
+  </tr>
+  </thead>
   <tbody></tbody>
 </table>
 
-<!-- Modal for enlarged molecule view -->
+<!-- Modal for enlarged molecule view (now also dumps every property) -->
 <div id="mol-modal" class="mol-modal-bg" onclick="if(event.target===this) closeMolModal();">
   <div class="mol-modal">
     <button class="close" onclick="closeMolModal()" title="Close">&times;</button>
     <div id="mol-modal-svg"></div>
     <div id="mol-modal-smiles" class="smiles-box"></div>
+    <div id="mol-modal-props" style="margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:4px 16px;font-size:12px;max-width:600px;"></div>
   </div>
 </div>
+
+<style>
+#mol-modal-props .grp{grid-column:1/-1;font-weight:600;color:#555;text-transform:uppercase;
+  letter-spacing:0.04em;font-size:10px;margin-top:8px;padding-top:6px;border-top:1px solid #e5e7eb;}
+#mol-modal-props .k{color:#666;}
+#mol-modal-props .v{font-family:monospace;font-variant-numeric:tabular-nums;color:#111;}
+</style>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
@@ -138,24 +211,166 @@ function qedClass(v){if(v>0.6)return 'cell-qed-good';if(v<0.4)return 'cell-qed-b
 function mwClass(v){return v>500?'cell-mw-bad':'';}
 function tcTrainClass(v){return v<0.2?'cell-tc-train-bad':'';}
 
+// ── Literature-grounded color rules (mirrors report.html, 2026-05-26) ──
+const T2_GREEN='#0E9F6E', T2_YELLOW='#D97706', T2_RED='#DC2626';
+const T2_COLOR_RULES = {
+  pIC50_mean:        v => v >= 7 ? 'green' : v >= 5 ? 'yellow' : 'red',
+  pIC50_std:         v => v <= 0.5 ? 'green' : v <= 1.0 ? 'yellow' : 'red',
+  pIC50_film:        v => v >= 7 ? 'green' : v >= 5 ? 'yellow' : 'red',
+  delta_vs_mol1:     v => v >= 1.0 ? 'green' : v >= 0 ? 'yellow' : 'red',
+  Tc_to_Mol1:        v => v >= 0.4 ? 'green' : v >= 0.25 ? 'yellow' : 'red',
+  max_Tc_train:      v => v >= 0.3 ? 'green' : v >= 0.2 ? 'yellow' : 'red',
+  mean_top10_Tc_train: v => v >= 0.35 ? 'green' : v >= 0.20 ? 'yellow' : 'red',
+  // v3 300-lead panel: empirical p90 of mean ≈0.15, of top10 ≈0.27. Re-anchored.
+  mean_pubTc:        v => v >= 0.18 ? 'green' : v >= 0.13 ? 'yellow' : 'red',
+  top10_mean_pubTc:  v => v >= 0.30 ? 'green' : v >= 0.22 ? 'yellow' : 'red',
+  // Pose-free strain: empirical p10≈42, p90≈102 — re-anchored from pose-aware thresholds.
+  rdkit_strain_posefree_kcal_mol: v => v <= 45 ? 'green' : v <= 85 ? 'yellow' : 'red',
+};
+function t2ColorFor(key, value){
+  if(value == null || value === '' || (typeof value === 'number' && isNaN(value))) return null;
+  const rule = T2_COLOR_RULES[key];
+  if(!rule) return null;
+  const tag = rule(+value);
+  return tag === 'green' ? T2_GREEN : tag === 'yellow' ? T2_YELLOW : tag === 'red' ? T2_RED : null;
+}
+
+// ── 7-family modal grouping (2026-05-26 reorg, mirrors report.html) ──
+// Tier 2 SCALED is pose-free: cofold geometry, pocket interaction, and warhead
+// reactivity families render as `—` for the 498K cohort. Banners still appear
+// so the layout matches the Tier 1 report.
+const T2_MODAL_SECTIONS = [
+  {title:'IDENTITY', keys:[
+    ['method','method'],['row_id','row_id'],['MW','MW'],
+  ]},
+  {title:'PREDICTED POTENCY', keys:[
+    ['pIC50_mean','pIC50 (mean)'],['pIC50_std','pIC50 (std)'],
+    ['anchor_wins','wins / 280'],['anchor_wins_ge7','wins ≥ 7'],
+    ['delta_vs_mol1','Δ vs Mol1'],
+  ]},
+  {title:'SIMILARITY — INTERNAL', keys:[
+    ['Tc_to_Mol1','Tc → Mol1'],['mean_top10_Tc_train','mean top10 Tc → train'],
+  ]},
+  {title:'SIMILARITY — PUBLICATIONS', keys:[
+    ['mean_pubTc','pub mean (v3)'],['top10_mean_pubTc','pub top10 mean (v3)'],
+    ['max_pubTc','pub max (v3)'],['median_pubTc','pub median (v3)'],
+    ['closest_lead','closest published lead'],
+  ]},
+  {title:'SIMILARITY — 3D SHAPE (pose-free cohort: usually —)', keys:[
+    ['shape_Tc_seed','shape Tc seed'],['esp_sim_seed','ESP-Sim seed'],
+    ['warhead_dev_deg','warhead Δ°'],
+  ]},
+  {title:'COFOLD GEOMETRY (pose-free cohort: usually —)', keys:[
+    ['d_SG','d_SG (Å)'],['n_h_bonds','n H-bonds'],
+    ['n_stabilizing_contacts','n contacts'],['pocket_occupancy_pct','pocket %'],
+    ['mPAE','mPAE'],['iptm','iptm'],['ligand_iptm','ligand iptm'],
+    ['boltz_plddt','boltz pLDDT'],['boltz_confidence','boltz conf'],
+    ['combined_score','combined score'],
+  ]},
+  {title:'POCKET INTERACTION ENERGY (pose-free cohort: usually —)', keys:[
+    ['vina_kcalmol','Vina Free Energy (kcal/mol)'],['vina_inter_kcalmol','Vina inter'],
+    ['vina_intra_kcalmol','Vina intra'],['vdw_interaction_kcal_mol','vdW (kcal/mol)'],
+    ['rdkit_strain_kcal_mol','RDKit strain (kcal/mol)'],
+    ['rdkit_strain_posefree_kcal_mol','strain (posefree, kcal/mol)'],
+    ['pred_log_k2_GSH','pred log k2 (GSH)'],
+  ]},
+  // Modal-only catch-all (matches report.html structure)
+  {title:'OTHER — Identity & properties', keys:[
+    ['yaml_name','yaml_name'],['smiles','SMILES'],
+    ['pIC50_film','pIC50_film'],['pIC50_method','pIC50_method'],
+    ['direct_delta_from_mol1','direct δ from Mol1'],
+  ]},
+  {title:'OTHER — Drug-likeness', keys:[
+    ['LogP','LogP'],['TPSA','TPSA'],['HBA','HBA'],['HBD','HBD'],
+    ['RotBonds','RotBonds'],['QED','QED'],['HeavyAtoms','HeavyAtoms'],
+    ['Rings','Rings'],['fsp3','fsp3'],['Lipinski_violations','Lipinski viol.'],
+    ['SAScore','SAScore'],['PAINS_alerts','PAINS alerts'],
+    ['warhead_intact','warhead intact'],
+  ]},
+  {title:'OTHER — Efficiency', keys:[
+    ['LLE','LLE'],['LE','LE'],['BEI','BEI'],['SEI','SEI'],['SILE','SILE'],
+  ]},
+  {title:'OTHER — Cofold extras', keys:[
+    ['geom_ok','geom ok'],['boltz_pde','boltz PDE'],
+    ['max_Tc_train','max Tc → train'],
+  ]},
+  {title:'OTHER — Warhead reactivity (pose-free cohort: usually —)', keys:[
+    ['LUMO_eV','LUMO (eV)'],['HOMO_eV','HOMO (eV)'],['gap_eV','gap (eV)'],
+    ['omega_eV','ω (eV)'],['q_Cb','q(Cβ)'],['fukui_plus_Cb','f+(Cβ)'],
+  ]},
+  {title:'OTHER — Nucleophile activation (pose-free cohort: usually —)', keys:[
+    ['pKa_Cys346','pKa Cys346'],['ligand_strain_capped_kcalmol','strain (capped)'],
+    ['dG_recognition_kcalmol','ΔG_recognition (kcal/mol)'],
+  ]},
+];
+
+function t2ModalFmt(v){
+  if(v == null || v === '') return '—';
+  if(typeof v === 'boolean') return v ? '✓' : '✗';
+  if(typeof v === 'number'){
+    if(isNaN(v)) return '—';
+    if(Number.isInteger(v) || Math.abs(v) >= 100) return v.toFixed(0);
+    if(Math.abs(v) < 0.01 && v !== 0) return v.toExponential(2);
+    return v.toFixed(3);
+  }
+  return String(v);
+}
+
+function buildT2ModalSections(row){
+  if(!row || typeof row !== 'object') return '';
+  const usedKeys = new Set();
+  let html = '';
+  for(const sec of T2_MODAL_SECTIONS){
+    let body = '';
+    for(const [key, label] of sec.keys){
+      usedKeys.add(key);
+      const c = t2ColorFor(key, row[key]);
+      const valStyle = c ? ` style="color:${c}"` : '';
+      body += `<div class="k">${label}</div><div class="v"${valStyle}>${t2ModalFmt(row[key])}</div>`;
+    }
+    if(body){
+      html += `<div class="grp">${sec.title}</div>${body}`;
+    }
+  }
+  const extras = Object.keys(row).filter(k => !usedKeys.has(k));
+  if(extras.length){
+    html += `<div class="grp">OTHER — uncategorized</div>`;
+    for(const k of extras){
+      const c = t2ColorFor(k, row[k]);
+      const valStyle = c ? ` style="color:${c}"` : '';
+      html += `<div class="k">${k}</div><div class="v"${valStyle}>${t2ModalFmt(row[k])}</div>`;
+    }
+  }
+  return html;
+}
+
 // Modal
-function showMolModal(svgHtml, smiles){
+function showMolModal(svgHtml, smiles, row){
   document.getElementById('mol-modal-svg').innerHTML = svgHtml;
   const svg = document.querySelector('#mol-modal-svg svg');
   if(svg){svg.removeAttribute('width');svg.removeAttribute('height');}
   document.getElementById('mol-modal-smiles').textContent = smiles||'';
+  const propsEl = document.getElementById('mol-modal-props');
+  if(propsEl){
+    propsEl.innerHTML = row ? buildT2ModalSections(row) : '';
+  }
   document.getElementById('mol-modal').classList.add('show');
 }
 function closeMolModal(){document.getElementById('mol-modal').classList.remove('show');}
 document.addEventListener('keydown', e=>{if(e.key==='Escape') closeMolModal();});
 
+// Row cache so the modal can render every backend property — the thumb click
+// handler stores the row JSON on a data attribute for retrieval here.
+window._t2RowCache = {};
+
 // Lazy-load SVG for a given row_id
-function svgImg(rowId, smiles){
-  const id = 'mol-' + rowId;
-  // Use the backend SVG endpoint
+function svgImg(rowId, smiles, row){
+  // Cache the row so the modal can fetch every property on click.
+  window._t2RowCache[rowId] = row;
   return '<img src="'+BACKEND+'/api/svg/'+rowId+'?w=140&h=100" '
        + 'class="mol-thumb" onclick="loadAndShow('+rowId+')" '
        + 'data-smiles="'+(smiles||'').replace(/"/g,'&quot;')+'" '
+       + 'data-rowid="'+rowId+'" '
        + 'style="width:140px;height:100px;background:white;" '
        + 'onerror="this.style.display=\'none\'"/>';
 }
@@ -163,9 +378,9 @@ function loadAndShow(rowId){
   fetch(BACKEND + '/api/svg/' + rowId + '?w=600&h=500')
     .then(r=>r.text())
     .then(svg=>{
-      // Get smiles from the visible row
-      const smi = $('#t2scaled tbody [data-rowid="'+rowId+'"]').data('smiles') || '';
-      showMolModal(svg, smi);
+      const row = window._t2RowCache[rowId] || {};
+      const smi = row.smiles || '';
+      showMolModal(svg, smi, row);
     });
 }
 
@@ -181,18 +396,40 @@ $(document).ready(function(){
     processing: true,
     pageLength: 20,
     lengthMenu: [[10, 20, 50, 100], [10, 20, 50, 100]],
-    order: [[3, 'desc']],
+    // Default sort: pIC50_film (column index 4 in the new layout below).
+    order: [[4, 'desc']],
     dom: 'Qfrtip',
-    searchBuilder: {depthLimit: 2, columns: [3,4,5,6,7,8,9,10,11,12,13,14,15]},
+    // searchBuilder columns: numeric/filterable columns only.
+    // Indices below reference the NEW layout (see columns: array).
+    searchBuilder: {depthLimit: 2, columns: [3,4,5,6,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,
+                                              23,24,25,26,27,28,29,30,31,32,33]},
     scrollX: true,
     scrollY: '650px',
     scrollCollapse: true,
     ajax: function(data, callback, settings){
       // Translate DataTables params + chips into our backend's payload
       const order = data.order && data.order.length>0 ? data.order[0] : null;
-      const colMap = ['row_id','smiles','smiles','pIC50_film','SAScore','MW','QED',
-                      'LogP','TPSA','HBA','HBD','RotBonds','Tc_to_Mol1','max_Tc_train',
-                      'mean_top10_Tc_train','PAINS_alerts','warhead_intact'];
+      // colMap MUST match the columns: [] array below (and the thead order).
+      // New layout (2026-05-26 reorg):
+      //   [0] row_id (rownum), [1] structure, [2] smiles, [3] MW,
+      //   [4] pIC50_film, [5] pIC50_mean, [6] pIC50_std, [7] pIC50_method,
+      //   [8] delta_vs_mol1, [9] direct_delta_from_mol1,
+      //   [10] LLE, [11] LE, [12] SAScore, [13] QED, [14] LogP, [15] TPSA,
+      //   [16] HBA, [17] HBD, [18] RotBonds, [19] HeavyAtoms, [20] Rings,
+      //   [21] fsp3, [22] Lipinski_violations, [23] BEI, [24] SEI, [25] SILE,
+      //   [26] PAINS_alerts, [27] warhead_intact,
+      //   [28] Tc_to_Mol1, [29] max_Tc_train, [30] mean_top10_Tc_train,
+      //   [31] mean_pubTc, [32] top10_mean_pubTc,
+      //   [33] rdkit_strain_posefree_kcal_mol
+      const colMap = ['row_id','smiles','smiles','MW',
+                      'pIC50_film','pIC50_mean','pIC50_std','pIC50_method',
+                      'delta_vs_mol1','direct_delta_from_mol1',
+                      'LLE','LE','SAScore','QED','LogP','TPSA','HBA','HBD','RotBonds',
+                      'HeavyAtoms','Rings','fsp3','Lipinski_violations',
+                      'BEI','SEI','SILE','PAINS_alerts','warhead_intact',
+                      'Tc_to_Mol1','max_Tc_train','mean_top10_Tc_train',
+                      'mean_pubTc','top10_mean_pubTc',
+                      'rdkit_strain_posefree_kcal_mol'];
       const orderCol = order ? colMap[order.column] : 'pIC50_film';
       const orderDir = order ? order.dir : 'desc';
       const sb = data.searchBuilder || null;
@@ -227,38 +464,168 @@ $(document).ready(function(){
         }
       });
     },
-    columns: [
-      {data: 'row_id', render: function(d,t,r,m){return m.row+1+m.settings._iDisplayStart+'';}},
-      {data: 'row_id', orderable: false, render: function(d,t,r){return svgImg(d, r.smiles);}},
-      {data: 'smiles', className: 'smiles', render: function(d){return d.length>60?d.slice(0,57)+'…':d;}},
-      {data: 'pIC50_film', render: function(d,t){if(t==='display'){
-        const cls = pic50Class(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
-      }return d;}},
-      {data: 'SAScore', render: function(d,t){if(t==='display'){
-        const cls = sasClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
-      }return d;}},
-      {data: 'MW', render: function(d,t){if(t==='display'){
-        const cls = mwClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,0)+'</span>';
-      }return d;}},
-      {data: 'QED', render: function(d,t){if(t==='display'){
-        const cls = qedClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
-      }return d;}},
-      {data: 'LogP', render: function(d){return fmt(d,2);}},
-      {data: 'TPSA', render: function(d){return fmt(d,1);}},
-      {data: 'HBA', render: function(d){return fmt(d,0);}},
-      {data: 'HBD', render: function(d){return fmt(d,0);}},
-      {data: 'RotBonds', render: function(d){return fmt(d,0);}},
-      {data: 'Tc_to_Mol1', render: function(d){return fmt(d,3);}},
-      {data: 'max_Tc_train', render: function(d,t){if(t==='display'){
-        const cls = tcTrainClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
-      }return d;}},
-      {data: 'mean_top10_Tc_train', render: function(d){return fmt(d,3);}},
-      {data: 'PAINS_alerts', render: function(d){return d>0?'⚠ '+d:'0';}},
-      {data: 'warhead_intact', render: function(d,t){if(t==='display'){
-        return d?'<span class="cell-warhead-good" style="display:block;padding:2px 4px;">✓</span>':
-                  '<span class="cell-warhead-bad" style="display:block;padding:2px 4px;">—</span>';
-      }return d?1:0;}},
-    ],
+    // ── Reordered for 7-family layout (2026-05-26 reorg) ──
+    // Each render fn pipes through t2ColorFor for literature-based coloring
+    // where applicable. Pose-only families are absent from this pose-free cohort.
+    columns: (function(){
+      function tCell(key, dispStr, value){
+        const c = key ? t2ColorFor(key, value) : null;
+        return c ? '<span style="color:'+c+'">'+dispStr+'</span>' : dispStr;
+      }
+      return [
+        // 0. rownum
+        {data: 'row_id', name:'rownum',
+         render: function(d,t,r,m){return m.row+1+m.settings._iDisplayStart+'';}},
+        // 1. structure
+        {data: 'row_id', name:'structure', orderable: false,
+         render: function(d,t,r){return svgImg(d, r.smiles, r);}},
+        // 2. smiles
+        {data: 'smiles', name:'smiles', className: 'smiles',
+         render: function(d){return d.length>60?d.slice(0,57)+'…':d;}},
+        // 3. MW
+        {data: 'MW', name:'MW', render: function(d,t){if(t==='display'){
+          const cls = mwClass(d);
+          return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,0)+'</span>';
+        }return d;}},
+        // ── PREDICTED POTENCY ──
+        // 4. pIC50_film
+        {data: 'pIC50_film', name:'pIC50_film', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          if(t==='display'){
+            const c = t2ColorFor('pIC50_film', d);
+            if(c) return '<span style="color:'+c+'">'+fmt(d,3)+'</span>';
+            const cls = pic50Class(d);
+            return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
+          }
+          return d;
+        }},
+        // 5. pIC50_mean
+        {data: 'pIC50_mean', name:'pIC50_mean', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('pIC50_mean', fmt(d,3), d) : d;
+        }},
+        // 6. pIC50_std
+        {data: 'pIC50_std', name:'pIC50_std', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('pIC50_std', fmt(d,3), d) : d;
+        }},
+        // 7. pIC50_method
+        {data: 'pIC50_method', name:'pIC50_method', render: function(d){return fmt(d,3);}},
+        // 8. delta_vs_mol1
+        {data: 'delta_vs_mol1', name:'delta_vs_mol1', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('delta_vs_mol1', fmt(d,3), d) : d;
+        }},
+        // 9. direct_delta_from_mol1
+        {data: 'direct_delta_from_mol1', name:'direct_delta_from_mol1',
+         render: function(d){return fmt(d,3);}},
+        // ── DRUG-LIKENESS & EFFICIENCY ──
+        // 10. LLE
+        {data: 'LLE', name:'LLE', render: function(d){return fmt(d,2);}},
+        // 11. LE
+        {data: 'LE',  name:'LE',  render: function(d){return fmt(d,2);}},
+        // 12. SAScore
+        {data: 'SAScore', name:'SAScore', render: function(d,t){if(t==='display'){
+          const cls = sasClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
+        }return d;}},
+        // 13. QED
+        {data: 'QED', name:'QED', render: function(d,t){if(t==='display'){
+          const cls = qedClass(d); return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,2)+'</span>';
+        }return d;}},
+        // 14. LogP
+        {data: 'LogP', name:'LogP', render: function(d){return fmt(d,2);}},
+        {data: 'TPSA', name:'TPSA', render: function(d){return fmt(d,1);}},
+        {data: 'HBA', name:'HBA', render: function(d){return fmt(d,0);}},
+        {data: 'HBD', name:'HBD', render: function(d){return fmt(d,0);}},
+        {data: 'RotBonds', name:'RotBonds', render: function(d){return fmt(d,0);}},
+        {data: 'HeavyAtoms', name:'HeavyAtoms',
+         render: function(d){return d==null||isNaN(d)?'—':String(Math.round(d));}},
+        {data: 'Rings', name:'Rings',
+         render: function(d){return d==null||isNaN(d)?'—':String(Math.round(d));}},
+        {data: 'fsp3', name:'fsp3', render: function(d){return fmt(d,3);}},
+        {data: 'Lipinski_violations', name:'Lipinski_violations',
+         render: function(d){return d==null||isNaN(d)?'—':String(Math.round(d));}},
+        {data: 'BEI', name:'BEI', render: function(d){return fmt(d,2);}},
+        {data: 'SEI', name:'SEI', render: function(d){return fmt(d,2);}},
+        {data: 'SILE', name:'SILE', render: function(d){return fmt(d,2);}},
+        {data: 'PAINS_alerts', name:'PAINS_alerts', render: function(d){return d>0?'⚠ '+d:'0';}},
+        {data: 'warhead_intact', name:'warhead_intact', render: function(d,t){if(t==='display'){
+          return d?'<span class="cell-warhead-good" style="display:block;padding:2px 4px;">✓</span>':
+                    '<span class="cell-warhead-bad" style="display:block;padding:2px 4px;">—</span>';
+        }return d?1:0;}},
+        // ── SIMILARITY — INTERNAL ──
+        {data: 'Tc_to_Mol1', name:'Tc_to_Mol1', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('Tc_to_Mol1', fmt(d,3), d) : d;
+        }},
+        {data: 'max_Tc_train', name:'max_Tc_train', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          if(t==='display'){
+            const c = t2ColorFor('max_Tc_train', d);
+            if(c) return '<span style="color:'+c+'">'+fmt(d,3)+'</span>';
+            const cls = tcTrainClass(d);
+            return '<span class="'+cls+'" style="display:block;padding:2px 4px;">'+fmt(d,3)+'</span>';
+          }
+          return d;
+        }},
+        {data: 'mean_top10_Tc_train', name:'mean_top10_Tc_train', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('mean_top10_Tc_train', fmt(d,3), d) : d;
+        }},
+        // ── SIMILARITY — PUBLICATIONS (v3 panel) ──
+        {data: 'mean_pubTc', name:'mean_pubTc', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('mean_pubTc', fmt(d,3), d) : d;
+        }},
+        {data: 'top10_mean_pubTc', name:'top10_mean_pubTc',
+         defaultContent:'—', render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display' ? tCell('top10_mean_pubTc', fmt(d,3), d) : d;
+        }},
+        // ── STRAIN ──
+        {data: 'rdkit_strain_posefree_kcal_mol', name:'rdkit_strain_posefree_kcal_mol',
+         render: function(d,t){
+          if(d==null||isNaN(d)) return '—';
+          return t==='display'
+            ? tCell('rdkit_strain_posefree_kcal_mol', fmt(d,2), d) : d;
+        }},
+      ];
+    })(),
+  });
+
+  // ── Advisor-view column policy (Tier 2 SCALED, 7-family reorg 2026-05-26) ──
+  // All visible columns are listed below; v1/v2 pubTc removed from frontend
+  // (use the v3 mean_pubTc + top10_mean_pubTc instead).
+  const DEFAULT_VISIBLE = ['rownum','structure','smiles','MW',
+    'pIC50_film','pIC50_mean','pIC50_std','pIC50_method',
+    'delta_vs_mol1','direct_delta_from_mol1',
+    'LLE','LE','SAScore','QED','LogP','TPSA','HBA','HBD','RotBonds',
+    'HeavyAtoms','Rings','fsp3','Lipinski_violations',
+    'BEI','SEI','SILE','PAINS_alerts','warhead_intact',
+    'Tc_to_Mol1','max_Tc_train','mean_top10_Tc_train',
+    'mean_pubTc','top10_mean_pubTc',
+    'rdkit_strain_posefree_kcal_mol'];
+  const DETAIL_COLS = [];
+  function applyT2Visibility(){
+    DEFAULT_VISIBLE.forEach(k => {
+      try { const c = table.column(k+':name'); if(c && c.length) c.visible(true, false); } catch(e){}
+    });
+    try { table.columns.adjust().draw(false); } catch(e){}
+  }
+  window.SHOW_ALL_COLUMNS = true;
+  applyT2Visibility();
+  $('#advisor-view-toggle').attr('aria-pressed','true').text('Headline view only');
+  $('#advisor-view-status').text('All pose-free columns visible. Click a molecule to see the full property modal (cofold-only fields render as — for this cohort).');
+  $('#advisor-view-toggle').on('click', function(){
+    // Toggle is a no-op until a smaller headline list is agreed (2026-05-26).
+    // Left wired for forward compatibility.
+    window.SHOW_ALL_COLUMNS = !window.SHOW_ALL_COLUMNS;
+    $(this).attr('aria-pressed', window.SHOW_ALL_COLUMNS ? 'true' : 'false');
+    $(this).text(window.SHOW_ALL_COLUMNS ? 'Headline view only' : 'Show all columns');
+    $('#advisor-view-status').text(window.SHOW_ALL_COLUMNS
+      ? 'All pose-free columns visible. Click a molecule to see the full property modal.'
+      : 'Headline view (when a smaller set is defined). Currently no detail columns are hidden.');
+    applyT2Visibility();
   });
 
   // Chip click handler

@@ -1,0 +1,60 @@
+DONE 2026-07-13
+
+=== Constraint-free evaluation of v2_curriculum_clean (v1_clean) ===
+
+Headline verdict: **v1_clean shows pose-conditioned response (KS p<0.05) on
+16 metrics vs null_pose (conditioned vs unconditioned), but ZERO significant
+differences between pose targets (theta_90 vs theta_105 vs theta_130) on any
+metric in any experiment.**
+
+Bottom line for the paper: the covalent-constraint "thermostat" hypothesis is
+partly supported — Boltz-with-constraint hides some signal — but even without
+the thermostat, v1_clean does not produce theta-specific poses OR
+theta-specific conformer ensembles OR theta-specific chemistry. The pose bin
+conditioning is not steering the generator in a bin-specific way; it only
+differentiates conditioned-vs-null.
+
+Experiment A (Boltz no-constraint, 4 x 98 cofolds, ~3.2 h GPU on ai-gpu-a100-b):
+  - d_med theta_{90,105,130,null} = {9.55, 9.57, 9.93, 11.32} A
+    (constrained baseline: all ~1.9 A — clear thermostat)
+  - theta_BD_med = {97.5, 99.1, 96.9, 80.5} deg
+  - iptm_med    = {0.951, 0.957, 0.953, 0.935}
+  - f_BD_ready (d in [2.5, 5.5] A AND theta_BD in [80, 130] deg): 0% in ALL cohorts
+    → the Boltz-noconstraint model never places the warhead inside the BD window
+      unassisted; the covalent constraint is doing all the geometric work.
+  - KS (pose vs pose): p in [0.46, 0.97], NONE significant
+  - KS (pose vs null_pose): d/theta_BD/iptm/plddt all p<0.01
+
+Experiment B (ETKDG intrinsic strain, 4 x 100 mols x 50 confs, ~2 min CPU):
+  - f_reactive_rotamer_med = {0.61, 0.60, 0.58, 0.55}
+  - median_abs_phi_vinyl_med = {3.86, 3.17, 3.44, 7.34}
+  - KS: theta_90 vs null_pose f_reactive_rotamer p=0.023 *
+        null_pose vs theta_130 median_d_beta_centroid p=0.008 *
+        null_pose vs theta_130 median_abs_phi_vinyl p=0.017 *
+  - Between pose bins: nothing significant
+
+Experiment C (SMILES chemistry, 4 x 100 mols, ~1 s):
+  - null_pose is chemically distinct: MW=365 vs 408-422 for pose cohorts,
+    TPSA=75 vs 87-89, RotB=4 vs 5, within-cohort NN Tanimoto=0.41 vs 0.55
+  - Scaffold Jaccard ~0.02-0.07 across all pairs — essentially disjoint scaffolds
+  - Between pose bins: no physchem differences reach p<0.05
+
+Deliverables (all present):
+  data/paper_pair_training/v2_curriculum_clean/constraint_free_eval.md
+  data/paper_pair_training/v2_curriculum_clean/noconstraint_summary.json
+  data/paper_pair_training/v2_curriculum_clean/noconstraint_cofolds_merged.csv
+  data/paper_pair_training/v2_curriculum_clean/noconstraint_cofolds/track_A_*.csv
+  data/paper_pair_training/v2_curriculum_clean/etkdg_strain_panel.csv
+  data/paper_pair_training/v2_curriculum_clean/etkdg_strain_ks.json
+  data/paper_pair_training/v2_curriculum_clean/cohort_chemistry_panel.csv
+  data/paper_pair_training/v2_curriculum_clean/cohort_chemistry_summary.json
+  data/paper_pair_training/v2_curriculum_clean/constrained_baseline/track_A_*.csv
+
+Scripts (all under experiments/):
+  boltz_noconstraint_driver.py         (Boltz-free-pose driver)
+  reharvest_noconstraint.py            (correct beta-C atom identification)
+  etkdg_strain_panel.py                (Exp B)
+  cohort_chemistry_panel.py            (Exp C)
+  analyze_noconstraint_cofolds.py      (Exp A analysis)
+  build_constraint_free_report.py      (assemble report)
+  fetch_and_analyze_noconstraint.sh    (pull remote + analyze + report)

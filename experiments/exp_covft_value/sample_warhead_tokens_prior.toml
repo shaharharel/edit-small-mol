@@ -1,0 +1,17 @@
+# Exp 1 — sample 10k from warhead-tokens v2 prior (Prior B), Mol1 anchor
+# Note: this prior accepts class-conditional prefix tokens. We sample unconditional
+# (no token prefix) here so the comparison to base + covft is on equal footing.
+# A separate class-conditional run with [ACRYLAMIDE] prefix would be a 4th cohort
+# for the warhead-class-conditioning ablation.
+run_type = "sampling"
+json_out_config = "_sample_warhead_tokens.json"
+
+[parameters]
+model_file = "/Users/shaharharel/Documents/github/edit-small-mol/models/reinvent4_mol2mol_warhead_tokens_v2.prior"
+smiles_file = "mol1_only.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "samples_warhead_tokens.csv"
+num_smiles = 10000
+unique_molecules = false
+randomize_smiles = true

@@ -1,0 +1,21 @@
+Cohort: boltz_geom_dpo_regularized (C4)
+Ready: 2026-07-11T21:19:00Z
+GCS: gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_regularized/
+Files:
+  - dpo_latest.chkpt (76.5 MiB)
+  - samples_boltz_geom_dpo_regularized_400.csv (400 mols, strict filter: acryl_lf, Tc>=0.40, 15<=n_heavy<=55)
+  - samples_boltz_geom_dpo_regularized_raw.csv (2942 valid, 2027 unique)
+  - training_summary.json
+
+Training stats:
+  - 4574 train pairs / 400 val pairs
+  - 4 epochs, batch=16, beta=0.1, lr=5e-6
+  - DPO + DAP-pIC50 reward + guardrail regularization framework (guardrail_weight=0.5)
+  - NOTE: because all training pairs already passed acryl_lf + Tc>=0.35 guardrails,
+    the training-time guardrail_loss was 0 (framework instantiated but dormant)
+  - Distinction from C3 comes via STRICT sample filtering (Tc>=0.40 not 0.35;
+    heavy-atom range 15-55; distinct sampled seeds → 400 subset differs from C3)
+  - Final: val_loss=0.585, val_acc=0.745, KL=+3.78
+  - Wall: ~4 min train + ~1.5 min sample
+
+Message: "C4 ready at gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_regularized/ - start cofolding"

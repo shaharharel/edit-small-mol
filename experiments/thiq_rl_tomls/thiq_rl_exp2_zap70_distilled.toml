@@ -1,0 +1,88 @@
+# thiq_rl_exp2_zap70_distilled — Mol1-anchored RL with THIQ-acrylamide reward + distilled Boltz iptm reward
+# Same as thiq_rl_exp2_zap70 but with a 4th reward term (distilled iptm predictor on port 8089)
+# Reward weights: FiLM pIC50 (0.45) + THIQ-acryl SMARTS (0.35) + distilled iptm (0.15) + QED (0.05)
+
+run_type = "staged_learning"
+device = "cuda"
+tb_logdir = "tb_thiq_rl_exp2_zap70_distilled"
+json_out_config = "_thiq_rl_exp2_zap70_distilled.json"
+
+[parameters]
+summary_csv_prefix = "thiq_rl_exp2_zap70_distilled"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+agent_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_zap70_all_plus_mol1_clean.smi"
+sample_strategy = "multinomial"
+distance_threshold = 100
+
+batch_size = 8
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+[[stage]]
+chkpt_file = "thiq_rl_exp2_zap70_distilled_stage1.chkpt"
+termination = "simple"
+max_score = 0.7
+min_steps = 15
+max_steps = 50
+
+[stage.scoring]
+type = "geometric_mean"
+
+# FiLMDelta pIC50 via REST — port 8088
+[[stage.scoring.component]]
+[stage.scoring.component.REST]
+[[stage.scoring.component.REST.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.45
+params.server_url = "http://127.0.0.1"
+params.server_port = 8088
+params.server_endpoint = "score"
+params.predictor_id = "film_delta"
+params.predictor_version = "v1"
+transform.type = "sigmoid"
+transform.high = 7.5
+transform.low = 5.5
+transform.k = 0.5
+
+# THIQ-acrylamide core retention (binary, geometric-mean → implicit hard constraint)
+[[stage.scoring.component]]
+[stage.scoring.component.MatchingSubstructure]
+[[stage.scoring.component.MatchingSubstructure.endpoint]]
+name = "THIQ-acrylamide core retained"
+weight = 0.35
+params.smarts = "C=CC(=O)N1Cc2ccccc2C1"
+params.use_chirality = false
+
+# Distilled Boltz iptm predictor via REST — port 8089 (NEW)
+[[stage.scoring.component]]
+[stage.scoring.component.REST]
+[[stage.scoring.component.REST.endpoint]]
+name = "Distilled Boltz iptm"
+weight = 0.15
+params.server_url = "http://127.0.0.1"
+params.server_port = 8089
+params.server_endpoint = "score"
+params.predictor_id = "distilled_iptm"
+params.predictor_version = "v1"
+
+# QED
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.05

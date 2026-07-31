@@ -1,0 +1,14 @@
+# RL'd mol2mol cohort — sample 10k from exp2_v2_rl_v2 RL checkpoint, Mol1-seeded
+# (Matches sample_covft_prior.toml schema)
+run_type = "sampling"
+json_out_config = "_sample_rl.json"
+
+[parameters]
+model_file = "/Users/shaharharel/Documents/github/edit-small-mol/models/rl_checkpoints/exp2_v2_rl_v2_stage1.chkpt"
+smiles_file = "mol1_only.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "samples_rl.csv"
+num_smiles = 10000
+unique_molecules = false
+randomize_smiles = true

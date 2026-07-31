@@ -1,0 +1,25 @@
+# Exp-P6 OVERNIGHT DONE (2026-07-27 22:20 UTC)
+
+## Phase-1 winner: P6-POSENOISE σ=0.3
+- Architecture: v2_cond + P5-1 pair training + Gaussian σ=0.3Å XYZ noise on tgt pose each fetch
+- Justification: Pose noise forces the model to be pose-robust — cannot memorize exact XYZ. Data-side augmentation of P5-1.
+- Results: 78% valid / 93.4% acryl / anchor Tc 0.35 / QED 0.79 / 68% unique
+- Delta vs P5-1-v2 base: +10pp valid, +4pp acryl, +0.02 Tc, same diversity — CLEAN WIN.
+
+## Phase-2 winner: RL_GEOMEAN (soft aggregation, 250 steps)
+- Architecture: DAP RL from P5-1-v2 base with geometric-mean aggregation over (pIC50, wh_STRICT, QED, planar)
+- Results: 97% valid / 96.3% acryl / anchor Tc 0.40 / QED 0.85 / 46% unique
+- Delta vs P6-POSENOISE: +19pp valid, +3pp acryl, +0.05 Tc, -22pp diversity (acceptable trade-off)
+
+## Phase-2 NEGATIVE: RL_MINSTRICT (hard MIN aggregation)
+- MIN of 4 components at 250 steps → 100% valid + 99.8% acryl + Tc 0.42 BUT only 2.2% unique (mode collapse)
+- Higher T=1.5 helped mildly (8.4%). Early-stop @ 100 steps (RL_SHORT) recovered 35% unique.
+- Lesson: MIN aggregation is too strict; geometric mean or early-stop are viable.
+
+## Files
+- Ckpts (on ai-gpu, STOPPED): models/exp_P6/{RL_MINSTRICT,RL_SHORT,RL_GEOMEAN}_from_P51v2.ckpt + data/exp_P6/models/{P6-POSENOISE,P6-POSENOISE-s05,P6-POSENOISE-s10}/
+- Samples: data/exp_P6/samples/*_mol1*.csv (8 files, all pulled locally)
+- RL logs: data/exp_P6/rl_logs/ on ai-gpu
+
+## Machines
+- ai-chem, ai-chem2, ai-gpu: all STOPPED

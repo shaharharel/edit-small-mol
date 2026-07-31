@@ -1,0 +1,44 @@
+cross_pocket_test — DONE 2026-07-14
+
+VERDICT: FAIL. v1_clean does NOT show pocket-specific chemistry.
+
+Artifacts (pulled to local):
+- data/paper_pair_training/cross_pocket_test/cross_pocket_report.md
+- data/paper_pair_training/cross_pocket_test/cross_pocket_stats.json
+- data/paper_pair_training/cross_pocket_test/vina_cross_dock.csv (3750 rows)
+
+Key numbers (Bonferroni α=1.11e-03, 45 tests):
+
+1. Vina selectivity (delta = mean(off) − on, positive = pocket-selective):
+   - mol2mol: n=26 (ZAP70 only), delta=−0.57±0.12 kcal/mol, p=8.5e-05 — anti-selective
+   - covft, v1_clean: too few dockable poses per target → no data
+
+2. Cross-target scaffold Jaccard (lower = pocket-specific):
+   - mol2mol=0.003, covft=0.000, v1_clean=0.000 — all near-zero (dominated by
+     scaffold diversity within each cohort, not pocket specificity signal)
+
+3. Same-anchor arm Jaccard (v1_clean should DIVERGE from pose-blind):
+   - mol2mol↔covft = 0.002 (both pose-blind baselines)
+   - mol2mol↔v1_clean = 0.000 (LOWER than baseline pair — expected direction
+     but noise-floor; not interpretable as pocket-listening)
+   - covft↔v1_clean = 0.043 (HIGHER — covft and v1_clean share covalent
+     fine-tune stage, so shared chemistry ≠ pocket signal)
+
+4. Physchem KS shift across pockets (fraction of significant tests):
+   - mol2mol=1/30 (0.033), covft=17/30 (0.567), v1_clean=19/30 (0.633)
+   - covft AND v1_clean shift physchem across pockets more than mol2mol,
+     BUT this is likely a downstream artifact of covalent FT (narrower chem
+     space, higher sensitivity to input token differences) rather than
+     genuine pocket-conditional generation.
+
+OVERALL WIN CONDITION (v1_clean pocket-selective on Vina): FAIL.
+
+Combined with Phase A ([POSE] scoring-visible but sampling-inert) and
+Phase B (v1_clean fails all covalent-competency metrics at Bonferroni),
+the v2 covalent-conditioning claim is unrecoverable in current architecture.
+
+Defensible remaining finding: covFT stage improves electronic reactivity
+(Fukui f+ p=2.6e-3, E_LUMO p=4.4e-6 vs mol2mol at Bonferroni).
+
+ai-gpu2 NOT stopped — ADAR ablation (ablate_full.py) still running,
+unrelated workload. Rule "never turn off machines unilaterally" enforced.

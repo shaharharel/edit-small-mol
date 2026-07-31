@@ -1,0 +1,54 @@
+# Exp-P4 FULL COMPARATIVE PANEL — DONE
+
+## Coverage
+- 7 SMILES methods × 7 anchors + DrugFlow (3D, Mol1 only) = 43 cohorts × 500 samples each
+- 6-metric panel: validity, anchor-class match, Murcko Tc, novelty, planar_dev, BD-dev
+
+## Sorted by anchor-class match (avg across all covered anchors)
+
+| Model | valid% | anchor-class% | Murcko | novelty% | planar° | anchors |
+|---|---|---|---|---|---|---|
+| drugflow_v2G (3D) | **100** | 86.7 | 0.07 | **100** | **0.53** | 1 (Mol1 only) |
+| **v2_cond_denoise (P3)** | 43 | **75.5** | 0.27 | 89 | 3.32 | 7 |
+| v2_cond_denoise_dap (composition) | 43 | 73.1 | 0.27 | 90 | 3.29 | 7 |
+| v2_cond_dap_min_strict (B1) | 40 | 72.3 | 0.28 | **91** | 3.36 | 7 |
+| v2_cond_with_zap70 (Exp-N winner) | 42 | 72.0 | 0.29 | 90 | 3.34 | 7 |
+| mol2mol_baseline | **75** | 62.6 | **0.52** | 93 | 5.69 | 7 |
+| v2_cond_no_zap70 | 36 | 20.4 | 0.28 | **99** | 3.00 | 7 |
+
+## Per-anchor anchor-class match (winner tally)
+
+- **mol1**: denoise_dap=95.6% >= denoise=95.4% > with_zap70=88.8%
+- **afatinib**: denoise=87.2% > with_zap70=84.3% > dap_min_strict=83.5%
+- **osimertinib**: denoise=92.2% > denoise_dap=91.1% > with_zap70=88.4%
+- **ibrutinib**: with_zap70=81.9% > dap_min_strict=81.2% > denoise=79.4%
+- **ars853**: denoise=85.2% > denoise_dap=83.2% > with_zap70=77.4%
+- **mrtx849**: dap_min_strict=86.1% > denoise=85.1% > denoise_dap=80.4%
+- **sotorasib**: mol2mol=28.6% (all others <13%; chemistry mismatch for all)
+
+## HEADLINE
+**v2_cond_denoise is the new SMILES winner** on 7-anchor broad eval: 75.5% avg warhead-match, wins 4/7 anchors. Denoise+DAP composition slightly worse (73.1%). Pure DAP-RL matches Exp-N base (72.3% vs 72.0%). Denoise ALONE is the best SMILES method tonight.
+
+**DrugFlow (3D) wins on Mol1 metrics** (100% validity, 0.53° planar) but only tested on 1 anchor + has near-zero anchor conservation (Murcko 0.07 — de novo design, not lead-opt).
+
+**Attribution refined**:
+- Architecture (pocket+pose): +51pp warhead-match over no-zap70 (72% vs 20%)
+- Denoise pair training: **+4pp warhead-match** over base autoencoder (76% vs 72%) — the ONLY intervention that actually improves the strongest baseline
+- DAP RL: no measurable warhead gain over base (+0.3pp), preserves geometry
+- Denoise + DAP composition: NOT additive — actually slightly regresses (73% vs 76% denoise-alone)
+
+## Machines
+- ai-gpu: STOPPED
+- ai-gpu2: STOPPED
+
+## Files
+- `data/exp_metric_panel/expP4_final_combined.csv` — 43-row full panel
+- `data/exp_metric_panel/p4_final/*.json` — per-cohort details
+- Model checkpoints on remote (both machines stopped)
+
+## What's still open (paper-relevant)
+1. DrugFlow eval on other 6 anchors (need to cofold with anchor-specific pockets)
+2. E4c geom-DPO — parquet schema issue, deferred
+3. E5 cross-PDB same-Cys pair training — pair mining done (1,410 pairs on ai-gpu2), training not launched
+4. Boltz-2 cofolds on top denoise candidates → validate 3D geometry (needs A100)
+5. Cov-Vina scoring on top candidates (needs ai-chem)

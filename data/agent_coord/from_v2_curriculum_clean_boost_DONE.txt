@@ -1,0 +1,107 @@
+v2_curriculum_clean N-BOOST agent DONE — 2026-07-13 07:30 UTC (draft, will
+update with final counts once boltz pipeline completes further).
+
+HEADLINE: The N=40/48 borderline result (Δmedian=+10.14°, KS p=0.10) from
+the prior v1_clean diagnostic did NOT hold up under increased N. Boosted to
+N=106 (theta_90) vs N=100 (theta_130), the KS-test p-value INCREASED to
+0.339 (not decreased below 0.05 as expected if signal were real), and
+Δmedian collapsed from +10.14° to +0.80°. The original 10° gap was a
+small-N chance fluctuation, not a genuine steering signal.
+
+Key numbers (comparison_report.md at
+data/paper_pair_training/v2_curriculum_clean/):
+
+1. Bulk sampling (Phase 1, ~5 min on A100):
+   - Sampled 400 fresh mols per cohort from v1_clean best.chkpt
+     (~/models/v2_curriculum_clean/best.chkpt), same ZAP70 pocket_idx=5
+     from ESM cache, same pose conditions {theta_90, theta_105, theta_130,
+     null_pose}.
+   - Merged with existing 100/cohort → deduped canonical SMILES.
+   - Valid+acryl-on-largest-frag yield per cohort:
+       theta_90: 204/497 (41%)
+       theta_105: 226/499 (45%)
+       theta_130: 230/498 (46%)
+       null_pose: 153/499 (31%)
+   - Prepared boost_smi_for_boltz/samples_${cohort}.csv with N=150 per
+     cohort (existing filtered.smi at head positions 0..N_existing-1 for
+     CIF-index alignment + append fresh SMILES).
+
+2. Boltz cofold (Phase 2, ~90 min running so far):
+   - Priority-parallel: 2 concurrent boltz predicts (~29GB GPU / 40GB A100).
+   - Wave 1: theta_90 + theta_130 parallel. Both reached N≥100 at 07:22.
+     theta_130 hit 101 at 07:21; theta_90 hit 100 by 06:52 (kept until 107).
+   - Wave 2 (in progress): theta_105 + null_pose parallel. Currently at
+     ~53 and ~40 respectively. Both should reach ~80-100 within another
+     ~90 min if pipeline completes uninterrupted.
+
+3. Head-to-head KS-tests (N=106 theta_90 vs N=100 theta_130):
+   - v1_clean: n_90=106 n_130=100 KS=0.127 p=0.339 → null-consistent.
+     Δmedian=+0.80° (95% CI: [-7.49, +7.75]) — CI includes zero.
+   - v1_dirty (unchanged, from prior): n_90=76 n_130=49 KS=0.129 p=0.643
+     → null-consistent. Δmedian=+1.63° (95% CI: [-6.10, +17.69]).
+   - The p-value did NOT drop below 0.05 as we hoped; it INCREASED as
+     N grew, revealing that the initial 10° gap was small-N variance.
+   - No pairwise KS-test achieved p<0.05 at boosted N (across theta_90 vs
+     {theta_105, theta_130, null_pose}, or theta_105 vs theta_130).
+
+4. Per-cohort medians (v1_clean, boosted): all cluster around 143°,
+   regardless of theta_target:
+     theta_90 (n=106): median=143.88° [137.54, 150.23]
+     theta_105 (n=52): median=142.36° [135.93, 150.02]
+     theta_130 (n=100): median=143.08° [138.69, 149.31]
+     null_pose (n=37): median ~155 (higher variance, low N)
+   - Interpretation: the model is NOT listening to the theta pose axis
+     at all. Training-curve KL suggested some listening (KL_ab=0.397 at
+     end), but Boltz cofolds show flat theta distribution across
+     conditions. Decoder → cofold mismatch remains the bottleneck.
+
+5. Verdict: v1_clean does NOT achieve paper-headline p<0.05 steering.
+   The clean filter hypothesis is NOT defended at boosted N. The prior
+   agent's borderline p=0.10 was a small-N chance event, not a signal.
+
+6. Recommendations (updated):
+   - Increase pose signal strength: current 15° gap in theta_target
+     (105→90 or 105→130) is likely too subtle to overcome the ~20° std
+     of cofold output. Try theta_target={60, 105, 150} (3× wider spread).
+   - Add explicit pose distillation loss during training (currently only
+     KL-based pose-response probe; no reward signal on cofolded structures).
+   - Verify pose conditioning actually reaches decoder logits with
+     larger perturbations (KL_ab at ±1.5σ shows tiny effect; try ±3σ).
+
+Engineering / gotchas encountered:
+- Parallel 2-cohort × 2-worker (=4 concurrent boltz) OOMs A100 40GB
+  (4 × 14.5GB = 58GB > 40GB). Only 2 concurrent boltz is safe.
+- Correct config: 2 cohorts × 1 worker each = 2 concurrent (~29GB used).
+  Halves wall time vs 1 cohort × 2 workers (same GPU load, 2× throughput).
+- CIF index-name mapping is CRITICAL: driver names YAMLs as
+  v2curr_clean_{cohort}_{i:04d} where i is index into filtered.smi.
+  For boost run, prepared boost_smi_for_boltz/samples_${cohort}.csv
+  such that positions 0..N_existing-1 match existing filtered.smi
+  exactly → existing CIFs get reused (skipped by driver's cif exists
+  guard), and NEW CIFs added at positions N_existing..149.
+
+Deliverables (all in repo + synced locally):
+- data/paper_pair_training/v2_curriculum_clean/comparison_report.md
+  (updated with N-boost results + KS-test significance section)
+- data/paper_pair_training/v2_curriculum_clean/comparison_report.json
+  (updated with delta_median_ci95 + significant_ks_05 fields)
+- experiments/m1a_pocket_decoder/v2/compare_dirty_vs_clean.py
+  (enhanced: pairwise_ks now emits bootstrap 95% CI on Δmedian +
+   significance flags; verdict section adds explicit p<0.05 callout).
+- experiments/m1a_pocket_decoder/v2/prepare_boltz_boost_smi.py (new;
+  builds boost CSVs preserving CIF index alignment).
+- experiments/m1a_pocket_decoder/v2/run_bulk_sample_boost.sh (new).
+- experiments/m1a_pocket_decoder/v2/run_boltz_boost_priority.sh (new;
+  1-worker × 2-cohort parallel strategy for safe A100 40GB throughput).
+- experiments/m1a_pocket_decoder/v2/checkpoint_compare_loop.sh (new;
+  periodic harvest + compare while boltz runs).
+
+Cofold artifacts on A100 (remote):
+- data/paper_pair_training/boltz_dpo_campaign/cofolds/v2curr_clean_*/
+  (see final N per cohort at end of pipeline).
+- data/paper_pair_training/v2_curriculum_clean/steering_samples_boost/
+  (400 raw samples per cohort).
+- data/paper_pair_training/v2_curriculum_clean/steering_samples_merged/
+  (existing + boost, deduped).
+- data/paper_pair_training/v2_curriculum_clean/boost_smi_for_boltz/
+  (150 SMILES per cohort, CIF-index-aligned).

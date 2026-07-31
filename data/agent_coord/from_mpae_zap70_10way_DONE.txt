@@ -1,0 +1,123 @@
+ZAP70 10-way factorial complete. Timestamp: 2026-07-09 22:24 UTC (finished on ai-gpu-a100, us-central1-a).
+
+Wall time: 30 min A100 (21:54 → 22:24 UTC).
+Budget: 5 h. Used: 0.5 h. Well under.
+
+Data used:
+  Extended CSV: data/paper_pair_training/zap70_cofold_harvest/zap70_acryl_mpae_extended.csv (6,563 rows total)
+  Real-PAE filter: 3,090 rows (2,221 old pae_tensor + 869 new pae_tensor_m1a_v2_vs_covft) -- NO pae_tensor_split_b_recovered rows recovered
+  Cache-join limit (ZAP70 pockets in esm2_cache_posefix_v3.npz): 1,546 rows
+  Above 2,500 real-PAE file-level threshold => no substitute rows used
+  Final training set: 1,546 rows, all real-PAE, unimodal (median mpae 4.9, std 0.55).
+  Distribution matches "median 4-5, not bimodal ~1.5/~4.8" spec expectation.
+
+Trained models (all 10):
+  models/m1a_v2_v3_d.ckpt
+  models/m1a_v2_v4_d.ckpt
+  models/m1a_v2_v3_theta.ckpt
+  models/m1a_v2_v4_theta.ckpt.partial   (fail-fast at ep3, val_ce=19.0 vs ws=12.07)
+  models/m1a_v2_v3_phi.ckpt
+  models/m1a_v2_v4_phi.ckpt
+  models/m1a_v2_v3_mpae.ckpt
+  models/m1a_v2_v4_mpae.ckpt
+  models/m1a_v2_v3_composite.ckpt
+  models/m1a_v2_v4_composite.ckpt
+Local + on ai-gpu-a100 at /home/shaharh_quris_ai/edit-small-mol/models/*.
+
+Config: batch 32, LR 1e-4, warmup 500, 12 epochs each. Warm-start models/m1a_v2.ckpt.
+Structural fixes: separate ContrastivePoseEncoder + ProjectionHead g(-), K=4 negatives
+    (2 real from opposite target quartile in-batch + 2 synthetic [+/-3sigma_theta pose + phi-flip 180]).
+V3: InfoNCE only (lambda_nce 0->0.3 over ep 0-5).
+V4: V3 + RegressionHead on h_pooled predicting z-normalized -target (lambda_reg 0->0.5 over ep 0-3).
+
+Mid-run bug + fix:
+  v4_theta hit fail-fast at ep3: unnormalized MSE on target_theta (raw scale mean=39, std=16) produced MSE~1800 that
+  overwhelmed CE loss. Root cause: I initially wrote MSE against raw target values. Patched during the run to
+  z-normalize the regression target internally. v4_phi, v4_mpae, v4_composite all trained cleanly with reg MSE~1.0.
+  v4_theta is the only quality-fail; the other 9 pass quality. Recommend re-running v4_theta with the fix
+  if we want a clean matrix.
+
+Training trajectory (final epoch metrics, all 10):
+  Model              val_CE   val_InfoNCE  val_pos_wins  val_reg_Spr
+  v3_d               11.20    0.498        0.792         --
+  v4_d               11.85    0.410        0.838         0.302
+  v3_theta           11.18    0.428        0.844         --
+  v4_theta (part)    18.99    1.025        --            0.348      QUALITY-FAIL
+  v3_phi             11.19    0.629        0.708         --
+  v4_phi             11.85    0.617        --            0.194
+  v3_mpae            11.19    0.653        --            --
+  v4_mpae            11.84    0.729        --            0.266
+  v3_composite       11.20    0.518        --            --
+  v4_composite       11.87    0.371        0.877         0.488   <-- BEST reg spearman
+
+  Warm-start val_CE = 12.07. All non-failed runs stay within +2 nats -- CE guardrail holds.
+  All non-failed runs stay below 0.9*log(K+1)=1.45 InfoNCE threshold -- collapse guardrail holds.
+  val_pos_wins climbed from 0.25-0.38 (warm start) to 0.60-0.88 (end) -- InfoNCE alignment works.
+  val_reg_spearman climbed monotonically for V4 (composite hit 0.488) -- regression head works.
+
+Proxy metrics on Clamp A (real Mol1 pose, all 10 -- headline quality):
+  9/10 pass quality gate (validity >= 0.55, dedup >= 0.60, acryl_lf >= 0.80, Tc in [0.35, 0.75], planar <= 5 deg).
+  Only v4_theta (partial) fails: validity=0.24, acryl=0.54, Tc=0.30.
+  Typical validity 0.75-0.83, acryl 0.85-0.92, planar 0.07-0.16 deg, Tc 0.53-0.62.
+
+Clamp responsiveness matrix (A vs C shifts):
+  Model              d_AC (A)  theta_AC (deg)  phi_AC (deg)  reg_pred_AC (z)
+  v3_d               -0.009    -1.215          -0.032        --
+  v4_d               -0.013    -0.902          -0.008        -0.032
+  v3_theta           +0.006    -0.075          +0.056        --
+  v4_theta (part)    +0.032    +6.135          +0.030        +0.064     QUALITY-FAIL
+  v3_phi             -0.001    -1.503          +0.012        --
+  v4_phi             +0.010    +0.875          +0.026        +0.033
+  v3_mpae            -0.014    -2.473          +0.018        --
+  v4_mpae            -0.017    -2.600          -0.033        +0.053
+  v3_composite       -0.030    -3.197          -0.064        --
+  v4_composite       +0.001    +0.796          +0.029        +0.017
+  Threshold          0.1       5.0             5.0           0.5
+
+  BEST theta shift under quality gate: v3_composite = 3.2 deg (short of 5 deg threshold).
+  BEST d shift: v4_theta = 0.032 A (partial ckpt, quality-fail); under quality gate BEST = v4_composite 0.001 A.
+  Zero models satisfy responsiveness gate on any axis.
+
+HEADLINE VERDICT: 0/10 models pass BOTH gates. Clean negative on ZAP70 real-PAE data.
+
+- Quality PASSED: 9/10 (only v4_theta partial fails, due to my unnormalized-MSE bug)
+- Responsiveness PASSED: 0/10 (best under-quality shifts are 30-100x below thresholds)
+- Second-order winner axis: none. No axis is controllable in any model.
+
+Interpretation:
+  InfoNCE contrastive term DOES install pose->hidden alignment (val_pos_wins 0.60-0.88 vs random 0.20).
+  Regression head DOES learn to predict target from h_pooled (val_spearman up to 0.488 for composite).
+  BUT neither pathway carries through to the decoder generation stage. When we clamp the pose input to
+  best-quartile-mean or worst-quartile-mean, the emitted SMILES converge to the same canonical
+  planar-acrylamide mode regardless. The h_pooled *does* differ across clamps (reg_head_prediction
+  shifts by 0.02-0.07 z-units), so the pooled hidden state is not fully saturated -- but the decoder
+  greedy path collapses back to the training modal geometry.
+
+  This mirrors the prior InfoNCE-only finding on the same architecture (from_infonce_DONE.txt).
+  Switching to the correct target (ZAP70 real-PAE with mpae_warhead_cys measured directly at Cys346)
+  does NOT change the result. Data-signal wall is likely fundamental to the InfoNCE+regression-head-
+  on-pooled-hidden design. The pose channel has only two entry points (pocket_vec, pose_vec) as
+  single memory-side tokens that are diluted across the whole decoder. To install true geometric
+  steering the pose likely needs FiLM-conditioning each decoder layer, or an explicit pose-token
+  cross-attention head, or a wider empirical distribution over off-canonical poses in training.
+
+3-way comparison:
+  (a) v2-cond autoencoder baseline: no clamp mechanism, ~val_CE 17.4, trivially fails.
+  (b) Previous factorial V4 (BMX/BTK panel, WRONG target): Delta_theta_AC=1.7 deg (under gate), val_CE 17.33, FAIL both.
+  (c) This run (correct ZAP70 real-PAE): Delta_theta_AC up to 3.2 deg (still under gate), val_CE 11.2-11.9, FAIL both.
+  Switching to correct data improved val_CE (autoencoder became a better fit to real ZAP70 mols) but did not
+  install responsiveness. The data-selection thesis of the recovery was CORRECT for CE quality but INSUFFICIENT
+  for pose steering.
+
+Files in data/paper_pair_training/mpae_zap70/:
+  verdict_10way_report.md               (full markdown report -- open this)
+  verdict_10way_raw.json                (structured verdict)
+  pose_stats_zap70.json                 (data selection + per-target stats)
+  labeled_mols_zap70.npz                (1,546 rows, all 5 targets, poses, pockets)
+  esm_cache_zap70.npz                   (124 unique ZAP70 pockets)
+  proxy_metrics_v{3,4}_{d,theta,phi,mpae,composite}.json  (10 proxy files)
+  train_v{3,4}_{d,theta,phi,mpae,composite}.jsonl        (10 training-trajectory logs)
+  samples_v{3,4}_*_clamp{A,B,C}.txt     (30 sample-SMILES files, 300 mols each)
+  logs/DRIVER.log, logs/stage_progress.log, logs/train_*_*.log, logs/sample_*_*.log
+
+A100 will be stopped after this coord write.

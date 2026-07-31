@@ -1,0 +1,84 @@
+# murcko_rl_zap70 — Mol1 Murcko-scaffold-preserving RL
+# Reward: FiLM 0.35 + Mol1-Murcko 0.30 + THIQ-acryl 0.25 + QED 0.10
+
+run_type = "staged_learning"
+device = "cuda"
+tb_logdir = "tb_murcko_rl_zap70"
+json_out_config = "_murcko_rl_zap70.json"
+
+[parameters]
+summary_csv_prefix = "murcko_rl_zap70"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_warhead_tokens.prior"
+agent_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_warhead_tokens.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_zap70_all_plus_mol1_clean.smi"
+sample_strategy = "multinomial"
+distance_threshold = 100
+
+batch_size = 8
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+[[stage]]
+chkpt_file = "murcko_rl_zap70_stage1.chkpt"
+termination = "simple"
+max_score = 0.7
+min_steps = 15
+max_steps = 50
+
+[stage.scoring]
+type = "geometric_mean"
+
+# 1. FiLMDelta pIC50 (REST)
+[[stage.scoring.component]]
+[stage.scoring.component.REST]
+[[stage.scoring.component.REST.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.35
+params.server_url = "http://127.0.0.1"
+params.server_port = 8088
+params.server_endpoint = "score"
+params.predictor_id = "film_delta"
+params.predictor_version = "v1"
+transform.type = "sigmoid"
+transform.high = 7.5
+transform.low = 5.5
+transform.k = 0.5
+
+# 2. Mol1 Murcko scaffold match (the "preserve the whole scaffold" reward)
+[[stage.scoring.component]]
+[stage.scoring.component.MatchingSubstructure]
+[[stage.scoring.component.MatchingSubstructure.endpoint]]
+name = "Mol1 Murcko scaffold retained"
+weight = 0.30
+params.smarts = "O=C(Nc1cncn1)c1cccc2c1CNC2"
+params.use_chirality = false
+
+# 3. THIQ-acrylamide core
+[[stage.scoring.component]]
+[stage.scoring.component.MatchingSubstructure]
+[[stage.scoring.component.MatchingSubstructure.endpoint]]
+name = "THIQ-acrylamide core retained"
+weight = 0.25
+params.smarts = "C=CC(=O)N1Cc2ccccc2C1"
+params.use_chirality = false
+
+# 4. QED
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.10

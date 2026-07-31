@@ -1,0 +1,46 @@
+CFG + retrieval-prefix v3 pipeline COMPLETE (2026-07-19).
+
+VERDICT: CFG DEAD OR HARMFUL AT LOW GUIDANCE for the p_drop=0.10 and p_drop=0.05
+variants of the covFT+v2 pocket/pose decoder.  Primary comparison window
+s=1.0 vs s=1.5 (per QA #4) shows:
+
+  - Validity DROPS by -0.185 to -0.345 (CIs exclude zero), destructive.
+  - Fukui f+ shifts all cross zero at s=1.5.
+  - Vina score shifts marginal (~-4 to -6 kcal/mol) but CIs cross zero.
+  - No metric passes 'beneficial hit' threshold at s=1.5.
+
+BENEFICIAL RETRIEVAL EFFECT confirmed at s=1.5 (p=0.10):
+  retrieval-on adds +0.135 validity [+0.040, +0.230] over retrieval-off.
+  This rescues ~half the CFG-induced validity loss.
+
+TOP-25/CELL LOCAL_ONLY VINA (paper narrative):
+  Best absolute Vina cov score: -7.67 kcal/mol (cfg_s2_retrieval_on_v2).
+  Median across 154-mol top cohort: -0.88 kcal/mol.
+  92/154 mols have negative scores after Newton minimization.
+
+FILES:
+  Report:  data/paper_pair_training/cfg_retrieval/cfg_retrieval_report_v3.md
+  Summary: data/paper_pair_training/cfg_retrieval/cfg_retrieval_report_v3_summary.csv
+  Effects: data/paper_pair_training/cfg_retrieval/cfg_retrieval_report_v3_effects.csv
+  Panels (2D + xTB + Vina free + Vina cov):
+    covalent_metric_panel_v2.csv, covalent_xtb_panel.csv,
+    covalent_vina_panel.csv, covalent_vina_cov_panel.csv,
+    covalent_vina_local_panel_p10.csv
+  p05 variant panels in data/paper_pair_training/cfg_retrieval_p05/
+  Training logs: train_log.csv, train_log_v2.csv (p0.10) and
+    cfg_retrieval_p05/train_log.csv (p0.05)
+  Model checkpoints:
+    models/cfg_retrieval_v2/cfg_final.ckpt (p=0.10)
+    models/cfg_retrieval_p05/cfg_final.ckpt (p=0.05)
+
+ARCHIVED:
+  data/paper_pair_training/cfg_retrieval/cfg_retrieval_report_v1_smoke.md
+    (frozen-base + Gasteiger proxy smoke run, both flagged broken by QA)
+
+NEXT STEPS (per QA #4 forward-looking):
+  If CFG steering is truly dead in this architecture, next architectural
+  attempt should be per-layer FiLM injection (drop the CFG-token trick,
+  inject conditioning at every decoder layer via FiLM) — the CFG-token
+  approach relies on the encoder-memory cross-attention alone, which
+  clearly doesn't create a strong enough dependence on the pocket/pose
+  conditioning for CFG to steer.

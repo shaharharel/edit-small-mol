@@ -1,0 +1,43 @@
+# Exp-P Overnight Campaign — DONE
+
+**Total wall time: ~30 min from launch to full 5-way comparison.**
+
+## Verdict: **DENOISE wins on covalent-awareness. DAP RL improves novelty without regression.**
+
+## 5-way Mol1 comparison (all N=500 fresh samples)
+
+| Model | valid | anchor-class-match | Murcko Tc | novelty Tc<0.6 | planar° | BD-dev° |
+|---|---|---|---|---|---|---|
+| mol2mol_baseline | 89% | 67% | 0.58 | **100%** | 3.4 | 13.3 |
+| v2_cond_no_zap70 | 51% | 27% | 0.25 | **100%** | 3.5 | 13.4 |
+| v2_cond_with_zap70 (Exp-N winner) | 75% | 89% | 0.62 | 37% | **1.9** | 13.3 |
+| **v2_cond_DENOISE (P3)** | 78% | **95%** ← winner | 0.59 | 40% | 2.7 | 13.4 |
+| **v2_cond_DAP_RL (B1)** | 73% | 87% | 0.62 | **43%** | 2.0 | 13.3 |
+
+## Attribution — updated
+
+- **Arch alone** (v2_cond_with_zap70): 89% anchor-class + 1.9° planar. Baseline win.
+- **Arch + DENOISING training** (P3): 95% anchor-class (+6pp). Denoising uses same data as base but perturbs pose+BD-angle during training so model learns to reconstruct from noisy geometry. Small planar cost (+0.8°) but ties on everything else.
+- **Arch + DAP RL** (B1): +6pp novelty over base without losing warhead (87% vs 89%) or planar (2.0° vs 1.9°). MIN-STRICT reward (pIC50, warhead, QED, planar) worked cleanly. B1 achieved final pIC50=6.71 (target 6.5+).
+
+## Key numbers per stage
+- Exp-P1 (metric panel, 21 cohorts × 500 mols): DONE 21 JSONs, `data/exp_metric_panel/expP1_panel.csv`
+- Exp-P3 (denoise training + samples): DONE 20 min train, 500 samples, ckpt `data/exp_P3/models/v2_cond_denoise_ckpts/m1a_v2_final.ckpt`
+- Exp-P2 B1 DAP RL: DONE 63s (30 steps), ckpt `data/exp_P2/models/B1_dap_min_strict.ckpt`, 500 samples via variant A
+
+## What's still open
+- **B2' geometry-DPO** on Exp-N winner using existing `data/dpo_pairs/geometry_only.parquet` — not launched (setup agent stalled before)
+- **DENOISE + DAP composition** — apply DAP RL on top of denoise ckpt (2 wins compose?)
+- **Cross-anchor eval**: P3 denoise only tested on Mol1. Should sample all 7 anchors + rerun panel to see if denoise generalizes.
+- **Boltz-2 cofolds** on top-30 candidates from denoise + DAP (need A100)
+- **cov-Vina** on same (need ai-chem)
+
+## Machines
+- ai-gpu: STOPPED
+- ai-gpu2: STOPPED
+
+## Next-experiment recommendations
+1. **Compose Denoise + DAP** — apply DAP RL to denoise ckpt (may combine 95% anchor + 43% novelty)
+2. **Cross-anchor generalization test for Denoise** — sample all 7 anchors, run panel
+3. **Boltz cofold on top candidates** — validate β-C-SG geometry improved on structural pose
+4. **Cov-Vina scoring** — bind-pose energy validation

@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>⚡ Light view — 916 survivors (838 + 78)</title>
+<link rel="preconnect" href="https://rsms.me/">
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+:root{
+  --fs-display:36px;--fs-h2:24px;--fs-h3:18px;
+  --fs-body:15px;--fs-table:13px;--fs-table-header:12px;
+  --fs-label:12px;--fs-mono:13px;
+  --lh-tight:1.2;--lh-snug:1.4;--lh-normal:1.6;
+  --font-ui:"Inter var","Inter",-apple-system,system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","SF Mono",ui-monospace,monospace;
+  --s-1:4px;--s-2:8px;--s-3:12px;--s-4:16px;
+  --s-6:24px;--s-8:32px;--s-12:48px;--s-16:64px;
+  --neutral-0:#FFFFFF;--neutral-50:#FAFAF9;--neutral-100:#F4F4F2;
+  --neutral-200:#E7E5E2;--neutral-300:#D1CFCB;--neutral-500:#78756F;
+  --neutral-700:#3E3C38;--neutral-900:#1A1917;
+  --primary-50:#EEF2FF;--primary-500:#4F46E5;--primary-600:#4338CA;
+  --success-50:#E6F6EF;--success-500:#0E9F6E;
+  --warning-50:#FEF3E2;--warning-500:#D97706;
+  --error-50:#FEE7E7;--error-500:#DC2626;
+  --heat-good:#E6F6EF;--heat-mid:#FEF3E2;--heat-bad:#FEE7E7;
+  --radius-sm:4px;--radius:8px;--radius-lg:12px;--radius-xl:16px;
+  --shadow-sm:0 1px 2px rgba(26,25,23,0.04);
+  --shadow:0 4px 12px rgba(26,25,23,0.06);
+  --shadow-lg:0 24px 64px rgba(26,25,23,0.18);
+}
+*,*::before,*::after{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--neutral-50);color:var(--neutral-900);
+  font-family:var(--font-ui);font-size:var(--fs-body);
+  line-height:var(--lh-normal);font-feature-settings:"cv11","ss01";
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+a{color:var(--primary-500);text-decoration:none;}
+a:hover{text-decoration:underline;}
+code{font-family:var(--font-mono);font-size:0.9em;background:var(--neutral-100);
+  padding:1px 6px;border-radius:var(--radius-sm);}
+
+/* Page chrome */
+.hero{background:var(--neutral-0);padding:var(--s-8) var(--s-16) var(--s-4);
+  border-bottom:1px solid var(--neutral-200);}
+.hero-inner{max-width:1480px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--s-4);}
+.hero h1{font-size:var(--fs-h2);font-weight:600;letter-spacing:-0.01em;
+  line-height:var(--lh-tight);margin:0;color:var(--neutral-900);}
+.hero h1 .lightning{display:inline-block;color:var(--warning-500);margin-right:8px;}
+.hero .subtitle{color:var(--neutral-500);font-size:13px;margin:4px 0 0 0;}
+.hero a.back{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;
+  border:1px solid var(--neutral-200);background:var(--neutral-0);
+  color:var(--neutral-700);font-size:13px;font-weight:500;border-radius:var(--radius-sm);}
+.hero a.back:hover{background:var(--neutral-100);border-color:var(--neutral-300);text-decoration:none;}
+
+.page{max-width:1480px;margin:0 auto;padding:var(--s-6) var(--s-16) var(--s-12);}
+
+/* Filter panel */
+.filter-panel{background:var(--neutral-0);border:1px solid var(--neutral-200);
+  border-radius:var(--radius);padding:var(--s-4) var(--s-6);margin-bottom:var(--s-4);
+  box-shadow:var(--shadow-sm);}
+.filter-panel h3{font-size:var(--fs-h3);font-weight:600;margin:0 0 var(--s-3);
+  color:var(--neutral-900);display:flex;align-items:center;gap:var(--s-3);}
+.filter-panel h3 .count{font-size:13px;color:var(--neutral-500);font-weight:400;}
+.conditions{display:flex;flex-direction:column;gap:8px;}
+.condition{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0;}
+.condition select,.condition input{font:inherit;font-size:13px;
+  padding:6px 10px;border:1px solid var(--neutral-200);border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-900);}
+.condition select{cursor:pointer;}
+.condition select.col-sel{min-width:240px;font-family:var(--font-mono);font-size:12px;}
+.condition select.op-sel{min-width:120px;font-family:var(--font-mono);font-size:12px;text-align:center;}
+.condition input.val-input{min-width:160px;flex:1;max-width:340px;font-family:var(--font-mono);font-size:12px;}
+.condition .rm-btn{width:28px;height:28px;border-radius:50%;border:none;
+  background:var(--neutral-100);color:var(--neutral-500);cursor:pointer;font-size:14px;line-height:1;
+  display:inline-flex;align-items:center;justify-content:center;transition:all 120ms;}
+.condition .rm-btn:hover{background:var(--error-50);color:var(--error-500);}
+.filter-actions{display:flex;gap:var(--s-3);margin-top:var(--s-4);padding-top:var(--s-3);
+  border-top:1px solid var(--neutral-200);align-items:center;flex-wrap:wrap;}
+.filter-actions .spacer{flex:1;}
+.btn{font:inherit;font-size:13px;font-weight:500;padding:7px 16px;border-radius:var(--radius-sm);
+  border:1px solid var(--neutral-200);background:var(--neutral-0);color:var(--neutral-700);
+  cursor:pointer;transition:all 120ms;}
+.btn:hover{background:var(--neutral-100);border-color:var(--neutral-300);}
+.btn.primary{background:var(--primary-500);color:var(--neutral-0);border-color:var(--primary-500);}
+.btn.primary:hover{background:var(--primary-600);border-color:var(--primary-600);}
+.btn.add-cond{color:var(--primary-500);border-color:var(--primary-500);background:var(--primary-50);}
+.btn.add-cond:hover{background:var(--primary-500);color:var(--neutral-0);}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* Meta strip above table */
+.meta-strip{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;
+  gap:var(--s-3);padding:var(--s-3) 0;font-size:13px;color:var(--neutral-700);}
+.meta-strip .count-badge{font-size:14px;font-variant-numeric:tabular-nums;}
+.meta-strip .count-badge strong{color:var(--neutral-900);font-weight:600;font-size:18px;}
+.meta-strip select{font:inherit;font-size:12px;padding:4px 8px;border:1px solid var(--neutral-200);
+  border-radius:var(--radius-sm);background:var(--neutral-0);}
+
+/* DataTable (mirrors main report) */
+.leader-scroll{overflow-x:auto;overflow-y:auto;max-height:780px;
+  border:1px solid var(--neutral-200);border-radius:var(--radius);
+  background:var(--neutral-0);}
+table.dataTable{width:100%;border-collapse:separate;border-spacing:0;
+  font-size:var(--fs-table);background:var(--neutral-0);margin:0;}
+table.dataTable thead tr.family-header th{background:var(--neutral-100);font-weight:700;
+  text-align:center;letter-spacing:0.04em;text-transform:uppercase;font-size:11px;
+  color:var(--neutral-700);padding:7px 14px;border-bottom:1px solid var(--neutral-200);
+  position:sticky;top:0;z-index:3;}
+table.dataTable thead tr.column-header th{background:var(--neutral-100);
+  font-size:var(--fs-table-header);font-weight:600;letter-spacing:0.04em;
+  text-transform:uppercase;color:var(--neutral-700);
+  padding:10px 14px;text-align:left;cursor:pointer;user-select:none;
+  border-bottom:1px solid var(--neutral-200);
+  position:sticky;top:29px;z-index:3;}
+table.dataTable thead tr.column-header th.num{text-align:right;}
+table.dataTable thead tr.column-header th:hover{background:var(--neutral-200);}
+table.dataTable thead tr.column-header th.sort-asc::after{content:" ▲";font-size:9px;color:var(--primary-500);}
+table.dataTable thead tr.column-header th.sort-desc::after{content:" ▼";font-size:9px;color:var(--primary-500);}
+table.dataTable tbody td{padding:10px 14px;border-bottom:1px solid var(--neutral-200);
+  color:var(--neutral-900);vertical-align:middle;white-space:nowrap;}
+table.dataTable tbody tr:last-child td{border-bottom:none;}
+table.dataTable tbody tr{transition:background 120ms;}
+table.dataTable tbody tr:hover td{background:var(--neutral-50);}
+table.dataTable td.num{text-align:right;font-variant-numeric:tabular-nums;
+  font-family:var(--font-mono);font-size:12.5px;}
+
+/* Sticky leftmost cols — rownum + structure stay pinned during horizontal scroll. */
+/* Family-header row: ONLY the spacer (rownum) sticks. The IDENTITY th has colspan:6,
+   so making it sticky would float a 6-col-wide label over the scrolled columns —
+   that's the bug. Keep IDENTITY top-sticky only; it scrolls horizontally. */
+table.dataTable thead tr.family-header th:nth-child(1){
+  width:50px;min-width:50px;max-width:50px;box-sizing:border-box;
+  position:sticky;left:0;top:0;background:var(--neutral-100);z-index:6;
+  box-shadow:1px 0 0 var(--neutral-200);}
+/* Column-header row: rownum + structure stick horizontally (and top). */
+table.dataTable thead tr.column-header th:nth-child(1){
+  width:50px;min-width:50px;max-width:50px;box-sizing:border-box;
+  position:sticky;left:0;top:29px;background:var(--neutral-100);z-index:5;
+  box-shadow:1px 0 0 var(--neutral-200);}
+table.dataTable thead tr.column-header th:nth-child(2){
+  width:170px;min-width:170px;max-width:170px;box-sizing:border-box;
+  position:sticky;left:50px;top:29px;background:var(--neutral-100);z-index:5;
+  box-shadow:2px 0 4px -2px rgba(0,0,0,0.08);}
+/* Body rows: rownum + structure cells stick horizontally. */
+table.dataTable tbody td:nth-child(1){
+  width:50px;min-width:50px;max-width:50px;box-sizing:border-box;
+  position:sticky;left:0;background:var(--neutral-0);z-index:4;
+  box-shadow:1px 0 0 var(--neutral-200);}
+table.dataTable tbody td:nth-child(2){
+  width:170px;min-width:170px;max-width:170px;box-sizing:border-box;
+  position:sticky;left:50px;background:var(--neutral-0);z-index:4;
+  box-shadow:2px 0 4px -2px rgba(0,0,0,0.08);}
+
+/* Structure thumb (same size as main report) */
+.thumb{display:block;width:140px;height:100px;border-radius:var(--radius-sm);
+  cursor:pointer;background:white;
+  transition:transform 120ms,box-shadow 120ms,border-color 120ms;
+  border:1px solid var(--neutral-200);}
+tr:hover .thumb{border-color:var(--neutral-300);box-shadow:var(--shadow);transform:scale(1.03);}
+
+/* Pagination */
+.pager{display:flex;justify-content:center;align-items:center;gap:var(--s-2);
+  padding:var(--s-4) 0;}
+.pager .page-info{font-size:12.5px;color:var(--neutral-700);
+  font-variant-numeric:tabular-nums;padding:0 var(--s-3);}
+
+/* Loading */
+.loading{display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:var(--s-8);color:var(--neutral-500);font-size:14px;}
+.loading.show{display:flex;}
+.loading.hide{display:none;}
+.spin{display:inline-block;width:18px;height:18px;border:2px solid var(--neutral-300);
+  border-top-color:var(--primary-500);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Modal (mirrors main report) */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(26,25,23,0.6);
+  backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal{width:640px;max-width:92vw;background:var(--neutral-0);
+  border-radius:var(--radius-xl);box-shadow:var(--shadow-lg);
+  padding:var(--s-8);position:relative;max-height:92vh;overflow:auto;}
+#mol-modal-card.modal-wide{width:880px;}
+.modal .close{position:absolute;top:var(--s-3);right:var(--s-3);
+  width:32px;height:32px;border-radius:50%;border:none;background:var(--neutral-100);
+  color:var(--neutral-700);cursor:pointer;font-size:20px;line-height:1;
+  display:flex;align-items:center;justify-content:center;z-index:1;}
+.modal .close:hover{background:var(--neutral-200);}
+.modal-tabs{display:flex;gap:0;border-bottom:1px solid var(--neutral-200);margin-bottom:var(--s-4);}
+.mt-tab{background:none;border:none;padding:8px 16px;font:inherit;font-size:13px;font-weight:500;
+  color:var(--neutral-500);cursor:pointer;border-bottom:2px solid transparent;transition:all 120ms;}
+.mt-tab:hover{color:var(--neutral-900);}
+.mt-tab.active{color:var(--primary-600);border-bottom-color:var(--primary-500);}
+.modal .struct{display:flex;justify-content:center;margin-bottom:var(--s-4);}
+.modal .struct svg{width:480px;height:380px;}
+.modal .smiles-block{background:var(--neutral-50);padding:var(--s-3) var(--s-4);
+  border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;
+  color:var(--neutral-700);word-break:break-all;line-height:1.5;}
+.modal .props{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--s-2) var(--s-4);
+  margin-top:var(--s-4);font-size:13px;}
+.modal .props .l{color:var(--neutral-500);font-size:12px;}
+.modal .props .v{color:var(--neutral-900);font-variant-numeric:tabular-nums;
+  font-family:var(--font-mono);}
+.modal .props .family-banner{grid-column:1/-1;font-size:11px;font-weight:700;
+  color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.05em;
+  background:var(--neutral-100);padding:var(--s-2) var(--s-3);
+  border-radius:4px;margin-top:var(--s-3);}
+.pose-meta{display:flex;flex-wrap:wrap;gap:var(--s-3);font-size:12px;
+  margin-bottom:var(--s-3);padding:var(--s-3);background:var(--neutral-50);
+  border:1px solid var(--neutral-200);border-radius:var(--radius);font-variant-numeric:tabular-nums;}
+.pose-meta .badge{padding:2px 8px;border-radius:999px;font-weight:500;}
+.pose-meta .badge-good{background:var(--success-50);color:var(--success-500);}
+.pose-meta .badge-mid{background:var(--warning-50);color:var(--warning-500);}
+.pose-meta .badge-bad{background:var(--error-50);color:var(--error-500);}
+.pose-controls{display:flex;flex-wrap:wrap;gap:var(--s-3);font-size:12px;
+  margin-bottom:var(--s-3);align-items:center;}
+.pose-controls label{display:inline-flex;align-items:center;gap:4px;cursor:pointer;}
+.pose-controls button{height:28px;padding:0 12px;border-radius:var(--radius-sm);
+  background:var(--neutral-0);color:var(--neutral-700);border:1px solid var(--neutral-200);
+  font:inherit;font-size:12px;cursor:pointer;}
+.pose-controls button:hover{background:var(--neutral-100);}
+.pose-controls button.active{background:var(--primary-500);color:white;border-color:var(--primary-500);}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <h1><span class="lightning">⚡</span>Light view — 916 visible survivors <span style="font-size:14px;font-weight:400;color:var(--neutral-500);">(838 main + 78 rescue, merged)</span></h1>
+      <div class="subtitle">Frozen snapshot of the filter-cascade output. All filtering &amp; sorting happens client-side — instant after the initial load.</div>
+    </div>
+    <a class="back" href="/">← Full report</a>
+  </div>
+</header>
+
+<main class="page">
+
+<!-- Mol1 reference row (anchor molecule, design baseline) -->
+<div id="mol1-ref-wrap" style="margin-bottom:var(--s-4);display:none;">
+  <div style="display:flex;align-items:baseline;gap:var(--s-3);margin-bottom:var(--s-2);">
+    <h3 style="font-size:var(--fs-h3);font-weight:600;margin:0;color:var(--neutral-900);">Reference — Mol 1 (anchor)</h3>
+    <span style="font-size:12px;color:var(--neutral-500);">measured pIC50 = 6.59 · ZAP70 (ChEMBL2803) covalent acrylamide · the design baseline our cohort is engineered around</span>
+  </div>
+  <div class="leader-scroll" id="mol1-ref-scroll" style="border-color:#FCD34D;background:#FFFBEB;">
+    <table class="dataTable" id="mol1-ref-tbl" style="background:transparent;">
+      <thead id="mol1-ref-thead"></thead>
+      <tbody id="mol1-ref-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="loading" class="loading show"><span class="spin"></span>Loading 916 rows…</div>
+
+<!-- Shared page size (applies to both tables) -->
+<div class="meta-strip" id="topbar" style="display:none;">
+  <div style="color:var(--neutral-700);font-size:13px;">
+    Two tables below — independent filter sets. Both partitions of the merged 916 cohort.
+  </div>
+  <div>
+    Page size:
+    <select id="pagesize" onchange="setPageSize(this.value)">
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="200">200</option>
+      <option value="1000">All</option>
+    </select>
+  </div>
+</div>
+
+<!-- ════════════════ TABLE M — Murcko+acryl (819) ════════════════ -->
+<section class="table-section" id="section-m" style="display:none;margin-top:var(--s-5);">
+  <div style="display:flex;align-items:baseline;gap:var(--s-3);margin-bottom:var(--s-3);">
+    <h2 style="font-size:18px;font-weight:700;margin:0;color:#6D28D9;">▼ Murcko+acryl</h2>
+    <span style="font-size:13px;color:var(--neutral-600);">— 819 mols matching Mol1's full Murcko scaffold AND acrylamide warhead</span>
+  </div>
+  <section class="filter-panel">
+    <h3>Filters <span class="count" id="filter-count-m">no conditions</span></h3>
+    <div class="conditions" id="conditions-m"></div>
+    <div class="filter-actions">
+      <button class="btn add-cond" onclick="addCondition('m')">+ Add condition</button>
+      <div class="spacer"></div>
+      <button class="btn" onclick="resetFilters('m')">Reset</button>
+      <button class="btn primary" onclick="applyFilters('m')">Apply filters</button>
+    </div>
+  </section>
+  <div class="meta-strip">
+    <div class="count-badge"><strong id="visible-count-m">…</strong> of <span>819</span> Murcko+acryl</div>
+  </div>
+  <div class="leader-scroll" id="table-wrap-m" style="border-color:#A78BFA;">
+    <table class="dataTable" id="tbl-m">
+      <thead id="thead-m"></thead>
+      <tbody id="tbody-m"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager-m">
+    <button class="btn" onclick="goto('m', 0)">⏮ First</button>
+    <button class="btn" onclick="goto('m', TABLES.m.start - STATE.length)">‹ Prev</button>
+    <span class="page-info" id="pg-info-m"></span>
+    <button class="btn" onclick="goto('m', TABLES.m.start + STATE.length)">Next ›</button>
+    <button class="btn" onclick="goto('m', -1)">Last ⏭</button>
+  </div>
+</section>
+
+<!-- ════════════════ TABLE T — THIQ-acryl NOT Murcko+acryl (97) ════════════════ -->
+<section class="table-section" id="section-t" style="display:none;margin-top:var(--s-6);">
+  <div style="display:flex;align-items:baseline;gap:var(--s-3);margin-bottom:var(--s-3);">
+    <h2 style="font-size:18px;font-weight:700;margin:0;color:#0E9F6E;">▼ THIQ-acryl NOT Murcko+acryl</h2>
+    <span style="font-size:13px;color:var(--neutral-600);">— 97 scaffold-relaxed analogs (THIQ-acryl core preserved, deviated from Mol1's Murcko scaffold)</span>
+  </div>
+  <section class="filter-panel">
+    <h3>Filters <span class="count" id="filter-count-t">no conditions</span></h3>
+    <div class="conditions" id="conditions-t"></div>
+    <div class="filter-actions">
+      <button class="btn add-cond" onclick="addCondition('t')">+ Add condition</button>
+      <div class="spacer"></div>
+      <button class="btn" onclick="resetFilters('t')">Reset</button>
+      <button class="btn primary" onclick="applyFilters('t')">Apply filters</button>
+    </div>
+  </section>
+  <div class="meta-strip">
+    <div class="count-badge"><strong id="visible-count-t">…</strong> of <span>97</span> THIQ-only</div>
+  </div>
+  <div class="leader-scroll" id="table-wrap-t" style="border-color:#6EE7B7;">
+    <table class="dataTable" id="tbl-t">
+      <thead id="thead-t"></thead>
+      <tbody id="tbody-t"></tbody>
+    </table>
+  </div>
+  <div class="pager" id="pager-t">
+    <button class="btn" onclick="goto('t', 0)">⏮ First</button>
+    <button class="btn" onclick="goto('t', TABLES.t.start - STATE.length)">‹ Prev</button>
+    <span class="page-info" id="pg-info-t"></span>
+    <button class="btn" onclick="goto('t', TABLES.t.start + STATE.length)">Next ›</button>
+    <button class="btn" onclick="goto('t', -1)">Last ⏭</button>
+  </div>
+</section>
+
+<!-- Rescued cohort (78 stricter-similarity Mol1 analogs) — same column schema, same filter state -->
+<div id="rescue-section" style="margin-top:var(--s-6);display:none;">
+  <div style="display:flex;align-items:baseline;gap:var(--s-3);margin-bottom:var(--s-2);">
+    <h3 style="font-size:var(--fs-h3);font-weight:600;margin:0;color:var(--neutral-900);">Rescued cohort
+      <span style="font-size:13px;font-weight:400;color:var(--neutral-600);">— 78 stricter-similarity Mol1 analogs (Tc≥0.6 + shape Tc≥0.6 + MW&lt;370 + pIC50≥6.77; no Vina gate)</span>
+    </h3>
+  </div>
+  <div class="meta-strip">
+    <div class="count-badge"><strong id="rescue-visible-count">…</strong> of <span>78</span> rescued</div>
+  </div>
+  <div class="leader-scroll" id="rescue-table-wrap" style="border-color:#7C3AED;background:#FAF5FF;">
+    <table class="dataTable" id="tbl-rescue" style="background:transparent;">
+      <thead id="thead-rescue"></thead>
+      <tbody id="tbody-rescue"></tbody>
+    </table>
+  </div>
+</div>
+
+</main>
+
+<!-- Modal (mirrors main report) -->
+<div class="modal-bg" id="mol-modal" onclick="if(event.target===this) closeMolModal();">
+  <div class="modal" id="mol-modal-card">
+    <button class="close" onclick="closeMolModal()" title="Close">&times;</button>
+    <div class="modal-tabs">
+      <button class="mt-tab active" data-tab="2d">2D Structure</button>
+      <button class="mt-tab" data-tab="3d" id="mol-modal-3d-tab" style="display:none">3D Pocket (Boltz)</button>
+    </div>
+    <div class="mt-pane" id="mt-pane-2d">
+      <div class="struct" id="mol-modal-struct"></div>
+      <div class="smiles-block" id="mol-modal-smiles"></div>
+      <div class="props" id="mol-modal-props"></div>
+    </div>
+    <div class="mt-pane" id="mt-pane-3d" style="display:none">
+      <div class="pose-meta" id="pose-meta"></div>
+      <div class="pose-controls" id="pose-controls">
+        <label><input type="checkbox" id="pc-cartoon"> Cartoon</label>
+        <label><input type="checkbox" id="pc-pocket" checked> Pocket surface</label>
+        <label><input type="checkbox" id="pc-cys346" checked> Highlight Cys346</label>
+        <label><input type="checkbox" id="pc-hbonds" checked> H-bonds (4Å)</label>
+        <button id="pc-reset" type="button">Reset view</button>
+      </div>
+      <div id="pose-viewer" style="width:100%;height:480px;position:relative;background:#fff;border:1px solid var(--neutral-200);border-radius:var(--radius);"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+<script>
+// ── Column schema (mirrors LEADER_COLS in report.html) ──
+const FMT = {
+  int:    v => (v == null || isNaN(v)) ? '—' : String(Math.round(+v)),
+  f0:     v => (v == null || isNaN(v)) ? '—' : (+v).toFixed(0),
+  f1:     v => (v == null || isNaN(v)) ? '—' : (+v).toFixed(1),
+  f2:     v => (v == null || isNaN(v)) ? '—' : (+v).toFixed(2),
+  f3:     v => (v == null || isNaN(v)) ? '—' : (+v).toFixed(3),
+  raw:    v => (v == null || v === '') ? '—' : String(v),
+  short:  v => (v == null || v === '') ? '—' : (String(v).length > 22 ? String(v).slice(0,19)+'…' : String(v)),
+  signed3:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(3)),
+  winsOf280: v => (v == null || isNaN(v)) ? '—' : `${Math.round(+v)}/280`,
+  winsOf57:  v => (v == null || isNaN(v)) ? '—' : `${Math.round(+v)}/57`,
+  checkx:    v => (v == null || v === '') ? '—' : ((v === true || v === 'True' || v === 1 || v === '1') ? '✓' : '✗'),
+};
+
+// ── Color rules (mirrors COLOR_RULES in report.html) ──
+const COLOR_GREEN  = '#0E9F6E';
+const COLOR_YELLOW = '#D97706';
+const COLOR_RED    = '#DC2626';
+const COLOR_RULES = {
+  // PREDICTED POTENCY
+  pIC50_mean:        v => v >= 7 ? 'green' : v >= 5 ? 'yellow' : 'red',
+  pIC50_std:         v => v <= 0.5 ? 'green' : v <= 1.0 ? 'yellow' : 'red',
+  delta_vs_mol1:     v => v >= 1.0 ? 'green' : v >= 0 ? 'yellow' : 'red',
+  anchor_wins:       v => v >= 200 ? 'green' : v >= 100 ? 'yellow' : 'red',
+  anchor_wins_ge7:   v => v >= 50 ? 'green' : v >= 20 ? 'yellow' : 'red',
+  // SIM INTERNAL
+  Tc_to_Mol1:          v => v >= 0.4 ? 'green' : v >= 0.25 ? 'yellow' : 'red',
+  mean_top10_Tc_train: v => v >= 0.35 ? 'green' : v >= 0.20 ? 'yellow' : 'red',
+  // SIM PUBLICATIONS
+  mean_pubTc:        v => v >= 0.18 ? 'green' : v >= 0.13 ? 'yellow' : 'red',
+  top10_mean_pubTc:  v => v >= 0.30 ? 'green' : v >= 0.22 ? 'yellow' : 'red',
+  // SIM 3D
+  shape_Tc_mol1:     v => v >= 0.6 ? 'green' : v >= 0.4 ? 'yellow' : 'red',
+  esp_sim_seed:      v => v >= 0.06 ? 'green' : v >= 0.02 ? 'yellow' : 'red',
+  warhead_dev_deg:   v => v <= 15 ? 'green' : v <= 30 ? 'yellow' : 'red',
+  // COFOLD GEOMETRY
+  d_SG:                   v => v <= 3.5 ? 'green' : v <= 4.5 ? 'yellow' : 'red',
+  n_h_bonds:              v => v >= 2 ? 'green' : v >= 1 ? 'yellow' : 'red',
+  n_stabilizing_contacts: v => v >= 15 ? 'green' : v >= 8 ? 'yellow' : 'red',
+  atp_pocket_fraction:    v => v >= 0.80 ? 'green' : v >= 0.60 ? 'yellow' : 'red',
+  mPAE:                   v => v <= 3.0 ? 'green' : v <= 5.0 ? 'yellow' : 'red',
+  mPAE_london:            v => v <= 3.0 ? 'green' : v <= 5.0 ? 'yellow' : 'red',
+  iptm:                   v => v >= 0.85 ? 'green' : v >= 0.70 ? 'yellow' : 'red',
+  ligand_iptm:            v => v >= 0.85 ? 'green' : v >= 0.70 ? 'yellow' : 'red',
+  boltz_plddt:            v => v >= 0.80 ? 'green' : v >= 0.65 ? 'yellow' : 'red',
+  boltz_confidence:       v => v >= 0.75 ? 'green' : v >= 0.55 ? 'yellow' : 'red',
+  desirability_score:     v => v >= 0.60 ? 'green' : v >= 0.40 ? 'yellow' : 'red',
+  // KINASE-LIKE
+  P_kinase:               v => v >= 0.80 ? 'green' : v >= 0.50 ? 'yellow' : 'red',
+  P_Tec_family:           v => v >= 0.50 ? 'green' : v >= 0.20 ? 'yellow' : 'red',
+  pIC50_kinase_aux:       v => v >= 7.0  ? 'green' : v >= 6.0  ? 'yellow' : 'red',
+  // POCKET INTERACTION ENERGY
+  dG_recognition_md_kcalmol:      v => v <= -35 ? 'green' : v <= -25 ? 'yellow' : 'red',
+  pKa_Cys346:                     v => v <= 9.0 ? 'green' : v <= 9.5 ? 'yellow' : 'red',
+  rdkit_strain_kcal_mol:          v => v <= 440 ? 'green' : v <= 575 ? 'yellow' : 'red',
+  rdkit_strain_posefree_kcal_mol: v => v <= 45 ? 'green' : v <= 85 ? 'yellow' : 'red',
+  pred_log_k2_GSH:                v => v >= 0 ? 'green' : v >= -1.5 ? 'yellow' : 'red',
+  // DRUG LIKELINESS
+  Brenk_alerts:        v => v === 0 ? 'green' : v <= 1 ? 'yellow' : 'red',
+  PAINS_alerts:        v => v === 0 ? 'green' : v <= 1 ? 'yellow' : 'red',
+  Lipinski_violations: v => v <= 0 ? 'green' : v <= 1 ? 'yellow' : 'red',
+  QED:                 v => v >= 0.6 ? 'green' : v >= 0.4 ? 'yellow' : 'red',
+  LogP:                v => (v >= 1 && v <= 4) ? 'green' : (v >= 0 && v <= 5) ? 'yellow' : 'red',
+  TPSA:                v => v <= 90 ? 'green' : v <= 140 ? 'yellow' : 'red',
+  HBD:                 v => v <= 3 ? 'green' : v <= 5 ? 'yellow' : 'red',
+  HBA:                 v => v <= 7 ? 'green' : v <= 10 ? 'yellow' : 'red',
+  RotBonds:            v => v <= 7 ? 'green' : v <= 10 ? 'yellow' : 'red',
+  fsp3:                v => v >= 0.4 ? 'green' : v >= 0.25 ? 'yellow' : 'red',
+  SAScore:             v => v <= 3 ? 'green' : v <= 5 ? 'yellow' : 'red',
+  net_charge_pH74:     v => (v === 0 || v === 1) ? 'green' : (Math.abs(v) === 2) ? 'yellow' : 'red',
+  frac_charge_pH74:    v => (v >= -0.3 && v <= 1.3) ? 'green' : (v >= -1.0 && v <= 2.0) ? 'yellow' : 'red',
+  net_charge_pH74_mg:  v => (v === 0 || v === 1) ? 'green' : (Math.abs(v) === 2) ? 'yellow' : 'red',
+  pKa_basic_max:       v => v <= 7.5 ? 'green' : v <= 9.0 ? 'yellow' : 'red',
+  // ── EFFICIENCY ──
+  LE:  v => v >= 0.35 ? 'green' : v >= 0.28 ? 'yellow' : 'red',
+  LLE: v => v >= 5.0  ? 'green' : v >= 3.0  ? 'yellow' : 'red',
+  BEI: v => v >= 22   ? 'green' : v >= 17   ? 'yellow' : 'red',
+  // ── COFOLD (BD angle dev) ──
+  burgi_dunitz_dev_deg: v => v <= 15 ? 'green' : v <= 30 ? 'yellow' : 'red',
+  // ── SYNTHESIS (PrexSyn) ──
+  prexsyn_route_found: v => v >= 1 ? 'green' : 'red',
+  prexsyn_n_steps:     v => v <= 3 ? 'green' : v <= 5 ? 'yellow' : 'red',
+  prexsyn_n_blocks:    v => v <= 3 ? 'green' : v <= 4 ? 'yellow' : 'red',
+  prexsyn_score:       v => v >= 0.7 ? 'green' : v >= 0.55 ? 'yellow' : 'red',
+};
+function colorFor(key, value){
+  if(value == null || value === '' || (typeof value === 'number' && isNaN(value))) return null;
+  const rule = COLOR_RULES[key];
+  if(!rule) return null;
+  const tag = rule(+value);
+  return tag === 'green' ? COLOR_GREEN
+       : tag === 'yellow' ? COLOR_YELLOW
+       : tag === 'red'   ? COLOR_RED : null;
+}
+
+// ── Column tooltips (mirrors FP_COL_TOOLTIPS in report.html) ──
+const COL_TOOLTIPS = {
+  'method':                     'RL fine-tuning cohort that generated this molecule (e.g. thiq_rl_zap70 / murcko_rl_kinase / mol1RL_v5).',
+  '_cohort':                    'Source cohort: "main" = 838 survivors of the canonical L4 cascade (Tc≥0.4, MW≤500, full L1-L4 gates); "rescue" = 78 stricter-similarity Mol1 analogs (Tc≥0.6 + shape Tc≥0.6 + MW<370 + pIC50≥6.77, no Vina gate). Filter on this column to view one cohort only.',
+  'pharmacophore':              'Mol1-anchored substructure family the molecule matches: Murcko-scaffold / THIQ-acrylamide / Murcko+acryl.',
+  'desirability_score':         'Combined Score = (P_potency)^0.17 × (P_pIC50_kinase_aux)^0.10 × (P_pose)^0.13 × (P_shape_to_mol1)^0.15 × (P_Tc_to_Mol1)^0.20 × (P_covgeom)^0.10 × (P_clean_reactivity)^0.08 × (P_Tec_family)^0.05 × (P_kinase)^0.02 — geometric mean of 9 percentile components (Σ=1.0). Higher = better.',
+  'MW':                         'Molecular weight (Da). Drug-likeness gate ≤500 at L1.',
+  'pIC50_mean':                 'pIC50 (mean over 3-seed FiLMDelta ensemble × 280 ZAP70 anchors). Higher = more potent. Mol1 = 6.59.',
+  'pIC50_std':                  'Ensemble disagreement on pIC50 across 3 seeds. >0.5 = high uncertainty; flag for re-eval.',
+  'anchor_wins':                'Count of 280 ZAP70 anchor mols the candidate is predicted to beat (FiLMDelta δ>0). Range 0–280.',
+  'anchor_wins_ge7':            'Wins restricted to high-potency anchors (pIC50 ≥ 7; 57 of 280). Max = 57.',
+  'delta_vs_mol1':              'Predicted Δ pIC50 vs Mol1 (ensemble mean of FiLMDelta). +0.5 = ~3× more potent.',
+  'LE':                         'Ligand Efficiency (kcal/mol per heavy atom) = 1.37 × pIC50 / HeavyAtoms. Hopkins 2004. Rewards potency on small scaffolds. Green ≥ 0.35, yellow 0.28–0.35, red < 0.28. Mol1 = 0.30.',
+  'LLE':                        'Lipophilic Ligand Efficiency = pIC50 − LogP. Leeson & Springthorpe 2007. Rewards potency without paying with lipophilicity (the #1 attrition risk). Green ≥ 5, yellow 3–5, red < 3. Mol1 = 4.0.',
+  'BEI':                        'Binding Efficiency Index = pIC50 / MW(kDa) = pIC50 × 1000 / MW. Abad-Zapatero 2005. MW-normalized potency (independent of HA). Green ≥ 22, yellow 17–22, red < 17.',
+  'Tc_to_Mol1':                 'Tanimoto similarity to Mol1 (Morgan FP r=2, 2048 bits). Lead-opt window [0.40, 0.72] at L1.',
+  'mean_top10_Tc_train':        'Mean Tanimoto to top-10 most-similar ZAP70 training mols. Higher = closer to training distribution.',
+  'mean_pubTc':                 'Mean Tanimoto to published kinase-covalent leads (v3 300-lead panel).',
+  'top10_mean_pubTc':           'Mean of top-10 Tanimotos to published kinase-covalent leads.',
+  'shape_Tc_mol1':              '3D shape Tanimoto vs Mol1 (RDKit O3A + ShapeTanimotoDist on 4-conformer ETKDG+MMFF ensemble). >0.6 = strong 3D footprint preservation.',
+  'esp_sim_seed':               'ESPSim shape + Gasteiger-charge similarity vs Mol1. Cohort-recalibrated thresholds (max ≈0.13).',
+  'warhead_dev_deg':            'Min angle (deg) between Mol1\'s C=C−C(=O)−N warhead vector and candidate\'s, over conformer pairs after O3A alignment. <15° = ready-to-react.',
+  'd_SG':                       'Warhead Cβ to Cys346 Sγ distance (Å), measured on the Boltz cofold pose (compute_full_boltz_metrics.py:232). Canonical thioether ≈ 1.8 Å; > 2.5 Å = not engaged. L5 cut ≤6 Å.',
+  'burgi_dunitz_dev_deg':       'Bürgi-Dunitz angle deviation from ideal nucleophilic attack on the warhead C=O. = |angle(Cys346.SG, warhead.Cβ, warhead.Cα) − 107°|, measured on the Boltz cofold pose. Lower = better. <15° excellent, 15-30° acceptable, >30° geometrically poor for Cys-Michael covalent attack. Together with d_SG this is the direct (pose-grounded) covalent readiness signal — preferable to the ligand-only warhead_dev_deg.',
+  'n_h_bonds':                  'Number of polar N/O ↔ protein N/O contacts at 2.5–3.5 Å in the Boltz cofold pose. Surrogate for H-bond network.',
+  'n_stabilizing_contacts':     'Sum of covalent + H-bonds + salt bridges + π-π contacts on the Boltz pose. Higher = better pocket complementarity.',
+  'atp_pocket_fraction':        'Fraction of ligand heavy atoms within 4 Å of any ZAP70 ATP-pocket residue (curated res list — ligand-independent denominator).',
+  'mPAE':                       'Boltz cofold min PAE (PROXY) — derived from confidence.json complex_pde scalar. Lower = more confident.',
+  'mPAE_london':                'True London min-PAE — min over the protein × ligand PAE matrix block. Tighter and more discriminating than the proxy.',
+  'iptm':                       'Boltz-2 interface predicted TM-score (iPTM). Higher = more confident protein-ligand interface.',
+  'ligand_iptm':                'Boltz-2 ligand-specific interface ipTM.',
+  'boltz_plddt':                'Boltz-2 complex pLDDT (per-residue confidence avg). 0–1. >0.80 = high-confidence structure.',
+  'boltz_confidence':           'Boltz-2 overall confidence score — weighted composite of iptm, ipLDDT, etc. Range 0–1. >0.85 top-tier.',
+  'dG_recognition_md_kcalmol':  'MM-GBSA dG_recognition single-frame on Boltz cofold pose (kcal/mol). Lower = stronger non-covalent. Capped-analog protocol — use for ranking, not absolute Ki.',
+  'pKa_Cys346':                 'Per-pose Cys346 thiol pKa from PROPKA3. ≤9 productive; >9.5 = covalent chemistry effectively dead.',
+  'rdkit_strain_kcal_mol':      'MMFF strain energy on the un-relaxed Boltz cofold pose. Use as relative pose-quality rank.',
+  'rdkit_strain_posefree_kcal_mol': 'MMFF strain on the FREE-state ligand. Lower = less strained intrinsically; gate ≤80 at L3.',
+  'pred_log_k2_GSH':            'Predicted log k2 rate vs glutathione (warhead reactivity proxy). Higher = more reactive electrophile.',
+  'Brenk_alerts':               'Brenk reactive/undesirable substructures (Brenk 2008). 0 = clean.',
+  'PAINS_alerts':               'PAINS interference patterns (Baell & Holloway 2010). 0 = clean.',
+  'Lipinski_violations':        'Lipinski Rule-of-5 violations (0–4). ≤1 = good.',
+  'QED':                        'Bickerton QED drug-likeness composite. ≥0.5 drug-like.',
+  'LogP':                       'Crippen octanol/water LogP. Sweet spot [1, 4]; gate ≤5 at L1.',
+  'TPSA':                       'Topological polar surface area (Å²). ≤140 for oral bioavailability.',
+  'HBD':                        'H-bond donors (Lipinski ≤5).',
+  'HBA':                        'H-bond acceptors (Lipinski ≤10).',
+  'RotBonds':                   'Rotatable bonds (Veber ≤10 for oral).',
+  'fsp3':                       'Fraction sp3 carbons. ≥0.25 for 3D character.',
+  'SAScore':                    'Synthetic Accessibility (Ertl 2009). ≤4 = easy; ≥6 = hard.',
+  'formal_charge_drawn':        'Formal charge of the SMILES as drawn (RDKit Chem.GetFormalCharge). Always 0 for our cohort (generators emit neutral SMILES). Kept as a QC baseline; use frac_charge_pH74 for the actual cation/anion state.',
+  'net_charge_pH74':            'Net molecular charge at pH 7.4 (Dimorphite-DL dominant microspecies, integer). Rule-based, fast. Mis-handles 2-amino-imidazole class — reports +1 for Mol1 (actually neutral). Visible-838: 32% 0, 44% +1, 19% +2, 3% +3.',
+  'frac_charge_pH74':           'POPULATION-WEIGHTED net charge at pH 7.4 (MolGpKa GCN per-site pKa + Henderson-Hasselbalch). Mol1 = +0.02 (essentially neutral), dasatinib = +1.20, imatinib = +1.43. Cohort 2,221: 63% 0, 23% +1, 9% +2, 2% +3 — confirms London "0-1" intuition for ZAP70.',
+  'net_charge_pH74_mg':         'MolGpKa fractional charge rounded to nearest integer — directly comparable to the Dimorphite (int) column. Use this for filtering (e.g. <2). Disagreement rows flag chemotype-hard cases. Cohort: 35.4% exact match vs Dimorphite, κ=0.054.',
+  'tox_alerts_count':           'RAW count of all tox structural-alert hits (~30 patterns). Includes kinase-precedented motifs (anilinopyridines, aniline-pyrimidines, anilines, cyclic sulfamides) that are NOT hard kills in kinase covalent chemistry. Use `tox alerts (strict)` for the kinase-appropriate count. Kept for full transparency.',
+  '_tox_alerts_count_strict':   'Tox alerts EXCLUDING kinase-precedented motifs (anilinopyridine_2/3/4, aniline_pyrimidine, aniline_pyridine_link, primary/secondary_aniline, cyclic_sulfamide). These motifs appear in 6+ approved kinase drugs (imatinib, dasatinib, crizotinib, gefitinib, ribociclib, …) — counting them as hard kills is over-strict for kinase chemistry. Remaining hits ARE real kill signals (alpha-halo carbonyl, MPTP-class tetrahydropyridine, peroxide, vinyl-ether, vinyl-aniline, N-F bond, ortho-F-aniline, isocyanate, etc.). Default tox filter uses this column. Cohort impact: 115 → 17 fail (98 mols saved). Decided 2026-06-20 after expert review.',
+  'tox_alert_names':            'Comma-separated names of alerts hit (truncated to 28 chars in display; hover for full). e.g. "anilinopyridine_2,cyclopropyl_CN" → aminopyridine bioactivation AND HCN release.',
+  'k_inact_proxy':              'Covalent productivity proxy = thiolate_fraction(pKa_Cys346) × exp(-((d_SG-1.8)² + (BD_dev/10)²)). Higher = better predicted Cys346 engagement. LUMO factor omitted (uniform warhead). Mol1 = 6e-12. Cohort median 1e-8. Use as relative ranking. Green ≥ 1e-4, yellow 1e-8 to 1e-4, red < 1e-8.',
+  'net_charge_pH74_mg':         'MolGpKa fractional charge rounded to nearest integer. Use as a categorical bucket; frac_charge_pH74 is more informative.',
+  'pKa_basic_max':              'Highest predicted basic pKa over all ionizable sites (MolGpKa). pKa > 9 = dominant cation at pH 7.4; pKa < 6 = dominant neutral. Mol1 = 5.5 (2-amino-imidazole — neutral).',
+  'P_kinase':                   'P(kinase) — probability the molecule is a kinase binder. 3-head FFN trained on 232K mols. Scaffold-split AUROC 0.98.',
+  'P_Tec_family':               'P(Tec family) — probability of binding a Tec-family kinase (BTK / ITK / TXK / BMX / TEC). AUROC 0.99.',
+  'pIC50_kinase_aux':           'pIC50 (kinase auxiliary regression). R²=0.53, MAE=0.52. 2nd opinion vs FiLMDelta pIC50_mean.',
+  // ── SYNTHESIS (PrexSyn — decoder-only transformer for synthesis routes from Enamine REAL building blocks; arXiv:2512.00384) ──
+  'prexsyn_route_found':  'PrexSyn: was at least one synthesis route from Enamine REAL building blocks found within the sampling budget? ✓ = yes (buildable from on-shelf reagents), ✗ = no route found. 100% of the 916 mols (838 + 78) returned ✓ in this run.',
+  'prexsyn_n_steps':      'PrexSyn: number of reaction steps in the BEST (highest-scoring) found route. Range 1–6. Shorter = faster + cheaper synthesis. ≤3 great, 4–5 ok, 6+ painful. Mean across cohort = 2.86.',
+  'prexsyn_n_blocks':     'PrexSyn: number of distinct Enamine REAL building blocks the best route consumes. Range 2–5. Fewer blocks = fewer reagents to order + less chance of catalog unavailability. ≤3 clean. Mean = 3.21.',
+  'prexsyn_score':        'PrexSyn composite synthesizability score: decoder confidence × catalog availability × route brevity. Range 0.38–1.0. Higher = easier to make. Single-number ranker for synthesis ease. Mean = 0.64. Click row to see the full step-by-step route in the modal.',
+};
+
+const COLS = [
+  {key:'rownum',    label:'#',         family:'identity', fmt:null, num:true},
+  {key:'structure', label:'Structure', family:'identity', fmt:null, num:false},
+  {key:'method',    label:'method',    family:'identity', fmt:FMT.short, num:false},
+  {key:'_cohort',   label:'cohort',    family:'identity', fmt:v => v || '—', num:false},
+  {key:'pharmacophore', label:'pharmacophore', family:'identity', fmt:v => v || '—', num:false},
+  {key:'desirability_score', label:'Combined Score', family:'identity', fmt:FMT.f3, num:true, bold:true},
+  {key:'MW',        label:'MW',        family:'identity', fmt:FMT.f0, num:true},
+  {key:'pIC50_mean',      label:'pIC50 (mean)',  family:'potency', fmt:FMT.f2, num:true},
+  {key:'pIC50_std',       label:'pIC50 (std)',   family:'potency', fmt:FMT.f2, num:true},
+  {key:'anchor_wins',     label:'wins /280',     family:'potency', fmt:FMT.winsOf280, num:true},
+  {key:'anchor_wins_ge7', label:'wins ≥7 /57',  family:'potency', fmt:FMT.winsOf57, num:true},
+  {key:'delta_vs_mol1',   label:'Δ vs Mol1',     family:'potency', fmt:FMT.signed3, num:true},
+  // ── EFFICIENCY (LE, LLE, BEI — derived from pIC50_mean + structural properties) ──
+  {key:'LE',  label:'LE',  family:'efficiency', fmt:FMT.f2, num:true, bold:true},
+  {key:'LLE', label:'LLE', family:'efficiency', fmt:FMT.f2, num:true, bold:true},
+  {key:'BEI', label:'BEI', family:'efficiency', fmt:FMT.f1, num:true},
+  {key:'Tc_to_Mol1',          label:'Tc→Mol1',           family:'sim_int', fmt:FMT.f3, num:true},
+  {key:'mean_top10_Tc_train', label:'mean top10 Tc→train', family:'sim_int', fmt:FMT.f3, num:true},
+  {key:'mean_pubTc',       label:'pub mean Tc',        family:'sim_pub', fmt:FMT.f3, num:true},
+  {key:'top10_mean_pubTc', label:'pub top10 mean Tc',  family:'sim_pub', fmt:FMT.f3, num:true},
+  {key:'shape_Tc_mol1',   label:'shape Tc vs Mol1', family:'sim_3d', fmt:FMT.f3, num:true},
+  {key:'esp_sim_seed',    label:'ESP-Sim seed',  family:'sim_3d', fmt:FMT.f3, num:true},
+  {key:'warhead_dev_deg', label:'warhead Δ°',    family:'sim_3d', fmt:FMT.f1, num:true},
+  {key:'d_SG',                   label:'d_SG (Å)',          family:'cofold', fmt:FMT.f2, num:true},
+  {key:'burgi_dunitz_dev_deg',   label:'BD dev (°)',        family:'cofold', fmt:FMT.f1, num:true},
+  {key:'n_h_bonds',              label:'n H-bonds',    family:'cofold', fmt:FMT.int, num:true},
+  {key:'n_stabilizing_contacts', label:'n contacts',   family:'cofold', fmt:FMT.int, num:true},
+  {key:'atp_pocket_fraction',    label:'ATP pocket frac',   family:'cofold', fmt:FMT.f3, num:true},
+  {key:'mPAE',                   label:'mPAE (proxy)', family:'cofold', fmt:FMT.f2, num:true},
+  {key:'mPAE_london',            label:'mPAE London',  family:'cofold', fmt:FMT.f2, num:true},
+  {key:'iptm',                   label:'iptm',         family:'cofold', fmt:FMT.f3, num:true},
+  {key:'ligand_iptm',            label:'ligand iptm',  family:'cofold', fmt:FMT.f3, num:true},
+  {key:'boltz_plddt',            label:'boltz pLDDT',  family:'cofold', fmt:FMT.f3, num:true},
+  {key:'boltz_confidence',       label:'boltz conf',   family:'cofold', fmt:FMT.f3, num:true},
+  {key:'dG_recognition_md_kcalmol', label:'MM-GBSA dG_recog', family:'pocket', fmt:FMT.f2, num:true},
+  {key:'pKa_Cys346',                label:'pKa Cys346',       family:'pocket', fmt:FMT.f2, num:true},
+  {key:'rdkit_strain_kcal_mol',     label:'RDKit strain',     family:'pocket', fmt:FMT.f2, num:true},
+  {key:'rdkit_strain_posefree_kcal_mol', label:'strain (posefree)', family:'pocket', fmt:FMT.f2, num:true},
+  {key:'pred_log_k2_GSH',           label:'log k2 (GSH)',     family:'pocket', fmt:FMT.f2, num:true},
+  {key:'Brenk_alerts',        label:'Brenk alerts',     family:'druglike', fmt:FMT.int, num:true},
+  {key:'PAINS_alerts',        label:'PAINS alerts',     family:'druglike', fmt:FMT.int, num:true},
+  {key:'Lipinski_violations', label:'Lipinski viol',    family:'druglike', fmt:FMT.int, num:true},
+  {key:'QED',                 label:'QED',              family:'druglike', fmt:FMT.f2, num:true},
+  {key:'LogP',                label:'LogP',             family:'druglike', fmt:FMT.f2, num:true},
+  {key:'TPSA',                label:'TPSA',             family:'druglike', fmt:FMT.f1, num:true},
+  {key:'HBD',                 label:'HBD',              family:'druglike', fmt:FMT.int, num:true},
+  {key:'HBA',                 label:'HBA',              family:'druglike', fmt:FMT.int, num:true},
+  {key:'RotBonds',            label:'RotBonds',         family:'druglike', fmt:FMT.int, num:true},
+  {key:'fsp3',                label:'fsp3',             family:'druglike', fmt:FMT.f2, num:true},
+  {key:'SAScore',             label:'SA Score',         family:'druglike', fmt:FMT.f2, num:true},
+  {key:'P_kinase',          label:'P(kinase)',      family:'kinase_like', fmt:FMT.f3, num:true},
+  {key:'P_Tec_family',      label:'P(Tec family)',  family:'kinase_like', fmt:FMT.f3, num:true},
+  {key:'pIC50_kinase_aux',  label:'pIC50 kin (aux)', family:'kinase_like', fmt:FMT.f2, num:true},
+  // ── CHARGE / IONIZATION (3 methods, one column each) ──
+  {key:'formal_charge_drawn', label:'charge (RDKit)',         family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'net_charge_pH74',     label:'charge (Dimorphite)',    family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'net_charge_pH74_mg',  label:'charge (MolGpKa int)',   family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'frac_charge_pH74',    label:'frac charge (MolGpKa)',  family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(2)), num:true},
+  // ── TOX HAZARDS + COVALENT PRODUCTIVITY ── 2026-06-13
+  {key:'tox_alerts_count',           label:'tox alerts (all)',     family:'tox', fmt:FMT.int, num:true},
+  {key:'_tox_alerts_count_strict',   label:'tox alerts (strict)',  family:'tox', fmt:FMT.int, num:true, bold:true},
+  {key:'tox_alert_names',            label:'alert names',          family:'tox', fmt:v => v ? (String(v).length > 30 ? String(v).slice(0,28)+'…' : String(v)) : '—', num:false},
+  {key:'k_inact_proxy',    label:'k_inact proxy',    family:'tox', fmt:v => (v == null || isNaN(v)) ? '—' : (+v).toExponential(1), num:true},
+  // ── SYNTHESIS (PrexSyn) ── 2026-06-16
+  {key:'prexsyn_route_found', label:'route',     family:'synthesis', fmt:FMT.checkx, num:false},
+  {key:'prexsyn_n_steps',     label:'# steps',   family:'synthesis', fmt:FMT.int,    num:true},
+  {key:'prexsyn_n_blocks',    label:'# blocks',  family:'synthesis', fmt:FMT.int,    num:true},
+  {key:'prexsyn_score',       label:'synth score', family:'synthesis', fmt:FMT.f3,  num:true, bold:true},
+];
+
+const FAMILIES = [
+  {family:'identity',    title:'IDENTITY',                  colspan:6},
+  {family:'potency',     title:'Predicted Potency',         colspan:5},
+  {family:'efficiency',  title:'Ligand Efficiency',          colspan:3},
+  {family:'sim_int',     title:'Sim — Internal',            colspan:2},
+  {family:'sim_pub',     title:'Sim — Publications',        colspan:2},
+  {family:'sim_3d',      title:'Sim — 3D Shape',            colspan:3},
+  {family:'cofold',      title:'Cofold Geometry',           colspan:11},
+  {family:'pocket',      title:'POCKET INTERACTION ENERGY', colspan:5},
+  {family:'druglike',    title:'DRUG LIKELINESS',           colspan:11},  // 2026-06-11 LATE: net_charge_pH74 moved to CHARGE family
+  {family:'kinase_like', title:'KINASE-LIKE PREDICTION',    colspan:3},
+  {family:'charge',      title:'CHARGE / IONIZATION', colspan:4},
+  {family:'tox',         title:'TOX HAZARDS + COVALENT PRODUCTIVITY', colspan:4},
+  {family:'synthesis',   title:'SYNTHESIS (PrexSyn)',       colspan:4},
+];
+
+// Filter operators
+const NUMERIC_OPS = [
+  {value:'>=', label:'≥'},
+  {value:'>',  label:'>'},
+  {value:'<=', label:'≤'},
+  {value:'<',  label:'<'},
+  {value:'==', label:'='},
+  {value:'!=', label:'≠'},
+];
+const TEXT_OPS = [
+  {value:'contains',    label:'contains'},
+  {value:'equals',      label:'equals'},
+  {value:'startswith',  label:'starts with'},
+  {value:'in',          label:'in (csv)'},
+  {value:'!contains',   label:"doesn't contain"},
+];
+
+// ── State ──
+// TABLES.m = Murcko+acryl partition (mol1_murcko_smarts_match AND acryl_match)
+// TABLES.t = THIQ-acryl partition (thiq_core AND NOT Murcko+acryl)
+// Each has independent filter conditions, filtered array, and start index.
+// Sort + page size are shared across both (one click sorts both tables).
+const TABLES = {
+  m: { rows: [], filtered: [], conditions: [], start: 0, condCounter: 0 },
+  t: { rows: [], filtered: [], conditions: [], start: 0, condCounter: 0 },
+};
+const STATE = {
+  length: 50,
+  sort: {col: 'desirability_score', dir: 'desc'},
+};
+const BACKEND = '';
+
+function isMurckoAcryl(r){
+  const t = x => (x === true || x === 1 || x === '1' || x === 'true' || x === 'True');
+  return t(r.mol1_murcko_smarts_match) && t(r.acryl_match);
+}
+
+// Kinase-precedented alerts the expert (scientific-analyst review, 2026-06-20)
+// recommended dropping from the hard-kill tox filter. These motifs appear in
+// 6+ approved kinase drugs (imatinib, dasatinib, gefitinib, crizotinib,
+// ribociclib, etc.) — counting them as hard kills is over-strict for kinase
+// chemistry. They remain visible in `tox_alert_names` for awareness.
+const TOX_ALERTS_DROPPED_KINASE = new Set([
+  'anilinopyridine_2',     // hinge donor; benign geometry (crizotinib, ribociclib, brigatinib)
+  'anilinopyridine_3',     // mid bioactivation risk; kinase-precedented
+  'anilinopyridine_4',     // worst quinone-imine geometry but kinase-precedented
+  'aniline_pyrimidine',    // imatinib/dasatinib/nilotinib/osimertinib hinge
+  'aniline_pyridine_link', // sorafenib/regorafenib/imatinib diarylamine core
+  'primary_aniline',       // dasatinib, imatinib, nilotinib, sorafenib
+  'secondary_aniline',     // gefitinib, erlotinib, lapatinib, osimertinib
+  'cyclic_sulfamide',      // class-dependent (HIV PI scaffolds benign)
+]);
+
+// Recompute a stricter tox count by re-counting `tox_alert_names` while
+// excluding the kinase-precedented alerts above. Pure derivation from existing
+// data — original `tox_alerts_count` is NOT modified.
+function strictToxCount(names){
+  if(!names) return 0;
+  const parts = String(names).split(',').map(s => s.trim()).filter(Boolean);
+  let n = 0;
+  for(const p of parts){ if(!TOX_ALERTS_DROPPED_KINASE.has(p)) n++; }
+  return n;
+}
+let _poseViewer = null;
+let _poseRowId = null;
+
+// ── Boot ──
+async function boot(){
+  try {
+    const [filterResp, mol1Resp] = await Promise.all([
+      fetch('/api/filter?groups=murcko,thiq,murcko_and_acryl&length=10000'),
+      fetch('/api/mol1_anchor').catch(() => null),
+    ]);
+    if(!filterResp.ok) throw new Error('HTTP ' + filterResp.status);
+    const d = await filterResp.json();
+    // Tag each row with cohort source, merge 838 + 78 into single 916-row pool,
+    // then partition by pharmacophore into two independent tables (M and T).
+    const mainRows   = (d.rows || []).map(r => ({...r, _cohort: 'main', _tox_alerts_count_strict: strictToxCount(r.tox_alert_names)}));
+    const rescueRows = (d.rows_rescue || []).map(r => ({...r, _cohort: 'rescue', _tox_alerts_count_strict: strictToxCount(r.tox_alert_names)}));
+    const merged = mainRows.concat(rescueRows);
+    TABLES.m.rows = merged.filter(isMurckoAcryl);
+    TABLES.t.rows = merged.filter(r => !isMurckoAcryl(r));
+    document.getElementById('loading').classList.add('hide');
+    document.getElementById('topbar').style.display = '';
+    document.getElementById('section-m').style.display = '';
+    document.getElementById('section-t').style.display = '';
+    const rescueSec = document.getElementById('rescue-section');
+    if(rescueSec) rescueSec.style.display = 'none';
+    // Render Mol1 reference row at the top (mirrors survivor-table columns)
+    try {
+      const m1 = mol1Resp ? await mol1Resp.json() : null;
+      if(m1 && m1.row){ renderMol1Ref(m1.row); }
+    } catch(e){ console.warn('mol1 ref render skipped:', e); }
+    // Per-table default filters.
+    // Murcko+acryl (M) gets the full 7 panel-recommended filters.
+    // THIQ-acryl NOT Murcko+acryl (T) is the scaffold-relaxed cohort — keep only the
+    // 3 "covalent productivity" gates (charge + Cys346 pKa + k_inact proxy); drop the
+    // similarity gates since the partition itself already excludes the Murcko match.
+    const FILTERS_M = [
+      ['net_charge_pH74_mg',         '<=', '1'],
+      ['_tox_alerts_count_strict',   '==', '0'],
+      ['pKa_Cys346',                 '<=', '9.5'],
+      ['k_inact_proxy',              '>=', '6.1e-12'],
+      ['d_SG',                       '<=', '2'],
+      ['burgi_dunitz_dev_deg',       '<=', '30'],
+      ['Tc_to_Mol1',                 '>=', '0.55'],
+      ['shape_Tc_mol1',              '>=', '0.6'],
+      ['MW',                         '<=', '430'],
+    ];
+    const FILTERS_T = [
+      ['net_charge_pH74_mg',         '<=', '1'],
+      ['_tox_alerts_count_strict',   '==', '0'],
+      ['pKa_Cys346',                 '<=', '9.5'],
+      ['k_inact_proxy',              '>=', '6.1e-12'],
+      ['d_SG',                       '<=', '2'],
+      ['burgi_dunitz_dev_deg',       '<=', '30'],
+    ];
+    for(const [c,o,v] of FILTERS_M){ addCondition('m', c, o, v); }
+    for(const [c,o,v] of FILTERS_T){ addCondition('t', c, o, v); }
+    applyFilters('m');
+    applyFilters('t');
+  } catch(e){
+    document.getElementById('loading').innerHTML = '<span style="color:var(--error-500);">Error loading: ' + (e.message || e) + '</span>';
+  }
+}
+
+function renderMol1Ref(row){
+  const wrap = document.getElementById('mol1-ref-wrap');
+  if(!wrap) return;
+  document.getElementById('mol1-ref-thead').innerHTML = buildThead();
+  // Use 'M1' as the row_id for SVG fetch (backend handles M1 specially → seed SVG)
+  const cells = COLS.map(c => {
+    if(c.key === 'rownum') return `<td class="num"><strong style="color:var(--primary-500);">M1</strong></td>`;
+    if(c.key === 'structure'){
+      const rowJson = JSON.stringify(row).replace(/'/g, '&#39;');
+      const smiJson = JSON.stringify(row.smiles || '');
+      return `<td><img src="/api/seed_svg?w=140&h=100" class="thumb" onclick='showSeedRef(${smiJson}, ${rowJson})' onerror="this.style.display='none'"/></td>`;
+    }
+    return renderCell(c, row, 'M1').replace('<td', '<td');
+  }).join('');
+  document.getElementById('mol1-ref-tbody').innerHTML = `<tr>${cells}</tr>`;
+  wrap.style.display = '';
+}
+
+function showSeedRef(smi, row){
+  // Reuse the standard modal with row_id='M1' so SVG fetch hits /api/seed_svg
+  showMolModal('M1', smi, row);
+}
+
+// ── Condition builder (per-table; tid is 'm' or 't') ──
+function addCondition(tid, col, op, val){
+  const T = TABLES[tid];
+  const id = ++T.condCounter;
+  const cond = {id, col: col || 'desirability_score', op: op || '>=', val: val == null ? '' : val};
+  T.conditions.push(cond);
+  renderConditions(tid);
+}
+
+function removeCondition(tid, id){
+  const T = TABLES[tid];
+  T.conditions = T.conditions.filter(c => c.id !== id);
+  renderConditions(tid);
+}
+
+function renderConditions(tid){
+  const T = TABLES[tid];
+  const container = document.getElementById('conditions-' + tid);
+  if(T.conditions.length === 0){
+    container.innerHTML = '<div style="color:var(--neutral-500);font-size:13px;font-style:italic;padding:6px 0;">No conditions — showing all rows in this partition. Click "+ Add condition" to add one.</div>';
+  } else {
+    container.innerHTML = T.conditions.map(c => renderConditionRow(tid, c)).join('');
+  }
+  updateFilterCount(tid);
+}
+
+function renderConditionRow(tid, cond){
+  const colOpts = COLS.filter(c => c.key !== 'rownum' && c.key !== 'structure')
+    .map(c => `<option value="${c.key}"${c.key === cond.col ? ' selected' : ''}>${c.key}</option>`).join('');
+  const colSpec = COLS.find(c => c.key === cond.col);
+  const ops = (colSpec && colSpec.num) ? NUMERIC_OPS : TEXT_OPS;
+  const opOpts = ops.map(o => `<option value="${o.value}"${o.value === cond.op ? ' selected' : ''}>${o.label}</option>`).join('');
+  const placeholder = (colSpec && colSpec.num) ? 'numeric value' : 'text…';
+  return `
+    <div class="condition" data-id="${cond.id}">
+      <select class="col-sel" onchange="updateCondition('${tid}', ${cond.id}, 'col', this.value)">${colOpts}</select>
+      <select class="op-sel" onchange="updateCondition('${tid}', ${cond.id}, 'op', this.value)">${opOpts}</select>
+      <input class="val-input" type="text" value="${(cond.val + '').replace(/"/g,'&quot;')}" placeholder="${placeholder}" oninput="updateCondition('${tid}', ${cond.id}, 'val', this.value)" onkeydown="if(event.key==='Enter')applyFilters('${tid}')">
+      <button class="rm-btn" onclick="removeCondition('${tid}', ${cond.id})" title="Remove">×</button>
+    </div>`;
+}
+
+function updateCondition(tid, id, field, value){
+  const T = TABLES[tid];
+  const c = T.conditions.find(x => x.id === id);
+  if(!c) return;
+  c[field] = value;
+  if(field === 'col'){
+    const colSpec = COLS.find(x => x.key === value);
+    const ops = (colSpec && colSpec.num) ? NUMERIC_OPS : TEXT_OPS;
+    c.op = ops[0].value;
+    renderConditions(tid);
+  }
+}
+
+function updateFilterCount(tid){
+  const T = TABLES[tid];
+  const n = T.conditions.length;
+  document.getElementById('filter-count-' + tid).textContent =
+    n === 0 ? 'no conditions' : `${n} condition${n === 1 ? '' : 's'}`;
+}
+
+function resetFilters(tid){
+  TABLES[tid].conditions = [];
+  renderConditions(tid);
+  applyFilters(tid);
+}
+
+// ── Filter + sort ──
+function evalCondition(row, cond){
+  const colSpec = COLS.find(c => c.key === cond.col);
+  if(!colSpec) return true;
+  const v = row[cond.col];
+  const valStr = (cond.val + '').trim();
+  if(valStr === '') return true;  // empty value = no-op
+  if(colSpec.num){
+    if(v == null || isNaN(v)) return false;
+    const target = parseFloat(valStr);
+    if(isNaN(target)) return true;
+    const x = +v;
+    switch(cond.op){
+      case '>':  return x > target;
+      case '>=': return x >= target;
+      case '<':  return x < target;
+      case '<=': return x <= target;
+      case '==': return x === target;
+      case '!=': return x !== target;
+    }
+  } else {
+    const s = (v == null ? '' : String(v)).toLowerCase();
+    const t = valStr.toLowerCase();
+    switch(cond.op){
+      case 'contains':    return s.includes(t);
+      case '!contains':   return !s.includes(t);
+      case 'equals':      return s === t;
+      case 'startswith':  return s.startsWith(t);
+      case 'in': {
+        const list = t.split(',').map(x => x.trim()).filter(Boolean);
+        return list.some(item => s.includes(item));
+      }
+    }
+  }
+  return true;
+}
+
+function applyFilters(tid){
+  const T = TABLES[tid];
+  T.filtered = T.rows.filter(r => T.conditions.every(c => evalCondition(r, c)));
+  applySort();
+  T.start = 0;
+  render(tid);
+}
+
+function applySort(){
+  const {col, dir} = STATE.sort;
+  const mult = dir === 'desc' ? -1 : 1;
+  const colSpec = COLS.find(c => c.key === col);
+  const isNum = colSpec && colSpec.num;
+  const cmp = (a, b) => {
+    const va = a[col], vb = b[col];
+    if(va == null && vb == null) return 0;
+    if(va == null) return 1;
+    if(vb == null) return -1;
+    if(isNum) return ((+va) - (+vb)) * mult;
+    return String(va).localeCompare(String(vb)) * mult;
+  };
+  TABLES.m.filtered.sort(cmp);
+  TABLES.t.filtered.sort(cmp);
+}
+
+function sortBy(col){
+  if(STATE.sort.col === col){
+    STATE.sort.dir = STATE.sort.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    STATE.sort = {col, dir: 'desc'};
+  }
+  applySort();
+  render('m'); render('t');
+}
+
+function setPageSize(v){
+  STATE.length = parseInt(v, 10) || 50;
+  TABLES.m.start = 0; TABLES.t.start = 0;
+  render('m'); render('t');
+}
+
+function goto(tid, start){
+  const T = TABLES[tid];
+  const total = T.filtered.length;
+  const len = STATE.length;
+  if(start < 0){ start = Math.max(0, Math.floor((total - 1) / len) * len); }
+  start = Math.max(0, Math.min(start, Math.max(0, total - 1)));
+  T.start = start;
+  render(tid);
+}
+
+// ── Render ──
+function buildThead(){
+  const fam = `<th></th>` +
+    FAMILIES.map(f => `<th colspan="${f.colspan}">${f.title}</th>`).join('');
+  const cols = COLS.map(c => {
+    const cls = c.num ? 'num' : '';
+    let extra = '';
+    if(STATE.sort.col === c.key){
+      extra = STATE.sort.dir === 'desc' ? ' sort-desc' : ' sort-asc';
+    }
+    const onclick = (c.key === 'rownum' || c.key === 'structure') ? '' : ` onclick="sortBy('${c.key}')"`;
+    const tip = COL_TOOLTIPS[c.key];
+    const tipAttr = tip ? ` title="${tip.replace(/"/g, '&quot;')}"` : '';
+    return `<th class="${cls}${extra}"${onclick}${tipAttr}>${c.label}</th>`;
+  }).join('');
+  return `<tr class="family-header">${fam}</tr><tr class="column-header">${cols}</tr>`;
+}
+
+function renderCell(col, row, rowIdx){
+  if(col.key === 'rownum') return `<td class="num">${rowIdx}</td>`;
+  if(col.key === 'structure'){
+    const rid = row.row_id != null ? row.row_id : rowIdx;
+    const rowJson = JSON.stringify(row).replace(/'/g, '&#39;');
+    const smiJson = JSON.stringify(row.smiles || '');
+    return `<td><img src="/api/svg/${rid}?w=140&h=100" class="thumb" loading="lazy" onclick='showMolModal(${JSON.stringify(String(rid))}, ${smiJson}, ${rowJson})' onerror="this.style.display='none'"/></td>`;
+  }
+  let raw = row[col.key];
+  // pharmacophore: derive from 3 boolean source cols (matches main report's leaderRenderCell)
+  if(col.key === 'pharmacophore'){
+    const isTrue = x => (x === true || x === 1 || x === '1' || x === 'true' || x === 'True');
+    const murcko = isTrue(row.mol1_murcko_smarts_match);
+    const thiq   = isTrue(row.thiq_core);
+    const acryl  = isTrue(row.acryl_match);
+    const tags = [];
+    if(murcko) tags.push('Mol1 Murcko');
+    if(thiq)   tags.push('THIQ-acryl');
+    if(murcko && acryl) tags.push('Murcko+acryl');
+    raw = tags.length ? tags.join(' / ') : null;
+  }
+  let val;
+  if(col.fmt){
+    try { val = col.fmt(raw); } catch(e){ val = String(raw); }
+  } else {
+    val = (raw == null || raw === '') ? '—' : String(raw);
+  }
+  const cls = col.num ? ' class="num"' : '';
+  let inner = col.bold ? `<strong>${val}</strong>` : val;
+  const color = colorFor(col.key, raw);
+  if(color){ inner = `<span style="color:${color}">${inner}</span>`; }
+  // Hover-tooltip on truncated text values — show full raw on hover.
+  let titleAttr = '';
+  if((col.key === 'tox_alert_names' || col.key === 'method' || col.key === 'pharmacophore') && raw != null && raw !== '') {
+    titleAttr = ` title="${String(raw).replace(/"/g, '&quot;')}"`;
+  }
+  // PrexSyn cells: hover shows short route summary ("2 steps · 3 blocks · score 0.474 — click row to see full route")
+  if((col.key === 'prexsyn_route_found' || col.key === 'prexsyn_n_steps' || col.key === 'prexsyn_n_blocks' || col.key === 'prexsyn_score')
+      && row.prexsyn_route_found != null){
+    const summary = `${row.prexsyn_n_steps || '?'} reaction step(s) · ${row.prexsyn_n_blocks || '?'} REAL building block(s) · synth score ${row.prexsyn_score != null ? (+row.prexsyn_score).toFixed(3) : '?'} — click the row's structure to see the full step-by-step route in the modal.`;
+    titleAttr = ` title="${summary.replace(/"/g, '&quot;')}"`;
+  }
+  return `<td${cls}${titleAttr}>${inner}</td>`;
+}
+
+function render(tid){
+  const T = TABLES[tid];
+  document.getElementById('thead-' + tid).innerHTML = buildThead();
+  const tbody = document.getElementById('tbody-' + tid);
+  const total = T.filtered.length;
+  const start = T.start;
+  const end = Math.min(start + STATE.length, total);
+  const slice = T.filtered.slice(start, end);
+
+  if(slice.length === 0){
+    tbody.innerHTML = `<tr><td colspan="${COLS.length}" style="padding:32px;text-align:center;color:var(--neutral-500);">No rows match the current filter. Try removing or relaxing some conditions.</td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map((row, i) => {
+      const cells = COLS.map(c => renderCell(c, row, start + i + 1)).join('');
+      return `<tr>${cells}</tr>`;
+    }).join('');
+  }
+  document.getElementById('visible-count-' + tid).textContent = total.toLocaleString();
+  const first = total ? (start + 1) : 0;
+  const totalPages = Math.max(1, Math.ceil(total / STATE.length));
+  const curPage = Math.floor(start / STATE.length) + 1;
+  document.getElementById('pg-info-' + tid).textContent =
+    `${first.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()} · page ${curPage}/${totalPages} · sort: ${STATE.sort.col} ${STATE.sort.dir === 'desc' ? '↓' : '↑'}`;
+}
+
+// Legacy stub — rescue rows are now partitioned into TABLES.m / TABLES.t.
+function renderRescueTable(){ /* no-op */ }
+
+// ── Modal (2D + 3D pose, mirrors main report) ──
+
+// Family sections for the modal property grid (same as main report's MODAL_SECTIONS,
+// adapted for the light-view columns).
+const MODAL_SECTIONS = [
+  {title:'Identity / Design', keys:[
+    ['method','Method'],['pharmacophore','Pharmacophore'],['MW','MW (Da)'],['HeavyAtoms','HeavyAtoms']]},
+  {title:'Combined Score', keys:[
+    ['desirability_score','Combined Score'],
+    ['P_potency','P_potency'],['P_pose','P_pose'],['P_shape_to_mol1','P_shape_to_mol1'],
+    ['P_covgeom','P_covgeom'],['P_clean_reactivity','P_clean_reactivity'],
+    ['P_Tec_family_pctl','P_Tec_family (pctl)'],['P_kinase_pctl','P_kinase (pctl)'],
+    ['P_pIC50_kinase_aux_pctl','P_pIC50_kinase_aux (pctl)']]},
+  {title:'Predicted Potency', keys:[
+    ['pIC50_mean','pIC50 mean'],['pIC50_std','pIC50 std'],
+    ['anchor_wins','anchor_wins (/280)'],['anchor_wins_ge7','anchor_wins ≥7 (/57)'],
+    ['delta_vs_mol1','Δ vs Mol1']]},
+  {title:'Ligand Efficiency', keys:[
+    ['LE','LE (kcal/HA)'],['LLE','LLE (pIC50−LogP)'],['BEI','BEI (pIC50/MW·kDa)']]},
+  {title:'2D / 3D similarity', keys:[
+    ['Tc_to_Mol1','Tc → Mol1'],['mean_top10_Tc_train','mean top10 Tc → train'],
+    ['mean_pubTc','mean pubTc'],['top10_mean_pubTc','top10 mean pubTc'],
+    ['shape_Tc_mol1','shape Tc vs Mol1'],['esp_sim_seed','ESP sim vs seed'],
+    ['warhead_dev_deg','warhead Δ°']]},
+  {title:'Cofold pose (Cys346)', keys:[
+    ['d_SG','d_SG (Å)'],['burgi_dunitz_dev_deg','BD dev (°)'],
+    ['n_h_bonds','n H-bonds'],['n_stabilizing_contacts','n contacts'],
+    ['atp_pocket_fraction','ATP pocket fraction'],
+    ['rdkit_strain_kcal_mol','RDKit strain'],['rdkit_strain_posefree_kcal_mol','strain (posefree)']]},
+  {title:'Boltz-2 confidence', keys:[
+    ['mPAE','mPAE (proxy)'],['mPAE_london','mPAE London'],
+    ['iptm','iptm'],['ligand_iptm','ligand iptm'],
+    ['boltz_plddt','boltz pLDDT'],['boltz_confidence','boltz conf']]},
+  {title:'Pocket interaction energy', keys:[
+    ['dG_recognition_md_kcalmol','MM-GBSA dG_recog'],
+    ['pKa_Cys346','pKa Cys346 (PROPKA3)'],
+    ['pred_log_k2_GSH','pred log k2 (GSH)']]},
+  {title:'Kinase classifier', keys:[
+    ['P_kinase','P(kinase)'],['P_Tec_family','P(Tec family)'],
+    ['pIC50_kinase_aux','pIC50_kinase_aux']]},
+  {title:'Drug-likeness', keys:[
+    ['QED','QED'],['LogP','LogP'],['TPSA','TPSA'],['HBA','HBA'],['HBD','HBD'],
+    ['RotBonds','RotBonds'],['fsp3','fsp3'],['SAScore','SAScore'],
+    ['PAINS_alerts','PAINS_alerts'],['Brenk_alerts','Brenk_alerts'],
+    ['Lipinski_violations','Lipinski violations']]},
+  {title:'Synthesis (PrexSyn)', keys:[
+    ['prexsyn_route_found','Route found'],
+    ['prexsyn_n_steps','# reaction steps'],
+    ['prexsyn_n_blocks','# REAL building blocks'],
+    ['prexsyn_score','Synth score']]},
+];
+
+function modalFmt(v, key){
+  if(v == null || (typeof v === 'number' && isNaN(v))) return '—';
+  if(key === 'prexsyn_route_found') return (v === true || v === 'True' || v === 1 || v === '1') ? '✓ yes' : '✗ no';
+  if(typeof v === 'number') return Math.abs(v) < 100 ? v.toFixed(3) : v.toFixed(0);
+  return String(v);
+}
+
+// Render a PrexSyn best_route_str (nested JSON) as a VISUAL retrosynthesis tree:
+// final product at top, "↑ RXN_xx" arrow, precursors as horizontal row below
+// (each recursively rendered the same way). Building blocks are leaves with
+// green border + Enamine REAL catalog ID; intermediates have blue border.
+function renderPrexsynRoute(routeStr){
+  if(!routeStr) return '<div style="color:var(--neutral-500);font-style:italic;padding:12px;">No route available.</div>';
+  let tree;
+  try { tree = JSON.parse(routeStr); }
+  catch(e){ return `<pre style="white-space:pre-wrap;font-size:11px;color:var(--neutral-600);">${String(routeStr).slice(0,2000)}</pre>`; }
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // ImgW × ImgH per node. Slight shrink with depth so deep trees still fit.
+  const W = 150, H = 105;
+  function nodeHTML(node, isRoot){
+    if(!node) return '';
+    const smi = node.SMILES || '';
+    const svgUrl = `/api/svg_smi?smi=${encodeURIComponent(smi)}&w=${W}&h=${H}`;
+    const isLeaf = !!node.BuildingBlock;
+    const isNote = !!node.Note && !isLeaf && !node.Reaction;
+    // Style by node kind (root takes precedence)
+    let borderColor, bgColor, labelColor, label;
+    if(isRoot){
+      borderColor='#7C3AED'; bgColor='#FAF5FF'; labelColor='#6D28D9'; label='🎯 TARGET';
+    } else if(isLeaf){
+      borderColor='#0E9F6E'; bgColor='#F0FDF4'; labelColor='#065F46'; label=`📦 ${esc(node.BuildingBlock)}`;
+    } else if(isNote){
+      borderColor='#D97706'; bgColor='#FFFBEB'; labelColor='#92400E'; label=`↻ ${esc(node.Note)}`;
+    } else {
+      borderColor='#2563EB'; bgColor='#EFF6FF'; labelColor='#1E40AF'; label='⚗️ Intermediate';
+    }
+    const svgBox = `<div style="background:white;border:2px solid ${borderColor};border-radius:8px;padding:2px;">
+        <img src="${svgUrl}" alt="${esc(smi)}" title="${esc(smi)}" loading="lazy"
+             style="width:${W}px;height:${H}px;display:block;" /></div>`;
+    const caption = `<div style="font-size:11px;font-weight:600;color:${labelColor};margin-top:4px;text-align:center;max-width:${W+8}px;">${label}</div>`;
+    const smiCode = `<code style="display:block;font-size:9.5px;color:var(--neutral-600);word-break:break-all;max-width:${W+8}px;text-align:center;line-height:1.3;margin-top:2px;">${esc(smi.length > 60 ? smi.slice(0,57)+'…' : smi)}</code>`;
+    // Build children subtree if this is a reaction node
+    let subtreeHTML = '';
+    if(!isLeaf && node.Reaction){
+      const precs = [];
+      const pArr = node.Precursors || [];
+      for(const p of pArr){
+        for(const k of Object.keys(p)){ precs.push(p[k]); }
+      }
+      const arrowHTML = `<div style="display:flex;flex-direction:column;align-items:center;margin:6px 0;">
+            <div style="font-size:14px;color:#2563EB;line-height:1;">▲</div>
+            <div style="font-size:11px;font-weight:700;color:#1E40AF;background:#DBEAFE;padding:2px 8px;border-radius:10px;letter-spacing:0.3px;">${esc(node.Reaction)}</div>
+          </div>`;
+      const childRow = `<div style="display:flex;flex-direction:row;gap:18px;align-items:flex-start;justify-content:center;flex-wrap:nowrap;">
+            ${precs.map(c => nodeHTML(c, false)).join('')}
+          </div>`;
+      subtreeHTML = arrowHTML + childRow;
+    }
+    return `<div style="display:flex;flex-direction:column;align-items:center;padding:4px;background:${bgColor};border-radius:8px;">${svgBox}${caption}${smiCode}${subtreeHTML}</div>`;
+  }
+  return `<div style="margin-top:8px;padding:14px;background:var(--neutral-50);border:1px solid var(--neutral-200);border-radius:10px;overflow:auto;max-height:560px;">${nodeHTML(tree, true)}</div>`;
+}
+
+function buildModalSections(row){
+  if(!row || typeof row !== 'object') return '';
+  const used = new Set();
+  let html = '';
+  for(const sec of MODAL_SECTIONS){
+    let secHtml = '';
+    for(const [key, label] of sec.keys){
+      used.add(key);
+      secHtml += `<div class="l">${label}</div><div class="v">${modalFmt(row[key], key)}</div>`;
+    }
+    if(secHtml){
+      html += `<div class="family-banner">${sec.title}</div>` + secHtml;
+    }
+    // Append step-by-step PrexSyn route immediately after the Synthesis section.
+    if(sec.title === 'Synthesis (PrexSyn)' && row.prexsyn_best_route_str){
+      html += `<div class="l" style="grid-column:1/-1;font-weight:600;color:var(--neutral-700);margin-top:4px;">Best route (step-by-step)</div>`
+            + `<div class="v" style="grid-column:1/-1;">${renderPrexsynRoute(row.prexsyn_best_route_str)}</div>`;
+    }
+  }
+  return html;
+}
+
+function showMolModal(rowId, smi, row){
+  _poseRowId = rowId;
+  _activateTab('2d');
+  document.getElementById('mol-modal-card').classList.remove('modal-wide');
+
+  fetch(`/api/svg/${rowId}?w=480&h=380`).then(r => r.text()).then(svg => {
+    document.getElementById('mol-modal-struct').innerHTML = svg;
+    const s = document.querySelector('#mol-modal-struct svg');
+    if(s){ s.removeAttribute('width'); s.removeAttribute('height'); }
+    document.getElementById('mol-modal-smiles').textContent = smi || '';
+    document.getElementById('mol-modal-props').innerHTML = buildModalSections(row);
+    document.getElementById('mol-modal').classList.add('show');
+  });
+  // Probe 3D pose — Mol1 uses /api/pose_seed; everything else uses /api/pose/<row_id>
+  const poseUrl = (rowId === 'M1') ? '/api/pose_seed' : `/api/pose/${rowId}`;
+  fetch(poseUrl).then(r => r.json()).then(d => {
+    const tab = document.getElementById('mol-modal-3d-tab');
+    if(d.available){
+      tab.style.display = 'inline-block';
+      tab._poseData = d;
+    } else {
+      tab.style.display = 'none';
+    }
+  }).catch(() => {
+    document.getElementById('mol-modal-3d-tab').style.display = 'none';
+  });
+}
+
+function closeMolModal(){
+  document.getElementById('mol-modal').classList.remove('show');
+  if(_poseViewer){ try { _poseViewer.clear(); } catch(_){} _poseViewer = null; }
+}
+
+function _activateTab(which){
+  document.querySelectorAll('.mt-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === which);
+  });
+  document.getElementById('mt-pane-2d').style.display = which === '2d' ? 'block' : 'none';
+  document.getElementById('mt-pane-3d').style.display = which === '3d' ? 'block' : 'none';
+  if(which === '3d'){
+    document.getElementById('mol-modal-card').classList.add('modal-wide');
+    _renderPose();
+  } else {
+    document.getElementById('mol-modal-card').classList.remove('modal-wide');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  if(e.target.classList && e.target.classList.contains('mt-tab')){
+    _activateTab(e.target.dataset.tab);
+  }
+});
+
+const POCKET_RADIUS = 5.0;
+
+function _renderPose(){
+  const tab = document.getElementById('mol-modal-3d-tab');
+  if(!tab || !tab._poseData) return;
+  const d = tab._poseData;
+  const meta = d.metadata || {};
+  let badge = '';
+  if(typeof meta.iptm === 'number'){
+    const klass = meta.iptm > 0.85 ? 'badge-good' : (meta.iptm > 0.75 ? 'badge-mid' : 'badge-bad');
+    badge = `<span class="badge ${klass}">iptm ${meta.iptm.toFixed(3)}</span>`;
+  }
+  document.getElementById('pose-meta').innerHTML =
+    `<strong>${meta.pose_name || ''}</strong>` +
+    `<span>mPAE: <b>${(meta.mPAE || 0).toFixed(2)} Å</b></span>` +
+    `<span>conf: <b>${(meta.confidence_score || 0).toFixed(3)}</b></span>` +
+    `<span>ligand iptm: <b>${(meta.ligand_iptm || 0).toFixed(3)}</b></span>` +
+    `<span>plddt: <b>${(meta.complex_plddt || 0).toFixed(3)}</b></span>` +
+    badge +
+    `<span style="color:var(--neutral-500)">(Boltz-2 cofold)</span>`;
+  const el = document.getElementById('pose-viewer');
+  el.innerHTML = '';
+  _poseViewer = $3Dmol.createViewer(el, {backgroundColor: 'white'});
+  _poseViewer.addModel(d.cif, 'cif');
+  _applyPoseStyles();
+  _poseViewer.zoomTo({chain: 'B'});
+  _poseViewer.zoom(0.7);
+  _poseViewer.render();
+}
+
+function _applyPoseStyles(){
+  if(!_poseViewer) return;
+  const showCart = document.getElementById('pc-cartoon').checked;
+  const showPocket = document.getElementById('pc-pocket').checked;
+  const showCys346 = document.getElementById('pc-cys346').checked;
+  const showHbonds = document.getElementById('pc-hbonds').checked;
+  _poseViewer.setStyle({}, {});
+  if(showCart){
+    _poseViewer.setStyle({chain:'A'}, {cartoon:{color:'spectrum', opacity:0.85}});
+  }
+  _poseViewer.addStyle({chain:'A', byres:true, within:{distance: POCKET_RADIUS, sel:{chain:'B'}}},
+    {stick:{radius:0.12, colorscheme:'whiteCarbon'}});
+  _poseViewer.setStyle({chain:'B'}, {stick:{colorscheme:'magentaCarbon', radius:0.18}});
+  if(showCys346){
+    _poseViewer.addStyle({chain:'A', resi:346},
+      {stick:{colorscheme:'cyanCarbon', radius:0.22}, sphere:{radius:0.45, hidden:false}});
+    _poseViewer.addLabel('Cys346', {useScreen:false,
+      backgroundColor:'rgba(0,180,200,0.85)', fontColor:'white', fontSize:11},
+      {chain:'A', resi:346, atom:'CA'});
+  }
+  _poseViewer.removeAllSurfaces();
+  if(showPocket){
+    _poseViewer.addSurface($3Dmol.SurfaceType.SAS,
+      {opacity:0.45, color:'#cccccc'},
+      {chain:'A', byres:true, within:{distance: POCKET_RADIUS, sel:{chain:'B'}}});
+  }
+  if(showHbonds){
+    const m = _poseViewer.getModel();
+    const protAtoms = m.selectedAtoms({chain:'A', elem:['N','O']});
+    const ligAtoms = m.selectedAtoms({chain:'B', elem:['N','O']});
+    for(const a of protAtoms){
+      for(const b of ligAtoms){
+        const dist = Math.hypot(a.x-b.x, a.y-b.y, a.z-b.z);
+        if(dist > 2.5 && dist < 3.5){
+          _poseViewer.addCylinder({start:{x:a.x,y:a.y,z:a.z}, end:{x:b.x,y:b.y,z:b.z},
+            radius:0.04, dashed:true, fromCap:1, toCap:1, color:'orange'});
+        }
+      }
+    }
+  }
+  _poseViewer.render();
+}
+
+document.addEventListener('change', (e) => {
+  if(e.target.matches && e.target.matches('#pose-controls input[type=checkbox]')){
+    _applyPoseStyles();
+  }
+});
+document.addEventListener('click', (e) => {
+  if(e.target.id === 'pc-reset' && _poseViewer){
+    _poseViewer.zoomTo({chain:'B'});
+    _poseViewer.zoom(0.7);
+    _poseViewer.render();
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if(e.key === 'Escape') closeMolModal();
+});
+
+boot();
+</script>
+</body>
+</html>

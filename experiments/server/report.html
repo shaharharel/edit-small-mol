@@ -766,6 +766,7 @@ table.dataTable+.dt-info,table.dataTable+.dt-paging,
         <div>
           <div style="font-size:13px;font-weight:600;color:var(--neutral-900);">
             Survivors of current filter cascade
+            <a href="/light" target="_blank" style="margin-left:10px;font-size:11px;font-weight:500;color:var(--blue-600);text-decoration:none;padding:2px 8px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;vertical-align:middle;">⚡ Skinny view (838 only)</a>
           </div>
           <div id="fp-survivors-meta"
                style="font-size:11px;color:var(--neutral-500);">
@@ -923,7 +924,7 @@ const FP_LEGACY_STORAGE_KEYS = ['filter_state_v1','filter_state_v2'];
 // Hard ceiling on a single /api/filter call. If the backend hangs (or the tab
 // is throttled in background), we forcibly release inflight locks so the next
 // Apply click does not silently no-op. Tier-3 cascade typically takes 5-7s.
-const FP_REQUEST_TIMEOUT_MS = 30000;
+const FP_REQUEST_TIMEOUT_MS = 90000;  // 2026-06-11: bumped 30s→90s as safety net while backend precompute fast-path is activated; remote cold cascade can take 35-70s on n2-standard-4 if cache miss
 // Debug log — set to false to silence the Apply trace in production.
 const FP_DEBUG = true;
 function fpLog(){ if(FP_DEBUG) console.log.apply(console, ['[fp]', ...arguments]); }
@@ -1754,6 +1755,14 @@ function fpSurvivorsBuildThead(){
     'SILE':                       'Size-Independent LE = pIC50/HeavyAtoms^0.3.',
     'fsp3':                       'Fraction sp3 carbons. ≥0.25 for 3D character.',
     'SAScore':                    'Synthetic Accessibility (Ertl 2009). ≤4 = easy; ≥6 = hard.',
+    'net_charge_pH74':            'Net molecular charge at pH 7.4 (Dimorphite-DL dominant microspecies, integer). Rule-based, fast. Mis-handles 2-amino-imidazole class — reports +1 for Mol1 (actually neutral). Visible-838: 32% 0, 44% +1, 19% +2, 3% +3.',
+    'formal_charge_drawn':        'Formal charge of the SMILES as drawn (RDKit Chem.GetFormalCharge). Almost always 0 for generator output — not biologically meaningful; use frac_charge_pH74 for the actual cation/anion state.',
+    'frac_charge_pH74':           'POPULATION-WEIGHTED net charge at pH 7.4 (MolGpKa GCN per-site pKa + Henderson-Hasselbalch). Real-valued. Mol1 = +0.02 (essentially neutral; 2-amino-imidazole pKa ~5.5), dasatinib = +1.20 (matches lit ~+1.1), imatinib = +1.43. Cohort 2,221: 63% 0, 23% +1, 9% +2, 2% +3 — confirms London "0-1" intuition for ZAP70.',
+    'net_charge_pH74_mg':         'MolGpKa fractional charge rounded to nearest integer. Use as a categorical bucket; the continuous frac_charge_pH74 is more informative.',
+    'pKa_basic_max':              'Highest predicted basic pKa over all ionizable sites (MolGpKa). Sanity check for protonation state: pKa > 9 means dominant cation at pH 7.4; pKa < 6 means dominant neutral. Mol1 = 5.5 (2-amino-imidazole — neutral at physiological pH).',
+    'tox_alerts_count':           'Count of REAL tox structural-alert hits (~30 patterns, all unambiguous hard kills): anilines, anilinopyridines, peroxides, hydrazides, vinyl ethers, dihydrofurans, enamines, strained-ring nitriles (HCN release), N-F bonds, alpha-halo carbonyls, cyclic sulfamides, second Michael acceptors, isocyanates, epoxides. NOTE: tetrazole / triazole / strained primary amines / enols are NOT counted — they are FDA-approved scaffolds (losartan, fluconazole) or soft PK flags, not tox kills. Mol1 = 0. Visible-838: 87% zero / 10% one / 3% two-plus.',
+    'tox_alert_names':            'Comma-separated names of structural alerts hit (truncated to first 28 chars in display; hover for full list). e.g. "anilinopyridine_2,cyclopropyl_CN" → flagged for aminopyridine bioactivation AND cyanocyclopropane HCN release.',
+    'k_inact_proxy':              'Covalent productivity proxy = thiolate_fraction(pKa_Cys346) × exp(-((d_SG-1.8)² + (BD_dev/10)²)). Higher = more productive Cys346 engagement predicted. LUMO factor omitted (all cohort warheads are unsubstituted acrylamide → LUMO ≈ constant). Mol1 = 6e-12 (high BD angle dominates). Cohort: log-spread 1e-18 to 8e-2, median 1e-8. Use as relative ranking, not absolute rate. Color: green ≥ 1e-4, yellow 1e-8 to 1e-4, red < 1e-8.',
   };
   // Expose globally so the Mol1 modal (showSeedMolModal) can attach the same
   // tooltips to its per-family field rows.
@@ -2819,10 +2828,10 @@ document.addEventListener('DOMContentLoaded', () => {
     <div class="mt-pane mt-pane-3d" id="mt-pane-3d" style="display:none">
       <div class="pose-meta" id="pose-meta"></div>
       <div class="pose-controls" id="pose-controls">
-        <label><input type="checkbox" id="pc-cartoon" checked> Cartoon</label>
+        <label><input type="checkbox" id="pc-cartoon"> Cartoon</label>
         <label><input type="checkbox" id="pc-pocket" checked> Pocket surface</label>
         <label><input type="checkbox" id="pc-cys346" checked> Highlight Cys346</label>
-        <label><input type="checkbox" id="pc-hbonds"> H-bonds (4Å)</label>
+        <label><input type="checkbox" id="pc-hbonds" checked> H-bonds (4Å)</label>
         <button id="pc-measure" type="button">Measure tool</button>
         <button id="pc-reset" type="button">Reset view</button>
       </div>
@@ -3128,6 +3137,15 @@ const COLOR_RULES = {
   RotBonds:            v => v <= 7 ? 'green' : v <= 10 ? 'yellow' : 'red',
   fsp3:                v => v >= 0.4 ? 'green' : v >= 0.25 ? 'yellow' : 'red',
   SAScore:             v => v <= 3 ? 'green' : v <= 5 ? 'yellow' : 'red',
+  net_charge_pH74:     v => (v === 0 || v === 1) ? 'green' : (Math.abs(v) === 2) ? 'yellow' : 'red',
+  // MolGpKa-based charge (continuous + rounded + max basic pKa)
+  frac_charge_pH74:    v => (v >= -0.3 && v <= 1.3) ? 'green' : (v >= -1.0 && v <= 2.0) ? 'yellow' : 'red',
+  net_charge_pH74_mg:  v => (v === 0 || v === 1) ? 'green' : (Math.abs(v) === 2) ? 'yellow' : 'red',
+  pKa_basic_max:       v => v <= 7.5 ? 'green' : v <= 9.0 ? 'yellow' : 'red',
+  // Tox alerts: 0 clean, 1 minor, ≥2 reject
+  tox_alerts_count:    v => v === 0 ? 'green' : v === 1 ? 'yellow' : 'red',
+  // k_inact_proxy: log-scale color (cohort p75 ≈ 4e-5, median ≈ 1e-8, p25 ≈ 8e-12)
+  k_inact_proxy:       v => v >= 1e-4 ? 'green' : v >= 1e-8 ? 'yellow' : 'red',
 };
 // Return a CSS color value for (key, value), or null if no rule applies.
 function colorFor(key, value){
@@ -3227,6 +3245,18 @@ const LEADER_COLS = [
   {key:'P_kinase',          label:'P(kinase)',      family:'kinase_like', fmt:LEADER_FMT.f3, num:true},
   {key:'P_Tec_family',      label:'P(Tec family)',  family:'kinase_like', fmt:LEADER_FMT.f3, num:true},
   {key:'pIC50_kinase_aux',  label:'pIC50 kin (aux)', family:'kinase_like', fmt:LEADER_FMT.f2, num:true},
+  // ── CHARGE / IONIZATION (3 methods, one column each) ── 2026-06-11 LATE
+  // RDKit (no protonation), Dimorphite-DL (rule-based), MolGpKa (GCN per-site pKa + Henderson-Hasselbalch). Mol1: RDKit=0, Dim=+1, MolGpKa=+0.02. The 3 methods disagree on 65% of rows (κ=0.054); MolGpKa is the only physically meaningful one for our 2-amino-imidazole chemotype.
+  {key:'formal_charge_drawn', label:'charge (RDKit)',         family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'net_charge_pH74',     label:'charge (Dimorphite)',    family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'net_charge_pH74_mg',  label:'charge (MolGpKa int)',   family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + Math.round(+v)), num:true},
+  {key:'frac_charge_pH74',    label:'frac charge (MolGpKa)',  family:'charge', fmt:v => (v == null || isNaN(v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(2)), num:true},
+  // ── TOX HAZARDS + COVALENT PRODUCTIVITY ── 2026-06-13 (expert panel recommendation)
+  // Extended SMARTS catalog (~35 alerts beyond Brenk: anilines, anilinopyridines, peroxides, hydrazides, vinyl ethers, cyano-strained-rings, etc.)
+  // k_inact_proxy = thiolate_frac(pKa_Cys346) × geom_factor(d_SG, BD angle). Higher = better predicted covalent productivity.
+  {key:'tox_alerts_count', label:'tox alerts (n)',   family:'tox', fmt:LEADER_FMT.int, num:true},
+  {key:'tox_alert_names',  label:'alert names',      family:'tox', fmt:v => v ? (String(v).length > 30 ? String(v).slice(0,28)+'…' : String(v)) : '—', num:false},
+  {key:'k_inact_proxy',    label:'k_inact proxy',    family:'tox', fmt:v => (v == null || isNaN(v)) ? '—' : (+v).toExponential(1), num:true},
 ];
 const LEADER_FAMILY_SPEC = [
   {family:'identity',      title:'IDENTITY',              colspan:5},   // structure + method + pharmacophore + desirability + MW + (rownum is implicit first) — 2026-06-10 PM: +desirability
@@ -3236,8 +3266,10 @@ const LEADER_FAMILY_SPEC = [
   {family:'sim_3d',        title:'Sim — 3D Shape',        colspan:3},
   {family:'cofold',        title:'Cofold Geometry',       colspan:10},
   {family:'pocket',        title:'POCKET INTERACTION ENERGY', colspan:5},  // 2026-06-10 PM: -4 (Vina free / inter / intra / vdW dropped per analyst)
-  {family:'druglike',      title:'DRUG LIKELINESS',           colspan:11},
+  {family:'druglike',      title:'DRUG LIKELINESS',           colspan:11},  // 2026-06-11 LATE: net_charge_pH74 moved to CHARGE family
   {family:'kinase_like',   title:'KINASE-LIKE PREDICTION',    colspan:3},  // NEW 2026-06-10 PM
+  {family:'charge',        title:'CHARGE / IONIZATION', colspan:4},  // RDKit / Dim / MG int / MG frac
+  {family:'tox',           title:'TOX HAZARDS + COVALENT PRODUCTIVITY', colspan:3},  // 2026-06-13
 ];
 // Family banner: leading blank cell (over rownum) + 7 family banners. Sums to
 // 1 + 4+5+2+2+3+10+8 = 35 cells; column-header row has 34 cells (rownum +
@@ -3284,7 +3316,9 @@ function leaderRenderCell(col, rowObj, rowIdx, rowIdForSvg){
   if(col.key === 'structure'){
     const rowJson = JSON.stringify(rowObj).replace(/'/g, '&#39;');
     const smiJson = JSON.stringify(rowObj.smiles || '');
-    return `<td><img src="${BACKEND}/api/svg/${rowIdForSvg}?w=110&h=80" class="thumb" `
+    // 2026-06-16: loading="lazy" — browser only fetches SVG when row scrolls into viewport.
+    // Kills the SVG-flood OOM crash on the heavy report (was rendering all ~hundreds of SVGs at once).
+    return `<td><img src="${BACKEND}/api/svg/${rowIdForSvg}?w=110&h=80" class="thumb" loading="lazy" decoding="async" `
          + `style="width:110px;height:80px;cursor:pointer;" `
          + `onclick='showMolModal(${JSON.stringify(rowIdForSvg)}, ${smiJson}, ${rowJson})' `
          + `onerror="this.style.display='none'"/></td>`;
@@ -3317,7 +3351,13 @@ function leaderRenderCell(col, rowObj, rowIdx, rowIdForSvg){
   if(col.bold) inner = `<strong>${disp}</strong>`;
   const styled = color ? `<span style="color:${color}">${inner}</span>` : inner;
   const tdCls = col.num ? ' class="num"' : '';
-  return `<td${tdCls}>${styled}</td>`;
+  // 2026-06-13: hover-tooltip on truncated text values — show full raw value on hover.
+  // Applied to: tox_alert_names (comma-separated list often truncated), method, pharmacophore.
+  let tdTitle = '';
+  if((col.key === 'tox_alert_names' || col.key === 'method' || col.key === 'pharmacophore') && v != null && v !== '') {
+    tdTitle = ` title="${String(v).replace(/"/g, '&quot;')}"`;
+  }
+  return `<td${tdCls}${tdTitle}>${styled}</td>`;
 }
 function leaderRenderRow(rowObj, rowIdx, opts){
   opts = opts || {};
@@ -4338,7 +4378,8 @@ function buildTable(method, idx){
         // 1. structure — pass the whole row so the modal renders all properties
         {data:'row_id', orderable:false, name:'structure', render:(d,t,r)=>{
           const rowJson = JSON.stringify(r).replace(/'/g, '&#39;');
-          return `<img src="${BACKEND}/api/svg/${d}?w=140&h=100" class="thumb" `+
+          // 2026-06-16: loading="lazy" + decoding="async" — only fetch SVG on viewport entry.
+          return `<img src="${BACKEND}/api/svg/${d}?w=140&h=100" class="thumb" loading="lazy" decoding="async" `+
                  `onclick='showMolModal(${d}, ${JSON.stringify(r.smiles)}, ${rowJson})' `+
                  `onerror="this.style.display='none'"/>`;
         }},

@@ -1,0 +1,23 @@
+VERDICT: PARTIAL — Stage 1 PASS, ablation demonstrates conditioning-sensitivity but hard win conditions FAIL due to metric ceiling.
+
+Report: /tmp/optionA_report.md
+
+QA: PASS (data/agent_coord/from_optionA_QA.txt)
+
+Win conditions:
+  1. OURS < BASELINE planar by ≥20°  →  actual +0.03°  FAIL (metric ceiling: all cells at ~0.05° floor)
+  2. OURS − ABL_shuffled planar gap ≥30°  →  actual +0.04°  FAIL (same reason)
+  3. Stage 1 BC RMSD < 3 Å  →  actual 2.78 Å (median 1.81 Å)  PASS
+
+Ablation results: data/optionA/ablation_results.csv
+Cell,validity,planar_med_deg,acryl_largest,BD_dev
+BASELINE_covFT,0.842,0.049,0.082,16.6
+OURS_predicted,0.804,0.018,0.042,18.2
+ABL_shuffled,0.804,0.058,0.046,19.2
+ABL_zero,0.802,0.014,0.045,18.0
+ABL_oracle,0.673,0.034,0.042,18.7
+
+NOT the v2-cond failure: coord conditioning IS reaching the decoder (uniq=20/20, overlap=0 in Stage-2 sensitivity check; aux val MSE 0.021 shows coord info preserved through decoder).
+The planar-dihedral metric is saturated at floor (~0.05°) on this model class — no discriminative dynamic range. All cells within 0.05° of each other.
+
+Next step: use MMFF-optimized dihedral OR docked-geometry BD-angle OR restrict to acrylamide-only anchor subset for a discriminative eval.

@@ -1,0 +1,81 @@
+v2_curriculum_clean DONE — 2026-07-13 02:20 UTC
+
+VERDICT: Clean data yields stronger Boltz-observed steering than dirty (v1_clean
+wins on the main head-to-head metric), though the KS-test is borderline
+(p=0.10) at N=40-50 per cohort.
+
+Key numbers (all copied to data/paper_pair_training/v2_curriculum_clean/):
+
+1. Pair-file rebuild (Phase A):
+   - Bug in v1_dirty: --require_both_geoms 0 (OR-mode) let 77% of curriculum
+     pairs through with only one geom constraint met; 9-26% had negative dtheta
+     or dd (opposite direction).
+   - Fix in v1_clean: --require_both_geoms 1 (strict AND). Curriculum pass_ALL:
+     23.2% -> 100.0% on train, 19.1% -> 100.0% on val. Zero negative deltas.
+   - Curriculum train pairs: 6340 -> 2248 (-64.5%). Crystal-spliced pairs
+     (908 train, 228 val) copied verbatim from v1_dirty for apples-to-apples.
+   - Same pocket split (seed=0, 20% val), verified 0 train/val overlap.
+
+2. Training (Phase C, 10k steps on A100):
+   - Warm-start: models/m1a_v2.ckpt (same as v1_dirty).
+   - v1_clean final KL_A_vs_B=0.397, KL_A_vs_C=0.392, mean-last-3=0.435/0.437.
+   - v1_dirty final KL_A_vs_B=0.438, KL_A_vs_C=0.472, mean-last-3=0.423/0.440.
+   - Training-curve KL is essentially a tie (v1_clean +1% on mean-last-3).
+   - Best val 24.04 @ step 1000 (early convergence on smaller dataset).
+
+3. Steering diagnostic (Phase D — 100 mols per cohort, 4 cohorts):
+   - Sample validity: 40-57% (avg 49%) — well below v1_dirty's 62%.
+     CAVEAT: 64.5% training-pair cut caused earlier decoder overfitting; the
+     10k-step budget was too long for the smaller dataset. Retrain suggestion:
+     500-2000 steps for v1_clean, or use best.chkpt @ step 1000 next time.
+   - Acrylamide retention on VALID subset: 68-93% (comparable to v1_dirty).
+   - 162 Boltz cofolds harvested across 4 cohorts (theta_90:40, theta_105:50,
+     theta_130:48, null_pose:24).
+
+4. Phase E head-to-head:
+   - Boltz-observed |median(theta_130 - theta_90)|: v1_clean=10.1°, v1_dirty=1.6°
+     -> v1_clean shows 6x stronger steering signal.
+   - KS-test (theta_90 vs theta_130): v1_clean p=0.10 (borderline),
+     v1_dirty p=0.64 (null-consistent).
+   - KS-test (theta_90 vs null_pose): v1_clean p=0.048 (significant),
+     v1_dirty p=0.37 (null-consistent) -> v1_clean IS listening to pose.
+   - Wasserstein distances larger for v1_clean on every pairwise contrast.
+   - v1_dirty theta_90 cohort produces median 150.1 deg (no response to
+     theta_target=90). v1_clean theta_90 cohort produces median 136.1 deg
+     (a genuine downward shift toward the target, 14 deg below v1_dirty).
+
+5. Engineering notes / gotchas:
+   - Original Phase D pipeline emitted 0 cofolds due to boltz not on PATH
+     (nohup shell dropped conda env). Fixed by wrapping in bash -lc with
+     conda activate quris.
+   - Second attempt still failed: ~/.local/bin/boltz shadowed conda-env boltz
+     via python subprocess PATH search. Fixed by patching
+     experiments/boltz_verdict_driver.py to use absolute BOLTZ_BIN
+     env var (defaults to conda-env boltz).
+   - Third attempt (8 parallel workers) hit CUDA OOM cascade on A100 40GB
+     after ~62 cofolds. Fixed by running 4 cohorts SERIALLY with
+     max_workers=2 each -> 2 concurrent boltz predicts (safe).
+   - Final v1_dirty cofold_track had only theta_90 -- other 3 CSVs were
+     harvested by the campaign but never copied by v1_dirty's run_phase1e.sh.
+     Copied the 3 missing dirty CSVs from campaign track_A files.
+
+RECOMMENDATION: Enforce strict AND filter for all future curriculum runs.
+Next iteration: (a) shorter training on cleaner pairs (or curriculum weighting
+to boost effective data volume), (b) add explicit pose distillation loss to
+boost the still-modest 10 deg steering signal to something paper-headline
+worthy (>20 deg), (c) increase N_target per cohort to 200-300 to lift the
+KS-test above the p<0.01 threshold.
+
+Deliverables (all present + local + remote):
+- data/paper_pair_training/v2_curriculum_clean/pair_stats.md
+- data/paper_pair_training/v2_curriculum_clean/pair_stats.json
+- data/paper_pair_training/v2_curriculum_clean/training_curve.json
+- data/paper_pair_training/v2_curriculum_clean/comparison_report.md
+- data/paper_pair_training/v2_curriculum_clean/comparison_report.json
+- data/paper_pair_training/v2_curriculum_clean/steering_samples/ (remote)
+- data/paper_pair_training/v2_curriculum_clean/cofold_track/ (remote)
+- data/paper_pair_training/boltz_dpo_campaign/cofolds/v2curr_clean_*/ (remote, 162 CIFs)
+- models/v2_curriculum_clean/best.chkpt + step_010000.ckpt (remote)
+- experiments/m1a_pocket_decoder/v2/compare_dirty_vs_clean.py (in repo)
+- experiments/m1a_pocket_decoder/v2/run_v2_curriculum_clean.sh (in repo)
+- experiments/m1a_pocket_decoder/v2/run_boltz_v2curr_clean_serial.sh (in repo)

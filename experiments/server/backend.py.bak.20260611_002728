@@ -1,0 +1,3601 @@
+#!/usr/bin/env python3
+"""
+Flask backend for live filtering of 498K Tier 2 SCALED candidates.
+
+Loads products_scored_full.csv into memory at startup, serves DataTables
+server-side AJAX requests with SearchBuilder filter conditions parsed into
+pandas queries. Plus quick chip presets, structure-on-demand SVG rendering.
+
+Run:
+    cd ~/Documents/github/edit-small-mol
+    conda run -n quris python experiments/server/backend.py
+    # listens on http://localhost:5000
+
+Frontend HTML lives at: results/paper_evaluation/overnight_method_report_live.html
+                        (Tier 2 SCALED section uses serverSide: true with this backend)
+"""
+
+import json
+import os
+import sys
+from pathlib import Path
+from io import BytesIO
+import warnings
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+import numpy as np
+import pandas as pd
+warnings.filterwarnings("ignore")
+
+from flask import Flask, request, jsonify, send_file
+from flask_cors import CORS
+from rdkit import Chem, RDLogger
+from rdkit.Chem import AllChem, Draw
+RDLogger.DisableLog('rdApp.*')
+
+DATA_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "all_methods_bulk_scored_v4.csv"
+LEGACY_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "aichem_tier2_scaled" / "products_scored_full.csv"
+
+app = Flask(__name__)
+CORS(app)
+
+print(f"Loading {DATA_FILE} ...")
+if DATA_FILE.exists():
+    DF = pd.read_csv(DATA_FILE)
+else:
+    print(f"  Falling back to {LEGACY_FILE}")
+    DF = pd.read_csv(LEGACY_FILE)
+    DF["method"] = "Tier 2 SCALED — Fragment Replacement (498K)"
+    if "pIC50_film" in DF.columns and "pIC50_method" not in DF.columns:
+        DF["pIC50_method"] = DF["pIC50_film"]
+print(f"Loaded {len(DF):,} legacy candidates with columns: {list(DF.columns)}")
+
+# ── Tier 4 overnight cohorts (2026-06-05) — concat into main DF ─────────────
+# This makes Tier 4 mols show up in the global totals + Tiers nav, not just
+# per-cohort tables.
+TIER4_BULK = PROJECT_ROOT / "results" / "paper_evaluation" / "tier4_overnight_bulk.csv"
+if TIER4_BULK.exists():
+    DF_T4 = pd.read_csv(TIER4_BULK, low_memory=False)
+    # Tier 4 overnight scorer wrote anchor_wins / anchor_wins_ge7 as 0/1 booleans
+    # (true 0-280 counts were not recomputed for that path). Drop the broken
+    # column so the SMILES-keyed backfill restores the 3-seed-ensemble count.
+    for col in ("anchor_wins", "anchor_wins_ge7"):
+        if col in DF_T4.columns:
+            mx = pd.to_numeric(DF_T4[col], errors="coerce").max()
+            if pd.notna(mx) and mx <= 1.5:
+                DF_T4[col] = pd.NA
+                print(f"  [t4] cleared broken {col} (max={mx}); backfill will restore")
+    for c in DF.columns:
+        if c not in DF_T4.columns:
+            DF_T4[c] = pd.NA
+    for c in DF_T4.columns:
+        if c not in DF.columns:
+            DF[c] = pd.NA
+    DF_T4 = DF_T4[DF.columns]
+    DF = pd.concat([DF, DF_T4], ignore_index=True)
+    print(f"  Concatenated Tier 4 overnight: +{len(DF_T4):,} mols → DF now {len(DF):,}")
+else:
+    print(f"  [warn] Tier 4 bulk file not found at {TIER4_BULK}")
+if "method" in DF.columns:
+    print(f"Methods: {DF['method'].value_counts().to_dict()}")
+
+# ── Tier 4 Mol1-anchored RL cohorts (Phases 3-6, 2026-06-08) — concat into DF
+# These are the 10 lead-optimization cohorts the user filters/ranks against.
+# Each cohort gets its own ``method`` label so subnav/tier pills can group on
+# them. Without this concat, Filter & Ranking quietly drops 423K mols (the
+# entire Mol1-anchored RL workstream). Each cohort CSV is read once at boot;
+# /api/methods'_refresh_stale_tier4_stats sees cohort mtimes for hot-reload.
+_MOL1_ANCHORED_DF_TAGS = [
+    ("mol1RL_v5_seed_mol1_only",   "Tier 4 Mol1-Anchored — mol1RL_v5 acryl reward"),
+    ("thiq_rl_mol1only",           "Tier 4 Mol1-Anchored — THIQ warhead_tokens (mol1)"),
+    ("thiq_rl_zap70",              "Tier 4 Mol1-Anchored — THIQ warhead_tokens (zap70)"),
+    ("thiq_rl_kinase",             "Tier 4 Mol1-Anchored — THIQ warhead_tokens (kinase)"),
+    ("thiq_rl_exp2_zap70",         "Tier 4 Mol1-Anchored — THIQ covalent_ft (zap70)"),
+    ("thiq_rl_exp2_kinase",        "Tier 4 Mol1-Anchored — THIQ covalent_ft (kinase)"),
+    ("murcko_rl_zap70",            "Tier 4 Mol1-Anchored — Murcko warhead_tokens (zap70)"),
+    ("murcko_rl_kinase",           "Tier 4 Mol1-Anchored — Murcko warhead_tokens (kinase)"),
+    ("murcko_rl_exp2_zap70",       "Tier 4 Mol1-Anchored — Murcko covalent_ft (zap70)"),
+    ("murcko_rl_exp2_kinase",      "Tier 4 Mol1-Anchored — Murcko covalent_ft (kinase)"),
+]
+_t4_mol1_cohort_root = PROJECT_ROOT / "data" / "tier4_scored"
+_t4_mol1_parts = []
+# SKIP_MOL1_ANCHORED_CONCAT=1 → don't merge the 423K Mol1-anchored rows into
+# the main DF. Use this on memory-constrained VMs where the concat OOMs.
+# Cohort tables still work (they read CSVs directly via /api/cohort_smis).
+if os.environ.get("SKIP_MOL1_ANCHORED_CONCAT") == "1":
+    print(f"  [mol1-anchored] SKIP_MOL1_ANCHORED_CONCAT=1 → skipping DF merge "
+          f"(cohort tables will still work via /api/cohort_smis)")
+    _MOL1_ANCHORED_DF_TAGS = []
+for _tag, _label in _MOL1_ANCHORED_DF_TAGS:
+    _path = _t4_mol1_cohort_root / f"{_tag}_scored.csv"
+    if not _path.exists():
+        print(f"  [mol1-anchored] skip {_tag}: CSV missing")
+        continue
+    try:
+        _sub = pd.read_csv(_path, low_memory=False)
+    except Exception as _e:
+        print(f"  [mol1-anchored] skip {_tag}: read error {_e}")
+        continue
+    # Stable per-cohort label so /api/methods groupby and the subnav match.
+    _sub["method"] = _label
+    # Fallback for cohorts whose enrichment landed pIC50 only under
+    # pIC50_xgb_multifp: copy it into pIC50_film/mean so Filter/Ranking sees it.
+    if "pIC50_film" not in _sub.columns and "pIC50_xgb_multifp" in _sub.columns:
+        _sub["pIC50_film"] = _sub["pIC50_xgb_multifp"]
+    if "pIC50_mean" not in _sub.columns:
+        _sub["pIC50_mean"] = _sub.get("pIC50_film")
+    # Add missing main-DF columns as NA (and vice-versa) so concat aligns
+    # without losing the cohort-specific xTB/Vina/etc. columns.
+    for _c in DF.columns:
+        if _c not in _sub.columns:
+            _sub[_c] = pd.NA
+    for _c in _sub.columns:
+        if _c not in DF.columns:
+            DF[_c] = pd.NA
+    _sub = _sub[DF.columns]
+    _t4_mol1_parts.append(_sub)
+if _t4_mol1_parts:
+    _pre = len(DF)
+    DF = pd.concat([DF] + _t4_mol1_parts, ignore_index=True)
+    _added = len(DF) - _pre
+    print(f"Concatenated {len(_t4_mol1_parts)} Mol1-anchored cohorts: +{_added:,} mols → DF now {len(DF):,}")
+
+DF = DF.reset_index(drop=True)
+DF["row_id"] = DF.index
+
+# ── Backfill pIC50_mean / pIC50_std / anchor_wins from 3-seed FiLMDelta ensemble
+# Produced by experiments/backfill_pIC50_mean.py (ran on ai-gpu2 V100 2026-06-05).
+# Fills the rows that were left NaN by the bulk-scored CSVs (single-seed Tier 4 +
+# Tier 2/3 scoring runs that never made it through compute_pairwise_for_topK).
+PIC50_BACKFILL = PROJECT_ROOT / "results" / "paper_evaluation" / "pIC50_mean_backfill.csv"
+if PIC50_BACKFILL.exists():
+    _bf = pd.read_csv(PIC50_BACKFILL)
+    _bf = _bf.drop_duplicates(subset=["smiles"], keep="first")
+    print(f"Loading pIC50_mean backfill from {PIC50_BACKFILL.name}: {len(_bf):,} mols")
+    # Build SMILES → row dict
+    _bf_idx = _bf.set_index("smiles")
+    for col in ["pIC50_mean", "pIC50_std", "anchor_wins", "anchor_wins_ge7"]:
+        if col not in DF.columns:
+            DF[col] = pd.NA
+    pre_filled = DF["pIC50_mean"].notna().sum()
+    mask_nan = DF["pIC50_mean"].isna() & DF["smiles"].isin(_bf_idx.index)
+    n_fill = int(mask_nan.sum())
+    if n_fill > 0:
+        smi_to_fill = DF.loc[mask_nan, "smiles"]
+        for col in ["pIC50_mean", "pIC50_std", "anchor_wins", "anchor_wins_ge7"]:
+            vals = smi_to_fill.map(_bf_idx[col])
+            DF.loc[mask_nan, col] = vals.values
+    # Force-overwrite anchor_wins / anchor_wins_ge7: the cohort merge wrote 0/1
+    # booleans for these in places (incorrect — they are 0-280 counts of how many
+    # of the 280 ZAP70 anchors the candidate beats). Backfill is canonical.
+    mask_smi = DF["smiles"].isin(_bf_idx.index)
+    for col in ["anchor_wins", "anchor_wins_ge7"]:
+        smi_known = DF.loc[mask_smi, "smiles"]
+        vals = smi_known.map(_bf_idx[col])
+        DF.loc[mask_smi, col] = vals.values
+    post_filled = DF["pIC50_mean"].notna().sum()
+    aw_pop = pd.to_numeric(DF["anchor_wins"], errors="coerce").dropna()
+    print(f"  Backfilled {n_fill:,} rows  ({pre_filled:,} → {post_filled:,} populated); "
+          f"anchor_wins force-overwrite (median={aw_pop.median():.0f}, max={aw_pop.max():.0f})")
+else:
+    print(f"[info] No pIC50_mean backfill CSV at {PIC50_BACKFILL}; bulk CSV values used as-is")
+
+# ── Method unification + tier grouping (per user 2026-05-04 spec) ──
+#  Tier 1: "Medchem Rules"  ← Tier 1 + Tier 1.5 unified
+#  Tier 2: "Amine Replacements"  ← Tier 2 + Tier 2 SCALED unified
+#  Tier 3: "Constrained Generative"  ← LibInvent locked / Mol2Mol+wh / De Novo+wh / v2 (kept as sub-methods)
+#  Tier 4: removed for now (Tier 4 De Novo / Tier 4 Mol2Mol / Method A / Method B filtered out)
+if "method" in DF.columns:
+    DF["method"] = DF["method"].replace({
+        "Tier 1 — Med-Chem Playbook (rule-based)": "Medchem Rules",
+        "Tier 1.5 — Warhead Controls + Med-Chem Tricks": "Medchem Rules",
+        "Tier 2 — Fragment Replacement (curated 204)": "Amine Replacements",
+        "Tier 2 SCALED — Fragment Replacement (498K)": "Amine Replacements",
+        "Tier 2 SCALED — Fragment Replacement (498K from ChEMBL 35)": "Amine Replacements",
+        # Tier 3 v2 + Tier 3 v3 sub-methods kept as-is, will group in frontend
+    })
+    # Drop Tier 4 + Methods A/B (generate-and-filter family) for now
+    DROPPED = [
+        "Tier 4 — De Novo unconstrained",
+        "Tier 4 — Mol2Mol unconstrained",
+        "Method A — De Novo FiLMDelta-driven",
+        "Method B — Mol2Mol FiLMDelta-driven",
+    ]
+    pre = len(DF)
+    DF = DF[~DF["method"].isin(DROPPED)].reset_index(drop=True)
+    print(f"  Filtered out Tier 4 / Methods A/B: {pre:,} -> {len(DF):,}")
+    # Drop warhead-modifying controls — every reported candidate must have warhead intact
+    if "warhead_intact" in DF.columns:
+        pre = len(DF)
+        DF = DF[DF["warhead_intact"] == True].reset_index(drop=True)
+        print(f"  Filtered out warhead-MODIFIED candidates: {pre:,} -> {len(DF):,}")
+    # Drop disconnected-fragment SMILES (Tier 1 ReplaceSubstructs sometimes produces
+    # mol1.fragment2 SMILES where a bond was inadvertently broken; these pass the warhead
+    # SMARTS via the first fragment but aren't real candidates).
+    if "smiles" in DF.columns:
+        pre = len(DF)
+        DF = DF[~DF["smiles"].astype(str).str.contains(".", regex=False, na=False)].reset_index(drop=True)
+        print(f"  Filtered out disconnected (multi-fragment) SMILES: {pre:,} -> {len(DF):,}")
+    DF["row_id"] = DF.index
+    print(f"  Methods after unification: {sorted(DF['method'].unique().tolist())}")
+# Use pIC50_method as the primary pIC50 (uniform across methods)
+if "pIC50_method" in DF.columns and "pIC50_film" not in DF.columns:
+    DF["pIC50_film"] = DF["pIC50_method"]
+elif "pIC50_film" not in DF.columns and "pIC50_method" in DF.columns:
+    DF["pIC50_film"] = DF["pIC50_method"]
+
+# ── Substructure-flag cache (Filter 0 — Mol1-anchored OR-set filter) ─────────
+# Pre-computed by scripts/build_substruct_cache.py. Provides per-SMILES flags:
+#   mol1_murcko_smarts_match  — lenient Mol1 Murcko SMARTS
+#   thiq_core                 — THIQ-acrylamide pharmacophore
+#   acryl_match               — acrylamide warhead alone
+# Merged into DF so /api/data (Tier 1/2/3 method tables + survivors) can honor
+# the same Filter 0 group filter as /api/cohort_smis (Tier 4 cohorts).
+SUBSTRUCT_CACHE = PROJECT_ROOT / "results" / "paper_evaluation" / "substruct_flags.csv"
+SUBSTRUCT_BY_SMILES: dict = {}
+if SUBSTRUCT_CACHE.exists():
+    _sc = pd.read_csv(SUBSTRUCT_CACHE)
+    _sc = _sc.drop_duplicates(subset=["smiles"], keep="first")
+    for c in ("mol1_murcko_smarts_match", "thiq_core", "acryl_match"):
+        if c in DF.columns:
+            DF = DF.drop(columns=[c])
+    DF = DF.merge(_sc, on="smiles", how="left")
+    for c in ("mol1_murcko_smarts_match", "thiq_core", "acryl_match"):
+        DF[c] = DF[c].fillna(False).astype(bool)
+    print(f"Merged substruct flags from {SUBSTRUCT_CACHE.name}: "
+          f"murcko={int(DF['mol1_murcko_smarts_match'].sum()):,}  "
+          f"thiq={int(DF['thiq_core'].sum()):,}  acryl={int(DF['acryl_match'].sum()):,}")
+    # Build per-SMILES dict for cohort CSVs that lack the cols (the 6 OLD CSVs
+    # were backfilled in scripts/backfill_substructure_cols.py; cohort SMILES
+    # not in DF still need a runtime lookup for /api/cohort_smis).
+    SUBSTRUCT_BY_SMILES = {
+        row.smiles: (bool(row.mol1_murcko_smarts_match), bool(row.thiq_core), bool(row.acryl_match))
+        for row in _sc.itertuples(index=False)
+    }
+else:
+    print(f"[warn] No substruct cache at {SUBSTRUCT_CACHE.name} — Filter 0 will treat all rows as non-matching")
+    for c in ("mol1_murcko_smarts_match", "thiq_core", "acryl_match"):
+        if c not in DF.columns:
+            DF[c] = False
+
+
+_FILTER0_VALID = ("murcko", "thiq", "murcko_and_acryl")
+# 2026-06-08: Default state is "all 3 ON" — the user wants the report to start
+# from the lead-optimization-relevant union. Clients (frontend or curl) get the
+# OR-of-all-3 unless they explicitly opt out with ``groups=all`` / ``=none``.
+_FILTER0_DEFAULT = set(_FILTER0_VALID)
+
+
+def _parse_groups(req) -> set[str]:
+    """Parse Filter-0 group selection from a Flask request.
+
+    Accepts either ``?groups=murcko,thiq`` (multi) or legacy ``?group=murcko``
+    (single). When the param is absent, the default is the OR-of-all-3 — see
+    ``_FILTER0_DEFAULT``. To explicitly DISABLE the filter, pass
+    ``groups=all`` or ``groups=none`` (empty string). Valid tokens:
+    'murcko', 'thiq', 'murcko_and_acryl'.
+    """
+    raw_args = req.args.get("groups")
+    if raw_args is None:
+        raw_args = req.args.get("group")
+    if raw_args is None:
+        # No param at all → apply default OR-of-all-3.
+        return set(_FILTER0_DEFAULT)
+    raw = (raw_args or "").strip().lower()
+    if raw in ("all", "none", "off"):
+        # Explicit opt-out.
+        return set()
+    out = {tok.strip() for tok in raw.split(",") if tok.strip() in _FILTER0_VALID}
+    return out
+
+
+def _df_group_mask(df, groups: set[str]):
+    """OR-mask over Filter-0 groups for a DataFrame with the 3 substruct cols.
+
+    Missing columns are treated as False (cohort CSV without backfill → no rows
+    match), which is the safe default. ``groups`` empty → all-True mask.
+    """
+    if not groups:
+        return pd.Series([True] * len(df), index=df.index)
+    def col(name):
+        if name in df.columns:
+            return df[name].fillna(False).astype(bool)
+        return pd.Series([False] * len(df), index=df.index)
+    mask = pd.Series([False] * len(df), index=df.index)
+    if "murcko" in groups:
+        mask = mask | col("mol1_murcko_smarts_match")
+    if "thiq" in groups:
+        mask = mask | col("thiq_core")
+    if "murcko_and_acryl" in groups:
+        mask = mask | (col("mol1_murcko_smarts_match") & col("acryl_match"))
+    return mask
+
+
+# Cache for default-OR-set mask on the main DF (set after DF assembly is done,
+# at the end of the load section). Keyed only by id(DF) so a DF rebuild
+# invalidates automatically.
+_DEFAULT_MASK_CACHE: dict = {}
+
+
+def _df_group_mask_cached(df, groups: set[str]):
+    """Same as _df_group_mask but caches the default OR-set mask on DF."""
+    if frozenset(groups) == frozenset(_FILTER0_DEFAULT):
+        key = id(df)
+        m = _DEFAULT_MASK_CACHE.get(key)
+        if m is not None and len(m) == len(df):
+            return m
+        m = _df_group_mask(df, groups)
+        _DEFAULT_MASK_CACHE.clear()
+        _DEFAULT_MASK_CACHE[key] = m
+        return m
+    return _df_group_mask(df, groups)
+
+
+# ── Merge Boltz cofold metrics ──────────────────────────────────────────────
+# Pre-2026-05-09: previous Cys560-targeted cofolds were deprecated after a QA
+# audit found Cys346 (P-loop, GxGxxG motif) is the literature-validated
+# ZAP70 covalent target (PMID 33845236, 37594408), not Cys560. Old data is
+# under _DEPRECATED_cys560_*; we wait for the Cys346 redo to repopulate
+# the Boltz columns. Until then, the columns are simply NaN.
+TOP1000_MAN = PROJECT_ROOT / "data" / "boltz_poses" / "top1000_manifest__zap70_cys346.json"
+ENERGY_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_energy_scores.csv"
+if TOP1000_MAN.exists():
+    _b = json.loads(TOP1000_MAN.read_text())
+    boltz_rows = []
+    for rid_str, m in _b.items():
+        boltz_rows.append({
+            "row_id": int(rid_str),
+            "yaml_name": m.get("yaml_name"),
+            "mPAE": m["mPAE"],
+            "iptm": m["iptm"],
+            "ligand_iptm": m["ligand_iptm"],
+            "boltz_plddt": m["complex_plddt"],
+            "boltz_pde": m["complex_pde"],
+            "boltz_confidence": m["confidence_score"],
+            "combined_score": m["combined_score"],
+        })
+    boltz_df = pd.DataFrame(boltz_rows)
+    DF = DF.merge(boltz_df, on="row_id", how="left")
+    n_with = DF["mPAE"].notna().sum()
+    print(f"Merged Cys346 Boltz cofold metrics for {n_with} of {len(DF)} rows")
+else:
+    print(f"No Cys346 cofold manifest yet at {TOP1000_MAN.name}; Boltz columns will be NaN until cofold redo completes")
+
+# ── MM-GBSA energy merge is DISABLED until scorer bugs are fixed ────────────
+# QA audit (2026-05-21) flagged 4 critical bugs in score_cofold_energy.py:
+#   1. MMFFOptimizeMolecule scrambles the Boltz pose before scoring (HETEROSCEDASTIC)
+#   2. GB radius patch (Sγ=1.80) is no-op on GBSAOBCForce (silent)
+#   3. CustomBondForce restraint energy contaminates dG_bind
+#   4. Stage-2 minimization releases all restraints (not just near-ligand)
+# Expected rank correlation with combined_score: |ρ| < 0.15. Killing this path.
+# When a fixed scorer is built, re-enable the merge below. ENERGY_CSV exists
+# but has only 3 untrustworthy rows from the killed run.
+ENABLE_ENERGY_MERGE = False
+if ENABLE_ENERGY_MERGE and ENERGY_CSV.exists():
+    _e = pd.read_csv(ENERGY_CSV)
+    _e = _e[_e["success_flag"] == 1].copy()
+    if len(_e):
+        _e_merge = _e.rename(columns={"name": "yaml_name"})[
+            ["yaml_name", "dG_bind_kcalmol", "ligand_strain_kcalmol",
+             "rmsd_min_A", "sg_cb_dist_A"]
+        ].drop_duplicates(subset=["yaml_name"], keep="last")
+        if "yaml_name" in DF.columns:
+            DF = DF.merge(_e_merge, on="yaml_name", how="left")
+            n_e = DF["dG_bind_kcalmol"].notna().sum()
+            print(f"Merged MM-GBSA energy for {n_e} of {len(DF)} rows  ({len(_e)} successful)")
+else:
+    print("MM-GBSA energy merge disabled (scorer needs rebuild per QA audit)")
+
+# ── Expose extra Boltz geometry/confidence fields from top1000 manifest ─────
+# d_SG (warhead-Cys distance), ligand_iptm, complex_plddt already populated
+# above as 'boltz_plddt'. d_SG is the defensible warhead-geometry signal we
+# add now in lieu of broken energy terms.
+if TOP1000_MAN.exists() and "row_id" in DF.columns:
+    extra_rows = []
+    for rid_str, m in _b.items():
+        extra_rows.append({
+            "row_id": int(rid_str),
+            "d_SG": m.get("d_SG"),
+            "geom_ok": m.get("geom_ok"),
+            "n_h_bonds": m.get("n_h_bonds"),
+            "n_stabilizing_contacts": m.get("n_stabilizing_contacts"),
+            "pocket_occupancy_pct": m.get("pocket_occupancy_pct"),
+        })
+    extra_df = pd.DataFrame(extra_rows)
+    DF = DF.merge(extra_df, on="row_id", how="left")
+    print(f"Exposed d_SG, geom_ok, contact counts, pocket_occupancy for {DF['d_SG'].notna().sum()} rows")
+
+# ── Merge LEGACY 997 burgi_dunitz_dev_deg + extras (computed 2026-06-06) ─────
+# The legacy 997 manifest didn't include burgi_dunitz_dev_deg etc.; the
+# `compute_legacy_geom.py` script re-runs compute_pose_geom on the legacy
+# cofold CIFs so they pass f5_warhead_dev + other geometry-keyed filters.
+LEGACY_GEOM_CSV = PROJECT_ROOT / "data" / "tier4_scored" / "boltz_legacy_geom_metrics_997.csv"
+if LEGACY_GEOM_CSV.exists() and "row_id" in DF.columns:
+    _lg = pd.read_csv(LEGACY_GEOM_CSV)
+    legacy_geom_cols = ["burgi_dunitz_dev_deg", "n_h_bonds", "n_stabilizing_contacts",
+                        "pocket_occupancy_pct", "atp_pocket_fraction", "hinge_hbond",
+                        "warhead_atom_name", "geom_ok", "d_SG"]
+    legacy_geom_cols = [c for c in legacy_geom_cols if c in _lg.columns]
+    _lg_keep = _lg[["row_id"] + legacy_geom_cols].drop_duplicates(subset="row_id", keep="last").copy()
+    _lg_keep["row_id"] = _lg_keep["row_id"].astype(int)
+    # Use combine_first so we DON'T clobber any existing values from prior merges —
+    # only fill where legacy 997 has data and the DF is currently NaN.
+    DF = DF.merge(_lg_keep, on="row_id", how="left", suffixes=("", "_lg997"))
+    for c in legacy_geom_cols:
+        lg_col = f"{c}_lg997"
+        if lg_col in DF.columns:
+            # Backfill: if the current column is NaN but legacy has a value, use legacy
+            if c in DF.columns:
+                mask = DF[c].isna() & DF[lg_col].notna()
+                DF.loc[mask, c] = DF.loc[mask, lg_col]
+            else:
+                DF[c] = DF[lg_col]
+            DF = DF.drop(columns=[lg_col])
+    n_bd = DF["burgi_dunitz_dev_deg"].notna().sum() if "burgi_dunitz_dev_deg" in DF.columns else 0
+    print(f"Backfilled legacy 997 burgi_dunitz_dev_deg + geom; total coverage now {n_bd}")
+else:
+    print(f"Legacy geom CSV not found at {LEGACY_GEOM_CSV}; legacy 997 will NaN-fail f5_warhead_dev")
+
+# ── Cross-fill boltz_* alias columns from legacy iptm/ligand_iptm/mPAE ──────
+# L5 filters now reference boltz_iptm / boltz_ligand_iptm / mPAE_paper (the
+# 3,597-cohort schema). The legacy 997 manifest populated the OLD column
+# names (iptm / ligand_iptm / mPAE). Without this coalesce, the legacy 997
+# mols NaN-fail every L5 Boltz-keyed filter even though they HAVE the data.
+_alias_map = [
+    ("boltz_iptm", "iptm"),
+    ("boltz_ligand_iptm", "ligand_iptm"),
+    ("mPAE_paper", "mPAE"),
+    ("boltz_complex_plddt", "boltz_plddt"),
+    # 2026-06-06 PM: legacy 997-cohort Vina rescore (zap70_cys346_vina_rescore.csv) uses the
+    # bare names; new 3,597-cohort merge brings vina_rescore_* prefixed. Coalesce so f5_vina_boltz
+    # and f5_vina_intra apply to BOTH cohorts (legacy 997 had ~990 with this).
+    ("vina_rescore_affinity_kcalmol", "vina_kcalmol"),
+    ("vina_rescore_intra_kcalmol", "vina_intra_kcalmol"),
+    ("vina_rescore_inter_kcalmol", "vina_inter_kcalmol"),
+]
+for new_col, legacy_col in _alias_map:
+    if legacy_col in DF.columns:
+        if new_col not in DF.columns:
+            DF[new_col] = DF[legacy_col]
+        else:
+            # combine_first: keep existing new-col values, fill NaNs from legacy
+            mask = DF[new_col].isna() & DF[legacy_col].notna()
+            DF.loc[mask, new_col] = DF.loc[mask, legacy_col]
+        n_now = DF[new_col].notna().sum()
+        print(f"  alias-backfilled {new_col} ← {legacy_col}; total coverage now {n_now}")
+
+# ── Merge 3,597-cohort Boltz metrics (NEW — from autonomous run 2026-06-06) ──
+# After the 3,597-mol Boltz cofold run, we have richer per-pose metrics from
+# the new cohort. boltz2_cohort_A_relaxed.csv carries: boltz_confidence_score,
+# boltz_iptm, boltz_complex_plddt, boltz_complex_iplddt, boltz_complex_pde,
+# boltz_complex_ipde, plus vanilla Vina + cov-Vina rescore on the Boltz poses.
+# We overlay these onto the main DF for any mols that have them (partial
+# coverage — fills as the fleet completes).
+COHORT_3597_CSV = PROJECT_ROOT / "data" / "tier4_scored" / "boltz2_cohort_A_relaxed.csv"
+if COHORT_3597_CSV.exists() and "row_id" in DF.columns:
+    _c = pd.read_csv(COHORT_3597_CSV, low_memory=False)
+    new_cols = [
+        "boltz_confidence_score", "boltz_iptm", "boltz_ligand_iptm",
+        # 2026-06-07: full Boltz confidence panel — pTM is the global metric,
+        # protein_iptm is the protein-side iPTM, both surfaced as observe-only.
+        "boltz_ptm", "boltz_protein_iptm",
+        "boltz_complex_plddt", "boltz_complex_iplddt",
+        "boltz_complex_pde", "boltz_complex_ipde",
+        "vina_rescore_affinity_kcalmol", "vina_rescore_inter_kcalmol",
+        "vina_rescore_intra_kcalmol", "vina_rescore_torsions_kcalmol",
+        "covvina_rescore_affinity_kcalmol", "covvina_rescore_inter_kcalmol",
+        "covvina_rescore_intra_kcalmol", "covvina_rescore_torsions_kcalmol",
+        "boltz_pose_locally_available",
+        # 2026-06-06: geometry/contact metrics from compute_full_boltz_metrics.
+        # Without these in the merge, L5 filters f5_dsg, f5_warhead_dev, f5_mpae,
+        # f5_n_hbonds NaN-reject the 2,010 cohort rows even though the data IS
+        # in the cohort CSV. CRITICAL fix per QA audit 2026-06-06.
+        "d_SG", "geom_ok", "burgi_dunitz_dev_deg", "warhead_atom_name", "warhead_class",
+        "n_h_bonds", "n_stabilizing_contacts", "n_contacts_total", "n_salt_bridges",
+        "pocket_occupancy_pct", "atp_pocket_fraction", "hinge_hbond",
+        "mPAE_paper", "mPAE_full", "mPAE_interface", "mPAE_min",
+        "mPAE_proxy_kind", "mPAE_min_available",
+        # 2026-06-06 PM: master-agent-computed metrics merged into cohort CSV. PULL them.
+        "pKa_Cys346", "pred_log_k2_GSH",
+        "LUMO_eV", "HOMO_eV", "gap_eV", "omega_eV", "q_Cb", "fukui_plus_Cb",
+        # 2026-06-07: shape + ESP similarity and strain — were silently missing from
+        # cohort merge so survivors rendered 0% for these. Pull explicitly.
+        "shape_Tc_seed", "esp_sim_seed",
+        "rdkit_strain_kcal_mol", "rdkit_strain_posefree_kcal_mol",
+        "vdw_interaction_kcal_mol",
+        # 2026-06-07: TRUE London-style mPAE_min computed from Boltz PAE NPZ
+        # files (now available after --write_full_pae rerun on 198 survivors).
+        # Coverage: 141 / 198 survivors (the ones A+B had on their local SSD).
+        # Lower = better. Boltz PAE scale differs from AF3; ranking-relative.
+        "mPAE_min_london", "mPAE_min_raw_atompair", "mPAE_mean_lig_to_prot",
+        # 2026-06-07: efficiency metrics computed from pIC50_mean + physchem
+        # (BEI/SEI/SILE/fsp3) — the legacy efficiency_metrics.csv only covers
+        # row_ids 0-520935 (the OLD cohort); new cohort row_ids start at 520942.
+        # Lipinski_violations is already 100% via the master bulk-scored CSV's
+        # Lipinski_violations (renders as Lipinski_violations_x after merge).
+        "BEI", "SEI", "SILE", "fsp3",
+        # 2026-06-07: anchor_wins / anchor_wins_ge7 from the 280-anchor pairwise
+        # FiLMDelta tournament (cohort-CSV-derived). Already 100% on the 3,597
+        # cohort but absent from master DF for these row_ids.
+        "anchor_wins", "anchor_wins_ge7",
+        # 2026-06-07: pubTc v3 panel similarity recomputed on the 3,597 cohort
+        # (the legacy pubtc_scores_v3.csv stopped at row_id 620714 — missing
+        # ~62% of cohort). max_pubTc was rescued via the cheap-backfill CSV
+        # earlier; mean/median/top10 are merged here.
+        "mean_pubTc", "median_pubTc", "top10_mean_pubTc", "closest_lead",
+        # 2026-06-07: Tanimoto similarity to the 280-mol ZAP70 anchor training
+        # set (max + top-10 mean). Master CSV's max_Tc_train only covers old
+        # row_ids; new cohort row_ids start at 520942 so we recompute on the
+        # full 3,597 directly into cohort CSV.
+        "max_Tc_train", "mean_top10_Tc_train",
+    ]
+    new_cols = [c for c in new_cols if c in _c.columns]
+    keep_cols = ["row_id"] + new_cols
+    _c_keep = _c[keep_cols].drop_duplicates(subset="row_id", keep="last").copy()
+    _c_keep["row_id"] = _c_keep["row_id"].astype(int)
+    # Don't clobber existing boltz_iptm/iptm etc — use 3597_ prefix if collision
+    rename_map = {c: f"c3597_{c}" if c in DF.columns else c for c in new_cols}
+    _c_keep = _c_keep.rename(columns=rename_map)
+    DF = DF.merge(_c_keep, on="row_id", how="left")
+    n_with_boltz = DF[[rename_map.get("boltz_confidence_score", "boltz_confidence_score")]].notna().any(axis=1).sum() if rename_map.get("boltz_confidence_score", "boltz_confidence_score") in DF.columns else 0
+    print(f"Merged 3,597-cohort Boltz metrics for {n_with_boltz} of {len(DF)} rows")
+    # ── Final coalesce: combine c3597_* prefixed columns back into their base ──
+    # The 3,597 merge auto-prefixed any column already present with `c3597_` to
+    # avoid clobbering. That means the 3,597 cohort's boltz_iptm landed in
+    # c3597_boltz_iptm while the legacy-alias-backfilled boltz_iptm still only
+    # carries the 997 legacy values. Coalesce so a single column carries BOTH.
+    _coalesce_pairs = [(c, f"c3597_{c}") for c in new_cols if f"c3597_{c}" in DF.columns]
+    for base_col, prefixed_col in _coalesce_pairs:
+        if base_col not in DF.columns:
+            DF[base_col] = DF[prefixed_col]
+        else:
+            mask = DF[base_col].isna() & DF[prefixed_col].notna()
+            DF.loc[mask, base_col] = DF.loc[mask, prefixed_col]
+        DF = DF.drop(columns=[prefixed_col])
+    if _coalesce_pairs:
+        print(f"Coalesced {len(_coalesce_pairs)} c3597_* columns into their base names; "
+              f"boltz_iptm coverage now {DF['boltz_iptm'].notna().sum() if 'boltz_iptm' in DF.columns else 0}")
+
+    # ── 2026-06-07 fix: reverse-fill legacy alias columns from the new 3,597-merged
+    # ones so the survivor-table display fields (iptm, mPAE, boltz_plddt, boltz_pde,
+    # boltz_confidence, vina_kcalmol, vina_inter_kcalmol, vina_intra_kcalmol) inherit
+    # coverage from the new cohort. Before this, those legacy aliases only covered
+    # the 997 top1000 manifest rows; now they cover all 3,337 cofold rows.
+    _reverse_alias = [
+        ("boltz_iptm", "iptm"),
+        ("boltz_ligand_iptm", "ligand_iptm"),
+        ("mPAE_paper", "mPAE"),
+        ("boltz_complex_plddt", "boltz_plddt"),
+        ("boltz_complex_pde", "boltz_pde"),
+        ("boltz_confidence_score", "boltz_confidence"),
+        ("vina_rescore_affinity_kcalmol", "vina_kcalmol"),
+        ("vina_rescore_inter_kcalmol", "vina_inter_kcalmol"),
+        ("vina_rescore_intra_kcalmol", "vina_intra_kcalmol"),
+        ("burgi_dunitz_dev_deg", "warhead_dev_deg"),
+    ]
+    n_rev = 0
+    for new_col, legacy_col in _reverse_alias:
+        if new_col in DF.columns:
+            if legacy_col not in DF.columns:
+                DF[legacy_col] = DF[new_col]
+                n_rev += 1
+            else:
+                mask = DF[legacy_col].isna() & DF[new_col].notna()
+                DF.loc[mask, legacy_col] = DF.loc[mask, new_col]
+                n_rev += int(mask.sum() > 0)
+    print(f"Reverse-aliased {n_rev} legacy display cols from 3,597-cohort sources")
+else:
+    print(f"3,597 cohort CSV not found at {COHORT_3597_CSV.name}; new Boltz metrics not merged")
+
+
+# ── Merge PROPKA3 Cys346 pKa per-pose ─────────────────────────────────────
+# Per Olsson 2011 / Søndergaard 2011, PROPKA3 estimates a per-pose,
+# ligand-environment-aware pKa for the Cys346 nucleophile. Together with
+# xTB warhead electrophilicity, this completes the covalent-rate story
+# (nucleophile activation + electrophile). Computed by
+# experiments/propka_cys346_batch.py over the 997 Boltz cofolds.
+PROPKA_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_propka.csv"
+if PROPKA_CSV.exists() and "row_id" in DF.columns:
+    _pk = pd.read_csv(PROPKA_CSV)
+    _pk_merge = _pk[_pk["success_flag"] == 1][["row_id", "pKa_Cys346"]].drop_duplicates(
+        subset=["row_id"], keep="last"
+    )
+    # 2026-06-06 PM: cohort merge above may have already added pKa_Cys346 (master-agent run).
+    # If so, merge will produce _x/_y suffixes — handle by coalesce.
+    DF = DF.merge(_pk_merge, on="row_id", how="left", suffixes=("", "_propka"))
+    if "pKa_Cys346_propka" in DF.columns:
+        mask = DF["pKa_Cys346"].isna() & DF["pKa_Cys346_propka"].notna()
+        DF.loc[mask, "pKa_Cys346"] = DF.loc[mask, "pKa_Cys346_propka"]
+        DF = DF.drop(columns=["pKa_Cys346_propka"])
+    n_pk = DF["pKa_Cys346"].notna().sum() if "pKa_Cys346" in DF.columns else 0
+    print(f"Merged PROPKA3 pKa_Cys346 for {n_pk} of {len(DF)} rows")
+else:
+    print(f"No PROPKA3 pKa CSV at {PROPKA_CSV}; pKa_Cys346 will be NaN")
+
+# ── Merge pubTc v3 panel similarity (300-lead, primary; v1/v2 removed) ────
+# Computed by experiments/compute_pubtc_panel_v3.py from the curated 300-lead
+# panel of published kinase covalent inhibitors (experiments/pubtc_panel_v3.py).
+# Covers ≥20 target classes (BTK/EGFR/KRAS-G12C/HER2/SYK/JAK/FGFR/MEK/BMX/TEC/
+# TYK2/ITK/ALK/MET/ABL/RIPK1/KIT/CDK7-9/MELK/AURKA/GAK/ERK/RSK + warhead probes).
+# Replaces both the v1 (11-lead) and v2 (30-lead) panels — those columns are
+# *dropped*, not renamed, per user instruction.
+#
+# Columns merged (primary, unsuffixed):
+#   max_pubTc            max Tanimoto across 300 leads
+#   mean_pubTc           mean Tanimoto
+#   median_pubTc         median Tanimoto
+#   top10_mean_pubTc     mean of the top-10 Tanimotos (broader than v1/v2 top-3)
+#   closest_lead         drug_name of highest-Tanimoto lead
+PUBTC_V3_CSV = PROJECT_ROOT / "data" / "paper_evaluation" / "pubtc_scores_v3.csv"
+
+if PUBTC_V3_CSV.exists():
+    _pt3 = pd.read_csv(PUBTC_V3_CSV)
+    # 2026-06-07: cohort 3,597 merge above also brings mean/median/top10 pubTc
+    # for new row_ids (520942-756351). pubtc_scores_v3.csv covers row_ids
+    # 0-620,714 (legacy). Coalesce-prefer-existing so neither clobbers the other.
+    DF = DF.merge(_pt3, on="row_id", how="left", suffixes=("", "_pt3csv"))
+    for c in ("max_pubTc", "median_pubTc", "mean_pubTc", "top10_mean_pubTc", "closest_lead"):
+        new_c = f"{c}_pt3csv"
+        if new_c in DF.columns:
+            if c not in DF.columns:
+                DF[c] = DF[new_c]
+            else:
+                mask = DF[c].isna() & DF[new_c].notna()
+                DF.loc[mask, c] = DF.loc[mask, new_c]
+            DF = DF.drop(columns=[new_c])
+    n_with_v3 = DF["max_pubTc"].notna().sum()
+    print(f"Merged pubTc v3 (300-lead) panel similarities for {n_with_v3} rows")
+else:
+    print(f"No pubTc v3 panel scores at {PUBTC_V3_CSV}; pubTc columns will be NaN")
+
+# ── Merge classic medchem ligand-efficiency metrics ─────────────────────────
+# Computed by experiments/compute_efficiency_metrics.py from existing columns
+# (pIC50_method, MW, LogP, HeavyAtoms, TPSA, HBA, HBD) + RDKit fsp3.
+# Exposes: LLE, LE, BEI, SEI, SILE, fsp3, Lipinski_violations
+# Citations: Hopkins 2014 (LLE); Hopkins, Groom, Alex 2004 (LE);
+#   Abad-Zapatero & Metz 2005 (BEI, SEI); Reynolds 2008 (SILE);
+#   Lovering 2009 (fsp3); Lipinski 1997 (rule-of-5).
+EFFICIENCY_CSV = PROJECT_ROOT / "data" / "paper_evaluation" / "efficiency_metrics.csv"
+if EFFICIENCY_CSV.exists():
+    _eff = pd.read_csv(EFFICIENCY_CSV)
+    # 2026-06-07: efficiency_metrics.csv was computed on old row_id range 0-520935
+    # and has 0 overlap with the new 3,597 cohort row_ids (520942-756351). The
+    # cohort 3,597 merge above already added BEI/SEI/SILE/fsp3/Lipinski_violations_y
+    # for that range; here we want to ADD coverage for the older candidate row_ids
+    # WITHOUT clobbering the new cohort values. Use coalesce-prefer-existing.
+    DF = DF.merge(_eff, on="row_id", how="left", suffixes=("", "_effcsv"))
+    for c in ("LLE", "LE", "BEI", "SEI", "SILE", "fsp3", "Lipinski_violations"):
+        new_c = f"{c}_effcsv"
+        if new_c in DF.columns:
+            if c not in DF.columns:
+                DF[c] = DF[new_c]
+            else:
+                mask = DF[c].isna() & DF[new_c].notna()
+                DF.loc[mask, c] = DF.loc[mask, new_c]
+            DF = DF.drop(columns=[new_c])
+    n_with = DF["LLE"].notna().sum()
+    print(f"Merged efficiency metrics (LLE/LE/BEI/SEI/SILE/fsp3/Lipinski_violations) for {n_with} rows")
+else:
+    print(f"No efficiency metrics at {EFFICIENCY_CSV}; efficiency columns will be NaN")
+
+# ── xTB GFN2 warhead electrophilicity descriptors ───────────────────────────
+# k_inact (covalent reaction-rate) signal — the missing half of
+# dG_total = dG_recognition + ΔG_react.  Computed by
+# experiments/xtb_warhead_electrophilicity.py for all 997 Cys346 cofold
+# ligands (acrylamide [CH2]=[CH]-[C](=O)-[N] Cβ identified via SMARTS,
+# free-state ETKDG+MMFF geometry, xTB --gfn 2 --vfukui single point).
+# Exposed columns:
+#   LUMO_eV         frontier orbital energy (lower = more electrophilic)
+#   HOMO_eV         frontier occupied orbital energy
+#   gap_eV          HOMO-LUMO gap
+#   omega_eV        Parr global electrophilicity ω = (H+L)²/(2·gap)
+#   q_Cb            Mulliken charge on Cβ (xTB scale; more-negative = slower)
+#   fukui_plus_Cb   local electrophilic Fukui f+ on Cβ
+#   pred_log_k2_GSH heuristic log k2 for GSH addition (Flanagan JMC 2014
+#                   style; calibrated to span ~-3 → +1 in literature units)
+# Note: xTB GFN2 LUMOs are systematically ~4-5 eV lower than DFT/B3LYP
+# (internal calibration). Use these for ranking, not absolute kinetic
+# interpretation. Rank correlation with combined_score is modest
+# (|Spearman| ≈ 0.18-0.24), confirming orthogonality from K_I signal.
+WARHEAD_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_warhead_reactivity.csv"
+if WARHEAD_CSV.exists() and "row_id" in DF.columns:
+    _w = pd.read_csv(WARHEAD_CSV)
+    _w = _w[_w["success_flag"] == 1].copy()
+    _w_merge = _w[[
+        "row_id", "LUMO_eV", "HOMO_eV", "gap_eV", "omega_eV",
+        "q_Cb", "fukui_plus_Cb", "pred_log_k2_GSH",
+    ]].drop_duplicates(subset=["row_id"], keep="last")
+    # 2026-06-06 PM: cohort merge above may have already added LUMO_eV/pred_log_k2_GSH (master agent).
+    # Coalesce on suffix conflict to avoid _x/_y collision.
+    DF = DF.merge(_w_merge, on="row_id", how="left", suffixes=("", "_xtb"))
+    xtb_cols = ["LUMO_eV", "HOMO_eV", "gap_eV", "omega_eV", "q_Cb", "fukui_plus_Cb", "pred_log_k2_GSH"]
+    for col in xtb_cols:
+        suf = f"{col}_xtb"
+        if suf in DF.columns:
+            mask = DF[col].isna() & DF[suf].notna()
+            DF.loc[mask, col] = DF.loc[mask, suf]
+            DF = DF.drop(columns=[suf])
+    n_w = DF["LUMO_eV"].notna().sum() if "LUMO_eV" in DF.columns else 0
+    n_k = DF["pred_log_k2_GSH"].notna().sum() if "pred_log_k2_GSH" in DF.columns else 0
+    print(f"Merged xTB warhead electrophilicity for {n_w} (LUMO) / {n_k} (log_k2_GSH) of {len(DF)} rows")
+else:
+    print(f"No xTB warhead reactivity file at {WARHEAD_CSV.name}; descriptors will be NaN")
+
+# ── AutoDock Vina rescore (score_only) for all 997 Cys346 cofold poses ─────
+# Trott & Olson 2010 knowledge-based scoring function. Orthogonal physics to
+# MM-GBSA (force field) and complementary to Boltz ML confidence — catches
+# MM-GBSA pathologies (entropy neglect, clash mis-scoring). Computed by
+# experiments/vina_rescore_batch.py from the existing Boltz cofold poses
+# (no re-docking; --score_only on the pre-positioned ligand).
+# Exposed columns:
+#   vina_kcalmol         Estimated free energy of binding (kcal/mol); primary
+#   vina_inter_kcalmol   Final intermolecular energy (ligand-receptor)
+#   vina_intra_kcalmol   Final total internal energy (ligand torsions)
+# Real kinase covalent inhibitors typically score -7 to -10 in Vina; values
+# below -2 indicate plausible binders, above 0 indicates significant clash.
+VINA_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_vina_rescore.csv"
+if VINA_CSV.exists() and "row_id" in DF.columns:
+    _v = pd.read_csv(VINA_CSV)
+    _v = _v[_v["success_flag"] == 1].copy()
+    _v_merge = _v[[
+        "row_id", "vina_kcalmol", "vina_inter_kcalmol", "vina_intra_kcalmol",
+    ]].drop_duplicates(subset=["row_id"], keep="last")
+    # 2026-06-07: orchestrator's coalesce-prefer-newer for vina/covvina may have
+    # already brought vina_kcalmol in (or aliased it). Use suffixes to avoid
+    # collision; coalesce into single base col.
+    DF = DF.merge(_v_merge, on="row_id", how="left", suffixes=("", "_legacyvina"))
+    for c in ("vina_kcalmol", "vina_inter_kcalmol", "vina_intra_kcalmol"):
+        legacy_c = f"{c}_legacyvina"
+        if legacy_c in DF.columns:
+            if c not in DF.columns:
+                DF[c] = DF[legacy_c]
+            else:
+                m = DF[c].isna() & DF[legacy_c].notna()
+                DF.loc[m, c] = DF.loc[m, legacy_c]
+            DF = DF.drop(columns=[legacy_c])
+    n_v = DF["vina_kcalmol"].notna().sum() if "vina_kcalmol" in DF.columns else 0
+    print(f"Merged Vina rescore (vina_kcalmol / inter / intra) for {n_v} of {len(DF)} rows")
+else:
+    print(f"No Vina rescore file at {VINA_CSV.name}; vina_kcalmol will be NaN")
+
+# ── Vanilla AutoDock Vina + AD-CovDock --local_only on Tier 4 Filter-1 ─────
+# Two orthogonal docking scores from the 41K Filter-1 survivors merged into
+# the per-cohort _scored.csv files at data/tier4_scored/. We re-aggregate
+# them here (union over 4 cohort CSVs, keep best score per SMILES) and merge
+# into the master DF on `smiles` so they become first-class filter/ranking
+# columns. Source CSVs are written by experiments/vanilla_vina_scorer.py and
+# experiments/adcov_local_scorer.py respectively.
+TIER4_SCORED_FILES = [
+    PROJECT_ROOT / "data" / "tier4_scored" / "exp6_v3_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "exp6_v4_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "exp6_v5_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "exp2_v2_rl_v2_scored.csv",
+    # 2026-06-10 FIX: F4_boltz_pool_v2 + mol1-anchored cohort CSVs also carry
+    # vanilla_vina + adcov_local. Without these, the F4 Boltz pool (which
+    # sources rows from murcko_rl/thiq_rl/mol1RL_v5 cohorts) had 0 Vina
+    # coverage in the merged DF → cascade After-L4 collapsed to 1 mol.
+    PROJECT_ROOT / "data" / "tier4_scored" / "F4_boltz_pool_v2.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "mol1RL_v5_seed_mol1_only_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "murcko_rl_exp2_kinase_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "murcko_rl_exp2_zap70_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "murcko_rl_kinase_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "murcko_rl_zap70_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_exp2_kinase_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_exp2_mol1only_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_exp2_zap70_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_kinase_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_mol1only_scored.csv",
+    PROJECT_ROOT / "data" / "tier4_scored" / "thiq_rl_zap70_scored.csv",
+]
+_t4_vina_frames = []
+for _p in TIER4_SCORED_FILES:
+    if not _p.exists():
+        continue
+    _sub_cols = ["smiles"]
+    _peek = pd.read_csv(_p, nrows=1)
+    for _c in ("vanilla_vina_kcalmol", "adcov_local_kcalmol"):
+        if _c in _peek.columns:
+            _sub_cols.append(_c)
+    if len(_sub_cols) > 1:
+        _t4_vina_frames.append(pd.read_csv(_p, usecols=_sub_cols))
+if _t4_vina_frames:
+    _t4_vina = pd.concat(_t4_vina_frames, ignore_index=True)
+    # Keep best (most negative) score per SMILES across cohorts
+    _t4_vina = _t4_vina.sort_values(
+        ["vanilla_vina_kcalmol", "adcov_local_kcalmol"],
+        na_position="last",
+    ).drop_duplicates("smiles", keep="first")
+    # Drop pre-existing columns so we don't double-merge
+    for _c in ("vanilla_vina_kcalmol", "adcov_local_kcalmol"):
+        if _c in DF.columns:
+            DF = DF.drop(columns=_c)
+    DF = DF.merge(_t4_vina, on="smiles", how="left")
+    _n_van = DF["vanilla_vina_kcalmol"].notna().sum() if "vanilla_vina_kcalmol" in DF.columns else 0
+    _n_cov = DF["adcov_local_kcalmol"].notna().sum() if "adcov_local_kcalmol" in DF.columns else 0
+    print(f"Merged Tier 4 Vina dock scores: vanilla_vina for {_n_van:,} rows, "
+          f"adcov_local for {_n_cov:,} rows (of {len(DF):,})")
+else:
+    print("No Tier 4 Vina scored CSVs found; vanilla_vina + adcov_local will be NaN")
+
+# ── L3 cheap-backfill (SAScore + LLE + LE + max_pubTc + posefree-strain) ────
+# Backfill produced by direct/agent script 2026-06-06 to make Layer-3 filters
+# meaningful across the full 756K DF (vs. previous ~70% legacy-only coverage).
+# Output schema: row_id,smiles,SAScore,LLE_method,LE_method,max_pubTc,rdkit_strain_posefree_kcal_mol
+# Merge strategy: rows in DF with NaN for any of these columns take the backfill
+# value; rows with existing values keep them (legacy methods scored precisely).
+L3_BACKFILL_CSV = PROJECT_ROOT / "data" / "paper_evaluation" / "l3_cheap_backfill.csv"
+if L3_BACKFILL_CSV.exists() and "row_id" in DF.columns:
+    _bf = pd.read_csv(L3_BACKFILL_CSV)
+    # Rename _method → canonical name (LLE_method → LLE, LE_method → LE).
+    _bf = _bf.rename(columns={"LLE_method": "LLE_bf", "LE_method": "LE_bf",
+                              "SAScore": "SAScore_bf", "max_pubTc": "max_pubTc_bf",
+                              "rdkit_strain_posefree_kcal_mol": "rdkit_strain_posefree_kcal_mol_bf"})
+    _bf_merge = _bf[["row_id", "SAScore_bf", "LLE_bf", "LE_bf",
+                     "max_pubTc_bf", "rdkit_strain_posefree_kcal_mol_bf"]].drop_duplicates("row_id", keep="last")
+    DF = DF.merge(_bf_merge, on="row_id", how="left")
+    # Fill existing-NaN cells with backfill value; preserve existing precise values.
+    for canonical, bf in [
+        ("SAScore", "SAScore_bf"),
+        ("LLE", "LLE_bf"),
+        ("LE", "LE_bf"),
+        ("max_pubTc", "max_pubTc_bf"),
+        ("rdkit_strain_posefree_kcal_mol", "rdkit_strain_posefree_kcal_mol_bf"),
+    ]:
+        if canonical not in DF.columns:
+            DF[canonical] = pd.NA
+        # where DF[canonical] is NaN, take backfill
+        mask = DF[canonical].isna() & DF[bf].notna()
+        DF.loc[mask, canonical] = DF.loc[mask, bf]
+        DF = DF.drop(columns=bf)
+    _ns = DF["SAScore"].notna().sum()
+    _nl = DF["LLE"].notna().sum()
+    _nm = DF["max_pubTc"].notna().sum()
+    _np = DF["rdkit_strain_posefree_kcal_mol"].notna().sum()
+    print(f"Merged L3 cheap-backfill: SAScore={_ns:,}, LLE={_nl:,}, max_pubTc={_nm:,}, posefree_strain={_np:,} (of {len(DF):,})")
+else:
+    print(f"No L3 cheap-backfill at {L3_BACKFILL_CSV}; existing column coverage unchanged")
+
+# ── RDKit MMFF ligand strain + UFF vdW (cofold) ────────────────────────────
+# H-only relaxation (heavy atoms fixed) under MMFF94s, then MMFF SP energy of
+# the bound pose, minus best-of-5 free-conformer reference. Pose-aware strain
+# for the 997 Cys346 Boltz cofolds. vdW interaction (UFF Lennard-Jones,
+# 8 A cutoff, 2.5 A min-dist to exclude warhead-Cys bond partner) is an
+# orthogonal physics signal complementary to Vina.
+# Computed by experiments/score_rdkit_strain_batch.py --mode cofold.
+RDKIT_STRAIN_COFOLD_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_rdkit_strain_cofold.csv"
+if RDKIT_STRAIN_COFOLD_CSV.exists() and "row_id" in DF.columns:
+    _rs = pd.read_csv(RDKIT_STRAIN_COFOLD_CSV)
+    _rs = _rs[_rs["success_flag"] == 1].copy()
+    _rs_merge = _rs[[
+        "row_id", "strain_kcal_mol", "vdw_interaction_kcal_mol",
+    ]].rename(columns={
+        "strain_kcal_mol": "rdkit_strain_kcal_mol",
+    }).drop_duplicates(subset=["row_id"], keep="last")
+    # If the cohort already brought rdkit_strain_kcal_mol via the 3,597 merge
+    # (orchestrator 2026-06-07 v2 strain), coalesce-prefer-existing rather than
+    # creating _x/_y duplicate columns from the legacy 997-row file.
+    if "rdkit_strain_kcal_mol" in DF.columns:
+        _rs_merge = _rs_merge.rename(columns={
+            "rdkit_strain_kcal_mol": "rdkit_strain_kcal_mol_legacy",
+            "vdw_interaction_kcal_mol": "vdw_interaction_kcal_mol_legacy",
+        })
+        DF = DF.merge(_rs_merge, on="row_id", how="left")
+        # Backfill NaNs in the cohort-derived col from the legacy 997 strain.
+        for tgt, leg in [("rdkit_strain_kcal_mol", "rdkit_strain_kcal_mol_legacy"),
+                         ("vdw_interaction_kcal_mol", "vdw_interaction_kcal_mol_legacy")]:
+            if leg in DF.columns:
+                if tgt not in DF.columns:
+                    DF[tgt] = DF[leg]
+                else:
+                    mask = DF[tgt].isna() & DF[leg].notna()
+                    DF.loc[mask, tgt] = DF.loc[mask, leg]
+                DF = DF.drop(columns=[leg])
+    else:
+        DF = DF.merge(_rs_merge, on="row_id", how="left")
+    n_rs = DF["rdkit_strain_kcal_mol"].notna().sum()
+    print(f"Merged RDKit MMFF strain + vdW (cofold) for {n_rs} of {len(DF)} rows")
+else:
+    print(f"No RDKit strain cofold file at {RDKIT_STRAIN_COFOLD_CSV.name}; rdkit strain columns will be NaN")
+
+# ── RDKit pose-free constitutional strain (~520K rows) ─────────────────────
+# Single ETKDGv3 conformer ("bound proxy", H-only relax) MMFF SP minus
+# best-of-5 free conformer MMFF energy. Scaffold-independent intrinsic
+# strain proxy for all dashboard candidates (covers methods that lack cofold
+# poses). Computed by experiments/score_rdkit_strain_batch.py --mode posefree.
+# Supports the canonical single file OR a directory of shard CSVs written
+# by independent --shard idx/total invocations (concatenated in-memory).
+RDKIT_STRAIN_POSEFREE_CSV = PROJECT_ROOT / "data" / "paper_evaluation" / "rdkit_strain_posefree.csv"
+RDKIT_STRAIN_POSEFREE_SHARDS = PROJECT_ROOT / "data" / "paper_evaluation" / "posefree_shards"
+
+_rp_df = None
+if RDKIT_STRAIN_POSEFREE_CSV.exists() and RDKIT_STRAIN_POSEFREE_CSV.stat().st_size > 0:
+    try:
+        _rp_df = pd.read_csv(RDKIT_STRAIN_POSEFREE_CSV)
+    except pd.errors.EmptyDataError:
+        _rp_df = None
+elif RDKIT_STRAIN_POSEFREE_SHARDS.exists() and RDKIT_STRAIN_POSEFREE_SHARDS.is_dir():
+    shard_dfs = []
+    for shard in sorted(RDKIT_STRAIN_POSEFREE_SHARDS.glob("shard_*.csv")):
+        if shard.stat().st_size == 0:
+            continue
+        try:
+            shard_dfs.append(pd.read_csv(shard))
+        except pd.errors.EmptyDataError:
+            continue
+    if shard_dfs:
+        _rp_df = pd.concat(shard_dfs, ignore_index=True)
+        print(f"  (loaded {len(shard_dfs)} pose-free shards: {len(_rp_df)} rows)")
+
+if _rp_df is not None and "row_id" in DF.columns and "success_flag" in _rp_df.columns:
+    _rp = _rp_df[_rp_df["success_flag"] == 1].copy()
+    _rp_merge = _rp[["row_id", "strain_kcal_mol"]].rename(
+        columns={"strain_kcal_mol": "_rdkit_strain_posefree_legacy"}
+    ).drop_duplicates(subset=["row_id"], keep="last")
+    DF = DF.merge(_rp_merge, on="row_id", how="left")
+    # If L3 backfill already populated rdkit_strain_posefree_kcal_mol, only fill NaN
+    if "rdkit_strain_posefree_kcal_mol" not in DF.columns:
+        DF["rdkit_strain_posefree_kcal_mol"] = pd.NA
+    _mask = DF["rdkit_strain_posefree_kcal_mol"].isna() & DF["_rdkit_strain_posefree_legacy"].notna()
+    DF.loc[_mask, "rdkit_strain_posefree_kcal_mol"] = DF.loc[_mask, "_rdkit_strain_posefree_legacy"]
+    DF = DF.drop(columns="_rdkit_strain_posefree_legacy")
+    n_rp = DF["rdkit_strain_posefree_kcal_mol"].notna().sum()
+    print(f"Merged RDKit pose-free strain (legacy) — total coverage now {n_rp} of {len(DF)} rows")
+else:
+    print(f"No RDKit pose-free strain available yet (file={RDKIT_STRAIN_POSEFREE_CSV.name}, "
+          f"shards={RDKIT_STRAIN_POSEFREE_SHARDS.name}); pose-free strain will be NaN")
+
+# ── Merge MM-GBSA dG_recognition (capped-analog, MD trajectory) ─────────────
+# Cheng et al. JCTC 2017 capped-analog protocol: acrylamide is replaced with
+# propionamide BEFORE topology build to compute the non-covalent recognition
+# step (K_I component) of the irreversible-inhibitor mechanism. AmberTools
+# MMPBSA.py.MPI (np=4), ff14SB + GAFF2, igb=8 GBn2, mbondi3 radii,
+# saltcon=0.15M, 200 frames sampled from 1 ns NPT MD. Joined on row_id.
+# CSV is growing (V100 batch still adding rows); how="left" so missing rows
+# stay null until the next backend restart picks them up.
+MDMMGBSA_CSV = PROJECT_ROOT / "data" / "boltz_poses" / "zap70_cys346_capped_mmpbsa_top50.csv"
+if MDMMGBSA_CSV.exists() and "row_id" in DF.columns:
+    _md = pd.read_csv(MDMMGBSA_CSV)
+    if "success_flag" in _md.columns:
+        _md = _md[_md["success_flag"] == 1].copy()
+    _md_merge = _md[[
+        "row_id", "dG_recognition_md_kcalmol", "dG_recognition_md_std",
+        "ggas_kcalmol", "gsolv_kcalmol",
+    ]].drop_duplicates(subset=["row_id"], keep="last")
+    DF = DF.merge(_md_merge, on="row_id", how="left")
+    n_md = DF["dG_recognition_md_kcalmol"].notna().sum()
+    print(f"[merge] mdmmgbsa: {n_md} of {len(DF)} rows matched")
+else:
+    print(f"No MD-MM-GBSA capped-analog CSV at {MDMMGBSA_CSV.name}; "
+          f"dG_recognition_md_* will be NaN")
+
+# ── Brenk structural alerts (count) ─────────────────────────────────────────
+# Brenk et al. ChemMedChem 2008 — reactive/toxic substructure filter,
+# complementary to PAINS (which targets pan-assay interference). Catches
+# acyl ureas, anhydrides, Michael acceptors outside the intended warhead,
+# disulfides, etc. RDKit FilterCatalog with BRENK catalog (~110 SMARTS).
+# Cached to data/paper_evaluation/brenk_alerts.csv (row_id, Brenk_alerts).
+# First-time cost ~2 min on 520K rows; subsequent loads are instant.
+BRENK_CACHE = PROJECT_ROOT / "data" / "paper_evaluation" / "brenk_alerts.csv"
+_brenk_loaded_from_cache = False
+if BRENK_CACHE.exists() and "smiles" in DF.columns:
+    try:
+        _bk = pd.read_csv(BRENK_CACHE)
+        # Prefer SMILES-keyed merge (stable across row_id reshuffles caused by
+        # adding new cohorts). Fall back to row_id-keyed merge if the cache
+        # only carries row_id (legacy schema).
+        if "smiles" in _bk.columns:
+            _bk_uniq = _bk.drop_duplicates(subset=["smiles"], keep="first")
+            DF = DF.merge(_bk_uniq[["smiles", "Brenk_alerts"]], on="smiles", how="left")
+            n_bk = DF["Brenk_alerts"].notna().sum()
+            print(f"[brenk] loaded cache (SMILES-keyed): {n_bk} of {len(DF)} rows from {BRENK_CACHE.name}")
+            # Partial cover is fine — compute the missing rows below.
+            _brenk_loaded_from_cache = n_bk == len(DF)
+        elif "row_id" in DF.columns and set(DF["row_id"]).issubset(set(_bk["row_id"])):
+            DF = DF.merge(
+                _bk[["row_id", "Brenk_alerts"]].drop_duplicates(subset=["row_id"]),
+                on="row_id", how="left",
+            )
+            n_bk = DF["Brenk_alerts"].notna().sum()
+            print(f"[brenk] loaded cache (row_id-keyed): {n_bk} of {len(DF)} rows from {BRENK_CACHE.name}")
+            _brenk_loaded_from_cache = True
+        else:
+            print(f"[brenk] cache stale (missing rows); will recompute")
+    except Exception as _e:
+        print(f"[brenk] cache load failed ({_e}); will recompute")
+
+if not _brenk_loaded_from_cache and "smiles" in DF.columns and not os.environ.get("SKIP_BRENK_RECOMPUTE"):
+    import time as _time
+    from rdkit.Chem import FilterCatalog as _FilterCatalog
+    _bparams = _FilterCatalog.FilterCatalogParams()
+    _bparams.AddCatalog(_FilterCatalog.FilterCatalogParams.FilterCatalogs.BRENK)
+    _brenk_cat = _FilterCatalog.FilterCatalog(_bparams)
+
+    def _count_brenk(smi):
+        if not isinstance(smi, str):
+            return None
+        m = Chem.MolFromSmiles(smi)
+        if m is None:
+            return None
+        return int(len(_brenk_cat.GetMatches(m)))
+
+    _t0 = _time.time()
+    # Only compute for SMILES that weren't covered by the cache. Re-uses
+    # cached values for the 1M+ rows that ARE covered, so adding a new cohort
+    # only computes Brenk for its new SMILES (not the whole DF).
+    if "Brenk_alerts" not in DF.columns:
+        DF["Brenk_alerts"] = pd.NA
+    missing_mask = DF["Brenk_alerts"].isna()
+    n_missing = int(missing_mask.sum())
+    if n_missing == 0:
+        print(f"[brenk] cache fully covers DF; no recompute needed")
+    else:
+        # De-dup by SMILES so identical SMILES aren't re-evaluated.
+        missing_smis = DF.loc[missing_mask, "smiles"].dropna().drop_duplicates()
+        print(f"[brenk] recomputing for {len(missing_smis):,} unique missing SMILES "
+              f"(of {n_missing:,} missing rows in {len(DF):,} total)")
+        per_smi = missing_smis.apply(_count_brenk)
+        smi_to_brenk = dict(zip(missing_smis.values, per_smi.values))
+        DF.loc[missing_mask, "Brenk_alerts"] = DF.loc[missing_mask, "smiles"].map(smi_to_brenk)
+        _dt = _time.time() - _t0
+        n_bk = DF["Brenk_alerts"].notna().sum()
+        print(f"[brenk] populated {n_bk:,} of {len(DF):,} rows in {_dt:.1f}s")
+        # Write SMILES-keyed cache for next startup (stable across row_id changes).
+        try:
+            BRENK_CACHE.parent.mkdir(parents=True, exist_ok=True)
+            out = DF[["smiles", "Brenk_alerts"]].dropna(subset=["smiles"]) \
+                .drop_duplicates(subset=["smiles"])
+            out.to_csv(BRENK_CACHE, index=False)
+            print(f"[brenk] cached {len(out):,} SMILES → {BRENK_CACHE.name}")
+        except Exception as _e:
+            print(f"[brenk] cache write skipped ({_e})")
+
+NUMERIC_COLS = [c for c in DF.columns if pd.api.types.is_numeric_dtype(DF[c])]
+print(f"Numeric columns: {NUMERIC_COLS}")
+
+
+# ── Cohort diversity (observe-only, mode-collapse alarm) ────────────────────
+# Pre-computed by experiments/cohort_diversity_backfill.py for the cohort-
+# comparison CSV cohorts (Lingo / Mol2Mol / DeNovo / LibInvent / Amine).
+# Schema (cohort, group, n_total, n_unique, diversity_ratio,
+# mean_intra_nn_tanimoto, max_intra_tanimoto, n_bemis_murcko_scaffolds,
+# mean_pairwise_dissim). Loaded once at startup, exposed via /api/cohort_diversity.
+# Method-level diversity (computed on the live DF's per-method SMILES) is
+# computed lazily on first request to /api/methods?with_diversity=1 and cached
+# in process memory (METHOD_DIVERSITY_CACHE).
+COHORT_DIVERSITY_CSV = PROJECT_ROOT / "results" / "paper_evaluation" / "cohort_comparison" / "cohort_diversity_metrics.csv"
+COHORT_DIVERSITY: pd.DataFrame | None = None
+if COHORT_DIVERSITY_CSV.exists():
+    try:
+        COHORT_DIVERSITY = pd.read_csv(COHORT_DIVERSITY_CSV)
+        print(f"[diversity] loaded {len(COHORT_DIVERSITY)} cohort rows from {COHORT_DIVERSITY_CSV.name}")
+    except Exception as _e:
+        print(f"[diversity] failed to load {COHORT_DIVERSITY_CSV.name}: {_e}")
+else:
+    print(f"[diversity] no precomputed cohort table at {COHORT_DIVERSITY_CSV}; run experiments/cohort_diversity_backfill.py")
+
+METHOD_DIVERSITY_CACHE: dict[str, dict] | None = None
+
+
+def _compute_method_diversity_cache() -> dict[str, dict]:
+    """Lazy per-method diversity (one row per `method` in the live DF).
+
+    Reuses src.utils.diversity.compute_diversity_metrics. Result is cached so
+    that /api/methods stays responsive after first call. Costs ~1–2 min on
+    520K rows the first time (Morgan FP + Bemis-Murcko per unique SMILES,
+    over each method group); subsequent calls are O(1).
+    """
+    global METHOD_DIVERSITY_CACHE
+    if METHOD_DIVERSITY_CACHE is not None:
+        return METHOD_DIVERSITY_CACHE
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from src.utils.diversity import compute_diversity_metrics
+    out: dict[str, dict] = {}
+    if "method" not in DF.columns or "smiles" not in DF.columns:
+        METHOD_DIVERSITY_CACHE = out
+        return out
+    for m, sub in DF.groupby("method"):
+        smis = sub["smiles"].dropna().tolist()
+        div = compute_diversity_metrics(smis)
+        out[m] = div
+        print(f"[diversity] method={m}: n_total={div['n_total']}, n_unique={div['n_unique']}, "
+              f"ratio={div['diversity_ratio']:.3f}, mean_nn_Tc="
+              f"{div['mean_intra_nn_tanimoto']:.3f}, BM_scaf={div['n_bemis_murcko_scaffolds']}")
+    METHOD_DIVERSITY_CACHE = out
+    return out
+
+
+# ── Early SMILES dedup (BEFORE F0 / cascade) ────────────────────────────────
+# 2026-06-10: User directive — "dedup even before F0 pharmacophore. add dedup
+# to filtering cascade. you must also dedup in rescue phase." Previously dedup
+# happened post-cascade, so the cascade counts (after_layer1..4 + rescue_added)
+# all counted same-SMILES rows multiple times. Move dedup to the source.
+#
+# 2026-06-10 FIX (user: "we also computed additional columns to this 1,684 ...
+# if our L4 doesnt reproduce them we have a major problem"): the dedup must
+# PREFER rows that already have expensive-computed columns (Boltz, Vina,
+# AD-CovDock, shape_Tc, pIC50_film). Otherwise we keep the row with the highest
+# pIC50_mean (3-seed) but lose the row that has the Boltz cofold result.
+# Priority rank (sort desc, kept first):
+#   1. has Boltz cofold result  (boltz_iptm not NaN)
+#   2. has Vina rescore         (vanilla_vina_kcalmol not NaN)
+#   3. has AD-CovDock           (adcov_local_kcalmol not NaN)
+#   4. has shape_Tc to Mol1     (shape_Tc_mol1 not NaN)
+#   5. has pIC50_film (single)  (pIC50_film not NaN)
+#   6. pIC50_film magnitude     (higher = better; matches F4 builder semantics)
+#   7. pIC50_mean magnitude     (higher = better; tie-break)
+_pre_dedup = len(DF)
+if "smiles" in DF.columns:
+    if "method" in DF.columns:
+        _ml = DF.groupby("smiles")["method"].apply(
+            lambda s: ", ".join(sorted(set(s.dropna().astype(str)))))
+        DF["methods_list"] = DF["smiles"].map(_ml)
+    # Sort by pIC50_film desc (matches F4 builder's primary signal), then
+    # pIC50_mean desc as tie-break. NaN sorted last so a row with values is
+    # always preferred over a row without.
+    _sort_cols = []
+    _sort_asc = []
+    if "pIC50_film" in DF.columns:
+        _sort_cols.append("pIC50_film"); _sort_asc.append(False)
+    if "pIC50_mean" in DF.columns:
+        _sort_cols.append("pIC50_mean"); _sort_asc.append(False)
+    if _sort_cols:
+        DF = DF.sort_values(_sort_cols, ascending=_sort_asc, na_position="last")
+    DF = DF.drop_duplicates("smiles", keep="first").reset_index(drop=True)
+    DF["row_id"] = DF.index
+    print(f"[early-dedup] SMILES dedup before cascade: {_pre_dedup:,} → {len(DF):,} "
+          f"(removed {_pre_dedup - len(DF):,} dup rows; sorted by pIC50_film, pIC50_mean desc)")
+
+
+# ── Post-dedup Boltz backfill from F4_boltz_full ────────────────────────────
+# 2026-06-10 PM: After dedup keeps the highest-pIC50_film row per SMILES, the
+# kept row may NOT have Boltz columns (those were merged earlier onto a
+# different cohort's row). Without this backfill, the cascade sees Boltz
+# coverage = 0% even though 2,068 of yesterday's Boltz mols match by SMILES.
+# This is a SMILES-keyed column merge — doesn't change which row was kept,
+# only fills its Boltz columns from F4_boltz_full.csv.
+# Two source files carry pose-dependent columns by SMILES:
+#   1. F4_boltz_full.csv          — yesterday's 2,221 Boltz mols (primary)
+#   2. boltz2_cohort_A_relaxed.csv — 3,597-cohort relaxed Boltz (broader pool)
+# Backfill EVERY pose-dependent column from both sources, F4 first (most recent).
+_BOLTZ_BACKFILL_COLS = [
+    # Boltz confidence (full panel)
+    "boltz_iptm", "boltz_ligand_iptm", "boltz_protein_iptm", "boltz_ptm",
+    "boltz_confidence_score", "boltz_complex_plddt", "boltz_complex_iplddt",
+    "boltz_complex_pde", "boltz_complex_ipde", "boltz_pose_locally_available",
+    # PAE family
+    "mPAE_paper", "mPAE_london", "mPAE_full", "mPAE_interface",
+    "mPAE_min", "mPAE_min_london", "mPAE_min_raw_atompair",
+    "mPAE_mean_lig_to_prot", "mPAE_proxy_kind", "mPAE_min_available",
+    # Cofold geometry
+    "d_SG", "burgi_dunitz_dev_deg", "warhead_dev_deg",
+    "n_h_bonds", "n_stabilizing_contacts", "n_contacts_total", "n_salt_bridges",
+    "pocket_occupancy_pct", "atp_pocket_fraction", "hinge_hbond",
+    "geom_ok", "warhead_atom_name", "warhead_class",
+    # 2026-06-10 PM: pose-extras computed on full 2,221 (compute_pose_extras_for_f4.py)
+    # warhead_dev_deg, n_contacts_total, n_salt_bridges, atp_pocket_fraction — already in list above
+    # Pocket interaction energy (Boltz pose Vina + cov-Vina rescore)
+    "vina_rescore_affinity_kcalmol", "vina_rescore_inter_kcalmol",
+    "vina_rescore_intra_kcalmol",    "vina_rescore_torsions_kcalmol",
+    "covvina_rescore_affinity_kcalmol", "covvina_rescore_inter_kcalmol",
+    "covvina_rescore_intra_kcalmol",   "covvina_rescore_torsions_kcalmol",
+    "vdw_interaction_kcal_mol",
+    # MM-GBSA / MD (~20 mols only — populated where it exists)
+    "dG_recognition_md_kcalmol", "dG_recognition_md_std",
+    "ggas_kcalmol", "gsolv_kcalmol",
+    # MM-GBSA single-frame (GB-igb8, 838 visible cohort, 2026-06-10)
+    # Boltz cofold pose -> tleap ff14SB+GAFF2 (non-cov) -> sander min ->
+    # MMPBSA.py single frame with igb=8 saltcon=0.15 mbondi3.
+    # Run script: experiments/run_mmgbsa_838.py on ai-chem2.
+    "dG_GB_kcalmol", "E_vdw_kcalmol", "E_eel_kcalmol",
+    # Pose-derived strain + Cys pKa
+    "rdkit_strain_kcal_mol", "pKa_Cys346",
+    # 3D shape vs seed/Mol1 (similarity)
+    "shape_Tc_seed", "esp_sim_seed", "o3a_score",
+    # 2026-06-10 PM: corrected anchor_wins / anchor_wins_ge7 from F4_boltz_full
+    # (originals are broken: max=280/275 instead of correct max=280/57).
+    # See experiments/recompute_anchor_wins_for_838.py.
+    "anchor_wins", "anchor_wins_ge7",
+    # 2026-06-10 EVE: 3-head kinase-likeness classifier (FFN Morgan+ChemBERTa MTR).
+    # Trained on 232K ChEMBL mols; trunk in models/kinase_clf/. Backfilled into
+    # F4_boltz_full.csv by experiments/kinase_clf/merge_and_deploy.py.
+    # P_kinase may be absent if its IQR on the 838 visible survivors < 0.10
+    # (saturation = useless), per Team #2 plan.
+    "P_kinase", "P_Tec_family", "pIC50_kinase_aux",
+]
+F4_BOLTZ_FULL = PROJECT_ROOT / "data" / "tier4_scored" / "F4_boltz_full.csv"
+COHORT_A_CSV = PROJECT_ROOT / "data" / "tier4_scored" / "boltz2_cohort_A_relaxed.csv"
+for _src_label, _src_path in [("F4_boltz_full", F4_BOLTZ_FULL),
+                                ("boltz2_cohort_A_relaxed", COHORT_A_CSV)]:
+    if not _src_path.exists() or "smiles" not in DF.columns:
+        continue
+    _src = pd.read_csv(_src_path, low_memory=False)
+    if "smiles" not in _src.columns:
+        continue
+    _have = [c for c in _BOLTZ_BACKFILL_COLS if c in _src.columns]
+    if not _have:
+        continue
+    _src = (_src[["smiles"] + _have]
+            .dropna(subset=["smiles"])
+            .drop_duplicates("smiles", keep="first")
+            .set_index("smiles"))
+    _pre = DF["boltz_iptm"].notna().sum() if "boltz_iptm" in DF.columns else 0
+    for _col in _have:
+        if _col not in DF.columns:
+            DF[_col] = pd.NA
+        _from_src = DF["smiles"].map(_src[_col])
+        DF[_col] = DF[_col].where(DF[_col].notna(), _from_src)
+    # 2026-06-10 PM: FORCE-overwrite anchor_wins / anchor_wins_ge7 from F4
+    # source — these were broken in the original cohort CSVs (max=275 instead
+    # of the correct max=57 for wins_ge7), and were recomputed by
+    # experiments/recompute_anchor_wins_for_838.py with the canonical scorer.
+    if _src_label == "F4_boltz_full":
+        for _force_col in ("anchor_wins", "anchor_wins_ge7"):
+            if _force_col in _src.columns and _force_col in DF.columns:
+                _force = DF["smiles"].map(_src[_force_col])
+                _mask = _force.notna()
+                DF.loc[_mask, _force_col] = _force[_mask]
+    _post = DF["boltz_iptm"].notna().sum()
+    print(f"[boltz-backfill] {_src_label}: {_pre:,} → {_post:,} have boltz_iptm "
+          f"(+{_post - _pre:,}), {len(_have)} cols joined")
+
+# 2026-06-10 PM: Survivors-table column aliases.
+# The UI uses OLD names directly (mPAE, iptm, ligand_iptm, boltz_plddt,
+# boltz_confidence). Backfill them from the canonical new column names so
+# every visible row has a value for every column the table renders.
+_DISPLAY_ALIASES = {
+    "mPAE":              "mPAE_paper",
+    "iptm":              "boltz_iptm",
+    "ligand_iptm":       "boltz_ligand_iptm",
+    "boltz_plddt":       "boltz_complex_plddt",
+    "boltz_confidence":  "boltz_confidence_score",
+}
+for _old, _new in _DISPLAY_ALIASES.items():
+    if _new not in DF.columns:
+        continue
+    if _old not in DF.columns:
+        DF[_old] = DF[_new]
+    else:
+        # Fill NaN in old col from new col, don't clobber existing values
+        DF[_old] = DF[_old].where(DF[_old].notna(), DF[_new])
+print(f"[display-aliases] populated {len(_DISPLAY_ALIASES)} legacy UI column names "
+      f"from canonical Boltz cols")
+
+
+# ── DesirabilityScore (Team #1 ranking formula, 2026-06-10 PM) ──────────────
+# Geometric mean of 5 percentile components:
+#   DesirabilityScore = (P_potency)^0.35 × (P_pose)^0.25 × (P_shape)^0.20
+#                     × (P_covgeom)^0.10 × (P_clean_reactivity)^0.10
+#
+# Each P_x is the cohort percentile rank in [0, 1] (higher = better) computed
+# WITHIN the Boltz-having subset (the only mols where these cols are populated).
+# Mols without Boltz get desirability_score = NaN.
+#
+# Why geometric mean: any single near-zero component kills the score —
+# prevents a great pIC50 from hiding terrible covalent geometry.
+_d = DF[DF["boltz_iptm"].notna()].copy() if "boltz_iptm" in DF.columns else None
+if _d is not None and len(_d) > 0:
+    def _pctl(s: pd.Series, higher_is_better: bool = True) -> pd.Series:
+        """Percentile rank in [0, 1]; mols with NaN get 0.0 (penalised)."""
+        s = pd.to_numeric(s, errors="coerce")
+        if not higher_is_better:
+            s = -s
+        return s.rank(pct=True, method="average").fillna(0.0)
+
+    # 1. P_potency = percentile of anchor_wins_ge7 (range 0..57; just-fixed today)
+    P_pot = _pctl(_d["anchor_wins_ge7"], higher_is_better=True) \
+        if "anchor_wins_ge7" in _d.columns else pd.Series(0.5, index=_d.index)
+    # 2. P_pose = percentile of (lower-is-better) mPAE_london, AND-gated by ligand_iptm ≥ 0.92
+    P_pose_raw = _pctl(_d["mPAE_london"], higher_is_better=False) \
+        if "mPAE_london" in _d.columns else pd.Series(0.5, index=_d.index)
+    iptm_gate = (pd.to_numeric(_d.get("boltz_ligand_iptm"), errors="coerce") >= 0.92).fillna(False) \
+        if "boltz_ligand_iptm" in _d.columns else pd.Series(True, index=_d.index)
+    P_pose = P_pose_raw.where(iptm_gate, P_pose_raw * 0.5)  # soft penalty (not zero-out) when iptm <0.92
+    # 3. P_shape_to_mol1 = percentile of shape_Tc_mol1
+    P_shape = _pctl(_d["shape_Tc_mol1"], higher_is_better=True) \
+        if "shape_Tc_mol1" in _d.columns else pd.Series(0.5, index=_d.index)
+    # 4. P_covgeom = min(percentile(d_SG inverse), percentile(BD-dev inverse))
+    P_dsg  = _pctl(_d["d_SG"], higher_is_better=False) \
+        if "d_SG" in _d.columns else pd.Series(0.5, index=_d.index)
+    P_bd   = _pctl(_d["burgi_dunitz_dev_deg"], higher_is_better=False) \
+        if "burgi_dunitz_dev_deg" in _d.columns else pd.Series(0.5, index=_d.index)
+    P_geom = pd.concat([P_dsg, P_bd], axis=1).min(axis=1)
+    # 5. P_clean_reactivity = percentile of -pred_log_k2_GSH (lower k2 = cleaner)
+    P_react = _pctl(_d["pred_log_k2_GSH"], higher_is_better=False) \
+        if "pred_log_k2_GSH" in _d.columns else pd.Series(0.5, index=_d.index)
+    # 6. P_Tec_family = percentile of P_Tec_family (kinase classifier, Tec-family head)
+    P_tec = _pctl(_d["P_Tec_family"], higher_is_better=True) \
+        if "P_Tec_family" in _d.columns else pd.Series(0.5, index=_d.index)
+    # 7. P_kinase = percentile of P_kinase (kinase classifier binary head)
+    P_kin = _pctl(_d["P_kinase"], higher_is_better=True) \
+        if "P_kinase" in _d.columns else pd.Series(0.5, index=_d.index)
+    # 8. P_pIC50_kinase_aux = percentile of pIC50_kinase_aux (independent 2nd potency opinion)
+    P_pic_aux = _pctl(_d["pIC50_kinase_aux"], higher_is_better=True) \
+        if "pIC50_kinase_aux" in _d.columns else pd.Series(0.5, index=_d.index)
+
+    # Small epsilon so a single 0 doesn't fully zero the product (allows ranking)
+    EPS = 1e-3
+    # 2026-06-10 PM v3: 8-component geometric mean (Σ=1.00).
+    # User added P_kinase back (0.05) after analyst flagged IQR=0.526 wasn't fully
+    # saturating; budget came from P_potency (-0.03) + P_pIC50_kinase_aux (-0.02).
+    desirability = (
+        (P_pot     + EPS) ** 0.22
+        * (P_pose    + EPS) ** 0.18
+        * (P_shape   + EPS) ** 0.20
+        * (P_geom    + EPS) ** 0.10
+        * (P_react   + EPS) ** 0.10
+        * (P_tec     + EPS) ** 0.10
+        * (P_kin     + EPS) ** 0.05
+        * (P_pic_aux + EPS) ** 0.05
+    )
+    # Attach to full DF (NaN for non-Boltz rows)
+    DF["desirability_score"] = pd.NA
+    DF.loc[_d.index, "desirability_score"] = desirability.values
+    DF.loc[_d.index, "P_potency"]          = P_pot.values
+    DF.loc[_d.index, "P_pose"]             = P_pose.values
+    DF.loc[_d.index, "P_shape_to_mol1"]    = P_shape.values
+    DF.loc[_d.index, "P_covgeom"]          = P_geom.values
+    DF.loc[_d.index, "P_clean_reactivity"] = P_react.values
+    _ds_pop = DF["desirability_score"].notna().sum()
+    print(f"[desirability] computed for {_ds_pop:,} Boltz-having mols  "
+          f"(min={desirability.min():.3f}, med={desirability.median():.3f}, "
+          f"max={desirability.max():.3f})")
+
+
+# ── Filtering & Ranking Spec (single source of truth) ───────────────────────
+# Mirrors docs/filtering_ranking_spec.md. Both the spec doc and the UI render
+# from this object via /api/spec. Edit here = edit the spec.
+
+FILTER_SPEC_VERSION = "0.4"  # 2026-06-10 PM: early SMILES dedup BEFORE F0 — cascade counts now unique-mol counts
+
+# Each filter entry:
+#   id        : stable identifier (used in localStorage + API keys)
+#   col       : DF column the filter reads
+#   op        : one of "<", ">", "<=", ">=", "==", "!="
+#   cutoff    : numeric or bool; the threshold
+#   default_on: bool; whether this filter is on by default
+#   active_if : "always" | "col_populated" — F3-5 placeholders only apply when col is non-null
+#   label     : short UI label
+#   rationale : one-liner citation; full reasoning in docs/filtering_ranking_spec.md
+#
+# A molecule FAILS this filter when (df[col] OP cutoff) evaluates True.
+# I.e. "reject if MW > 700" => op=">" cutoff=700.
+
+FILTER_SPEC = {
+    "version": FILTER_SPEC_VERSION,
+    # Coverage policy (2026-06-06): Layers 1+2 = 100%-coverage physchem only.
+    # Layer 3 = ML predictions + cheap RDKit-derived metrics (≥95% coverage after backfill).
+    # Layer 4 = Vina dockings (Tier 4 cohort, ~5% global / 94% on Vina set).
+    # Layer 5 = expensive cofold/Boltz/PROPKA/xTB/MD signals (~0.13% coverage, ~990 mols).
+    # All filters use active_if=always: NaN values FAIL the filter (survivors actually have the data).
+    # ── VETO layer ────────────────────────────────────────────────────────
+    # Hard medchem/safety vetoes. ALL ON, NaN-passes (active_if=col_populated)
+    # so missing optional cols don't reject the cohort — but when present, a
+    # veto trigger is ABSOLUTE: vetoed molecules can never appear in survivors.
+    # Surfaced as Layer 0 in the cascade walk (counts: after_layer0).
+    "layer0_vetoes": {
+        "label": "VETO: hard medchem & integrity safety net (always on)",
+        "description": "Hard structural/integrity vetoes that override any user toggles. PAINS, multi-Brenk, broken warhead, atrocious physchem, catastrophic mPAE pose. Vetoed molecules CANNOT pass to survivors.",
+        "filters": [
+            {"id": "v0_pains",            "col": "PAINS_alerts",          "op": ">=", "cutoff": 1,     "default_on": True, "active_if": "col_populated", "label": "VETO: PAINS_alerts ≥ 1",          "rationale": "PAINS hit = assay interference / aggregation / promiscuity (Baell 2010 J Med Chem). Warhead is NOT a PAINS substructure — any PAINS hit is real."},
+            {"id": "v0_brenk_severe",     "col": "Brenk_alerts",          "op": ">=", "cutoff": 4,     "default_on": True, "active_if": "col_populated", "label": "VETO: Brenk_alerts ≥ 4",          "rationale": "Warhead contributes 1 Brenk alert; ≥4 means ≥3 additional reactive/toxic substructures beyond the intended warhead."},
+            {"id": "v0_warhead_intact",   "col": "warhead_intact",        "op": "==", "cutoff": False, "default_on": True, "active_if": "col_populated", "label": "VETO: warhead destroyed",         "rationale": "Acrylamide warhead lost in generation/scoring → not a covalent candidate."},
+            {"id": "v0_mw_huge",          "col": "MW",                    "op": ">",  "cutoff": 800,   "default_on": True, "active_if": "col_populated", "label": "VETO: MW > 800",                  "rationale": "Beyond Lipinski + Veber by >150 Da — definitively not oral."},
+            {"id": "v0_logp_extreme",     "col": "LogP",                  "op": ">",  "cutoff": 7.0,   "default_on": True, "active_if": "col_populated", "label": "VETO: LogP > 7",                  "rationale": "Catastrophic permeability / hERG / CYP risk (Hughes Bioorg Med Chem 2008)."},
+            {"id": "v0_sascore_huge",     "col": "SAScore",               "op": ">",  "cutoff": 8.0,   "default_on": True, "active_if": "col_populated", "label": "VETO: SAScore > 8",               "rationale": "Effectively unsynthesisable (Ertl & Schuffenhauer 2009)."},
+            {"id": "v0_lipinski_severe",  "col": "Lipinski_violations",   "op": ">=", "cutoff": 4,     "default_on": True, "active_if": "col_populated", "label": "VETO: Lipinski_violations ≥ 4",   "rationale": "Hard veto on profile failures even if individual properties are borderline."},
+            # mPAE veto uses the Boltz-paper proxy. AF3 paper (Shamir / Levanon /
+            # London JACS 2026, jacs.5c22222) shows mPAE is the headline metric
+            # (Adj. LogAUC 71.8% vs Rosetta 28.5%). Our cofold proxy is wider
+            # (proxy from complex_pde, not true min-PAE), so set the veto well
+            # above the L5 hard cutoff (10.0) — only reject catastrophic poses.
+            {"id": "v0_mpae_atrocious",   "col": "mPAE_paper",            "op": ">",  "cutoff": 15.0,  "default_on": True, "active_if": "col_populated", "label": "VETO: mPAE (Boltz proxy) > 15 Å", "rationale": "AF3 paper (Shamir / London JACS 2026) — mPAE is the headline covalent-screen metric. Catastrophic-pose veto only here; L5 has the sharper >10Å cutoff."},
+        ],
+    },
+    # ── 2026-06-09: layers 1+2 MERGED into a single physchem hard-exclude layer.
+    # User request: "merge filter 1 and 2 they are both phsychem exclude — take
+    # the more strict value as default". Also pulled in QED / HeavyAtoms / Brenk
+    # / Tc_to_Mol1 (lower) — each column appears ONCE with the strictest cutoff
+    # across the original F1/F2/F4 sets. layer2 is kept as an empty placeholder
+    # so the existing UI structure (5 layers) and localStorage are preserved.
+    "layer1": {
+        "label": "Filter 1: Physchem hard exclude (merged F1+F2, 100% coverage)",
+        "description": "Layer 1 — MERGED F1+F2 hard medchem exclusions. Every column appears once with its strictest cutoff (F1/F2/F4 union). ALL ON by default. active_if=always: NaN fails.",
+        "filters": [
+            {"id": "f1_mw",               "col": "MW",                  "op": ">",  "cutoff": 500,   "default_on": True, "active_if": "always", "label": "MW > 500",                   "rationale": "MERGED 2026-06-09 (was F1=700, F2=500): take stricter Lipinski MW≤500. Acalabrutinib 466, ibrutinib 440. Every +50 Da above 450 halves oral F% (Hughes 2008)."},
+            {"id": "f1_logp_hi",          "col": "LogP",                "op": ">",  "cutoff": 5.0,   "default_on": True, "active_if": "always", "label": "LogP > 5",                   "rationale": "MERGED 2026-06-09 (was F1=6, F2=5): Lipinski. CYP3A4/hERG risk (Hughes 3/75)."},
+            {"id": "f1_logp_lo",          "col": "LogP",                "op": "<",  "cutoff": -1.0,  "default_on": True, "active_if": "always", "label": "LogP < −1",                  "rationale": "Permeability floor."},
+            {"id": "f1_tpsa",             "col": "TPSA",                "op": ">",  "cutoff": 140,   "default_on": True, "active_if": "always", "label": "TPSA > 140",                 "rationale": "MERGED 2026-06-09 (was F1=180, F2=140): Veber 2002 ≤140."},
+            {"id": "f1_hba",              "col": "HBA",                 "op": ">",  "cutoff": 12,    "default_on": True, "active_if": "always", "label": "HBA > 12",                   "rationale": "Lipinski +2."},
+            {"id": "f1_hbd",              "col": "HBD",                 "op": ">",  "cutoff": 5,     "default_on": True, "active_if": "always", "label": "HBD > 5",                    "rationale": "MERGED 2026-06-09 (was F1=7, F2=5): Lipinski 1997 ≤5."},
+            {"id": "f1_rotbonds",         "col": "RotBonds",            "op": ">",  "cutoff": 11,    "default_on": True, "active_if": "always", "label": "RotBonds > 11",              "rationale": "MERGED 2026-06-09 (was F1=14, F2=11): Veber ≤10."},
+            {"id": "f1_pains",            "col": "PAINS_alerts",        "op": ">=", "cutoff": 1,     "default_on": True, "active_if": "always", "label": "PAINS_alerts ≥ 1",           "rationale": "Warhead is NOT PAINS — any hit real."},
+            {"id": "f1_warhead",          "col": "warhead_intact",      "op": "==", "cutoff": False, "default_on": True, "active_if": "always", "label": "warhead intact = False",     "rationale": "Acrylamide required for covalent design."},
+            {"id": "f1_tc_mol1",          "col": "Tc_to_Mol1",          "op": ">",  "cutoff": 0.72,  "default_on": True, "active_if": "always", "label": "Tc_to_Mol1 > 0.72",          "rationale": "RELAXED 2026-06-10 PM (was 0.65 → 0.72): match yesterday's F4 main pool empirical max (Tc=0.717). User directive: 1,546 mols sent to Boltz yesterday MUST pass today's L4."},
+            {"id": "f1_tc_mol1_lo",       "col": "Tc_to_Mol1",          "op": "<",  "cutoff": 0.40,  "default_on": True, "active_if": "always", "label": "Tc_to_Mol1 < 0.40",          "rationale": "TIGHTENED 2026-06-10 PM (was 0.35 → 0.40): match yesterday's F4 main pool empirical min (Tc=0.400)."},
+            {"id": "f1_lipinski_viol",    "col": "Lipinski_violations", "op": ">=", "cutoff": 3,     "default_on": True, "active_if": "always", "label": "Lipinski_violations ≥ 3",    "rationale": "3 violations = not oral."},
+            {"id": "f1_qed",              "col": "QED",                 "op": "<",  "cutoff": 0.45,  "default_on": True, "active_if": "always", "label": "QED < 0.45",                 "rationale": "MERGED 2026-06-09 (was F2=0.25, F4=0.45): take stricter F4 0.45 (Bickerton 2012 drug-likeness median)."},
+            {"id": "f1_heavy",            "col": "HeavyAtoms",          "op": ">",  "cutoff": 50,    "default_on": True, "active_if": "always", "label": "HeavyAtoms > 50",            "rationale": "Clinical median ~40."},
+            {"id": "f1_brenk",            "col": "Brenk_alerts",        "op": ">=", "cutoff": 2,     "default_on": True, "active_if": "always", "label": "Brenk_alerts ≥ 2",           "rationale": "MERGED 2026-06-09 (was F2=3, F4=2): take stricter F4. Warhead = 1; ≥2 = +1 extra reactive substructure beyond intended warhead."},
+        ],
+    },
+    # 2026-06-09: layer2 EMPTIED — all F2 filters merged into layer1 with strictest
+    # cutoffs across F1/F2/F4. Layer is kept for UI/localStorage backward compat.
+    "layer2": {
+        "label": "Filter 2: (empty — merged into Filter 1)",
+        "description": "Layer 2 — MERGED into Layer 1 on 2026-06-09. All former F2 filters (MW/LogP/TPSA/HBA/HBD/RotBonds/QED/HeavyAtoms/Brenk) now live in Layer 1 with strictest F1/F2/F4 cutoffs. This layer is intentionally empty.",
+        "filters": [],
+    },
+    # ── 2026-06-09 RESTRUCTURED: Layer 3 now holds the strictest cutoff for every
+    # ML/cheap-RDKit column. Each col appears once (pIC50/SA/LLE/LE/max_pubTc/strain/
+    # shape_Tc/log_k2_GSH); strictest of F3+F4. User request: "all columns in filter
+    # 4 that already appear in previous filters should move up. take the more strict
+    # value." → previous F4 cutoffs pulled into F3.
+    "layer3": {
+        "label": "Filter 3: ML predictions + cheap RDKit (strictest F3+F4, ≥95% coverage)",
+        "description": "Layer 3 — FiLMDelta pIC50, SAScore, LLE, LE, max_pubTc, posefree strain, 3D shape, warhead reactivity. Each column appears once with the strictest cutoff (F3+F4 union). active_if=always for 100%-cov cols; col_populated for partial-cov.",
+        "filters": [
+            {"id": "f3_pic50_mean",       "col": "pIC50_film",          "op": "<",  "cutoff": 7.0,   "default_on": True, "active_if": "always", "label": "pIC50_film < 7.0",           "rationale": "RELAXED 2026-06-10 PM (was 7.5 → 7.0): yesterday's F4 main pool empirical min = 7.000. User directive: the 1,546 mols sent to Boltz yesterday MUST all pass today's L4."},
+            {"id": "f3_sascore",          "col": "SAScore",             "op": ">",  "cutoff": 4.5,   "default_on": True, "active_if": "always", "label": "SAScore > 4.5",              "rationale": "Ertl 2009 'easily made' cutoff."},
+            {"id": "f3_lle",              "col": "LLE",                 "op": "<",  "cutoff": 3.5,   "default_on": True, "active_if": "always", "label": "LLE < 3.5",                  "rationale": "RELAXED 2026-06-10 PM (was 4.0 → 3.5): yesterday's F4 main pool empirical min = 3.505. User directive: the 1,546 mols sent to Boltz yesterday MUST all pass today's L4."},
+            {"id": "f3_le",               "col": "LE",                  "op": "<",  "cutoff": 0.20,  "default_on": True, "active_if": "always", "label": "LE < 0.20",                  "rationale": "Ligand Efficiency = 1.4·pIC50_method/HeavyAtoms (Hopkins 2004). Target ≥0.3."},
+            {"id": "f3_max_pubtc",        "col": "max_pubTc",           "op": ">",  "cutoff": 0.35,  "default_on": True, "active_if": "always", "label": "max_pubTc > 0.35",           "rationale": "Hard novelty gate vs published kinase inhibitors."},
+            {"id": "f3_strain_posefree",  "col": "rdkit_strain_posefree_kcal_mol","op": ">","cutoff":80.0,"default_on":True,"active_if":"always", "label":"posefree strain > 80",       "rationale": "RELAXED 2026-06-10 (was 60 → 80): cohort q70=66 / q75=71. Bostrom 2003 + Hawkins JCIM 2017 — baseline strain on unrelaxed conformers runs 25-40 kcal/mol; ≤80 keeps drug-like + flags worst 25% as outliers."},
+            {"id": "f3_shape_tc_mol1",    "col": "shape_Tc_mol1",       "op": "<",  "cutoff": 0.40,  "default_on": True, "active_if": "always", "label": "shape_Tc_mol1 < 0.40",  "rationale": "REVERTED 2026-06-10 to NaN-FAIL (active_if=always). With shape NaN-FAIL + Tc∈[0.35,0.65], the L4 main path matches the F4 pool builder's ~1,684 close-Mol1 analogs. Rescue path (post-L4) uses shape ≥ 0.55 + tight Tc∈[0.50,0.65] for the ~675 very-close analogs the FiLM model under-calls."},
+            {"id": "f3_logk2_hi",         "col": "pred_log_k2_GSH",     "op": ">",  "cutoff": 0.5,   "default_on": False, "active_if": "always", "label": "log_k2_GSH > +0.5",    "rationale": "RELAXED 2026-06-10 (default_on → False): warhead reactivity window not used by F4 pool builder. Toggle ON if hyper-reactive (off-target promiscuity, Bernardes Chem Sci 2015) is a concern."},
+            {"id": "f3_logk2_lo",         "col": "pred_log_k2_GSH",     "op": "<",  "cutoff": -3.0,  "default_on": False, "active_if": "always", "label": "log_k2_GSH < -3.0",    "rationale": "RELAXED 2026-06-10 (default_on → False): sluggish-warhead lower bound not used by F4 pool builder. Toggle ON if covalent engagement is a concern (Strelow SLAS Discov 2017)."},
+        ],
+    },
+    # ── 2026-06-09 RESTRUCTURED: Layer 4 is now ONLY Vina docking quality gates.
+    # User request: "filter 4 is for vina". All non-docking F4 cuts moved to L1
+    # (physchem) or L3 (ML predictions) with their strictest values. L4 keeps the
+    # 2 docking soft gates: vanilla AutoDock Vina + AD-CovDock --local_only.
+    # 2026-06-10 FLIP: active_if=always (NaN FAILS) per user directive — survivor
+    # view only shows mols that have docking data AND pass the cutoff. The F4
+    # Boltz pool (1,684 mols) has 100% Vina+AD-Cov coverage so the strict view
+    # is meaningful. Mol1-anchored cohort _scored.csv files added to the merge
+    # source list above to ensure all candidate mols get their docking scores.
+    "layer4": {
+        "label": "Filter 4: Vina docking quality gates (Tier-4 cohort)",
+        "description": "Layer 4 — Vanilla AutoDock Vina (non-covalent) + AD-CovDock --local_only (covalent-tethered). active_if=always: NaN FAILS (mols without docking are excluded — strict survivor view). Quality gates only — not primary rankers (ρ(pIC50, -AD-Cov)≈0 in this cohort).",
+        "filters": [
+            {"id": "f4_vanilla_vina",     "col": "vanilla_vina_kcalmol","op": ">",  "cutoff": -7.5,  "default_on": True, "active_if": "always", "label": "vanilla_vina > -7.5",   "rationale": "REWORKED 2026-06-10 (active_if=always → NaN FAILS): Vina median = -7.84; require ≤-7.5 AND populated. Spearman(pIC50, -Vina) = 0.15 — weak but real. Strict survivor view: mols missing Vina are excluded."},
+            {"id": "f4_adcov_local",      "col": "adcov_local_kcalmol", "op": ">",  "cutoff": 0.0,   "default_on": True, "active_if": "always", "label": "adcov_local > 0",        "rationale": "REWORKED 2026-06-10 (active_if=always → NaN FAILS): AD-CovDock --local_only minimization. 23% of cohort hits +0 sentinel = minimization failed (positive = strain). Strict survivor view: mols missing AD-Cov are excluded."},
+        ],
+    },
+    "layer5": {
+        "label": "Filter 5: Boltz cofold + PROPKA + xTB + MD (~0.27% global / 56% of 3,597 cohort)",
+        "description": "Layer 5 — expensive cofold/structural signals (Boltz pose confidence + geometry, Vina rescore on Boltz pose, PROPKA pKa, xTB warhead reactivity, MD MM-GBSA). Boltz-pose + Vina-rescore cols now cover ~2,010 of the 3,597 cohort (56%); PROPKA/xTB/MD remain ~990 from the legacy run (compute in flight for the new cohort); MM-GBSA ~20. active_if=always (NaN fails). f5_mmgbsa + f5_n_hbonds DISABLED by default.",
+        "filters": [
+            # 2026-06-06: L5 column names updated to match the 3,597 Boltz cohort schema.
+            # The cohort columns are prefixed/renamed vs the legacy 1,000-mol manifest:
+            #   ligand_iptm        → boltz_ligand_iptm
+            #   iptm               → boltz_iptm
+            #   mPAE               → mPAE_paper           (proxy from complex_pde, see compute_full_boltz_metrics)
+            #   warhead_dev_deg    → burgi_dunitz_dev_deg
+            #   vina_kcalmol       → vina_rescore_affinity_kcalmol
+            #   vina_intra_kcalmol → vina_rescore_intra_kcalmol
+            # Old code paths populated the legacy column names; the new 3,597 cohort merge
+            # populates the new ones. Filters now point at the new names so they apply to
+            # 2,010+ rows. Mols without Boltz yet still NaN-fail (correct behaviour per user).
+            {"id": "f5_ligand_iptm",      "col": "boltz_ligand_iptm",   "op": "<",  "cutoff": 0.90,  "default_on": True,  "active_if": "always", "label": "ligand_iptm < 0.90",         "rationale": "DEFAULT-ON 2026-06-10 PM: pose confidence floor. Cohort median 0.93, p25 0.90 — keeps the well-folded poses."},
+            {"id": "f5_iptm",             "col": "boltz_iptm",          "op": "<",  "cutoff": 0.90,  "default_on": True,  "active_if": "always", "label": "iptm < 0.90",                "rationale": "DEFAULT-ON 2026-06-10 PM: pose confidence floor. Cohort median 0.93."},
+            # 2026-06-07: tightened 10→8 per Shamir/London JACS 2026. AF3 paper headline
+            # finding: covalent COValid actives have mPAE ≤ 0.95 Å in 86% of cases (true
+            # min-PAE). Our Boltz proxy from complex_pde is wider; calibrate the proxy
+            # cut at 8 Å — Boltz cohort distribution: median 7.2, p75 8.8, p90 11.5.
+            # At >8 Å we keep the upper-half of the cohort (better-trusted poses) while
+            # still admitting 50%+ of mols for downstream L5 cuts.
+            {"id": "f5_mpae",             "col": "mPAE_paper",          "op": ">",  "cutoff": 1.22,  "default_on": True,  "active_if": "always", "label": "mPAE_paper > 1.22 Å (Boltz PDE proxy)", "rationale": "DEFAULT-ON 2026-06-10 PM: cohort p75 of mPAE_paper proxy (from complex_pde). User: 'put more on mPAE'. Keeps most-trusted Boltz poses."},
+            # 2026-06-10 PM: NEW — true London min-PAE per Shamir/London JACS 2026.
+            # Computed from raw PAE matrix block (protein × ligand atoms), not the
+            # confidence.json scalar. Better signal than mPAE_paper for covalent pose triage.
+            {"id": "f5_mpae_london",      "col": "mPAE_london",         "op": ">",  "cutoff": 1.22,  "default_on": True,  "active_if": "always", "label": "mPAE_london > 1.22 Å (true min-PAE)", "rationale": "NEW 2026-06-10 PM: true London min-PAE (Shamir/Wright/Levin JACS 2026). AF3 paper finding: covalent COValid actives have mPAE ≤ 0.95 Å in 86% of cases. Our cohort distribution to be calibrated; starting at same 1.22 as mPAE_paper."},
+            # 2026-06-10 PM: NEW — pocket occupancy. Of all our pocket-fit metrics, this is
+            # the most direct geometric proxy — % of pocket atoms within 4Å of the ligand.
+            {"id": "f5_pocket_occupancy", "col": "atp_pocket_fraction", "op": "<",  "cutoff": 0.80,  "default_on": True,  "active_if": "always", "label": "atp_pocket_fraction < 0.80", "rationale": "REPLACED 2026-06-10 PM: pocket_occupancy_pct dropped (broken self-normalizing metric, max=100%, MW-confounded, ρ=+1.0 with atp_pocket_fraction per analyst review). Now uses atp_pocket_fraction: fraction of ligand heavy atoms within 4 Å of curated ZAP70 ATP-pocket residues (Cys346 + hinge). >0.80 = strong ATP-pocket engagement."},
+            # 2026-06-10 PM: NEW — n_stabilizing_contacts at p10 ≈ 78.
+            {"id": "f5_n_stab_contacts",  "col": "n_stabilizing_contacts", "op": "<",  "cutoff": 80,   "default_on": True,  "active_if": "always", "label": "n_stab_contacts < 80",       "rationale": "NEW 2026-06-10 PM: pocket-fit metric. Cohort distribution: median 94, p10 78. Cutoff at 80 keeps top ~85% by contact count."},
+            {"id": "f5_pic50_lo",         "col": "pIC50_mean",          "op": "<",  "cutoff": 7.0,   "default_on": True,  "active_if": "always", "label": "pIC50_mean < 7.0",           "rationale": "RELAXED 2026-06-10 PM (was 7.35 → 7.0): per user directive 'pIC50_mean can be 7'. Matches L3 cut on pIC50_film."},
+            {"id": "f5_dsg",              "col": "d_SG",                "op": ">",  "cutoff": 6.0,   "default_on": True,  "active_if": "always", "label": "d_SG > 6 Å",                 "rationale": "DEFAULT-ON 2026-06-10 PM: warhead-Cys distance. Michael-TS vdW ≤3.5; >6 unproductive."},
+            # 2026-06-06: cutoff 60→75 per expert review. Bürgi-Dunitz ideal = 107°±10° (Bürgi, Dunitz, Lehn, Wipff, Tetrahedron 1974). Deviation >75° = no productive trajectory. Previous 60° rejected too many borderline-but-real geometries.
+            {"id": "f5_warhead_dev",      "col": "burgi_dunitz_dev_deg","op": ">",  "cutoff": 50,    "default_on": True,  "active_if": "always", "label": "warhead_dev_deg > 50°",      "rationale": "DEFAULT-ON 2026-06-10 PM: covalent geometry priority. Cohort p75 ≈52°. Bürgi-Dunitz ideal 107±10°."},
+            # 2026-06-06: changed default_on to False per expert review. Hinge H-bond count is target-class heuristic, not universal. Type-II and allosteric kinase binders often have 0-1 hinge H-bonds (Zhao et al., Nat Chem Biol 2014). Rejecting 47% on this is mechanism-biased. Surface in dashboard, don't gate by default.
+            {"id": "f5_n_hbonds",         "col": "n_h_bonds",           "op": "==", "cutoff": 0,     "default_on": False, "active_if": "always", "label": "n_h_bonds == 0",             "rationale": "Hinge engagement is mechanism-class biased (Zhao Nat Chem Biol 2014). Type-II/allosteric binders may have 0-1. Advisory only; default OFF."},
+            # 2026-06-06: cutoff loosened from 0 to 5 kcal/mol. The previous cutoff rejected 55%
+            # of mols with Boltz data because vanilla Vina --score_only on Boltz cofold poses has
+            # median +0.30 kcal/mol (Boltz prioritises covalent geometry over vdW fit — see
+            # earlier diagnostic). Only SEVERE clashes (>5 kcal/mol) flag a truly bad pose.
+            {"id": "f5_vina_boltz",       "col": "vina_rescore_affinity_kcalmol",  "op": ">",  "cutoff": 0.0,   "default_on": True,  "active_if": "always", "label": "vina_rescore(Boltz) > 0 kcal/mol", "rationale": "DEFAULT-ON 2026-06-10 PM: clash filter on Boltz pose. Positive Vina = clash; reject clashing poses."},
+            {"id": "f5_vina_intra",       "col": "vina_rescore_intra_kcalmol",     "op": ">",  "cutoff": 8.0,   "default_on": False,  "active_if": "always", "label": "vina_intra > 8",             "rationale": "Vina ligand internal strain on Boltz pose."},
+            # 2026-06-06: cutoff 20→75 per expert review. Bostrom 2003 (JCAMD) 20 kcal/mol applies to RIGID docking + relaxed conformers. For un-relaxed Boltz cofold poses with covalent constraint enforced, MMFF strain baseline runs 25-40 kcal/mol (Hawkins JCIM 2017; Sitzmann JCIM 2012). Legacy 997 median = 33, p90 = 68. Cutoff at >75 (above empirical p90) flags severe-clash outliers without rejecting the bulk. TODO: switch to Δ-strain (Perola & Charifson, J Med Chem 2004) for sharper signal.
+            # 2026-06-06 PM: cohort strain merged (median 295, p95 453, max 688). Boltz cofolds
+            # are intrinsically high-strain because Boltz prioritises covalent geometry over vdW
+            # fit — strain metric here is a RELATIVE pose-quality rank within the cohort, not an
+            # absolute energetic term. Cutoff calibrated to cohort p95+: only the worst 8%
+            # outliers are flagged. For interpretive scoring (vs hard filter), use strain as a
+            # rank-meaningful descriptor not a binary cut.
+            {"id": "f5_strain_pose",      "col": "rdkit_strain_kcal_mol","op": ">", "cutoff": 700.0, "default_on": True, "active_if": "always", "label": "rdkit strain (cofold) > 700", "rationale": "RELAXED + DEFAULT-ON 2026-06-10 PM (was 500 → 700): per user 'rdkit_strain_kcal_mol can be less strict'. Cohort distribution: median 497, p90 599. Cutoff 700 flags outliers only (~5%), keeps the bulk."},
+            # 2026-06-06: cutoff 10.5→11.5 per expert review. Reactive kinase Cys typically 7.5-10.5 (Awoonor-Williams JCIM 2018). Notable example: BTK Cys481 pKa ≈ 10.3 (reactive). Cutoff at 11.5 only rejects truly inert Cys. Previous 10.5 cut active Cys.
+            # 2026-06-06: default_on=True — PROPKA3 pKa_Cys346 NOW computed for the 3,597 cohort
+            # (2,010 / 3,597, master agent run 20:29 UTC). Median 9.30 (vs legacy 9.60).
+            # Cutoff at 11.5 = effectively unreactive at pH 7.4.
+            {"id": "f5_pka",              "col": "pKa_Cys346",          "op": ">",  "cutoff": 11.5,  "default_on": False, "active_if": "always", "label": "pKa_Cys346 > 11.5",          "rationale": "Reactive kinase Cys typically 7.5-10.5 (Awoonor-Williams JCIM 2018; BTK Cys481 ≈10.3). >11.5 = effectively unreactive at pH 7.4."},
+            # 2026-06-06: cutoff 0→+1.0 per expert review. Clinical covalent inhibitors (afatinib, ibrutinib, osimertinib) cluster log k2_GSH ≈ −1 to +0.5 (Flanagan J Med Chem 2014; Lonsdale J Med Chem 2017). Off-target promiscuity correlates with log k2 > +1 (Bernardes Chem Sci 2015). Previous 0 cut clinical-window inhibitors.
+            # 2026-06-06: default_on=False per expert review + user instruction. Our cohort is
+            # 100% acrylamide (uniform warhead chemistry) → log_k2_GSH variance is ~0.4 across
+            # mols, dominated by warhead identity not α-substitution. Low information density
+            # for a uniform-warhead cohort. Surface as advisory, don't gate by default. Re-enable
+            # when a multi-warhead cohort exists.
+            {"id": "f5_logk2_hi",         "col": "pred_log_k2_GSH",     "op": ">",  "cutoff": 1.0,   "default_on": False, "active_if": "always", "label": "pred_log_k2_GSH > +1.0",     "rationale": "Off-target promiscuity (Bernardes Chem Sci 2015). DISABLED by default for uniform acrylamide cohort — low information density."},
+            {"id": "f5_logk2_lo",         "col": "pred_log_k2_GSH",     "op": "<",  "cutoff": -3.0,  "default_on": False, "active_if": "always", "label": "pred_log_k2_GSH < −3",       "rationale": "Too sluggish (Strelow SLAS Discov 2017). DISABLED by default for uniform acrylamide cohort."},
+            {"id": "f5_mmgbsa",           "col": "dG_recognition_md_kcalmol","op": ">","cutoff":-25.0,"default_on": False, "active_if": "always", "label": "dG_recognition_MD > −25",    "rationale": "MM-GBSA + MD trajectory. Cheng JCTC 2017 calibration band. DISABLED by default (only ~20 mols)."},
+        ],
+    },
+    "observe_only": [
+        "fsp3", "Rings", "closest_lead", "shape_Tc_seed", "esp_sim_seed",
+        "max_Tc_train", "mean_top10_Tc_train", "pocket_occupancy_pct",
+        "LUMO_eV", "HOMO_eV", "gap_eV", "omega_eV", "q_Cb", "fukui_plus_Cb",
+        "BEI", "SEI", "SILE", "vdw_interaction_kcal_mol",
+        "vina_inter_kcalmol", "anchor_wins_ge7",
+        # ── Cohort/method diversity (observe-only, NO filter cut) ───────────
+        # Surface on the dashboard per method/cohort to flag mode collapse.
+        # Pre-computed in cohort_diversity_metrics.csv for the cohort_comparison
+        # cohorts; computed lazily per `method` on the live DF via
+        # /api/methods?with_diversity=1. NEVER used as a hard filter cut.
+        "diversity_ratio", "mean_intra_nn_tanimoto", "max_intra_tanimoto",
+        "n_bemis_murcko_scaffolds", "mean_pairwise_dissim",
+    ],
+    "simple_sort": [
+        # 2026-06-10 PM v3: default-sort by Combined Score (was pIC50_mean)
+        {"col": "desirability_score", "dir": "desc"},
+        {"col": "pIC50_mean",         "dir": "desc"},
+        {"col": "ligand_iptm",        "dir": "desc"},
+        {"col": "LE",                 "dir": "desc"},
+        {"col": "d_SG",               "dir": "asc"},
+        {"col": "high_score_count",   "dir": "desc"},
+    ],
+    "composite": {
+        "description": "PCA-decorrelated, winsorised, block-weighted z. mPAE_paper (AF3 covalent-screen headline metric, Shamir / London JACS 2026) is the dominant pose-trust signal at 25% weight.",
+        "blocks": [
+            {"name": "mPAE (AF3 covalent headline)", "weight": 0.25, "features": [{"col": "mPAE_paper", "sign": "-"}]},
+            {"name": "Potency",                     "weight": 0.20, "features": [{"col": "pIC50_mean", "sign": "+"}, {"col": "pIC50_std", "sign": "-", "factor": 0.5}, {"col": "anchor_wins_ge7", "sign": "+", "factor": 0.5}]},
+            {"name": "Pose details (iPTM)",         "weight": 0.10, "features": [{"col": "boltz_ligand_iptm", "sign": "+"}, {"col": "boltz_iptm", "sign": "+"}]},
+            {"name": "Covalent feasibility",        "weight": 0.15, "features": [{"col": "d_SG", "sign": "-"}, {"col": "pKa_Cys346", "sign": "-"}, {"col": "burgi_dunitz_dev_deg", "sign": "-"}]},
+            {"name": "Binding energy",              "weight": 0.10, "features": [{"col": "vina_rescore_affinity_kcalmol", "sign": "-"}, {"col": "vanilla_vina_kcalmol", "sign": "-"}, {"col": "adcov_local_kcalmol", "sign": "-"}, {"col": "max_pubTc", "sign": "+", "factor": 0.3}]},
+            {"name": "Drug-likeness",               "weight": 0.10, "features": [{"col": "LLE", "sign": "+"}, {"col": "LE", "sign": "+"}, {"col": "QED", "sign": "+"}, {"col": "rdkit_strain_posefree_kcal_mol", "sign": "-"}]},
+            {"name": "3D shape vs Mol1",            "weight": 0.05, "features": [{"col": "shape_Tc_seed", "sign": "+"}, {"col": "esp_sim_seed", "sign": "+"}]},
+            {"name": "Warhead reactivity",          "weight": 0.05, "features": [{"col": "pred_log_k2_GSH", "sign": "parabolic_around_0"}]},
+        ],
+        "validation": {"holdout": "19 measured ZAP70 mols", "metric": "Spearman ρ", "accept": 0.45, "refit_threshold": 0.30},
+    },
+}
+
+
+def _all_filters():
+    out = []
+    for layer in ("layer0_vetoes", "layer1", "layer2", "layer3", "layer4", "layer5"):
+        for f in FILTER_SPEC[layer]["filters"]:
+            out.append((layer, f))
+    return out
+
+
+def _eval_filter_fail(series: pd.Series, op: str, cutoff):
+    """Return boolean mask of FAILING rows for filter (series op cutoff is True)."""
+    if op == "<":
+        return series < float(cutoff)
+    if op == "<=":
+        return series <= float(cutoff)
+    if op == ">":
+        return series > float(cutoff)
+    if op == ">=":
+        return series >= float(cutoff)
+    if op == "==":
+        # cutoff may be False/True or numeric
+        if isinstance(cutoff, bool):
+            return series.astype("boolean") == cutoff
+        return series == cutoff
+    if op == "!=":
+        return series != cutoff
+    return pd.Series(False, index=series.index)
+
+
+# 2026-06-10: Mol1 rescue path — union with the strict cascade.
+# Mols passing the rescue criteria are added back as survivors even if
+# they failed the strict L3/L4 cuts. Rescue criteria target very-close
+# Mol1 analogs (high shape_Tc + close Tc_to_Mol1) where the FiLM model
+# may have under-called potency (Mol1's own pIC50=6.59, so strict
+# pIC50≥7.5 in F4 excludes the chemotype itself).
+RESCUE_CRITERIA = [
+    # (col, op, cutoff) — NaN-fail for every criterion
+    ("MW", "<=", 500), ("LogP", ">=", -1), ("LogP", "<=", 5),
+    ("TPSA", "<=", 140), ("HBA", "<=", 12), ("HBD", "<=", 5),
+    ("RotBonds", "<=", 11), ("PAINS_alerts", "<", 1),
+    ("warhead_intact", "==", True), ("Lipinski_violations", "<", 3),
+    ("HeavyAtoms", "<=", 50), ("Brenk_alerts", "<", 2),
+    # CLOSE Mol1 analog — matched to yesterday's F4_boltz_extra_v2.csv ACTUAL
+    # data distribution: Tc_to_Mol1 min was 0.59, shape_Tc_mol1 min was 0.40.
+    # No upper cap on Tc — for rescue we WANT close Mol1 analogs.
+    ("Tc_to_Mol1", ">=", 0.59),
+    ("shape_Tc_mol1", ">=", 0.40),
+    # Relaxed potency / drug-likeness (vs strict F4 cuts)
+    # 2026-06-10: relaxed to 6.8 per user — close-Mol1 analogs may be under-called
+    # by the FiLM model (Mol1 itself is 6.59); 6.8 gives a 100 nM neighborhood.
+    ("pIC50_mean", ">=", 6.8),
+    ("LLE", ">=", 3.5), ("SAScore", "<=", 5.0),
+    ("QED", ">=", 0.35), ("max_pubTc", "<=", 0.40),
+    # Docking quality (same as strict)
+    ("vanilla_vina_kcalmol", "<=", -7.5),
+    ("adcov_local_kcalmol", "<=", 0.0),
+]
+RESCUE_PATH_DEFAULT_ON = True
+
+
+def _eval_rescue_mask(df: pd.DataFrame) -> pd.Series:
+    """Mol1-rescue NaN-fail mask. Used to UNION with the strict cascade."""
+    mask = pd.Series(True, index=df.index)
+    for col, op, cutoff in RESCUE_CRITERIA:
+        if col not in df.columns:
+            return pd.Series(False, index=df.index)
+        s = df[col]
+        if op == ">=":
+            cond = s.notna() & (s >= cutoff)
+        elif op == "<=":
+            cond = s.notna() & (s <= cutoff)
+        elif op == "<":
+            cond = s.notna() & (s < cutoff)
+        elif op == "==":
+            cond = s.notna() & (s == cutoff)
+        else:
+            cond = pd.Series(False, index=df.index)
+        mask = mask & cond
+    return mask.fillna(False)
+
+
+def apply_filter_cascade(df: pd.DataFrame, settings: dict):
+    """Walk Layers 1→5 and return cascade counts + final mask + per-row failures.
+
+    settings: {filter_id: {"on": bool, "cutoff": float|bool}} overrides.
+              Defaults come from FILTER_SPEC.
+    """
+    counts = {"total": len(df)}
+    failed_per_row = pd.Series([[] for _ in range(len(df))], index=df.index)
+    cumulative_mask = pd.Series(True, index=df.index)
+    layer_masks: dict = {}  # 2026-06-10: track per-layer mask so rescue can require L5
+
+    for layer in ("layer0_vetoes", "layer1", "layer2", "layer3", "layer4", "layer5"):
+        layer_mask = pd.Series(True, index=df.index)
+        for f in FILTER_SPEC[layer]["filters"]:
+            fid = f["id"]
+            cfg = settings.get(fid, {})
+            on = cfg.get("on", f["default_on"])
+            if not on:
+                continue
+            cutoff = cfg.get("cutoff", f["cutoff"])
+            col = f["col"]
+            if col not in df.columns:
+                continue
+            series = df[col]
+            populated = series.notna()
+            fail_mask = _eval_filter_fail(series, f["op"], cutoff)
+            fail_mask = fail_mask.fillna(False)
+            # NaN handling — RE-REVISED 2026-06-10 per user directive:
+            # "i want to see only results that pass filter and has values.
+            #  meaning if filter use vina and row is NAN on vina it is filtered out".
+            # We now honor the per-filter active_if config:
+            #   active_if == "always"        → NaN FAILS (row filtered out)
+            #   active_if == "col_populated" → NaN PASSES (row preserved)
+            # Earlier (2026-06-08) we forced all filters to NaN-pass because the
+            # cohort had 100% NaN on L5 Boltz cols. With L5 now default_off and
+            # most L3 cols ≥98% covered, NaN-fail is the correct default for
+            # the strict "every filter must have data" survivor view.
+            active_if = f.get("active_if", "always")
+            if active_if == "col_populated":
+                fail_mask = fail_mask & populated   # NaN-pass: only fail when value present AND comparison triggers
+            else:  # "always" or unset
+                fail_mask = fail_mask | (~populated)  # NaN-fail: comparison trigger OR missing value
+            layer_mask = layer_mask & ~fail_mask
+            # Record per-row failure label
+            for idx in df.index[fail_mask]:
+                failed_per_row.at[idx].append(f["label"])
+        cumulative_mask = cumulative_mask & layer_mask
+        layer_masks[layer] = layer_mask
+        counts[f"after_{layer}"] = int(cumulative_mask.sum())
+
+    # 2026-06-10 PM: Mol1 RESCUE PATH — union with strict cascade.
+    # Adds back close-Mol1-analogs that fail strict L3 thresholds but
+    # have tight 3D shape + Tc to Mol1 (F4 pool's rescue tier, ~675 mols).
+    #
+    # User directive 2026-06-10 PM: "filter 5 should be applied on the rescue
+    # as well". So rescue mols must ALSO pass L5 (Boltz/pose-quality cuts),
+    # not just the rescue criteria. With L5 NaN-FAIL on Boltz cols, this means
+    # only Boltz-having rescue mols can be added (which is what we want for
+    # Boltz-confirmed lead picks). Toggle via settings["_rescue_path"]["on"].
+    rescue_cfg = settings.get("_rescue_path", {})
+    rescue_on = rescue_cfg.get("on", RESCUE_PATH_DEFAULT_ON)
+    if rescue_on:
+        rescue_mask = _eval_rescue_mask(df)
+        l5_mask = layer_masks.get("layer5", pd.Series(True, index=df.index))
+        # Rescue contribution: must pass rescue criteria AND L5, but failed strict
+        added_by_rescue = rescue_mask & l5_mask & (~cumulative_mask)
+        counts["rescue_added"] = int(added_by_rescue.sum())
+        cumulative_mask = cumulative_mask | added_by_rescue
+
+    counts["visible"] = int(cumulative_mask.sum())
+    return cumulative_mask, failed_per_row, counts
+
+
+# ── Composite ranking ───────────────────────────────────────────────────────
+
+def _winsorise(s: pd.Series, lo=0.01, hi=0.99) -> pd.Series:
+    if s.notna().sum() < 10:
+        return s
+    qlo = s.quantile(lo)
+    qhi = s.quantile(hi)
+    return s.clip(qlo, qhi)
+
+
+def _robust_z(s: pd.Series) -> pd.Series:
+    med = s.median()
+    mad = (s - med).abs().median()
+    if mad is None or mad == 0 or pd.isna(mad):
+        std = s.std()
+        if std and std > 0:
+            return (s - med) / std
+        return s * 0
+    return (s - med) / (1.4826 * mad)
+
+
+def compute_composite_score(df: pd.DataFrame) -> pd.Series:
+    """Block-weighted z. Missing block features collapse to mean of present.
+    Missing block entirely => block weight re-normalised over present blocks."""
+    z_cache = {}
+    for block in FILTER_SPEC["composite"]["blocks"]:
+        for feat in block["features"]:
+            col = feat["col"]
+            if col in df.columns and col not in z_cache:
+                z_cache[col] = _robust_z(_winsorise(df[col]))
+
+    block_vals = []
+    block_weights = []
+    for block in FILTER_SPEC["composite"]["blocks"]:
+        comps = []
+        for feat in block["features"]:
+            col = feat["col"]
+            if col not in z_cache:
+                continue
+            z = z_cache[col]
+            sign = feat.get("sign", "+")
+            factor = feat.get("factor", 1.0)
+            if sign == "+":
+                comps.append(z * factor)
+            elif sign == "-":
+                comps.append(-z * factor)
+            elif sign == "parabolic_around_0":
+                comps.append(-(z ** 2) * factor)
+        if not comps:
+            continue
+        block_z = pd.concat(comps, axis=1).mean(axis=1, skipna=True)
+        block_vals.append(block_z)
+        block_weights.append(block["weight"])
+
+    if not block_vals:
+        return pd.Series([float("nan")] * len(df), index=df.index)
+    w_sum = sum(block_weights)
+    # Renormalise weights over present blocks
+    scaled = sum(v * (w / w_sum) for v, w in zip(block_vals, block_weights))
+    return scaled
+
+
+def compute_high_score_count(df: pd.DataFrame) -> pd.Series:
+    """Number of green cells across the 9 anchored axes per the spec doc."""
+    rules = [
+        ("pIC50_mean",         ">=", 7.0),
+        ("ligand_iptm",        ">=", 0.85),
+        ("d_SG",               "<=", 3.5),
+        ("LE",                 ">=", 0.30),
+        ("LLE",                ">=", 4.0),
+        ("vina_kcalmol",       "<=", -6.0),
+        ("pKa_Cys346",         "<=", 9.0),
+        ("Brenk_alerts",       "<=", 1),
+    ]
+    score = pd.Series(0, index=df.index, dtype=int)
+    for col, op, cut in rules:
+        if col not in df.columns:
+            continue
+        s = df[col]
+        if op == ">=":
+            score = score + (s >= cut).fillna(False).astype(int)
+        elif op == "<=":
+            score = score + (s <= cut).fillna(False).astype(int)
+    # pred_log_k2_GSH sweet spot [-2, 0]
+    if "pred_log_k2_GSH" in df.columns:
+        s = df["pred_log_k2_GSH"]
+        score = score + ((s >= -2.0) & (s <= 0.0)).fillna(False).astype(int)
+    return score
+
+
+# ── SearchBuilder condition parser ───────────────────────────────────────────
+
+def apply_searchbuilder(df: pd.DataFrame, sb_payload: dict) -> pd.DataFrame:
+    """Apply SearchBuilder JSON conditions to a pandas DataFrame.
+
+    Payload structure (from DataTables SearchBuilder):
+      {
+        "criteria": [
+          {"data": "MW", "condition": "<", "value": ["400"]},
+          {"data": "QED", "condition": ">", "value": ["0.5"]},
+          ...
+        ],
+        "logic": "AND"
+      }
+    """
+    if not sb_payload:
+        return df
+    criteria = sb_payload.get("criteria", [])
+    logic = sb_payload.get("logic", "AND").upper()
+    if not criteria:
+        return df
+
+    # Boolean-aware comparison helper. Bug history (2026-06-01):
+    # SearchBuilder sends string "true"/"false" for bool columns like
+    # warhead_intact. The old "float(vals[0])" path raised ValueError and fell
+    # back to `df[col].astype(str) == "true"`, but pandas stringifies bool as
+    # "True"/"False" (capitalized), so the comparison matched 0 rows. This made
+    # the LibInvent table appear empty whenever a user enabled a
+    # warhead_intact=True chip/filter, even though 11,363/11,367 rows are True.
+    _BOOL_TRUE = {"true", "1", "yes", "t", "y"}
+    _BOOL_FALSE = {"false", "0", "no", "f", "n"}
+
+    def _coerce_value(col_series, raw):
+        """Coerce a SearchBuilder string value to match the column dtype.
+        Returns (coerced_value, is_bool_compare). is_bool_compare signals that
+        the caller should use a pandas-bool comparison (no astype(str))."""
+        s = str(raw).strip()
+        sl = s.lower()
+        if col_series.dtype == bool or str(col_series.dtype) == "boolean":
+            if sl in _BOOL_TRUE: return True, True
+            if sl in _BOOL_FALSE: return False, True
+        # Try numeric
+        try:
+            return float(s), False
+        except (ValueError, TypeError):
+            # Accept literal "true"/"false" even for object cols (mixed bools)
+            if sl in _BOOL_TRUE: return True, True
+            if sl in _BOOL_FALSE: return False, True
+            return s, False
+
+    masks = []
+    for c in criteria:
+        col = c.get("data") or c.get("origData")
+        cond = c.get("condition")
+        vals = c.get("value", [])
+        if col not in df.columns:
+            continue
+        try:
+            if cond in ("<", "<="):
+                mask = df[col] <= float(vals[0]) if cond == "<=" else df[col] < float(vals[0])
+            elif cond in (">", ">="):
+                mask = df[col] >= float(vals[0]) if cond == ">=" else df[col] > float(vals[0])
+            elif cond in ("=", "==", "equals"):
+                coerced, is_bool = _coerce_value(df[col], vals[0])
+                if is_bool:
+                    mask = df[col] == coerced
+                elif isinstance(coerced, float):
+                    mask = df[col] == coerced
+                else:
+                    mask = df[col].astype(str) == coerced
+            elif cond in ("!=", "≠", "not"):
+                coerced, is_bool = _coerce_value(df[col], vals[0])
+                if is_bool:
+                    mask = df[col] != coerced
+                elif isinstance(coerced, float):
+                    mask = df[col] != coerced
+                else:
+                    mask = df[col].astype(str) != coerced
+            elif cond == "between":
+                lo, hi = float(vals[0]), float(vals[1])
+                mask = (df[col] >= lo) & (df[col] <= hi)
+            elif cond in ("starts", "starts with"):
+                mask = df[col].astype(str).str.startswith(str(vals[0]))
+            elif cond in ("ends", "ends with"):
+                mask = df[col].astype(str).str.endswith(str(vals[0]))
+            elif cond in ("contains",):
+                mask = df[col].astype(str).str.contains(str(vals[0]), na=False, regex=False)
+            elif cond in ("null", "isnull"):
+                mask = df[col].isna()
+            elif cond in ("notnull",):
+                mask = df[col].notna()
+            else:
+                continue
+        except Exception as e:
+            print(f"  SB error on {col}/{cond}/{vals}: {e}")
+            continue
+        masks.append(mask)
+
+    if not masks:
+        return df
+    if logic == "AND":
+        combined = masks[0]
+        for m in masks[1:]:
+            combined = combined & m
+    else:
+        combined = masks[0]
+        for m in masks[1:]:
+            combined = combined | m
+    return df[combined]
+
+
+# ── Quick filter chips ──────────────────────────────────────────────────────
+
+CHIP_PRESETS = {
+    "lipinski": lambda d: d[(d["MW"] < 500) & (d["LogP"] < 5) & (d["HBD"] <= 5) & (d["HBA"] <= 10)],
+    "leadlike": lambda d: d[(d["MW"] < 350) & (d["SAScore"] < 4) & (d["QED"] > 0.5)],
+    "potent": lambda d: d[d["pIC50_film"] >= 7.0],
+    "ultra_potent": lambda d: d[d["pIC50_film"] >= 8.0],
+    "in_distribution": lambda d: d[d["max_Tc_train"] >= 0.3],
+    "warhead_intact": lambda d: d[d["warhead_intact"] == True],
+    "pains_clean": lambda d: d[d["PAINS_alerts"] == 0],
+    "synthesizable": lambda d: d[d["SAScore"] < 4.0],
+    "drug_like": lambda d: d[d["QED"] >= 0.5],
+}
+
+
+@app.route("/api/data", methods=["POST", "GET"])
+def api_data():
+    """DataTables server-side endpoint."""
+    if request.method == "POST":
+        payload = request.get_json() or request.form.to_dict() or {}
+    else:
+        payload = request.args.to_dict()
+    # DEBUG: log non-trivial payload keys to find SearchBuilder integration bug
+    _interesting = {k: v for k, v in payload.items() if k not in ("draw", "start", "length")}
+    if _interesting:
+        print(f"[REQ] keys={list(payload.keys())} interesting={_interesting}", flush=True)
+    # Standard DataTables params
+    draw = int(payload.get("draw", 1))
+    start = int(payload.get("start", 0))
+    length = int(payload.get("length", 20))
+    if length < 0: length = len(DF)
+
+    df = DF
+    # Method filter (selects one method)
+    method_filter = payload.get("method", "")
+    if method_filter and method_filter != "_all" and "method" in df.columns:
+        df = df[df["method"] == method_filter]
+    n_total = len(df)
+
+    # Filter 0 — Mol1-anchored substructure OR-set. Accepts groups via either
+    # GET ?groups=… or POST payload key. Same default-ON semantics as
+    # _parse_groups(): missing param → OR-of-all-3; explicit "all"/"none"/"off"
+    # → disabled.
+    if "groups" in payload or "group" in payload:
+        raw = (payload.get("groups") or payload.get("group") or "").strip().lower()
+        if raw in ("all", "none", "off"):
+            groups = set()
+        else:
+            groups = {t.strip() for t in raw.split(",") if t.strip() in _FILTER0_VALID}
+    else:
+        groups = set(_FILTER0_DEFAULT)
+    if groups:
+        df = df[_df_group_mask(df, groups)]
+
+    # Apply quick chips
+    chips_str = payload.get("chips", "")
+    if chips_str:
+        chips = [c.strip() for c in chips_str.split(",") if c.strip()]
+        for chip in chips:
+            if chip in CHIP_PRESETS:
+                df = CHIP_PRESETS[chip](df)
+
+    # Apply SearchBuilder
+    sb_str = payload.get("searchBuilder", "") or payload.get("sb", "")
+    if sb_str:
+        try:
+            sb = json.loads(sb_str) if isinstance(sb_str, str) else sb_str
+            print(f"[SB] method={method_filter!r} payload={sb}", flush=True)
+            before = len(df)
+            df = apply_searchbuilder(df, sb)
+            print(f"[SB] {before} -> {len(df)}", flush=True)
+        except Exception as e:
+            print(f"SB parse error: {e}")
+
+    # Free-text search across SMILES
+    text = payload.get("search", "") or payload.get("q", "")
+    if text:
+        df = df[df["smiles"].astype(str).str.contains(text, case=False, na=False)]
+
+    n_filtered = len(df)
+
+    # Sorting
+    order_col = payload.get("order_col", "pIC50_film")
+    order_dir = payload.get("order_dir", "desc")
+    if order_col in df.columns:
+        df = df.sort_values(order_col, ascending=(order_dir == "asc"), na_position="last")
+
+    # Pagination
+    df_page = df.iloc[start:start + length]
+
+    # CRITICAL: replace NaN with None — Python's json.dumps emits literal `NaN`
+    # tokens which are invalid JSON; browsers' JSON.parse rejects them and
+    # jQuery routes the response to the error handler, causing the table to
+    # render "No data available" even on a 200 OK with valid filtered data.
+    df_page = df_page.astype(object).where(df_page.notna(), None)
+    rows = df_page.to_dict(orient="records")
+    return jsonify({
+        "draw": draw,
+        "recordsTotal": n_total,
+        "recordsFiltered": n_filtered,
+        "data": rows,
+    })
+
+
+# ── Boltz / AlphaFold cofolded poses (Cys346 cohort) ──────────────────────
+# Old Cys560-targeted poses are under _DEPRECATED_cys560_* and explicitly
+# NOT loaded here. Cys346 manifests will populate when the redo completes.
+MEDCHEM10_ROOT = PROJECT_ROOT / "data" / "boltz_poses" / ("medchem_top10__zap70_cys346")
+TOP1000_ROOT   = PROJECT_ROOT / "data" / "boltz_poses" / ("boltz_results_top1000__zap70_cys346") / "predictions"
+
+POSES_MANIFEST = {}
+_man = MEDCHEM10_ROOT / "manifest.json"
+if _man.exists():
+    POSES_MANIFEST.update(json.loads(_man.read_text()))
+    print(f"Loaded {len(POSES_MANIFEST)} medchem-top10 poses (Cys346)")
+else:
+    print(f"No Cys346 medchem-top10 manifest yet")
+
+TOP1000_MANIFEST = {}
+if TOP1000_MAN.exists():
+    TOP1000_MANIFEST = json.loads(TOP1000_MAN.read_text())
+    print(f"Loaded {len(TOP1000_MANIFEST)} top-1000 Cys346 cofold poses")
+
+
+COHORT_3597_ROOT = PROJECT_ROOT / "data" / "boltz_results" / "cohort_3597_full"
+
+# 2026-06-10 PM: F4 Boltz pool — SMILES → CIF path map.
+# The F4 cohort uses cofold names like "row00000" / "EXTRA_00000" which don't
+# match the live DF's integer row_id. Build a SMILES-keyed lookup so the 3D
+# pocket tab works for all visible F4 survivors.
+F4_SMILES_TO_CIF: dict[str, str] = {}
+try:
+    sys.path.insert(0, str(PROJECT_ROOT / "experiments"))
+    from compute_full_boltz_metrics import build_row_id_index
+    _f4_index = build_row_id_index()
+    for _csv_name in ("F4_boltz_pool_v2_with_boltz.csv", "F4_boltz_extra_v2_with_boltz.csv"):
+        _p = PROJECT_ROOT / "data" / "tier4_scored" / _csv_name
+        if not _p.exists(): continue
+        _df = pd.read_csv(_p, low_memory=False)
+        _id_col = "row_id" if "row_id" in _df.columns else None
+        if _id_col is None:
+            _prefix = "row" if "pool" in _csv_name else "EXTRA_"
+            _df["_cofold_name"] = [f"{_prefix}{i:05d}" for i in range(len(_df))]
+            _id_col = "_cofold_name"
+        for _, _r in _df.iterrows():
+            _rid = str(_r[_id_col])
+            _smi = _r.get("smiles")
+            if not _smi: continue
+            _pred = _f4_index.get(_rid)
+            if not _pred: continue
+            _cif = _pred / f"{_pred.name}_model_0.cif"
+            if _cif.exists() and _cif.stat().st_size > 100:
+                F4_SMILES_TO_CIF[_smi] = str(_cif)
+    print(f"Built F4_SMILES_TO_CIF: {len(F4_SMILES_TO_CIF):,} SMILES → CIF paths")
+except Exception as _e:
+    print(f"[warn] F4_SMILES_TO_CIF build failed: {_e}")
+
+
+def _resolve_pose(row_id: int):
+    """Return (cif_text, metadata) for the given row_id, or (None, None)."""
+    key = str(row_id)
+    if key in TOP1000_MANIFEST:
+        m = TOP1000_MANIFEST[key]
+        cif = TOP1000_ROOT / m["yaml_name"] / f"{m['yaml_name']}_model_0.cif"
+        if cif.exists():
+            meta = dict(m)
+            meta["pose_name"] = m["yaml_name"]
+            meta["pose_source"] = "top1000_boltz"
+            return cif.read_text(), meta
+    if key in POSES_MANIFEST:
+        m = POSES_MANIFEST[key]
+        cif = MEDCHEM10_ROOT / "predictions" / m["pose_name"] / f"{m['pose_name']}_model_0.cif"
+        if cif.exists():
+            meta = dict(m)
+            meta["pose_source"] = "medchem10_boltz"
+            return cif.read_text(), meta
+    # 3,597 cohort cofolds sharded across from_{a..h}/<row_id>/
+    for sub in COHORT_3597_ROOT.glob(f"from_*/{row_id}/{row_id}_model_0.cif"):
+        if sub.exists():
+            shard = sub.parent.parent.name
+            return sub.read_text(), {"pose_source": "cohort_3597", "shard": shard,
+                                     "pose_name": f"{row_id}", "row_id": row_id}
+    # 2026-06-10 PM: F4 Boltz pool — keyed by SMILES (the F4 cohort uses different
+    # row_ids than the live DF). Look up DF's SMILES for this row_id, then resolve
+    # via the prebuilt F4_SMILES_TO_CIF map.
+    try:
+        df_row = DF.loc[DF["row_id"] == row_id]
+        if len(df_row):
+            smi = df_row.iloc[0].get("smiles")
+            if smi and smi in F4_SMILES_TO_CIF:
+                cif_path = F4_SMILES_TO_CIF[smi]
+                if Path(cif_path).exists() and Path(cif_path).stat().st_size > 100:
+                    return Path(cif_path).read_text(), {
+                        "pose_source": "f4_boltz_pool",
+                        "pose_name": Path(cif_path).parent.name,
+                        "row_id": row_id,
+                    }
+    except Exception:
+        pass
+    return None, None
+
+
+@app.route("/api/pose/<int:row_id>")
+def api_pose(row_id: int):
+    """Return the cofolded protein-ligand mmCIF + metadata for row_id."""
+    cif, meta = _resolve_pose(row_id)
+    if cif is None:
+        return jsonify({"available": False, "row_id": row_id})
+    return jsonify({"available": True, "row_id": row_id, "cif": cif, "metadata": meta})
+
+
+@app.route("/api/poses_index")
+def api_poses_index():
+    """Return all row_ids that have cofolded poses available."""
+    keys = set(POSES_MANIFEST.keys()) | set(TOP1000_MANIFEST.keys())
+    # Also include cohort_3597 cofolds on disk
+    for cif in COHORT_3597_ROOT.glob("from_*/*/[0-9]*_model_0.cif"):
+        keys.add(cif.parent.name)
+    return jsonify({"row_ids": sorted(int(k) for k in keys if k.isdigit())})
+
+
+@app.route("/api/top_combined")
+def api_top_combined():
+    """Top-N candidates ranked by combined_score (FiLMDelta pIC50 + Boltz confidence).
+
+    2026-05-26: Each manifest row is enriched with ALL DF columns (pubTc panel,
+    vina rescore, RDKit strain, propka, xTB, efficiency, …) so the Top-20
+    leaderboard can render the SAME 33-column 7-family layout as the per-method
+    tables. Manifest values win on overlap (manifest has the Boltz cofold
+    metrics keyed by yaml_name; DF row_id is the JOIN key).
+    """
+    n = int(request.args.get("n", 20))
+    groups = _parse_groups(request)
+    rows = list(TOP1000_MANIFEST.values())
+    # combined_score can be null in some manifest entries; coerce to -1e9 so they sort last
+    rows.sort(key=lambda r: (r.get("combined_score") if r.get("combined_score") is not None else -1e9), reverse=True)
+    enriched = []
+    # We may need to scan past `n` if a Filter-0 group is set, since some rows
+    # in the manifest top-N could be filtered out.
+    for r in rows:
+        rid = r.get("row_id")
+        merged = dict(r)
+        try:
+            rid_int = int(rid) if rid is not None else None
+        except (TypeError, ValueError):
+            rid_int = None
+        if rid_int is not None:
+            df_row = DF[DF["row_id"] == rid_int]
+            if not df_row.empty:
+                df_dict = df_row.iloc[0].replace({np.nan: None}).to_dict()
+                # DF columns fill in everything; manifest then overrides for
+                # the cofold-keyed fields (mPAE, iptm, …, combined_score).
+                merged = {**df_dict, **r}
+        # Apply Filter-0 group filter (OR-set) using merged smiles
+        if groups:
+            smi = merged.get("smiles")
+            flags = SUBSTRUCT_BY_SMILES.get(smi, (False, False, False)) if smi else (False, False, False)
+            murcko_f, thiq_f, acryl_f = flags
+            ok = False
+            if "murcko" in groups and murcko_f: ok = True
+            if "thiq" in groups and thiq_f: ok = True
+            if "murcko_and_acryl" in groups and (murcko_f and acryl_f): ok = True
+            if not ok:
+                continue
+        enriched.append(merged)
+        if len(enriched) >= n:
+            break
+    return jsonify({
+        "n_total": len(rows),
+        "rows": enriched,
+        "groups": sorted(groups) if groups else None,
+    })
+
+
+# ── Seed Mol 1 cofold (Cys346) — pending redo ──────────────────────────
+# Old Cys560-targeted seed poses are deprecated. New Cys346 versions will
+# populate at data/boltz_poses/mol1__zap70_cys346/ when ready.
+SEED_POSE_DIR = PROJECT_ROOT / "data" / "boltz_poses" / "mol1__zap70_cys346"
+SEED_POSE_META = None
+_seed_meta_path = SEED_POSE_DIR / "mol1_manifest.json"
+if _seed_meta_path.exists():
+    SEED_POSE_META = json.loads(_seed_meta_path.read_text()).get("mol1")
+    print(f"Loaded seed Mol 1 cofold pose (Cys346)")
+else:
+    print(f"No Cys346 seed Mol 1 cofold yet")
+
+
+@app.route("/api/pose_seed")
+def api_pose_seed():
+    """Return the cofolded Mol 1 (seed) protein-ligand mmCIF + metadata.
+
+    Query param `variant`:
+      - 'v1' (default): no pocket constraint — covalent bond to Cys560 forms,
+        molecule sits at activation loop, NO hinge H-bonds
+      - 'v2': pocket constraint at hinge (Met414/Glu415/Met416) — molecule
+        binds canonically at ATP pocket with hinge H-bonds, but warhead can't
+        reach Cys560 so covalent bond is NOT formed
+    """
+    variant = request.args.get("variant", "v1")
+    if variant == "v2":
+        v2_dir = PROJECT_ROOT / "data" / "boltz_poses" / "mol1_v2" / "mol1_v2_pocket"
+        cif_path = v2_dir / "mol1_v2_pocket_model_0.cif"
+        conf_path = v2_dir / "confidence_mol1_v2_pocket_model_0.json"
+        if not cif_path.exists():
+            return jsonify({"available": False})
+        meta = {
+            "pose_name": "mol1_v2_pocket",
+            "smiles": "C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1",
+            "method": "Seed (Mol 1) — pocket-constrained",
+            "variant": "v2",
+            **(json.loads(conf_path.read_text()) if conf_path.exists() else {}),
+        }
+        return jsonify({
+            "available": True,
+            "cif": cif_path.read_text(),
+            "metadata": meta,
+        })
+
+    # default: v1
+    cif_path = SEED_POSE_DIR / "mol1" / "mol1_model_0.cif"
+    if not cif_path.exists() or SEED_POSE_META is None:
+        return jsonify({"available": False})
+    meta = dict(SEED_POSE_META)
+    meta["variant"] = "v1"
+    return jsonify({
+        "available": True,
+        "cif": cif_path.read_text(),
+        "metadata": meta,
+    })
+
+
+MOL1_SMILES = "C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1"
+
+
+@app.route("/api/svg/<row_id>")
+def api_svg(row_id: str):
+    """Render a small SVG for one row's molecule.
+
+    Special-case `row_id == "M1"` → render from MOL1_SMILES so the Mol1 anchor
+    row in the dashboard can use the same SVG endpoint as the leaderboard.
+    Special-case non-integer string row_ids (e.g. "exp2_0", "exp6_42" from the
+    Tier 4 cohort endpoint) → render from the `smi` query param passed by the
+    Tier 4 render JS. Otherwise expects an integer row_id indexed into the
+    bulk-scored CSV.
+    """
+    smi_q = request.args.get("smi", "")
+    if row_id == "M1":
+        smi = MOL1_SMILES
+    elif smi_q:
+        smi = smi_q
+    else:
+        try:
+            rid = int(row_id)
+        except ValueError:
+            return "", 404
+        if rid < 0 or rid >= len(DF):
+            return "", 404
+        smi = DF.iloc[rid]["smiles"]
+    mol = Chem.MolFromSmiles(smi)
+    if mol is None:
+        return "", 404
+    AllChem.Compute2DCoords(mol)
+    w = int(request.args.get("w", 140))
+    h = int(request.args.get("h", 100))
+    drawer = Draw.MolDraw2DSVG(w, h)
+    drawer.drawOptions().bondLineWidth = 1.0
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText().replace("<?xml version='1.0' encoding='iso-8859-1'?>", "")
+    return svg, 200, {"Content-Type": "image/svg+xml"}
+
+@app.route("/api/seed_svg")
+def api_seed_svg():
+    w = int(request.args.get("w", 200))
+    h = int(request.args.get("h", 140))
+    mol = Chem.MolFromSmiles(MOL1_SMILES)
+    AllChem.Compute2DCoords(mol)
+    drawer = Draw.MolDraw2DSVG(w, h)
+    drawer.drawOptions().bondLineWidth = 1.0
+    drawer.DrawMolecule(mol)
+    drawer.FinishDrawing()
+    svg = drawer.GetDrawingText().replace("<?xml version='1.0' encoding='iso-8859-1'?>", "")
+    return svg, 200, {"Content-Type": "image/svg+xml"}
+
+
+# ── Mol1 (seed / design anchor) — one-row reference for the dashboard ─────
+# Returns ONE row with the SAME column keys as the Top-20 leaderboard /
+# bulk CSV manifest entries, plus the enriched columns (pKa_Cys346,
+# vina_kcalmol, LLE, pubTc panel, rdkit_strain, xTB descriptors). Used by
+# the new "Mol1 — Design Anchor" reference table above the leaderboard.
+# Mol1 is NOT in all_methods_bulk_scored_v4.csv (it's the seed) so all
+# fields are computed/loaded fresh here.
+MOL1_ANCHOR_CACHE: dict | None = None
+
+def _build_mol1_anchor() -> dict:
+    """Compute Mol1 anchor row. Cached at first call."""
+    global MOL1_ANCHOR_CACHE
+    if MOL1_ANCHOR_CACHE is not None:
+        return MOL1_ANCHOR_CACHE
+
+    from rdkit.Chem import Descriptors, Crippen, Lipinski, QED, rdMolDescriptors
+    from rdkit.Chem import DataStructs, FilterCatalog, RDConfig
+
+    smi = MOL1_SMILES
+    mol = Chem.MolFromSmiles(smi)
+    row: dict = {
+        "row_id": "M1",
+        "smiles": smi,
+        "method": "Seed (Mol 1) — Design Anchor",
+        "yaml_name": "mol1",
+    }
+
+    # ── RDKit physchem ─────────────────────────────────────────────────
+    MW = float(Descriptors.MolWt(mol))
+    LogP = float(Crippen.MolLogP(mol))
+    TPSA = float(Descriptors.TPSA(mol))
+    HBA = int(Lipinski.NumHAcceptors(mol))
+    HBD = int(Lipinski.NumHDonors(mol))
+    RotBonds = int(Lipinski.NumRotatableBonds(mol))
+    HeavyAtoms = int(mol.GetNumHeavyAtoms())
+    Rings = int(rdMolDescriptors.CalcNumRings(mol))
+    fsp3 = float(rdMolDescriptors.CalcFractionCSP3(mol))
+    qed_val = float(QED.qed(mol))
+    row.update({
+        "MW": MW, "LogP": LogP, "TPSA": TPSA, "HBA": HBA, "HBD": HBD,
+        "RotBonds": RotBonds, "HeavyAtoms": HeavyAtoms, "Rings": Rings,
+        "fsp3": fsp3, "QED": qed_val,
+    })
+
+    # Lipinski violations (matches compute_efficiency_metrics.py)
+    viol = (int(MW > 500) + int(LogP > 5) + int(HBA > 10) + int(HBD > 5))
+    row["Lipinski_violations"] = viol
+
+    # PAINS
+    try:
+        params = FilterCatalog.FilterCatalogParams()
+        params.AddCatalog(FilterCatalog.FilterCatalogParams.FilterCatalogs.PAINS)
+        cat = FilterCatalog.FilterCatalog(params)
+        row["PAINS_alerts"] = int(len(cat.GetMatches(mol)))
+    except Exception as e:
+        print(f"  PAINS failed: {e}")
+        row["PAINS_alerts"] = None
+
+    # SAScore (Ertl-Schuffenhauer; ships with RDKit Contrib)
+    try:
+        sa_path = Path(RDConfig.RDContribDir) / "SA_Score"
+        if str(sa_path) not in sys.path:
+            sys.path.append(str(sa_path))
+        import sascorer  # type: ignore
+        row["SAScore"] = float(sascorer.calculateScore(mol))
+    except Exception as e:
+        print(f"  SAScore failed: {e}")
+        row["SAScore"] = None
+
+    # Warhead intact (acrylamide) — by definition true for Mol1
+    row["warhead_intact"] = True
+    row["Tc_to_Mol1"] = 1.0
+
+    # max Tc to training set (Mol1 vs 280 ZAP70 training mols)
+    try:
+        from experiments.run_zap70_v3 import load_zap70_molecules
+        train_df, _ = load_zap70_molecules()
+        mol1_fp = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
+        train_fps = []
+        for s in train_df["smiles"].tolist():
+            m = Chem.MolFromSmiles(s)
+            if m is None:
+                continue
+            train_fps.append(AllChem.GetMorganFingerprintAsBitVect(m, 2, nBits=2048))
+        sims = np.array(DataStructs.BulkTanimotoSimilarity(mol1_fp, train_fps))
+        row["max_Tc_train"] = float(sims.max())
+        top10 = np.partition(sims, -10)[-10:]
+        row["mean_top10_Tc_train"] = float(top10.mean())
+    except Exception as e:
+        print(f"  Tc-train failed: {e}")
+        row["max_Tc_train"] = None
+        row["mean_top10_Tc_train"] = None
+
+    # ── pubTc v3 panel (300-lead) ─────────────────────────────────────
+    try:
+        sys.path.insert(0, str(PROJECT_ROOT / "experiments"))
+        from pubtc_panel_v3 import PANEL_SMILES  # type: ignore
+        panel_fps, panel_names = [], []
+        for name, ps in PANEL_SMILES.items():
+            pm = Chem.MolFromSmiles(ps)
+            if pm is None:
+                continue
+            panel_fps.append(AllChem.GetMorganFingerprintAsBitVect(pm, 2, nBits=2048))
+            panel_names.append(name)
+        mol1_fp_v3 = AllChem.GetMorganFingerprintAsBitVect(mol, 2, nBits=2048)
+        sims = np.array(DataStructs.BulkTanimotoSimilarity(mol1_fp_v3, panel_fps))
+        row["max_pubTc"] = float(sims.max())
+        row["median_pubTc"] = float(np.median(sims))
+        row["mean_pubTc"] = float(sims.mean())
+        k = min(10, len(sims))
+        top10 = np.partition(sims, -k)[-k:]
+        row["top10_mean_pubTc"] = float(top10.mean())
+        row["closest_lead"] = panel_names[int(np.argmax(sims))]
+    except Exception as e:
+        print(f"  pubTc v3 panel failed: {e}")
+        for k in ("max_pubTc", "median_pubTc", "mean_pubTc", "top10_mean_pubTc"):
+            row[k] = None
+        row["closest_lead"] = None
+
+    # ── Boltz cofold metrics (from mol1_manifest.json) ───────────────
+    seed_meta_path = PROJECT_ROOT / "data" / "boltz_poses" / "mol1__zap70_cys346" / "mol1_manifest.json"
+    if seed_meta_path.exists():
+        sm = json.loads(seed_meta_path.read_text()).get("mol1", {})
+        # Map manifest field names → leaderboard field names
+        row["mPAE"] = None  # not in mol1 manifest; only confidence/iptm/etc
+        row["iptm"] = sm.get("boltz_iptm")
+        row["ligand_iptm"] = sm.get("boltz_ligand_iptm")
+        row["boltz_plddt"] = sm.get("boltz_complex_plddt")
+        row["complex_plddt"] = sm.get("boltz_complex_plddt")
+        row["boltz_pde"] = sm.get("boltz_complex_pde")
+        row["boltz_confidence"] = sm.get("boltz_confidence_score")
+        row["combined_score"] = None
+        row["rank_score"] = None
+        row["warhead_atom_name"] = sm.get("warhead_atom_name")
+    else:
+        for k in ("mPAE", "iptm", "ligand_iptm", "boltz_plddt", "complex_plddt",
+                  "boltz_pde", "boltz_confidence", "combined_score", "rank_score",
+                  "warhead_atom_name"):
+            row[k] = None
+
+    # ── Enriched per-pose computations (Vina, PROPKA, xTB, RDKit strain, ─
+    # cofold geometry) loaded from cache JSON written by
+    # experiments/enrich_mol1_anchor.py. If the cache is missing every
+    # column falls back to None (the previous behaviour).
+    enriched_path = PROJECT_ROOT / "data" / "boltz_poses" / "mol1_anchor_enriched.json"
+    if enriched_path.exists():
+        try:
+            enr = json.loads(enriched_path.read_text())
+        except Exception as e:
+            print(f"  failed to load mol1_anchor_enriched.json: {e}")
+            enr = {}
+    else:
+        enr = {}
+
+    # Cofold geometry (overrides manifest's None if present)
+    for k in ("d_SG", "geom_ok", "n_h_bonds", "n_stabilizing_contacts",
+              "pocket_occupancy_pct"):
+        row[k] = enr.get(k)
+    # If the cache derived a better warhead atom name keep it.
+    if enr.get("warhead_atom_name"):
+        row["warhead_atom_name"] = enr["warhead_atom_name"]
+
+    # ── pIC50 prediction for Mol1 ─────────────────────────────────────
+    # Mol1 is the anchor used to predict Δ on candidates; we don't have a
+    # FiLMDelta pIC50 prediction for Mol1 itself stored on disk. It also
+    # has no measured ChEMBL pIC50 (it's a designed seed, not in the 280
+    # ZAP70 anchor set). Leave as null with a clear note in the
+    # dashboard.
+    row["pIC50_method"] = None
+    row["pIC50_mean"] = None
+    row["pIC50_std"] = None
+    row["pIC50_film"] = None
+    row["delta_vs_mol1"] = 0.0  # by definition (Mol1 vs itself)
+    row["direct_delta_from_mol1"] = 0.0  # by definition
+
+    # ── Efficiency metrics (need pIC50 → all NaN for Mol1) ───────────
+    # LLE/LE/BEI/SEI/SILE all require a pIC50 anchor value. Mol1's pIC50
+    # is unknown (no in-house assay), so these stay null.
+    row["LLE"] = None
+    row["LE"] = None
+    row["BEI"] = None
+    row["SEI"] = None
+    row["SILE"] = None
+
+    # ── Vina rescore for Mol1 pose (from cache) ──────────────────────
+    row["vina_kcalmol"] = enr.get("vina_kcalmol")
+    row["vina_inter_kcalmol"] = enr.get("vina_inter_kcalmol")
+    row["vina_intra_kcalmol"] = enr.get("vina_intra_kcalmol")
+
+    # ── PROPKA pKa_Cys346 / xTB warhead reactivity / RDKit strain (cache) ──
+    for k in ("pKa_Cys346", "LUMO_eV", "HOMO_eV", "gap_eV", "omega_eV",
+              "q_Cb", "fukui_plus_Cb", "pred_log_k2_GSH",
+              "rdkit_strain_kcal_mol", "vdw_interaction_kcal_mol",
+              "rdkit_strain_posefree_kcal_mol",
+              "shape_Tc_seed", "esp_sim_seed", "warhead_dev_deg"):
+        row[k] = enr.get(k)
+
+    # Anchor-vs-itself wins are n/a (we never compare Mol1 to itself).
+    row["anchor_wins"] = None
+    row["anchor_wins_ge7"] = None
+
+    # Convert any remaining numpy types → Python builtins for clean JSON
+    out: dict = {}
+    for k, v in row.items():
+        if isinstance(v, (np.floating,)):
+            out[k] = float(v) if not np.isnan(v) else None
+        elif isinstance(v, (np.integer,)):
+            out[k] = int(v)
+        elif isinstance(v, (np.bool_,)):
+            out[k] = bool(v)
+        else:
+            out[k] = v
+
+    MOL1_ANCHOR_CACHE = out
+    return out
+
+
+@app.route("/api/mol1_anchor")
+def api_mol1_anchor():
+    """Mol1 (design anchor) as a one-row reference for the dashboard."""
+    try:
+        row = _build_mol1_anchor()
+        return jsonify({"available": True, "row": row})
+    except Exception as e:
+        import traceback
+        print(f"mol1_anchor error: {e}\n{traceback.format_exc()}")
+        return jsonify({"available": False, "error": str(e)}), 500
+
+
+@app.route("/api/methods")
+def api_methods():
+    """List methods + their candidate counts + per-method stats.
+
+    Query params:
+        with_diversity=1  Include per-method diversity panel (lazy, cached
+                          after first call: n_unique, diversity_ratio,
+                          mean_intra_nn_tanimoto, max_intra_tanimoto,
+                          n_bemis_murcko_scaffolds, mean_pairwise_dissim).
+                          Default off so the existing report.html init stays
+                          fast.
+        groups=…           Filter-0 OR-set (murcko|thiq|murcko_and_acryl,…).
+                          Counts are recomputed against the filtered DF; Tier
+                          4 Mol1-anchored virtual rows are filtered using the
+                          per-CSV cached stats.
+    """
+    if "method" not in DF.columns:
+        return jsonify({"methods": [{"name": "All", "n": len(DF)}]})
+    groups = _parse_groups(request)
+    with_div = str(request.args.get("with_diversity", "0")).lower() in ("1", "true", "yes", "on")
+    div_cache = _compute_method_diversity_cache() if with_div else {}
+    df_view = DF[_df_group_mask_cached(DF, groups)] if groups else DF
+    # Per-method UNFILTERED counts come from DF (never change with Filter 0).
+    # Filtered counts come from df_view. Both are returned so the UI can show
+    # "library 1,179,554 · 936,132 in lead-opt set" rather than appearing to
+    # lose data when Filter 0 hides rows.
+    unfiltered_counts = DF.groupby("method").size().to_dict() if "method" in DF.columns else {}
+    rows = []
+    seen_methods = set()
+    for m, sub in df_view.groupby("method"):
+        pic = sub["pIC50_film"].dropna() if "pIC50_film" in sub.columns else pd.Series(dtype=float)
+        n_unfilt = int(unfiltered_counts.get(m, len(sub)))
+        seen_methods.add(m)
+        row = {
+            "name": m,
+            "n": n_unfilt,                     # unfiltered library size (stable)
+            "n_filtered": int(len(sub)),       # current Filter 0 OR-set
+            "max_pIC50": float(pic.max()) if len(pic) else None,
+            "median_pIC50": float(pic.median()) if len(pic) else None,
+            "n_potent_7": int((pic >= 7).sum()),
+            "n_potent_8": int((pic >= 8).sum()),
+            "n_warhead": int(sub["warhead_intact"].sum()) if "warhead_intact" in sub.columns else None,
+        }
+        if with_div and m in div_cache:
+            d = div_cache[m]
+            row.update({
+                "n_unique": int(d["n_unique"]),
+                "diversity_ratio": d["diversity_ratio"],
+                "mean_intra_nn_tanimoto": d["mean_intra_nn_tanimoto"],
+                "max_intra_tanimoto": d["max_intra_tanimoto"],
+                "n_bemis_murcko_scaffolds": int(d["n_bemis_murcko_scaffolds"]),
+                "mean_pairwise_dissim": d["mean_pairwise_dissim"],
+            })
+        rows.append(row)
+    # Add zero-survivor methods so the unfiltered library size remains visible
+    # in subnav pills + tier totals even when Filter 0 wipes them out entirely.
+    for m, n_unfilt in unfiltered_counts.items():
+        if m in seen_methods:
+            continue
+        rows.append({"name": m, "n": int(n_unfilt), "n_filtered": 0,
+                     "max_pIC50": None, "median_pIC50": None,
+                     "n_potent_7": 0, "n_potent_8": 0, "n_warhead": 0})
+
+    # 2026-06-08: Mol1-anchored cohorts are now concat'd directly into DF
+    # (each cohort gets its own method label). The previous "virtual methods"
+    # block here is no longer needed — those cohorts are picked up by the
+    # main groupby above and would otherwise be double-counted.
+    total_unfilt = int(len(DF))
+    total_filt   = int(len(df_view))
+    return jsonify({
+        "methods": rows,
+        "total": total_unfilt,           # kept for backwards compat ⇒ ALWAYS unfiltered
+        "total_unfiltered": total_unfilt,
+        "total_filtered": total_filt,
+        "groups": sorted(groups) if groups else None,
+        "filter0_default": sorted(_FILTER0_DEFAULT),
+    })
+
+
+@app.route("/api/cohort_diversity")
+def api_cohort_diversity():
+    """Per-cohort diversity metrics (observe-only, mode-collapse alarm).
+
+    Returns the pre-computed `cohort_diversity_metrics.csv` rows as JSON.
+    Columns: cohort, group, n_total, n_unique, diversity_ratio,
+             mean_intra_nn_tanimoto, max_intra_tanimoto,
+             n_bemis_murcko_scaffolds, mean_pairwise_dissim.
+    Source: experiments/cohort_diversity_backfill.py over
+    `results/paper_evaluation/cohort_comparison/all_cohorts_metrics.csv`.
+    """
+    if COHORT_DIVERSITY is None:
+        return jsonify({"rows": [], "source": str(COHORT_DIVERSITY_CSV), "available": False}), 200
+    rows = COHORT_DIVERSITY.astype(object).where(COHORT_DIVERSITY.notna(), None).to_dict(orient="records")
+    return jsonify({
+        "rows": rows,
+        "source": str(COHORT_DIVERSITY_CSV.relative_to(PROJECT_ROOT)),
+        "available": True,
+        "n_cohorts": len(rows),
+    })
+
+
+@app.route("/api/spec")
+def api_spec():
+    """Return the filter+ranking spec JSON. Single source of truth (the docs
+    page and the dashboard UI both render from this)."""
+    return jsonify(FILTER_SPEC)
+
+
+def _parse_filter_settings(payload: dict) -> dict:
+    """Pull per-filter on/cutoff overrides out of a JSON or query payload.
+
+    Accepts either:
+      - JSON: {"filters": {"f1_mw": {"on": true, "cutoff": 700}, ...}}
+      - Query: ?f1_mw_on=1&f1_mw_cutoff=700&...
+      - Layer-level shortcuts: ?layer1_enabled=1&layer2_enabled=0
+    """
+    settings: dict = {}
+    # JSON body
+    if isinstance(payload.get("filters"), dict):
+        settings.update(payload["filters"])
+
+    # Layer-level shortcuts
+    for layer in ("layer0_vetoes", "layer1", "layer2", "layer3", "layer4", "layer5"):
+        enabled_key = f"{layer}_enabled"
+        if enabled_key in payload:
+            v = payload[enabled_key]
+            on = str(v).lower() in ("1", "true", "yes", "on")
+            for f in FILTER_SPEC[layer]["filters"]:
+                settings.setdefault(f["id"], {})
+                settings[f["id"]]["on"] = on
+
+    # Per-filter query params: <id>_on=1, <id>_cutoff=700
+    for layer in ("layer0_vetoes", "layer1", "layer2", "layer3", "layer4", "layer5"):
+        for f in FILTER_SPEC[layer]["filters"]:
+            fid = f["id"]
+            if f"{fid}_on" in payload:
+                v = payload[f"{fid}_on"]
+                on = str(v).lower() in ("1", "true", "yes", "on")
+                settings.setdefault(fid, {})["on"] = on
+            if f"{fid}_cutoff" in payload:
+                raw = payload[f"{fid}_cutoff"]
+                try:
+                    settings.setdefault(fid, {})["cutoff"] = float(raw)
+                except (TypeError, ValueError):
+                    if isinstance(raw, bool):
+                        settings.setdefault(fid, {})["cutoff"] = raw
+    return settings
+
+
+# Default-filter precompute cache. Filled at startup by _precompute_default_filter()
+# so the FIRST request from a fresh browser hits a warm cache (sub-millisecond).
+# Invalidated only on backend restart; keyed by "default" since the request is
+# the canonical "no params" case (method=_all, groups=default OR-set, all L1-L5
+# defaults, composite ON).
+_DEFAULT_FILTER_CACHE: dict = {}
+
+
+# ── /api/filter TTL cache (UI-QA fix, 2026-06-08) ──────────────────────────
+# UI-QA agent measured 34-60s per /api/filter call (entire cascade rebuilt on
+# every "Apply" press, no cache). The Apply button is hit N times with the
+# SAME filter combo as the user toggles unrelated UI bits → cache by
+# payload-hash with short TTL gives near-instant repeat hits. Cache keys
+# include id(DF) so any DF mutation (e.g. report-agent adding 423K Mol1
+# cohorts) automatically invalidates without explicit purge.
+import hashlib as _hashlib
+import time as _time_mod
+_FILTER_TTL_SECONDS = 60
+_FILTER_CACHE_MAX = 64
+_FILTER_CACHE: dict = {}  # key -> (timestamp, response_dict)
+# Lightweight hit/miss counters (exposed via /api/health).
+_FILTER_CACHE_STATS = {"hits": 0, "misses": 0, "evictions": 0,
+                       "default_fast_path": 0, "invalidations": 0}
+
+
+def _filter_cache_key(payload: dict) -> str:
+    """Canonical hash for an /api/filter payload. Includes id(DF) so DF
+    mutations automatically invalidate every entry without a purge call.
+    """
+    # Sort keys; stringify values so booleans / numbers normalize identically
+    # across JSON-body and query-string forms.
+    canon = {str(k): str(v) for k, v in payload.items()
+             if v not in (None, "")}
+    blob = json.dumps(canon, sort_keys=True)
+    # id(DF) shifts whenever DF is reassigned (the report agent rebuilds DF
+    # via DF = pd.concat([...]) → new object id).
+    return _hashlib.sha1(f"{id(DF)}|{blob}".encode()).hexdigest()
+
+
+def _filter_cache_get(key: str):
+    now = _time_mod.time()
+    entry = _FILTER_CACHE.get(key)
+    if entry is None:
+        return None
+    ts, resp = entry
+    if now - ts > _FILTER_TTL_SECONDS:
+        _FILTER_CACHE.pop(key, None)
+        return None
+    return resp
+
+
+def _filter_cache_put(key: str, resp: dict):
+    now = _time_mod.time()
+    _FILTER_CACHE[key] = (now, resp)
+    if len(_FILTER_CACHE) > _FILTER_CACHE_MAX:
+        # LRU-ish: drop oldest by timestamp.
+        oldest = min(_FILTER_CACHE.items(), key=lambda kv: kv[1][0])[0]
+        _FILTER_CACHE.pop(oldest, None)
+        _FILTER_CACHE_STATS["evictions"] += 1
+
+
+def _default_filter_payload() -> dict:
+    """Canonical payload representing "open the page with no settings touched"."""
+    return {}  # All filters fall back to FILTER_SPEC defaults.
+
+
+def _run_filter_pipeline(payload: dict) -> dict:
+    """Pure-function version of api_filter's body. Returns the same dict that
+    api_filter would jsonify(). Used both by /api/filter and by the startup
+    precompute so the cache is byte-identical to a live response.
+    """
+    df = DF
+    method_filter = payload.get("method", "")
+    if method_filter and method_filter != "_all" and "method" in df.columns:
+        df = df[df["method"] == method_filter]
+
+    n_unfiltered = int(len(df))
+
+    if "groups" in payload or "group" in payload:
+        raw = (payload.get("groups") or payload.get("group") or "").strip().lower()
+        if raw in ("all", "none", "off"):
+            groups = set()
+        else:
+            groups = {t.strip() for t in raw.split(",") if t.strip() in _FILTER0_VALID}
+    else:
+        groups = set(_FILTER0_DEFAULT)
+    if groups:
+        df = df[_df_group_mask_cached(df, groups)]
+
+    settings = _parse_filter_settings(payload)
+    mask, failed, counts = apply_filter_cascade(df, settings)
+    visible = df[mask].copy()
+    visible["_failed_filters"] = failed.loc[visible.index].apply(lambda x: list(x))
+    visible["_pass_count"] = 0
+    if "high_score_count" not in visible.columns:
+        visible["high_score_count"] = compute_high_score_count(visible)
+    visible["score"] = compute_composite_score(visible)
+    visible["_score"] = visible["score"]
+    # 2026-06-10: post-cascade SMILES dedup is no longer needed — DF was
+    # deduplicated at module import time (see "Early SMILES dedup" section
+    # above). `methods_list` is already attached on DF. Cascade counts are
+    # now unique-mol counts directly.
+
+    composite = str(payload.get("composite", "1")).lower() in ("1", "true", "yes", "on")
+    sort_str = payload.get("sort", "")
+    if composite and not sort_str:
+        # 2026-06-10 PM v3: default-sort by Combined Score (desirability_score)
+        # — the 8-component geometric-mean ranker. Fall back to legacy `score`
+        # column for non-Boltz mols that have NaN desirability.
+        sort_pairs = [("desirability_score", "desc"), ("score", "desc")]
+    elif sort_str:
+        sort_pairs = []
+        for token in sort_str.split(","):
+            if ":" in token:
+                col, d = token.split(":", 1)
+                sort_pairs.append((col.strip(), d.strip().lower()))
+            else:
+                sort_pairs.append((token.strip(), "desc"))
+    else:
+        sort_pairs = [(s["col"], s["dir"]) for s in FILTER_SPEC["simple_sort"]]
+    sort_cols = [c for c, _ in sort_pairs if c in visible.columns]
+    sort_dirs = [d == "asc" for c, d in sort_pairs if c in visible.columns]
+    if sort_cols:
+        visible = visible.sort_values(sort_cols, ascending=sort_dirs, na_position="last")
+
+    start = int(payload.get("start", 0))
+    length = int(payload.get("length", 200))
+    n_visible = len(visible)
+    if length < 0:
+        length = n_visible
+    page = visible.iloc[start:start + length]
+    page = page.astype(object).where(page.notna(), None)
+    rows = page.to_dict(orient="records")
+
+    counts["total_unfiltered"] = n_unfiltered
+    counts["after_filter0"] = counts.get("total", n_unfiltered)
+    return {
+        "counts": counts,
+        "n_visible": n_visible,
+        "start": start,
+        "length": length,
+        "rows": rows,
+        "sort": [{"col": c, "dir": d} for c, d in sort_pairs],
+        "composite": composite,
+    }
+
+
+def _is_default_filter_request(payload: dict) -> bool:
+    """True iff this payload matches the canonical default (method=_all OR
+    missing, no groups param, no L1-L5 settings, no sort, composite=1 or
+    missing, start=0 or missing, length absent or default 200).
+
+    Bug fix 2026-06-10: previous logic stripped any key whose value was the
+    literal string "0", which silently misclassified `f1_qed_on=0`,
+    `f1_brenk_on=0`, `layer3_enabled=0` etc. as "default" and served the
+    stale precompute. Per-filter `_on` / `_cutoff` / layer `_enabled` /
+    `filters` / `groups` / `group` / `method` / `sort` PRESENCE (regardless
+    of value) means the request is non-default and must run the cascade.
+    """
+    # Any presence of these keys disqualifies the default fast-path.
+    NONDEFAULT_KEY_SUFFIXES = ("_on", "_cutoff", "_enabled")
+    NONDEFAULT_KEYS = {"filters", "groups", "group", "method", "sort"}
+    for k, v in payload.items():
+        if v in (None, ""):
+            continue
+        if k in NONDEFAULT_KEYS:
+            # method=_all is the "all methods" sentinel; treat as default.
+            if k == "method" and str(v) == "_all":
+                continue
+            return False
+        if any(k.endswith(s) for s in NONDEFAULT_KEY_SUFFIXES):
+            return False
+    if "start" in payload and str(payload["start"]) not in ("0", ""):
+        return False
+    if "length" in payload and str(payload["length"]) not in ("200", ""):
+        return False
+    if "composite" in payload and str(payload["composite"]).lower() not in ("1", "true", "yes", "on", ""):
+        return False
+    return True
+
+
+@app.route("/api/filter", methods=["GET", "POST"])
+def api_filter():
+    """Apply F1-F5 cascade + sort + (optional) composite scoring.
+
+    Query/JSON params:
+      layer{1..5}_enabled : 0/1 — bulk toggle a layer
+      <filter_id>_on      : 0/1 — toggle one filter
+      <filter_id>_cutoff  : float — override cutoff
+      sort                : comma-separated 'col:dir' pairs (overrides default simple sort)
+      composite           : 0/1 — sort by composite score column
+      method              : restrict to one method (else _all)
+      start, length       : pagination (length=-1 returns everything)
+    """
+    t_start = _time_mod.perf_counter()
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or request.form.to_dict() or {}
+    else:
+        payload = request.args.to_dict()
+    bench = str(payload.pop("bench", "0") if isinstance(payload, dict) else "0").lower() in ("1", "true", "yes")
+
+    # Fast path #1 — canonical default (no settings touched) ⇒ serve the
+    # startup precompute. Saves ~3-8 s on the cold first request.
+    if _DEFAULT_FILTER_CACHE and _is_default_filter_request(payload):
+        _FILTER_CACHE_STATS["default_fast_path"] += 1
+        resp = jsonify(_DEFAULT_FILTER_CACHE)
+        resp.headers["X-Filter-Cache"] = "default-precompute"
+        resp.headers["X-Filter-Total-Ms"] = str(round((_time_mod.perf_counter() - t_start) * 1000, 1))
+        return resp
+
+    # Fast path #2 — payload-hash TTL cache. Same filter combo within 60 s ⇒
+    # serve the cached response. id(DF) is part of the key so any DF
+    # mutation invalidates automatically.
+    cache_key = _filter_cache_key(payload)
+    cached = _filter_cache_get(cache_key)
+    if cached is not None:
+        _FILTER_CACHE_STATS["hits"] += 1
+        resp = jsonify(cached)
+        resp.headers["X-Filter-Cache"] = "ttl-hit"
+        resp.headers["X-Filter-Total-Ms"] = str(round((_time_mod.perf_counter() - t_start) * 1000, 1))
+        return resp
+
+    # Slow path — run the full cascade, then cache.
+    _FILTER_CACHE_STATS["misses"] += 1
+    t_pipe = _time_mod.perf_counter()
+    result = _run_filter_pipeline(payload)
+    pipe_ms = round((_time_mod.perf_counter() - t_pipe) * 1000, 1)
+    _filter_cache_put(cache_key, result)
+    resp = jsonify(result)
+    resp.headers["X-Filter-Cache"] = "miss"
+    resp.headers["X-Filter-Pipeline-Ms"] = str(pipe_ms)
+    resp.headers["X-Filter-Total-Ms"] = str(round((_time_mod.perf_counter() - t_start) * 1000, 1))
+    if bench:
+        print(f"[/api/filter MISS] pipeline={pipe_ms}ms  cache_size={len(_FILTER_CACHE)}  "
+              f"hits={_FILTER_CACHE_STATS['hits']} misses={_FILTER_CACHE_STATS['misses']}", flush=True)
+    return resp
+
+
+@app.route("/api/health")
+def api_health():
+    cs = _FILTER_CACHE_STATS
+    total = cs["hits"] + cs["misses"]
+    hit_rate = round(cs["hits"] / total * 100, 1) if total else 0.0
+    return jsonify({"ok": True, "n_rows": len(DF), "columns": list(DF.columns),
+                    "methods": list(DF["method"].unique()) if "method" in DF.columns else [],
+                    "filter_cache": {
+                        "size": len(_FILTER_CACHE),
+                        "ttl_seconds": _FILTER_TTL_SECONDS,
+                        "hits": cs["hits"], "misses": cs["misses"],
+                        "default_fast_path": cs["default_fast_path"],
+                        "evictions": cs["evictions"],
+                        "invalidations": cs["invalidations"],
+                        "hit_rate_pct": hit_rate,
+                        "df_id": id(DF),
+                    }})
+
+
+@app.route("/api/admin/invalidate_filter_cache", methods=["POST", "GET"])
+def api_admin_invalidate_filter_cache():
+    """Clear the /api/filter TTL cache. Used by external agents (e.g. the
+    Report agent) after they mutate DF so subsequent Apply presses recompute.
+    Idempotent. id(DF) keying already auto-invalidates on DF reassignment,
+    so this endpoint is a belt-and-suspenders for in-place mutations.
+    """
+    n_before = len(_FILTER_CACHE)
+    _FILTER_CACHE.clear()
+    _DEFAULT_FILTER_CACHE.clear()
+    _FILTER_CACHE_STATS["invalidations"] += 1
+    print(f"[filter-cache] manually invalidated {n_before} entries; precompute will rerun lazily", flush=True)
+    return jsonify({"ok": True, "cleared": n_before})
+
+
+# ── Tier 4 cohort SMI loader (EXP2 + EXP6 + EXP6_v3) ──────────────────────
+COHORT_SMI_PATHS = {
+    "exp2":    PROJECT_ROOT / "data/reinvent4_mol2mol_covalent_ft_samples/samples.smi",
+    "exp6":    PROJECT_ROOT / "data/reinvent4_mol2mol_warhead_tokens_samples/samples.smi",
+    "exp6_v3": PROJECT_ROOT / "data/reinvent4_mol2mol_exp6_v3_samples/samples.smi",
+}
+# Pre-scored Tier 4 CSVs from experiments/score_tier4_cohorts.py — prefer these
+# when present since they carry the full LEADER_COLS metric set including
+# FiLMDelta pIC50, Tc_to_Mol1, anchor_wins, LE/LLE/BEI/SEI, Lipinski, etc.
+_MOL1_ANCHORED_TAGS_LABELS = [
+    ("mol1RL_v5_seed_mol1_only",  "mol1RL_v5 — acryl reward (mol1-only seed)"),
+    ("thiq_rl_mol1only",          "THIQ reward, warhead_tokens (mol1-only)"),
+    ("thiq_rl_zap70",             "THIQ reward, warhead_tokens (220 zap70)"),
+    ("thiq_rl_kinase",            "THIQ reward, warhead_tokens (34K kinase)"),
+    ("thiq_rl_exp2_mol1only",     "THIQ reward, covalent_ft (mol1-only)"),
+    ("thiq_rl_exp2_zap70",        "THIQ reward, covalent_ft (220 zap70)"),
+    ("thiq_rl_exp2_kinase",       "THIQ reward, covalent_ft (34K kinase)"),
+    ("murcko_rl_zap70",           "Murcko reward, warhead_tokens (220 zap70)"),
+    ("murcko_rl_kinase",          "Murcko reward, warhead_tokens (34K kinase)"),
+    ("murcko_rl_exp2_zap70",      "Murcko reward, covalent_ft (220 zap70)"),
+    ("murcko_rl_exp2_kinase",     "Murcko reward, covalent_ft (34K kinase)"),
+]
+
+
+def _compute_tier4_mol1_stats_one(tag: str, label: str, path) -> dict | None:
+    """Compute stats for a SINGLE cohort. Records source mtime so the per-cohort
+    cache can invalidate when the V100 enrichment agent rewrites the CSV.
+
+    Reads pIC50_film (preferred) then pIC50_mean (fallback for cohorts whose
+    enrichment landed pIC50 under a different column name).
+    """
+    if path is None or not path.exists():
+        return None
+    try:
+        df = pd.read_csv(path, low_memory=False)
+    except Exception as e:
+        print(f"[tier4-stats] skip {tag}: {e}")
+        return None
+    # Prefer pIC50_film; fall back to pIC50_mean so a cohort that gets enriched
+    # AFTER backend start still reports max/median once the column lands.
+    pic_series = df.get("pIC50_film")
+    if pic_series is None or pd.to_numeric(pic_series, errors="coerce").notna().sum() == 0:
+        pic_series = df.get("pIC50_mean")
+    pic = pd.to_numeric(pic_series, errors="coerce").dropna() if pic_series is not None \
+          else pd.Series(dtype=float)
+    def col_bool(name):
+        if name in df.columns:
+            return df[name].fillna(False).astype(bool)
+        return pd.Series([False] * len(df), index=df.index)
+    m = col_bool("mol1_murcko_smarts_match")
+    t = col_bool("thiq_core")
+    a = col_bool("acryl_match")
+    or_set = m | t | (m & a)
+    return {
+        "label": label,
+        "n": int(len(df)),
+        "n_potent_7": int((pic >= 7).sum()),
+        "n_potent_8": int((pic >= 8).sum()),
+        "n_warhead": int(col_bool("warhead_intact").sum()),
+        "max_pIC50": float(pic.max()) if len(pic) else None,
+        "median_pIC50": float(pic.median()) if len(pic) else None,
+        "n_murcko": int(m.sum()),
+        "n_thiq": int(t.sum()),
+        "n_murcko_and_acryl": int((m & a).sum()),
+        "n_any_of": int(or_set.sum()),
+        # mtime used to invalidate the per-cohort cache when the CSV is rewritten.
+        "_src_mtime": float(path.stat().st_mtime),
+    }
+
+
+def _compute_tier4_mol1_stats(scored_paths: dict) -> dict:
+    """Pre-compute per-cohort stats for Mol1-anchored Tier 4 scored CSVs.
+
+    Returns ``{tag: {label, n, n_potent_7, n_potent_8, n_warhead,
+                     max_pIC50, median_pIC50, n_murcko, n_thiq,
+                     n_murcko_and_acryl, n_any_of, _src_mtime}}``.
+    ``n_any_of`` is the exact OR-set size for the 3 groups (for /api/methods).
+    Missing CSVs are skipped; rows with no smiles are ignored.
+    """
+    stats = {}
+    for tag, label in _MOL1_ANCHORED_TAGS_LABELS:
+        s = _compute_tier4_mol1_stats_one(tag, label, scored_paths.get(tag))
+        if s is not None:
+            stats[tag] = s
+    return stats
+
+
+def _refresh_stale_tier4_stats() -> int:
+    """Re-read any cohort whose CSV mtime is newer than the cached _src_mtime.
+
+    Called on every /api/methods request (cheap — only stats up to a dict
+    lookup + stat() syscall per cohort). Prevents the post-startup race where
+    the V100 enrichment agent adds columns (pIC50_film, etc.) to a cohort CSV
+    AFTER backend boot, leaving the in-memory stats stale.
+    Returns the number of cohorts whose stats were refreshed.
+    """
+    n_refreshed = 0
+    labels = dict(_MOL1_ANCHORED_TAGS_LABELS)
+    for tag, path in TIER4_SCORED_PATHS.items():
+        if tag not in labels:
+            continue
+        if path is None or not path.exists():
+            continue
+        try:
+            cur_mtime = path.stat().st_mtime
+        except OSError:
+            continue
+        cached = TIER4_MOL1_STATS.get(tag)
+        # Tolerate sub-second filesystem clock skew (mtime granularity on
+        # some filesystems is 1 s; treat anything within 0.5 s as "same").
+        if cached is not None and abs(cached.get("_src_mtime", 0) - cur_mtime) < 0.5:
+            continue
+        new = _compute_tier4_mol1_stats_one(tag, labels[tag], path)
+        if new is not None:
+            old_n = cached.get("n") if cached else None
+            old_p7 = cached.get("n_potent_7") if cached else None
+            TIER4_MOL1_STATS[tag] = new
+            n_refreshed += 1
+            print(f"[tier4-stats] refreshed {tag}: n={old_n}→{new['n']} "
+                  f"n_potent_7={old_p7}→{new['n_potent_7']} "
+                  f"max_pIC50={new['max_pIC50']}", flush=True)
+    return n_refreshed
+
+
+TIER4_SCORED_PATHS = {
+    "exp2":          PROJECT_ROOT / "data/tier4_scored/exp2_scored.csv",
+    "exp6":          PROJECT_ROOT / "data/tier4_scored/exp6_scored.csv",
+    "exp6_v3":       PROJECT_ROOT / "data/tier4_scored/exp6_v3_scored.csv",
+    # ── 2026-06-05 overnight Tier 4 RL cohorts (Filter-1 11/12 survivors) ──
+    "exp2_v2_rl_v2": PROJECT_ROOT / "data/tier4_scored/exp2_v2_rl_v2_scored.csv",
+    "exp6_v4":       PROJECT_ROOT / "data/tier4_scored/exp6_v4_scored.csv",
+    "exp6_v5":       PROJECT_ROOT / "data/tier4_scored/exp6_v5_scored.csv",
+    # ── 2026-06-08 Mol1-anchored RL cohorts (Phases 3-6) ──
+    # Phase 3 (acryl reward, warhead_tokens base, Mol1 only seed)
+    "mol1RL_v5_seed_mol1_only":  PROJECT_ROOT / "data/tier4_scored/mol1RL_v5_seed_mol1_only_scored.csv",
+    # Phase 4 (THIQ-acryl reward, warhead_tokens base)
+    "thiq_rl_mol1only":          PROJECT_ROOT / "data/tier4_scored/thiq_rl_mol1only_scored.csv",
+    "thiq_rl_zap70":             PROJECT_ROOT / "data/tier4_scored/thiq_rl_zap70_scored.csv",
+    "thiq_rl_kinase":            PROJECT_ROOT / "data/tier4_scored/thiq_rl_kinase_scored.csv",
+    # Phase 5 (THIQ-acryl reward, covalent_ft / EXP2 base)
+    "thiq_rl_exp2_mol1only":     PROJECT_ROOT / "data/tier4_scored/thiq_rl_exp2_mol1only_scored.csv",
+    "thiq_rl_exp2_zap70":        PROJECT_ROOT / "data/tier4_scored/thiq_rl_exp2_zap70_scored.csv",
+    "thiq_rl_exp2_kinase":       PROJECT_ROOT / "data/tier4_scored/thiq_rl_exp2_kinase_scored.csv",
+    # Phase 6 (Mol1-Murcko + THIQ + FiLM reward)
+    "murcko_rl_zap70":           PROJECT_ROOT / "data/tier4_scored/murcko_rl_zap70_scored.csv",
+    "murcko_rl_kinase":          PROJECT_ROOT / "data/tier4_scored/murcko_rl_kinase_scored.csv",
+    "murcko_rl_exp2_zap70":      PROJECT_ROOT / "data/tier4_scored/murcko_rl_exp2_zap70_scored.csv",
+    "murcko_rl_exp2_kinase":     PROJECT_ROOT / "data/tier4_scored/murcko_rl_exp2_kinase_scored.csv",
+    # ── 2026-06-09 F4 Boltz-2 pool (Mol1 lead-opt selection across 11 NEW cohorts) ──
+    # Aggressive F4 cascade: pIC50≥7.5, shape_Tc≥0.40, LLE≥4.0, SAS≤4.5, strain≤80,
+    # QED≥0.45, max_pubTc≤0.35, Tc_to_Mol1∈[0.35,0.65] + soft Vina/AD-Cov gates.
+    # Plus Mol1-rescue tier (shape≥0.55, Tc_to_Mol1∈[0.50,0.65], pIC50≥7.0 relaxed).
+    # Butina-clustered Tc=0.7, top-2/cluster → 2,021 mols for Boltz-2.
+    # Build: experiments/build_f4_boltz_pool.py
+    # 2026-06-10: F4_boltz_pool now serves the UNIFIED 2,221-mol pool
+    # (1,546 main strict + 675 rescue close-Mol1-analog tier).
+    # The `_tier` column distinguishes 'main' vs 'rescue'.
+    "F4_boltz_pool":             PROJECT_ROOT / "data/tier4_scored/F4_boltz_full.csv",
+}
+
+# Pre-compute Mol1-anchored cohort stats once at startup so /api/methods can
+# expose them as virtual methods (one pill per cohort) without reading 250MB
+# of CSV on every request.
+TIER4_MOL1_STATS = _compute_tier4_mol1_stats(TIER4_SCORED_PATHS)
+print(f"[tier4-stats] loaded {len(TIER4_MOL1_STATS)} Mol1-anchored cohort stats; "
+      f"total mols={sum(s['n'] for s in TIER4_MOL1_STATS.values()):,}")
+
+
+# ── Pre-filtered cohort CSV cache (Phase 2 optimization, 2026-06-08) ────────
+# We keep a smaller, pre-filtered copy of each cohort CSV containing ONLY rows
+# matching the default Filter-0 OR-set (Mol1 Murcko ∪ THIQ-acryl ∪
+# Murcko-AND-acryl). The default page load + the most common filter combo serve
+# from this smaller file → ~3-5x faster CSV read + no in-memory mask.
+#
+# Sentinel: data/tier4_scored/.filtered_v1.done stores per-cohort source mtimes
+# as JSON. Cohorts whose source mtime > recorded mtime are rebuilt (handles V100
+# race-fix #19 still writing to murcko_rl_kinase).
+TIER4_FILTERED_DIR = PROJECT_ROOT / "data" / "tier4_scored"
+TIER4_FILTERED_SENTINEL = TIER4_FILTERED_DIR / ".filtered_v1.done"
+TIER4_FILTERED_PATHS: dict = {}
+# In-memory DataFrame cache for filtered CSVs — keyed by (cohort, mtime).
+_FILTERED_DF_CACHE: dict = {}
+# In-memory sorted-index cache for column-sort fast path — keyed by
+# (cohort, "filtered"|"full", column_name, mtime).
+_SORT_INDEX_CACHE: dict = {}
+
+# The canonical default OR-set — must stay in sync with _FILTER0_DEFAULT.
+_DEFAULT_GROUP_SET = frozenset(_FILTER0_DEFAULT)
+
+
+def _is_default_groups(groups: set[str]) -> bool:
+    """True iff ``groups`` matches the default OR-set (or is the same combo).
+    We dispatch to the pre-filtered file only in this case.
+    """
+    return frozenset(groups) == _DEFAULT_GROUP_SET
+
+
+def _filtered_path_for(cohort: str):
+    """Return the pre-filtered CSV path for a cohort (may not exist yet)."""
+    src = TIER4_SCORED_PATHS.get(cohort)
+    if src is None:
+        return None
+    return src.parent / f"{src.stem}_filtered.csv"
+
+
+def _build_one_prefilter(cohort: str, src_path) -> dict:
+    """Build the pre-filtered CSV for one cohort. Returns a status dict.
+
+    Filter: rows where (mol1_murcko_smarts_match) OR (thiq_core AND
+    warhead_intact) OR (mol1_murcko_smarts_match AND acryl_match).
+    Note we honor the historical _df_group_mask semantics for "thiq" (uses
+    thiq_core alone, NOT thiq_core & warhead_intact) so the pre-filtered CSV
+    matches the default OR-set exactly. See _df_group_mask above.
+    """
+    try:
+        df = pd.read_csv(src_path, low_memory=False)
+    except Exception as e:
+        return {"cohort": cohort, "ok": False, "err": str(e)}
+    n_total = len(df)
+    mask = _df_group_mask(df, _DEFAULT_GROUP_SET)
+    sub = df[mask].reset_index(drop=True)
+    dst = src_path.parent / f"{src_path.stem}_filtered.csv"
+    sub.to_csv(dst, index=False)
+    return {"cohort": cohort, "ok": True, "n_total": n_total, "n_kept": len(sub),
+            "src_mtime": src_path.stat().st_mtime, "dst": str(dst)}
+
+
+def _build_prefilters(force: bool = False) -> dict:
+    """Build pre-filtered CSVs for all cohorts; skip ones whose mtime hasn't
+    changed since the sentinel was written. Records new mtimes in the sentinel.
+    """
+    prior = {}
+    if TIER4_FILTERED_SENTINEL.exists() and not force:
+        try:
+            prior = json.loads(TIER4_FILTERED_SENTINEL.read_text())
+        except Exception:
+            prior = {}
+    statuses = []
+    for cohort, src in TIER4_SCORED_PATHS.items():
+        if src is None or not src.exists():
+            continue
+        dst = src.parent / f"{src.stem}_filtered.csv"
+        src_mtime = src.stat().st_mtime
+        recorded = prior.get(cohort, {}).get("src_mtime", 0)
+        # Rebuild if: forced, dst missing, or source has been touched since.
+        needs_rebuild = force or (not dst.exists()) or (src_mtime > recorded + 0.5)
+        if not needs_rebuild:
+            TIER4_FILTERED_PATHS[cohort] = dst
+            statuses.append({"cohort": cohort, "ok": True, "skipped": True,
+                             "n_kept": prior.get(cohort, {}).get("n_kept", -1)})
+            continue
+        st = _build_one_prefilter(cohort, src)
+        statuses.append(st)
+        if st.get("ok"):
+            TIER4_FILTERED_PATHS[cohort] = src.parent / f"{src.stem}_filtered.csv"
+            prior[cohort] = {"src_mtime": st["src_mtime"], "n_kept": st["n_kept"],
+                             "n_total": st["n_total"]}
+    # Persist updated sentinel.
+    try:
+        TIER4_FILTERED_SENTINEL.write_text(json.dumps(prior, indent=2))
+    except Exception as e:
+        print(f"[prefilter] sentinel write failed: {e}")
+    n_built = sum(1 for s in statuses if s.get("ok") and not s.get("skipped"))
+    n_skipped = sum(1 for s in statuses if s.get("skipped"))
+    print(f"[prefilter] built {n_built}, skipped {n_skipped}, total cohorts mapped "
+          f"{len(TIER4_FILTERED_PATHS)}")
+    return {"statuses": statuses, "n_built": n_built, "n_skipped": n_skipped}
+
+
+# Build at startup (synchronous — keeps the contract simple; ~1-2s for 16 cohorts
+# when up-to-date, ~20-60s on first-ever launch).
+_build_prefilters(force=False)
+
+
+def _ensure_fresh_prefilter(cohort: str):
+    """If the source CSV is newer than the pre-filtered CSV, rebuild the
+    pre-filtered file in-place. Idempotent and cheap (two stat() calls when
+    fresh, single read+write when stale).
+
+    Bug-1 fix (QA 2026-06-08): the cache used to key on the FILTERED file's
+    mtime only, so any agent rewriting the SOURCE CSV (V100 race-fix #19, xTB
+    backfill, etc.) silently served stale data. Concrete example caught by
+    QA: murcko_rl_kinase grew from 31,874 → 32,577 rows (703 new mols)
+    while the report kept rendering the smaller cached subset.
+    """
+    src = TIER4_SCORED_PATHS.get(cohort)
+    if src is None or not src.exists():
+        return None
+    dst = src.parent / f"{src.stem}_filtered.csv"
+    src_mtime = src.stat().st_mtime
+    # Fresh: dst exists AND its mtime is >= source's (allow 0.5s float fuzz).
+    if dst.exists() and dst.stat().st_mtime >= src_mtime - 0.5:
+        TIER4_FILTERED_PATHS[cohort] = dst
+        return dst
+    # Stale or missing — rebuild.
+    print(f"[prefilter] STALE {cohort}: src_mtime={src_mtime} > dst_mtime="
+          f"{dst.stat().st_mtime if dst.exists() else 'missing'}; rebuilding")
+    st = _build_one_prefilter(cohort, src)
+    if st.get("ok"):
+        TIER4_FILTERED_PATHS[cohort] = dst
+        # Invalidate any cached DataFrame + sort indices for this cohort.
+        for k in list(_FILTERED_DF_CACHE):
+            if k[0] == cohort:
+                _FILTERED_DF_CACHE.pop(k, None)
+        for k in list(_SORT_INDEX_CACHE):
+            if k[0] == cohort:
+                _SORT_INDEX_CACHE.pop(k, None)
+        # Update sentinel JSON so a restart doesn't redundantly rebuild.
+        try:
+            prior = {}
+            if TIER4_FILTERED_SENTINEL.exists():
+                prior = json.loads(TIER4_FILTERED_SENTINEL.read_text())
+            prior[cohort] = {"src_mtime": st["src_mtime"], "n_kept": st["n_kept"],
+                             "n_total": st["n_total"]}
+            TIER4_FILTERED_SENTINEL.write_text(json.dumps(prior, indent=2))
+        except Exception as e:
+            print(f"[prefilter] sentinel update failed: {e}")
+        return dst
+    return None
+
+
+def _load_filtered_df(cohort: str):
+    """Load (and cache) the pre-filtered DataFrame for a cohort. Returns None
+    if not available. Cache is keyed on file mtime so any rebuild
+    automatically invalidates. Bug-1 fix: ``_ensure_fresh_prefilter`` is
+    called first to rebuild the on-disk filtered file if the source CSV
+    has been touched (V100/xTB/backfill agents rewrite cohort CSVs).
+    """
+    dst = _ensure_fresh_prefilter(cohort)
+    if dst is None or not dst.exists():
+        return None
+    mtime = dst.stat().st_mtime
+    key = (cohort, mtime)
+    cached = _FILTERED_DF_CACHE.get(key)
+    if cached is not None:
+        return cached
+    try:
+        df = pd.read_csv(dst, low_memory=False)
+    except Exception as e:
+        print(f"[prefilter] read failed for {cohort}: {e}")
+        return None
+    # Evict older entries for the same cohort.
+    for k in list(_FILTERED_DF_CACHE):
+        if k[0] == cohort and k != key:
+            _FILTERED_DF_CACHE.pop(k, None)
+    _FILTERED_DF_CACHE[key] = df
+    return df
+
+
+def _get_sort_index(cohort: str, view: str, column: str):
+    """Return a numpy int64 array of row indices that would sort the given view
+    (``"filtered"`` or ``"full"``) descending by ``column``. NaNs sink to the
+    end. Cached per (cohort, view, column, mtime).
+    """
+    if view == "filtered":
+        path = TIER4_FILTERED_PATHS.get(cohort)
+    else:
+        path = TIER4_SCORED_PATHS.get(cohort)
+    if path is None or not path.exists():
+        return None
+    mtime = path.stat().st_mtime
+    key = (cohort, view, column, mtime)
+    cached = _SORT_INDEX_CACHE.get(key)
+    if cached is not None:
+        return cached
+    df = _load_filtered_df(cohort) if view == "filtered" else None
+    if df is None and view == "full":
+        try:
+            df = pd.read_csv(path, low_memory=False)
+        except Exception:
+            return None
+    if df is None or column not in df.columns:
+        return None
+    col = pd.to_numeric(df[column], errors="coerce")
+    # Descending sort, NaN last.
+    order = (-col.fillna(-np.inf)).argsort(kind="mergesort").to_numpy()
+    # Evict older keys for this (cohort,view,column).
+    for k in list(_SORT_INDEX_CACHE):
+        if k[:3] == key[:3] and k != key:
+            _SORT_INDEX_CACHE.pop(k, None)
+    _SORT_INDEX_CACHE[key] = order
+    return order
+
+
+@app.route("/api/cohort_smis")
+def api_cohort_smis():
+    """Return a Tier-4 cohort's mols as table rows compatible with leaderRenderRow.
+    Prefers pre-scored CSV at data/tier4_scored/{cohort}_scored.csv if present.
+
+    Optional query param ``groups`` (comma-separated) is an OR-set across:
+        - ``murcko``           : mol1_murcko_smarts_match == True
+        - ``thiq``             : thiq_core == True
+        - ``murcko_and_acryl`` : mol1_murcko_smarts_match AND acryl_match True
+    A row passes if it matches ANY selected group. Empty / "all" / "none" =
+    no filter. Legacy single ``group=`` is accepted as a 1-element list.
+    Falsy / missing columns are treated as False so a cohort without the
+    substructure columns simply returns 0 rows when a filter is on (safe
+    default — cohort CSVs without backfill must be re-scored to participate).
+    """
+    import time as _time
+    _t_start = _time.perf_counter()
+    cohort = request.args.get("cohort", "")
+    groups = _parse_groups(request)
+    bench = str(request.args.get("bench", "0")).lower() in ("1", "true", "yes")
+    sort_by = request.args.get("sort_by", "").strip() or None
+    try:
+        limit = int(request.args.get("limit", "0") or 0)
+    except Exception:
+        limit = 0
+    scored = TIER4_SCORED_PATHS.get(cohort)
+    timing = {"path": "none"}
+    if scored is not None and scored.exists():
+        try:
+            sdf = None
+            source_tag = "scored_csv"
+            # ── FAST PATH ───────────────────────────────────────────────
+            # When groups is the default OR-set, the pre-filtered CSV has
+            # exactly the rows we need; skip the in-memory mask too.
+            if _is_default_groups(groups):
+                _t_load = _time.perf_counter()
+                sdf = _load_filtered_df(cohort)
+                timing["filtered_load_ms"] = round((_time.perf_counter() - _t_load) * 1000, 1)
+                if sdf is not None:
+                    source_tag = "scored_csv_filtered"
+                    timing["path"] = "prefiltered"
+            # ── SLOW PATH ───────────────────────────────────────────────
+            if sdf is None:
+                _t_load = _time.perf_counter()
+                sdf = pd.read_csv(scored, low_memory=False)
+                timing["full_load_ms"] = round((_time.perf_counter() - _t_load) * 1000, 1)
+                if groups:
+                    _t_mask = _time.perf_counter()
+                    sdf = sdf[_df_group_mask(sdf, groups)].reset_index(drop=True)
+                    timing["mask_ms"] = round((_time.perf_counter() - _t_mask) * 1000, 1)
+                timing["path"] = "full"
+            # ── Optional column-sort fast path ──────────────────────────
+            _t_sort = _time.perf_counter()
+            if sort_by and sort_by in sdf.columns:
+                view = "filtered" if source_tag == "scored_csv_filtered" else "full"
+                idx = _get_sort_index(cohort, view, sort_by)
+                if idx is not None and len(idx) == len(sdf):
+                    sdf = sdf.iloc[idx].reset_index(drop=True)
+                else:
+                    col = pd.to_numeric(sdf[sort_by], errors="coerce")
+                    sdf = sdf.iloc[(-col.fillna(-np.inf)).argsort(kind="mergesort").to_numpy()].reset_index(drop=True)
+            timing["sort_ms"] = round((_time.perf_counter() - _t_sort) * 1000, 1)
+            # Default sort by pIC50 only when sort_by wasn't specified — done
+            # at the DataFrame level (vectorized) instead of post-serialize.
+            if not sort_by:
+                _t_dsort = _time.perf_counter()
+                pic = None
+                if "pIC50_film" in sdf.columns:
+                    pic = pd.to_numeric(sdf["pIC50_film"], errors="coerce")
+                if pic is None or pic.isna().all():
+                    if "pIC50_mean" in sdf.columns:
+                        pic2 = pd.to_numeric(sdf["pIC50_mean"], errors="coerce")
+                        pic = pic2 if pic is None else pic.fillna(pic2)
+                if pic is not None:
+                    order = (-pic.fillna(-np.inf)).argsort(kind="mergesort").to_numpy()
+                    sdf = sdf.iloc[order].reset_index(drop=True)
+                timing["default_sort_ms"] = round((_time.perf_counter() - _t_dsort) * 1000, 1)
+            if limit > 0:
+                sdf = sdf.head(limit)
+            # ── Vectorized JSON-safe serialization (Bug-2 fix, 2026-06-08) ──
+            # Was: per-row .iterrows() + pd.isna(v) on every cell → 12-15s for
+            # 77K rows. Now: replace NaN→None at column level, cast numpy
+            # scalars in bulk via astype(object), then to_dict(orient="records").
+            _t_rows = _time.perf_counter()
+            sdf_out = sdf
+            # row_id / method backfill — vectorized.
+            n = len(sdf_out)
+            if "row_id" not in sdf_out.columns:
+                sdf_out = sdf_out.assign(row_id=[f"{cohort}_{i}" for i in range(n)])
+            else:
+                mask_rid = sdf_out["row_id"].isna() | (sdf_out["row_id"].astype(str) == "")
+                if mask_rid.any():
+                    fillvals = [f"{cohort}_{i}" for i in np.where(mask_rid.to_numpy())[0]]
+                    sdf_out = sdf_out.copy()
+                    sdf_out.loc[mask_rid, "row_id"] = fillvals
+            method_label = f"Tier 4 — {cohort.upper()}"
+            if "method" not in sdf_out.columns:
+                sdf_out = sdf_out.assign(method=method_label)
+            else:
+                mask_m = sdf_out["method"].isna() | (sdf_out["method"].astype(str) == "")
+                if mask_m.any():
+                    sdf_out = sdf_out.copy()
+                    sdf_out.loc[mask_m, "method"] = method_label
+            # Replace NaN with None for JSON compatibility, then dump.
+            rows = sdf_out.astype(object).where(sdf_out.notna(), None).to_dict(orient="records")
+            timing["serialize_ms"] = round((_time.perf_counter() - _t_rows) * 1000, 1)
+            timing["total_ms"] = round((_time.perf_counter() - _t_start) * 1000, 1)
+            resp = jsonify({"rows": rows, "n_rows": len(rows), "cohort": cohort,
+                            "groups": sorted(groups) if groups else None, "source": source_tag,
+                            "_timing": timing if bench else None})
+            resp.headers["X-Backend-Path"] = timing["path"]
+            resp.headers["X-Backend-Total-Ms"] = str(timing["total_ms"])
+            return resp
+        except Exception as e:
+            # Fall through to SMI loader on read error rather than 500.
+            print(f"[tier4] scored CSV read failed for {cohort}: {e}", flush=True)
+    path = COHORT_SMI_PATHS.get(cohort)
+    if path is None or not path.exists():
+        return jsonify({"rows": [], "error": f"unknown cohort {cohort}"}), 404
+    rows = []
+    try:
+        with open(path) as f:
+            header = next(f, "").strip().lower().split("\t")
+        df = pd.read_csv(path, sep="\t")
+        # Try to enrich with FiLMDelta pIC50 + RDKit-derived columns
+        from rdkit import Chem as _Chem
+        from rdkit.Chem import Descriptors as _Desc, QED as _QED
+        for i, row in df.iterrows():
+            smi = row.get("smiles") or row.get("SMILES") or ""
+            if not isinstance(smi, str) or not smi:
+                continue
+            mol = _Chem.MolFromSmiles(smi)
+            if mol is None:
+                continue
+            r = {"row_id": f"{cohort}_{i}", "smiles": smi,
+                 "method": f"Tier 4 — {cohort.upper()}",
+                 "pIC50_film": float(row.get("predicted_pIC50", "nan")) if row.get("predicted_pIC50", None) is not None else None,
+                 "MW": float(_Desc.MolWt(mol)),
+                 "QED": float(_QED.qed(mol)),
+                 "HeavyAtoms": int(mol.GetNumHeavyAtoms()),
+                 "warhead_intact": True,
+                 "warhead": int(row.get("warhead", 1)) if "warhead" in df.columns else 1,
+                 "Tc_to_anchor": float(row.get("tc_to_anchor", "nan")) if "tc_to_anchor" in df.columns else None,
+                 "nll": float(row.get("nll", "nan")) if "nll" in df.columns else None,
+                 }
+            # if predicted_pIC50 column exists explicitly
+            if "predicted_pIC50" in df.columns:
+                try: r["pIC50_film"] = float(row["predicted_pIC50"])
+                except Exception: pass
+            elif "pIC50_film" in df.columns:
+                try: r["pIC50_film"] = float(row["pIC50_film"])
+                except Exception: pass
+            rows.append(r)
+            if len(rows) >= 500:
+                break
+    except Exception as e:
+        return jsonify({"rows": [], "error": str(e)}), 500
+    rows.sort(key=lambda x: -(x.get("pIC50_film") or 0))
+    return jsonify({"rows": rows, "n_rows": len(rows), "cohort": cohort})
+
+
+@app.route("/")
+def index():
+    """Serve the report HTML directly so a single Flask process handles everything."""
+    html_path = Path(__file__).parent / "report.html"
+    if html_path.exists():
+        return send_file(html_path)
+    return jsonify({"endpoints": ["/api/data", "/api/svg/<row_id>", "/api/health"]})
+
+
+@app.route("/tier2")
+@app.route("/tier2_scaled")
+def tier2_scaled_page():
+    """Serve the Tier 2 SCALED page (reduced column layout, pose-free cohort)."""
+    html_path = Path(__file__).parent / "tier2_scaled_page.html"
+    if html_path.exists():
+        return send_file(html_path)
+    return jsonify({"error": "tier2_scaled_page.html not found"}), 404
+
+
+@app.route("/figures/<path:fname>")
+def serve_figure(fname):
+    """Serve PNG/SVG figures from results/paper_evaluation/ (read-only)."""
+    base = PROJECT_ROOT / "results" / "paper_evaluation"
+    target = (base / fname).resolve()
+    if not str(target).startswith(str(base.resolve())):
+        return jsonify({"error": "bad path"}), 400
+    if not target.exists():
+        return jsonify({"error": "not found"}), 404
+    return send_file(target)
+
+
+def _precompute_default_filter():
+    """Warm the default-filter cache so the very first /api/filter call from a
+    fresh browser is instant. Runs at startup AFTER all DF setup.
+
+    Skip behavior (2026-06-09): under low-memory hosts the cascade clone +
+    composite scoring on a 1.17M-row DF can hit OOM-kill (3.4GB peak on a
+    3.8GB VM). Set ``SKIP_PRECOMPUTE_FILTER=1`` to bypass; first request
+    will be slow (~48s) but every subsequent press hits the TTL cache (5ms).
+    Auto-skipped when ``len(DF) * mem-per-row estimate`` exceeds available
+    RAM by a safety factor.
+    """
+    import os, time
+    if str(os.environ.get("SKIP_PRECOMPUTE_FILTER", "0")).lower() in ("1", "true", "yes"):
+        print("[precompute] skipped (SKIP_PRECOMPUTE_FILTER=1); first request will be slow but TTL cache covers retries", flush=True)
+        return
+    # Auto-skip on low-memory hosts. The pipeline materializes ~2x DF +
+    # composite scoring intermediates. We estimate 8 bytes/cell as a rough
+    # lower bound (mixed dtype) and need ~2x that as headroom.
+    try:
+        n_rows = len(DF)
+        n_cols = len(DF.columns)
+        # Conservative: 16 bytes per cell × 2.5 working multiplier.
+        est_bytes = n_rows * n_cols * 16 * 2.5
+        # Available RAM (Linux: /proc/meminfo MemAvailable).
+        avail_bytes = None
+        try:
+            with open("/proc/meminfo") as f:
+                for line in f:
+                    if line.startswith("MemAvailable:"):
+                        avail_bytes = int(line.split()[1]) * 1024
+                        break
+        except FileNotFoundError:
+            pass  # macOS / non-Linux — skip the auto-skip check.
+        if avail_bytes is not None and est_bytes > avail_bytes:
+            print(f"[precompute] skipped: est need {est_bytes/1e9:.1f}GB > "
+                  f"avail {avail_bytes/1e9:.1f}GB. Set SKIP_PRECOMPUTE_FILTER=0 + "
+                  f"resize VM to force on.", flush=True)
+            return
+    except Exception as e:
+        print(f"[precompute] memory probe failed ({e}); attempting anyway", flush=True)
+    t0 = time.time()
+    try:
+        result = _run_filter_pipeline(_default_filter_payload())
+        _DEFAULT_FILTER_CACHE.update(result)
+        print(f"[precompute] default filter cache warmed in {time.time()-t0:.2f}s "
+              f"(library={result['counts'].get('total_unfiltered'):,}, "
+              f"after_F0={result['counts'].get('after_filter0'):,}, "
+              f"visible={result['n_visible']:,})", flush=True)
+    except Exception as e:
+        print(f"[precompute] default filter warmup failed: {e}", flush=True)
+
+
+_precompute_default_filter()
+
+
+if __name__ == "__main__":
+    import os
+    host = os.environ.get("BACKEND_HOST", "127.0.0.1")
+    port = int(os.environ.get("BACKEND_PORT", "5001"))
+    print(f"Listening on {host}:{port}")
+    app.run(host=host, port=port, debug=False)

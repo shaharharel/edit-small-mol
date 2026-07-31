@@ -1,0 +1,106 @@
+# R3 — RL with cheap geometry + distilled cov-Vina surrogate.
+# Goal: test if a fast Morgan-FP distilled cov-Vina scorer + RL can beat M1a
+# on binding affinity (cov-Vina median) without paying full docking cost.
+#
+# Prior: covFT+mol2mol (reinvent4_mol2mol_covalent_ft.prior)
+# Geometric mean over 5 components:
+#   * FiLMDelta pIC50 (w=0.35)
+#   * Acrylamide retained (w=0.25)
+#   * QED (w=0.10)
+#   * Pre-reactivity 2D (w=0.15)
+#   * Distilled cov-Vina surrogate (w=0.15)
+# Single 50-step stage on V100, Mol1 seed.
+
+run_type = "staged_learning"
+device = "cuda"
+tb_logdir = "tb_r3_distilled_covvina"
+json_out_config = "_r3_distilled_covvina.json"
+
+[parameters]
+summary_csv_prefix = "r3_distilled_covvina"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+agent_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_only_anchor.smi"
+sample_strategy = "multinomial"
+distance_threshold = 100
+
+batch_size = 16
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+[[stage]]
+chkpt_file = "r3_distilled_covvina_stage1.chkpt"
+termination = "simple"
+max_score = 0.8
+min_steps = 20
+max_steps = 50
+
+[stage.scoring]
+type = "geometric_mean"
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.35
+params.executable = "/home/shaharh_quris_ai/miniconda3/envs/quris/bin/python"
+params.args = "/home/shaharh_quris_ai/edit-small-mol/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 8.0
+transform.low = 5.5
+transform.k = 0.5
+
+[[stage.scoring.component]]
+[stage.scoring.component.MatchingSubstructure]
+[[stage.scoring.component.MatchingSubstructure.endpoint]]
+name = "Acrylamide retained"
+weight = 0.25
+params.smarts = "[CH2]=[CH]C(=O)N"
+params.use_chirality = false
+
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.10
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "Pre-reactivity 2D"
+weight = 0.15
+params.executable = "/home/shaharh_quris_ai/miniconda3/envs/quris/bin/python"
+params.args = "/home/shaharh_quris_ai/edit-small-mol/experiments/reinvent4_prereactivity_scorer.py"
+params.property = "prereactivity"
+transform.type = "sigmoid"
+transform.low = 0.0
+transform.high = 1.0
+transform.k = 1.0
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "Cov-Vina surrogate"
+weight = 0.15
+params.executable = "/home/shaharh_quris_ai/miniconda3/envs/quris/bin/python"
+params.args = "/home/shaharh_quris_ai/edit-small-mol/experiments/reinvent4_covvina_surrogate_scorer.py"
+params.property = "covvina_score"
+transform.type = "sigmoid"
+transform.low = 0.0
+transform.high = 1.0
+transform.k = 1.0

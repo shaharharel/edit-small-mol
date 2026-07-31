@@ -1,0 +1,16 @@
+Cohort: boltz_geom_dpo_only (C2)
+Ready: 2026-07-11T21:05:00Z
+GCS: gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_only/
+Files:
+  - dpo_latest.chkpt (76.5 MiB)
+  - samples_boltz_geom_dpo_only_400.csv (400 mols, all acryl_lf, Tc>=0.35 to Mol1)
+  - samples_boltz_geom_dpo_only_raw.csv (2957 valid, 1620 unique)
+  - training_summary.json
+
+Training stats:
+  - 4574 train pairs / 400 val pairs (from 5016 boltz-geom pairs)
+  - 5 epochs, batch=16, beta=0.1, lr=5e-6, warmup=100
+  - Final: val_loss=0.5655, val_acc=0.735, KL=-7.98 (stable divergence from ref)
+  - Wall: ~5 min train + ~1.5 min sample on V100
+
+Message: "C2 ready at gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_only/ - start cofolding"

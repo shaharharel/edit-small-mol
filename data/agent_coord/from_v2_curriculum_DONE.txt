@@ -1,0 +1,30 @@
+v2-curriculum retraining agent — DONE
+Date: 2026-07-13 01:03 IDT (UTC 22:03)
+
+Summary:
+- 7248 curriculum pairs + 1411 val pairs built from ESM cache
+  (1142 train pockets / 285 val pockets, geometry-directed + Tc>=0.30)
+- v2 model retrained (early-stopped at step 5000; best.chkpt from step 2500)
+  * val loss 22.20 (down from 24.43 baseline)
+  * pose-response logit KL 0.408 nats (5.5x pre-retrain 0.074)
+- Steering diagnostic on 4 cohorts (theta_90/105/130/null_pose) x 200 mols
+  * All 146 Boltz cofolds succeeded (100% cofold_ok)
+  * KS-tests on output bd_angle: all p > 0.34 (no direct geometric response)
+  * BUT: SMILES 100% disjoint, NLL differs significantly under conditioning
+  * Verdict: PARTIAL WIN — [POSE] is now information-carrying, but signal
+    is bottlenecked by Boltz's own strong pose prior at inference
+
+Artifacts (all in data/paper_pair_training/v2_curriculum/):
+- pairs_train.parquet, pairs_val.parquet, pair_stats.md, pair_stats.json
+- training_curve.json (10 val checkpoints)
+- steering_diagnostic_post.csv (all 146 cofolds), steering_comparison.md
+- report.md (this)
+- cofold_track/track_A_{theta_90,theta_105,theta_130,null_pose}.csv
+
+Model: models/v2_curriculum/best.chkpt
+
+Next steps (from steering_comparison.md):
+1. Replace Boltz with ETKDG+MMFF native geometric decoder in diagnostic
+2. Add pose-oracle KL distillation during training
+3. Move [POSE] from encoder-memory prepending to per-decoder-layer injection
+4. ETKDG-rank v2's emissions post-hoc, submit top-K per cohort to Boltz

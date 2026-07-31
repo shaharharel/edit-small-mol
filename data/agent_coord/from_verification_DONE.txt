@@ -1,0 +1,42 @@
+VERIFICATION AGENT DONE
+Verdict label: VERIFIED_WITH_CAVEAT
+Headline: VERIFIED: arch is real. Only recipe below 10.0 deg is 'v1_covaFT_massive_mol1_aug' at 8.05 deg, but it is MODE-COLLAPSED to Mol1 verbatim (99.4% of samples), so the low value is Mol1's own conformer under seed=42 ETKDG, NOT the model producing diverse novel planar-warhead molecules.
+
+Baseline v1_covaFT no FT (paper Table 4): 63.5 deg
+v2_cond target (paper Table 5): 2.6 deg
+Confound threshold: <= 10.0 deg
+Ref: Mol1 own seed=42 ETKDG+MMFF planar_dev on ai-gpu = 8.05 deg (bimodal)
+
+Ranked recipe results (best planar_dev first):
+  - v1_covaFT_massive_mol1_aug                planar=  8.05 deg  n_unique=  3  pct_mol1_verbatim=99.4  non_mol1_med=66.43
+  - v2_pairs_random_scaffold_pairing          planar= 62.08 deg  n_unique=386  pct_mol1_verbatim=0.0  non_mol1_med=62.08
+  - v2_pairs_higher_lr                        planar= 62.92 deg  n_unique=218  pct_mol1_verbatim=0.0  non_mol1_med=62.92
+  - v2_pairs_only                             planar= 63.48 deg  n_unique=345  pct_mol1_verbatim=0.0  non_mol1_med=63.48
+  - v2_pairs_more_epochs                      planar= 63.61 deg  n_unique=158  pct_mol1_verbatim=0.0  non_mol1_med=63.61
+  - v1_pairs_only                             planar= 63.83 deg  n_unique=331  pct_mol1_verbatim=0.0  non_mol1_med=63.83
+  - v2_pairs_lower_lr_longer                  planar= 63.87 deg  n_unique=314  pct_mol1_verbatim=0.0  non_mol1_med=63.87
+  - v1_covaFT_mol1_aug                        planar= 64.17 deg  n_unique=233  pct_mol1_verbatim=0.0  non_mol1_med=64.17
+
+Key insight:
+  Recipes 1-6 (hyperparam sweeps, base-vs-covFT prior, scaffold-hop pairs) all land
+  at planar_dev median 62-64 deg with diverse outputs (~500 unique SMILES / 500 samples).
+  Recipe 7 (500 Mol1-target aug pairs) planar=64 deg with 500/500 valid diverse outputs.
+  Recipe 8 (5000 Mol1-target aug pairs) planar=8 deg but 497/500 samples are Mol1 verbatim.
+  The 8 deg is Mol1's own seed=42 planarity, not a model-produced planar novel warhead.
+  When mode collapse is broken (T=3.0), non-Mol1 samples have planar median 61 deg.
+
+Verdict details:
+  No mol2mol-only recipe produces DIVERSE + PLANAR outputs.
+  Recipe 8 (5000 Mol1-target pairs, 30 ep) drops to planar=8 deg but
+  the model memorizes Mol1 verbatim (497/500). This is Mol1's own conformer
+  under seed=42 ETKDG, NOT the model shaping warhead geometry.
+  Non-Mol1 samples from recipe 8 have planar median 66 deg, same as all other recipes.
+  Diversifying (higher T) breaks planar again: at T=3.0 non-Mol1 planar median = 61 deg.
+  Conclusion: v2_cond's pocket+pose architecture achieves diverse-AND-planar output;
+  no mol2mol-only recipe achieves this. The 2.6 deg number is a genuine architecture win.
+
+Full ranked table + methodology: data/arch_verification/verdict.md
+Per-sample data: data/arch_verification/<recipe>/planar_per_sample.parquet
+Runner code: experiments/arch_verification_runner.py
+Pair-building: experiments/arch_verification_build_pairs.py
+Master batch: experiments/arch_verification_run_all.sh + run_remaining.sh

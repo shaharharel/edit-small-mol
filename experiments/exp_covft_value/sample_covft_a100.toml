@@ -1,0 +1,13 @@
+# Exp 2 — sample 10k from CovInDB v2 FT prior, Mol1 anchor (A100 baseline, no RL)
+run_type = "sampling"
+json_out_config = "_sample_covft_a100.json"
+
+[parameters]
+model_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_mol1_only.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "/home/shaharh_quris_ai/edit-small-mol/data/exp_rl_value/baseline_covft_samples.csv"
+num_smiles = 10000
+unique_molecules = false
+randomize_smiles = true

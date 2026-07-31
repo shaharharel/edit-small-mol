@@ -1,0 +1,90 @@
+Phase 3 InfoNCE contrastive pose training done. Timestamp: 2026-07-09 (finished 2026-07-09 ~14:20 UTC on ai-gpu V100).
+
+Checkpoints:
+  models/m1a_v2_infonce.ckpt           (9.5 MB, InfoNCEWrapper state — full outer + null_pose_emb)
+  models/m1a_v2_infonce_basefmt.ckpt  (9.5 MB, base M1aV2 state — loadable via load_m1a_v2)
+  Local + on ai-gpu at /home/shaharh_quris_ai/edit-small-mol/models/*
+
+Training summary (15 epochs, 7875 steps, ~13 min wall):
+  Warm start from models/m1a_v2.ckpt (ORIGINAL autoencoder). Clean load: missing=0, unexpected=0.
+  Trainable params: 2.47M.
+  Dataset: 9321 usable rows / 9365 total. Train=8389, val=932.
+
+  Curriculum λ_infonce: 0→0.5 linear over epochs 0-5, then constant.
+  Pose-dropout p=0.15 (learned NULL embedding, D_MODEL=256).
+  InfoNCE temperature τ=0.1, K=7 negatives (3 synthetic z-shifted + 2 same-pocket + 2 random-pocket).
+
+  Val CE trajectory: warm_start=17.43 → ep0=18.05 → ep7=17.44 → ep14=17.12
+    (below warm-start baseline — CE not damaged; guardrail passed all epochs)
+  Val InfoNCE trajectory: warm_start=2.086 → ep0=2.088 → ep5=2.000 → ep14=1.975
+    (dropped 5.3% — modest but consistent)
+  Val pos_wins: warm_start=7.4% → ep0=8.0% → ep12=12.1% → ep14=10.6%
+    (peak ~12%, vs 12.5% random 1/(1+7) baseline — InfoNCE learned to slightly beat chance
+     but did NOT achieve strong alignment)
+
+  Full history in data/paper_pair_training/infonce/train_progress.json.
+  Per-step log in data/paper_pair_training/infonce/train_infonce_log.jsonl.
+
+Evaluation summary (Eval 1 + Eval 2 with CFG w∈{1,2,3} + Eval 3 dose-response on Clamp D w∈{0.5,1,2,3,4}):
+
+  EVAL 1 (10K Mol1-anchored, real ZAP70 pocket + Mol1 pose, w=1):
+    validity=0.777, acryl_largest_frag=0.931, planar_median=0.15°, Tc-to-Mol1_median=0.63.
+    BEST on all four dimensions vs Scheme A/B (val 0.58-0.60, acryl 0.86-0.90, planar 0.20-0.22,
+    Tc 0.51-0.53). InfoNCE training improves quality vs the auto-encoder branches.
+
+  EVAL 2 (5 clamps + pose_swap × 1K × 3 CFG scales):
+    HEADLINE (pooled Spearman across A/B/C/D/E clamps):
+      w=1: r_d=+0.003 (n=3200, p=0.88) | r_θ=+0.020 (p=0.25) | r_φ=-0.064 (n=3200, p=3e-4)
+      w=2: r_d=-0.072 (n=300,  p=0.21) | r_θ=+0.053 (p=0.36) | r_φ=-0.075 (n=300,  p=0.19)
+      w=3: r_d=+0.316 (n=4,    p=0.68) | r_θ=nan            | r_φ=-0.258 (n=4,    p=0.74)
+
+    POSE-SWAP DIVERGENCE W (Clamp A vs pose_swap donor):
+      w=1: W(d)=0.004  | W(θ)=0.54   | W(φ)=0.06
+      w=2: W(d)=0.006  | W(θ)=0.94   | W(φ)=0.21
+      w=3: W(d)=0.099  | W(θ)=10.36  | W(φ)=2.14
+
+  EVAL 3 (Clamp D θ+90° with CFG w∈{0.5,1,2,3,4}):
+    validity 0.5→1→2→3→4:  0.81  0.68  0.07  <0.01  0.02
+    planar_median:          0.130 0.127 0.042 None   None
+    emitted_theta_median:   123.7 121.6 118.8 None   None    (clamp was θ=-111° / +90°)
+    emitted_d_median:       2.44  2.43  2.40  None   None
+    Above w=2 the model completely stops producing valid acrylamides.
+
+VERDICT: CAUSAL POSE CONTROL NOT INSTALLED. The InfoNCE contrastive term did produce a working
+pose→hidden alignment gradient (pos_wins climbed from 7% random-chance floor to ~11-12%), and CFG
+scaling installs measurable conditional–unconditional divergence (W grows monotonically with w).
+However neither manifests as pose-clamp SPEARMAN growth. At w=1 the pose axes remain indistinguishable
+from zero (same failure mode as Scheme A/B). At w=2-3 validity collapses to n<10% so the causal test
+cannot even be measured. The emitted θ_BD stays ~120° regardless of Clamp D (θ=-111°) — CFG amplifies
+the "canonical planar acrylamide" mode of the training distribution rather than steering the geometry.
+
+QUALITY-ONLY WIN: InfoNCE ckpt at w=1 dominates all Scheme A/B baselines on validity, acryl retention,
+planar median, and Tc-to-Mol1. Useful as a stronger CE-only generator, but NOT a pose-steerable model.
+
+Interpretation vs Schemes A/B: adding a supervised contrastive term against pose is INSUFFICIENT because
+the pose channel is 3-dim invariant (d, θ, φ) and the training data covers a narrow high-planar high-θ
+manifold that dominates the loss landscape. The decoder learns "produce THE canonical acrylamide" and
+gets both good CE and good InfoNCE (with p_wins slightly above chance because the correlated axes are
+weakly informative). To install true steering the pose channel likely needs (a) a wider empirical
+distribution over off-canonical poses, (b) a hard-negative curriculum that forces the decoder to
+generate non-canonical output when off-canonical pose is clamped, or (c) an architectural change
+where the pose token is fused deeper into the decoder (e.g. FiLM-conditioning each decoder layer
+rather than a single memory-side token). None of these were in the Phase 3 spec.
+
+6-way panel comparison — see data/paper_pair_training/infonce/panel_6way.md and panel_6way.json.
+
+Files in data/paper_pair_training/infonce/:
+  train_progress.json                       (full training val history)
+  train_infonce_log.jsonl                    (per-step log)
+  report_infonce_eval1.json                  (Eval 1 10K panel)
+  report_infonce_eval2.json                  (Eval 2 per-CFG headline + pose-swap W)
+  report_infonce_eval3_cfg_dose.json          (Eval 3 dose-response on Clamp D)
+  panel_6way.json                            (structured 6-way comparison)
+  panel_6way.md                              (markdown table)
+  samples_infonce_10k.csv                    (Eval 1 raw samples)
+  samples_infonce_clamp{A,B,C,D,E,pose_swap}_w{1,2,3}.0_1k.csv   (18 Eval 2 CSVs)
+  samples_infonce_eval3_clampD_w{0.5,1,2,3,4}.csv                (5 Eval 3 CSVs)
+
+Wall budget: 4hr14min elapsed of 6h. Well under.
+V100 will be stopped after this coord write.
+A100 was NOT touched.

@@ -1,0 +1,54 @@
+[cohort theta_90] 100 unique SMILES
+[cohort theta_105] 100 unique SMILES
+[cohort theta_130] 100 unique SMILES
+[cohort null_pose] 100 unique SMILES
+[etkdg] processing 400 SMILES × 50 confs with 8 workers
+/Users/shaharharel/Documents/github/edit-small-mol/experiments/etkdg_strain_panel.py:179: RuntimeWarning: All-NaN slice encountered
+  row["median_d_beta_centroid_A"] = float(np.nanmedian(ds))
+[etkdg] 25/400 rate=159.9/min eta=2.3min
+[etkdg] 50/400 rate=180.2/min eta=1.9min
+[etkdg] 75/400 rate=211.1/min eta=1.5min
+[etkdg] 100/400 rate=209.8/min eta=1.4min
+[etkdg] 125/400 rate=207.0/min eta=1.3min
+[etkdg] 150/400 rate=201.4/min eta=1.2min
+[etkdg] 175/400 rate=199.9/min eta=1.1min
+[etkdg] 200/400 rate=191.9/min eta=1.0min
+[etkdg] 225/400 rate=185.0/min eta=0.9min
+[etkdg] 250/400 rate=193.7/min eta=0.8min
+[etkdg] 275/400 rate=195.2/min eta=0.6min
+[etkdg] 300/400 rate=202.6/min eta=0.5min
+[etkdg] 325/400 rate=207.3/min eta=0.4min
+[etkdg] 350/400 rate=212.8/min eta=0.2min
+[etkdg] 375/400 rate=213.4/min eta=0.1min
+[etkdg] 400/400 rate=219.5/min eta=0.0min
+[etkdg] wrote 400 rows to /Users/shaharharel/Documents/github/edit-small-mol/data/paper_pair_training/v2_curriculum_clean/etkdg_strain_panel.csv in 1.8min
+
+=== Cohort summary ===
+cohort       n    ok   f_react_med  strain_med  d_med   phi_med 
+theta_90     100  84   0.610        5.25        7.57    3.86    
+theta_105    100  88   0.600        5.65        7.58    3.17    
+theta_130    100  93   0.580        5.59        7.65    3.44    
+null_pose    100  68   0.550        4.45        7.43    7.34    
+
+=== KS tests (metric | pair | stat | p | n_a | n_b) ===
+f_reactive_rotamer                 theta_90_vs_theta_130  stat=0.146 p=0.2718 n=84/93
+f_reactive_rotamer                 theta_90_vs_null_pose  stat=0.238 p=0.02284 n=84/68
+f_reactive_rotamer                theta_105_vs_theta_130  stat=0.085 p=0.8598 n=88/93
+f_reactive_rotamer                 theta_90_vs_theta_105  stat=0.120 p=0.5139 n=84/88
+f_reactive_rotamer                null_pose_vs_theta_130  stat=0.188 p=0.1054 n=68/93
+median_strain_kcal                 theta_90_vs_theta_130  stat=0.094 p=0.7794 n=84/93
+median_strain_kcal                 theta_90_vs_null_pose  stat=0.191 p=0.1095 n=84/68
+median_strain_kcal                theta_105_vs_theta_130  stat=0.084 p=0.8701 n=88/93
+median_strain_kcal                 theta_90_vs_theta_105  stat=0.104 p=0.689 n=84/88
+median_strain_kcal                null_pose_vs_theta_130  stat=0.204 p=0.06459 n=68/93
+median_d_beta_centroid_A           theta_90_vs_theta_130  stat=0.147 p=0.2609 n=84/93
+median_d_beta_centroid_A           theta_90_vs_null_pose  stat=0.192 p=0.1116 n=84/67
+median_d_beta_centroid_A          theta_105_vs_theta_130  stat=0.102 p=0.6868 n=88/93
+median_d_beta_centroid_A           theta_90_vs_theta_105  stat=0.142 p=0.3131 n=84/88
+median_d_beta_centroid_A          null_pose_vs_theta_130  stat=0.261 p=0.007513 n=67/93
+median_abs_phi_vinyl_deg           theta_90_vs_theta_130  stat=0.113 p=0.5756 n=84/93
+median_abs_phi_vinyl_deg           theta_90_vs_null_pose  stat=0.211 p=0.05793 n=84/68
+median_abs_phi_vinyl_deg          theta_105_vs_theta_130  stat=0.129 p=0.3924 n=88/93
+median_abs_phi_vinyl_deg           theta_90_vs_theta_105  stat=0.174 p=0.1286 n=84/88
+median_abs_phi_vinyl_deg          null_pose_vs_theta_130  stat=0.240 p=0.01724 n=68/93
+[etkdg] KS results → /Users/shaharharel/Documents/github/edit-small-mol/data/paper_pair_training/v2_curriculum_clean/etkdg_strain_ks.json

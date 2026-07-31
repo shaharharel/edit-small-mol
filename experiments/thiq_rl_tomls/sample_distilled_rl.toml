@@ -1,0 +1,14 @@
+# Sample from distilled-RL'd checkpoint — RL ARM
+run_type = "sampling"
+device = "cuda"
+json_out_config = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/distilled_eval/_sample_rl.json"
+
+[parameters]
+model_file = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/thiq_rl_exp2_zap70_distilled/thiq_rl_exp2_zap70_distilled_stage1.chkpt"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_zap70_all_plus_mol1_clean.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/distilled_eval/rl_arm_samples.csv"
+num_smiles = 5000
+unique_molecules = true
+randomize_smiles = true

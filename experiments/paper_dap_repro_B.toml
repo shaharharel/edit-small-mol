@@ -1,0 +1,71 @@
+# Paper DAP Reproduction — Attempt B
+# Higher sigma (256) + longer (150 steps), no early stop, batch 64.
+
+run_type = "staged_learning"
+device = "cuda"
+tb_logdir = "/home/shaharh_quris_ai/paper_dap_repro/tb_B"
+json_out_config = "/home/shaharh_quris_ai/paper_dap_repro/_B.json"
+
+[parameters]
+summary_csv_prefix = "/home/shaharh_quris_ai/paper_dap_repro/B"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+agent_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/zap70_top_actives_clean.smi"
+sample_strategy = "multinomial"
+distance_threshold = 100
+
+batch_size = 16
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 256
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+### Single stage — higher sigma, no early stop
+[[stage]]
+chkpt_file = "/home/shaharh_quris_ai/paper_dap_repro/B_stage1.chkpt"
+termination = "simple"
+max_score = 1.1
+min_steps = 15
+max_steps = 40
+
+[stage.scoring]
+type = "geometric_mean"
+
+[[stage.scoring.component]]
+[stage.scoring.component.ExternalProcess]
+[[stage.scoring.component.ExternalProcess.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.50
+params.executable = "/home/shaharh_quris_ai/miniconda3/envs/quris/bin/python"
+params.args = "/home/shaharh_quris_ai/edit-small-mol/experiments/reinvent4_film_scorer.py"
+params.property = "pIC50"
+transform.type = "sigmoid"
+transform.high = 7.5
+transform.low = 5.5
+transform.k = 0.5
+
+[[stage.scoring.component]]
+[stage.scoring.component.MatchingSubstructure]
+[[stage.scoring.component.MatchingSubstructure.endpoint]]
+name = "Acrylamide retained"
+weight = 0.40
+params.smarts = "[CH2]=[CH]C(=O)N"
+params.use_chirality = false
+
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.10

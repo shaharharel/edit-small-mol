@@ -1,0 +1,18 @@
+Cohort: boltz_geom_dpo_plus_dap (C3)
+Ready: 2026-07-11T21:11:35Z
+GCS: gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_plus_dap/
+Files:
+  - dpo_latest.chkpt (76.5 MiB)
+  - samples_boltz_geom_dpo_plus_dap_400.csv (400 mols, all acryl_lf, Tc>=0.35 to Mol1)
+  - samples_boltz_geom_dpo_plus_dap_raw.csv (2942 valid, 2027 unique)
+  - training_summary.json
+
+Training stats:
+  - 4574 train pairs / 400 val pairs
+  - 4 epochs, batch=16, beta=0.1, lr=5e-6
+  - DPO + DAP-pIC50 (Morgan-MLP predictor trained on 280 ZAP70 mols, MSE=0.011 normalized units)
+    dap_weight=0.3, dap_every_n=5, sigmoid(pIC50-6.5) weighting on winner log-prob
+  - Final: val_loss=0.585, val_acc=0.745, KL=+3.78 (net positive KL wrt ref, from DAP push)
+  - Wall: ~4 min train + ~1.5 min sample
+
+Message: "C3 ready at gs://quris-shahar-dev/boltz_dpo_campaign/boltz_geom_dpo_plus_dap/ - start cofolding"

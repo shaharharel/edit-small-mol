@@ -71,7 +71,7 @@ def confidence_score(conf_json):
         return None
 
 
-def adj_log_auc(labels, scores_ascending, lam=10):
+def adj_log_auc(labels, scores_ascending, lam=1000):
     """labels: 1=active 0=decoy. scores_ascending: LOWER is better (e.g. mPAE).
     We invert internally for ranking."""
     order = np.argsort(np.asarray(scores_ascending))  # ascending (low first = best)

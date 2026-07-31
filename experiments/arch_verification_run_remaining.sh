@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Resume: only runs recipes 6, 7, 8 (after fixing vocab bug).
+set -uo pipefail
+
+cd ~/edit-small-mol
+PY=~/miniconda3/envs/quris/bin/python
+LOGDIR=data/arch_verification/logs
+mkdir -p "$LOGDIR"
+
+SAMPLE_N=500
+TEMP=1.0
+
+run_recipe() {
+  local name="$1"; shift
+  echo "=== [$(date '+%H:%M:%S')] START recipe=$name ==="
+  $PY experiments/arch_verification_runner.py --recipe "$name" "$@" 2>&1 | tee "$LOGDIR/${name}.log" || echo "RECIPE_FAILED: $name"
+  echo "=== [$(date '+%H:%M:%S')] END   recipe=$name ==="
+}
+
+# Recipe 6: v1_pairs_only (base mol2mol_medium_similarity, no covFT)
+run_recipe v1_pairs_only \
+  --prior_ckpt /home/shaharh_quris_ai/REINVENT4/priors/mol2mol_medium_similarity.prior \
+  --train_csv data/optionA/v2_pairs_scheme_A_1286.csv \
+  --epochs 20 --lr 5e-5 --bs 32 --n_samples $SAMPLE_N --temperature $TEMP \
+  --notes "base mol2mol prior (no covFT)"
+
+# Recipe 7: v1_covaFT + v2_pairs + Mol1_anchored_augmentation (30 ep, LR 5e-5)
+run_recipe v1_covaFT_mol1_aug \
+  --prior_ckpt models/reinvent4_mol2mol_covalent_ft.prior \
+  --train_csv data/arch_verification/pairs/recipe7_v2_plus_mol1_aug.csv \
+  --epochs 30 --lr 5e-5 --bs 32 --n_samples $SAMPLE_N --temperature $TEMP \
+  --notes "v2+500 (src, Mol1) aug pairs, 30ep"
+
+# Recipe 8: massive Mol1-aug (30 ep, LR 5e-5)
+run_recipe v1_covaFT_massive_mol1_aug \
+  --prior_ckpt models/reinvent4_mol2mol_covalent_ft.prior \
+  --train_csv data/arch_verification/pairs/recipe8_v2_plus_massive_mol1.csv \
+  --epochs 30 --lr 5e-5 --bs 32 --n_samples $SAMPLE_N --temperature $TEMP \
+  --notes "v2+5000 top-Tc (src, Mol1) pairs, 30ep"
+
+echo "REMAINING RECIPES DONE at $(date)"

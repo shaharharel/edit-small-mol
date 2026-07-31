@@ -1,0 +1,38 @@
+Scheme A done. Timestamp: 2026-07-07 (finished 2026-07-06 23:20 UTC on ai-gpu / 02:20 local).
+
+Checkpoint: models/m1a_v2_scheme_A.ckpt (9.9 MB, local + on ai-gpu at /home/shaharh_quris_ai/edit-small-mol/models/m1a_v2_scheme_A.ckpt).
+
+Pair build:
+  14,490 directed pairs across 550 pockets (of 956 with >=2 distinct ligs).
+  Cap raised to 500/pocket per brief; 10 pockets hit the cap.
+  Tc histogram (peak at 0.5): 0.3=1502, 0.4=3764, 0.5=4151, 0.6=3256, 0.7=1265, 0.8=552.
+  Warm-started from models/m1a_v2.ckpt (NOT Scheme B, per coord). Clean load (missing=0, unexpected=0).
+
+Training: 12 epochs, bs=16, lr=1e-4, warmup=500, 9780 steps, ~13 min wall.
+  Loss trajectory: first5_avg=31.82 -> last5_avg=23.46 (delta -8.36).
+  Val: 25.32 (ep0) -> 22.78 (ep5) -> 22.26 (ep9) -> 21.93 (ep11).
+
+HEADLINE: CAUSAL POSE TEST FAILED AGAIN. Pocket TOKEN is also inert against permutation control but weakly non-null vs a different-pocket swap. Full 5-way panel and Spearmans below in main report.
+
+Pose-clamp Spearman (pooled A/B/C/D/E, n=2123):
+  r_d     = +0.008  (p=0.73)   -- indistinguishable from zero
+  r_theta = +0.034  (p=0.12)   -- indistinguishable from zero
+  r_phi   = -0.108  (p=6e-7)   -- statistically significant but wrong sign at |r|=0.11 (distribution-stabilizer shrinkage, not steering)
+
+Pose-swap Wasserstein (A vs pose_swap): W(d)=0.0035, W(theta)=0.44, W(phi)=0.08. Essentially indistinguishable from Clamp A on all axes -- same failure mode as Scheme B (W(d)=0.0015).
+
+Pocket-clamp Wasserstein:
+  A vs B (ESM row permutation): W(d)=0.005, W(theta)=0.69, W(phi)=0.09, W(Tc-to-Mol1)=0.008 -- INDISTINGUISHABLE (pocket token ignores residue-row identity).
+  A vs C (different pocket / covindb_v2): W(d)=0.023, W(theta)=2.97, W(phi)=0.25, W(Tc-to-Mol1)=0.234 + validity 0.60 -> 0.30, acryl 0.89 -> 0.34, Tc-median 0.51 -> 0.21. NON-TRIVIAL SHIFT.
+
+Interpretation: pose token = still pure distribution stabilizer (D+E cohorts drop validity/acryl but pose axes do not track clamp).
+Pocket token = mostly a "kinase vs. not-kinase" gate; swaps to a very different pocket degrade chemistry (validity halves, Tc-to-Mol1 drops 60%), but a same-ZAP70 row permutation leaves outputs identical.
+
+Verdict: neither Scheme A nor B installs true geometry control. Path forward is Phase 3 (Contrastive + CFG).
+
+Files in data/paper_pair_training/scheme_A/:
+  pairs_scheme_A.npz, pairs_scheme_A_stats.json
+  samples_scheme_A_10k.csv, report_scheme_A.json
+  samples_scheme_A_clamp{A,B,C,D,E,pose_swap}_1k.csv, report_scheme_A_pose_clamps.json
+  samples_scheme_A_pocket_clamp{A,B,C}_1k.csv, report_scheme_A_pocket_clamps.json
+  train_scheme_A.log, eval_scheme_A.log

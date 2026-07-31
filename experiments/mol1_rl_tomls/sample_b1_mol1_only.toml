@@ -1,0 +1,16 @@
+# Sample from B'-1 RL'd checkpoint (Mol1-only-trained agent) on Mol1 input.
+# Generates Mol1-neighbors shaped by the Mol1-only RL training.
+
+run_type = "sampling"
+device = "cuda"
+json_out_config = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/b1_mol1_only_samples/_sampling.json"
+
+[parameters]
+model_file = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/mol1RL_v5_seed_mol1_only/mol1RL_v5_seed_mol1_only_stage1.chkpt"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_only_anchor.smi"
+sample_strategy = "multinomial"
+temperature = 1.0
+output_file = "/home/shaharh_quris_ai/edit-small-mol/results/paper_evaluation/mol1_rl/b1_mol1_only_samples/sampling.csv"
+num_smiles = 2000
+unique_molecules = true
+randomize_smiles = true

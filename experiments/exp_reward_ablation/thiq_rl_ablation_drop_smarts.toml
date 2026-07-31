@@ -1,0 +1,67 @@
+# Reward ablation: DROP-SMARTS
+# Reweighted: FiLM=0.83, QED=0.17 (no THIQ-acryl SMARTS term)
+# Otherwise identical to thiq_rl_exp2_zap70.toml
+
+run_type = "staged_learning"
+device = "cuda"
+tb_logdir = "tb_thiq_rl_ablation_drop_smarts"
+json_out_config = "_thiq_rl_ablation_drop_smarts.json"
+
+[parameters]
+summary_csv_prefix = "thiq_rl_ablation_drop_smarts"
+use_checkpoint = false
+purge_memories = false
+
+prior_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+agent_file = "/home/shaharh_quris_ai/edit-small-mol/models/reinvent4_mol2mol_covalent_ft.prior"
+smiles_file = "/home/shaharh_quris_ai/edit-small-mol/data/mol1_rl_seeds/seed_zap70_all_plus_mol1_clean.smi"
+sample_strategy = "multinomial"
+distance_threshold = 100
+
+batch_size = 8
+unique_sequences = true
+randomize_smiles = true
+
+[learning_strategy]
+type = "dap"
+sigma = 128
+rate = 0.0001
+
+[diversity_filter]
+type = "IdenticalMurckoScaffold"
+bucket_size = 25
+minscore = 0.4
+minsimilarity = 0.4
+
+[[stage]]
+chkpt_file = "thiq_rl_ablation_drop_smarts_stage1.chkpt"
+termination = "simple"
+max_score = 0.7
+min_steps = 15
+max_steps = 50
+
+[stage.scoring]
+type = "geometric_mean"
+
+# FiLMDelta pIC50 via REST
+[[stage.scoring.component]]
+[stage.scoring.component.REST]
+[[stage.scoring.component.REST.endpoint]]
+name = "FiLMDelta pIC50"
+weight = 0.83
+params.server_url = "http://127.0.0.1"
+params.server_port = 8088
+params.server_endpoint = "score"
+params.predictor_id = "film_delta"
+params.predictor_version = "v1"
+transform.type = "sigmoid"
+transform.high = 7.5
+transform.low = 5.5
+transform.k = 0.5
+
+# QED
+[[stage.scoring.component]]
+[stage.scoring.component.QED]
+[[stage.scoring.component.QED.endpoint]]
+name = "QED"
+weight = 0.17

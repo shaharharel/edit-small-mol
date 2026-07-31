@@ -68,7 +68,17 @@ def pocket_residue_one_hot(_resname_unused: str) -> np.ndarray:
 
 class CovIndDataset(Dataset):
     def __init__(self, csv_path: str | Path, split: str = "train",
-                 pocket_cutoff: float = 8.0, max_ligand_atoms: int = 50):
+                 pocket_cutoff: float = 8.0, max_ligand_atoms: int = 50,
+                 token_variant: str = "v2",
+                 darm_jitter_sigma_pos: float = 0.0):
+        """token_variant: "v2" → 52-d one-hot warhead token (default).
+                          "v2_5" → 290-d warhead-Morgan-FP token (v2.5 C-arm).
+        darm_jitter_sigma_pos: if >0, add Gaussian noise N(0, σ) to the
+                          first 5 atom positions (warhead) in local frame
+                          at __getitem__ time. Used by J3 (D-arm soft
+                          positioning ablation) to test if hard pinning
+                          of warhead atoms hurts the model. Set 0 to
+                          disable (default v2/v2.5 behavior)."""
         # Per-instance drop counter (not class-level — QA #6 round 2: train and
         # val instances shouldn't share state).
         self.drop_counts: dict[str, int] = {}
@@ -83,7 +93,18 @@ class CovIndDataset(Dataset):
         self.pocket_cutoff = pocket_cutoff
         self.max_ligand_atoms = max_ligand_atoms
         self._parser = PDBParser(QUIET=True)
-        print(f"CovIndDataset[{split}]: {len(self.df)} entries")
+        self.token_variant = token_variant
+        self.darm_jitter_sigma_pos = float(darm_jitter_sigma_pos)
+        if token_variant == "v2_5":
+            from anchordiff.covind.covalent_token_v2_5 import build_token_v2_5, TOKEN_DIM_V2_5
+            self._token_builder = build_token_v2_5
+            self._token_dim = TOKEN_DIM_V2_5
+        elif token_variant == "v2":
+            self._token_builder = build_token
+            self._token_dim = TOKEN_DIM
+        else:
+            raise ValueError(f"Unknown token_variant: {token_variant!r}")
+        print(f"CovIndDataset[{split}]: {len(self.df)} entries  token={token_variant} dim={self._token_dim}")
 
     def __len__(self):
         return len(self.df)
@@ -163,13 +184,25 @@ class CovIndDataset(Dataset):
         # Transform to local frame
         lig_local    = to_local(lig_coords, R, t)
         pocket_local = to_local(pocket_coords, R, t)
+        # J3: optional D-arm soft positioning — Gaussian jitter on the
+        # first 5 atoms (warhead) in local frame. Preserves global
+        # warhead-pocket geometry but softens the hard canonical-anchor
+        # pin. Default 0.0 → no jitter (v2/v2.5 behavior).
+        if self.darm_jitter_sigma_pos > 0.0:
+            n_warhead = min(5, lig_local.shape[0])
+            noise = np.random.normal(
+                loc=0.0, scale=self.darm_jitter_sigma_pos,
+                size=(n_warhead, 3),
+            )
+            lig_local[:n_warhead] = lig_local[:n_warhead] + noise
         # Covalent token — using the residues actually in the pocket (deterministic order)
         ctx = [res.get_resname() for res in pocket_res_sorted if "CA" in res]
-        token = build_token(d_canonical=r["warhead_canonical_d"],
-                            theta_canonical=r["warhead_canonical_angle"],
-                            warhead_class=r["warhead_class"],
-                            cys_context_residues=ctx,
-                            reaction_mechanism=r.get("reaction_type"))
+        token = self._token_builder(
+            d_canonical=r["warhead_canonical_d"],
+            theta_canonical=r["warhead_canonical_angle"],
+            warhead_class=r["warhead_class"],
+            cys_context_residues=ctx,
+            reaction_mechanism=r.get("reaction_type"))
         return {
             "record_id": r["record_id"],
             "warhead_class": r["warhead_class"],

@@ -31,6 +31,12 @@ warnings.filterwarnings("ignore")
 
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
+try:
+    from flask_compress import Compress  # 2026-06-14: gzip /api/filter (3.5 MB → ~500 KB)
+    _HAS_COMPRESS = True
+except ImportError:
+    _HAS_COMPRESS = False
+    print("[warn] flask_compress not installed — /api/filter will ship uncompressed")
 from rdkit import Chem, RDLogger
 from rdkit.Chem import AllChem, Draw
 RDLogger.DisableLog('rdApp.*')
@@ -40,6 +46,13 @@ LEGACY_FILE = PROJECT_ROOT / "results" / "paper_evaluation" / "aichem_tier2_scal
 
 app = Flask(__name__)
 CORS(app)
+if _HAS_COMPRESS:
+    # gzip responses ≥ 500 bytes — drops /api/filter from 3.5 MB to ~500 KB
+    app.config["COMPRESS_MIMETYPES"] = ["application/json", "text/html", "text/css", "application/javascript"]
+    app.config["COMPRESS_LEVEL"] = 6  # default; good speed/ratio balance
+    app.config["COMPRESS_MIN_SIZE"] = 500
+    Compress(app)
+    print("Flask-Compress enabled (gzip ≥ 500 bytes)")
 
 print(f"Loading {DATA_FILE} ...")
 if DATA_FILE.exists():
@@ -1208,6 +1221,28 @@ _BOLTZ_BACKFILL_COLS = [
     # P_kinase may be absent if its IQR on the 838 visible survivors < 0.10
     # (saturation = useless), per Team #2 plan.
     "P_kinase", "P_Tec_family", "pIC50_kinase_aux",
+    # 2026-06-11 EVE: net molecular charge (London comment — most kinase drugs
+    # are ~+1, dasatinib +1, ibrutinib +1; +2 raises permeability concerns).
+    # formal_charge_drawn = Chem.GetFormalCharge on input SMILES (almost always
+    # 0 for generator output). net_charge_pH74 = formal charge of Dimorphite-DL
+    # dominant microspecies at pH 7.4 (the biologically meaningful one).
+    # Computed by experiments/compute_net_charge.py.
+    "formal_charge_drawn", "net_charge_pH74",
+    # 2026-06-11 LATE: MolGpKa (GCN per-site pKa + Henderson-Hasselbalch) — corrects
+    # Dimorphite errors on 2-amino-imidazole class (Mol1) and similar where the
+    # rule-based protonator missed local pKa shifts. Mol1 MolGpKa: +0.017 (neutral),
+    # Dimorphite said +1 (wrong). Cohort: 63% 0, 23% +1, 9% +2, 2% +3 — supports
+    # London's "0-1" intuition (86% of cohort).
+    # frac_charge_pH74 = continuous, net_charge_pH74_mg = rounded integer,
+    # pKa_basic_max = most basic site pKa (sanity check).
+    # Computed by experiments/compute_molgpka_charge.py.
+    "frac_charge_pH74", "net_charge_pH74_mg", "pKa_basic_max",
+    # 2026-06-13: Tox structural alerts (extended SMARTS catalog, ~35 patterns
+    # covering panel-flagged Brenk gaps: anilines, anilinopyridines, peroxides,
+    # cyclic sulfamides, hydrazides, vinyl ethers, cyano-strained-rings, etc.)
+    # + k_inact_proxy = thiolate_fraction(pKa_Cys) × geometry_factor(d_SG, BD angle).
+    # Computed by experiments/compute_tox_and_kinact.py.
+    "tox_alerts_count", "tox_alert_names", "k_inact_proxy",
 ]
 F4_BOLTZ_FULL = PROJECT_ROOT / "data" / "tier4_scored" / "F4_boltz_full.csv"
 COHORT_A_CSV = PROJECT_ROOT / "data" / "tier4_scored" / "boltz2_cohort_A_relaxed.csv"
@@ -2095,6 +2130,19 @@ COHORT_3597_ROOT = PROJECT_ROOT / "data" / "boltz_results" / "cohort_3597_full"
 # match the live DF's integer row_id. Build a SMILES-keyed lookup so the 3D
 # pocket tab works for all visible F4 survivors.
 F4_SMILES_TO_CIF: dict[str, str] = {}
+# 2026-06-11 LATE: shipped CIF bundle for the 838 visible survivors. Used when
+# the local Boltz directory tree is not available (e.g. on the remote deploy).
+# Built by experiments/build_visible838_cif_bundle.py.
+VISIBLE838_CIFS: dict[str, dict] = {}
+_v838_path = PROJECT_ROOT / "data" / "tier4_scored" / "visible838_cifs.json.gz"
+if _v838_path.exists():
+    try:
+        import gzip as _gz
+        with _gz.open(_v838_path, "rt") as _f:
+            VISIBLE838_CIFS = json.load(_f)
+        print(f"Loaded visible838_cifs.json.gz: {len(VISIBLE838_CIFS):,} row_id → CIF text")
+    except Exception as _e:
+        print(f"[warn] visible838 bundle load failed: {_e}")
 try:
     sys.path.insert(0, str(PROJECT_ROOT / "experiments"))
     from compute_full_boltz_metrics import build_row_id_index
@@ -2163,6 +2211,12 @@ def _resolve_pose(row_id: int):
                     }
     except Exception:
         pass
+    # 2026-06-11 LATE: visible-838 CIF bundle (shipped as a single gzipped JSON
+    # for remote deploys that don't have the full Boltz directory tree). Built
+    # by experiments/build_visible838_cif_bundle.py from local pose endpoint.
+    if VISIBLE838_CIFS and str(row_id) in VISIBLE838_CIFS:
+        entry = VISIBLE838_CIFS[str(row_id)]
+        return entry["cif"], dict(entry.get("metadata", {}), pose_source="visible838_bundle")
     return None, None
 
 
@@ -2826,8 +2880,12 @@ def _filter_cache_put(key: str, resp: dict):
 
 
 def _default_filter_payload() -> dict:
-    """Canonical payload representing "open the page with no settings touched"."""
-    return {}  # All filters fall back to FILTER_SPEC defaults.
+    """Canonical payload representing "open the page with no settings touched".
+
+    2026-06-11 PERF: precompute now stores the FULL visible result (length=10000)
+    so the fast path can serve any pagination size by slicing in-memory.
+    """
+    return {"length": 10000}
 
 
 def _run_filter_pipeline(payload: dict) -> dict:
@@ -2925,10 +2983,27 @@ def _is_default_filter_request(payload: dict) -> bool:
     """
     # Any presence of these keys disqualifies the default fast-path.
     NONDEFAULT_KEY_SUFFIXES = ("_on", "_cutoff", "_enabled")
-    NONDEFAULT_KEYS = {"filters", "groups", "group", "method", "sort"}
+    NONDEFAULT_KEYS = {"filters", "group", "method", "sort"}
+    # 2026-06-11 PERF FIX (Backend team #1 — precompute dead-code root cause):
+    # The frontend ALWAYS sends `groups=murcko,thiq,murcko_and_acryl` (the
+    # canonical default value) on first load. Prior logic rejected ANY payload
+    # that had a `groups` key, so the precompute cache was never served. Now
+    # accept `groups` if and only if the value EQUALS the canonical default
+    # FILTER0_DEFAULT — same logical request, same fast path.
+    _DEFAULT_GROUPS_NORMALIZED = ",".join(sorted(_FILTER0_DEFAULT))
+    def _groups_equals_default(v: str) -> bool:
+        try:
+            normalized = ",".join(sorted(t.strip() for t in str(v).split(",") if t.strip()))
+            return normalized == _DEFAULT_GROUPS_NORMALIZED
+        except Exception:
+            return False
     for k, v in payload.items():
         if v in (None, ""):
             continue
+        if k == "groups":
+            if not _groups_equals_default(v):
+                return False
+            continue  # default groups value → still on the fast path
         if k in NONDEFAULT_KEYS:
             # method=_all is the "all methods" sentinel; treat as default.
             if k == "method" and str(v) == "_all":
@@ -2938,8 +3013,9 @@ def _is_default_filter_request(payload: dict) -> bool:
             return False
     if "start" in payload and str(payload["start"]) not in ("0", ""):
         return False
-    if "length" in payload and str(payload["length"]) not in ("200", ""):
-        return False
+    # 2026-06-11 PERF: any length is OK on the fast path — the cached response
+    # holds the full visible set (length=10000 at precompute time), and the
+    # fast-path serve slices to the requested length in-memory.
     if "composite" in payload and str(payload["composite"]).lower() not in ("1", "true", "yes", "on", ""):
         return False
     return True
@@ -2969,7 +3045,16 @@ def api_filter():
     # startup precompute. Saves ~3-8 s on the cold first request.
     if _DEFAULT_FILTER_CACHE and _is_default_filter_request(payload):
         _FILTER_CACHE_STATS["default_fast_path"] += 1
-        resp = jsonify(_DEFAULT_FILTER_CACHE)
+        # 2026-06-11: slice the precomputed full row set to the requested
+        # start/length so any pagination size benefits from the fast path.
+        _req_start = int(payload.get("start", 0) or 0)
+        _req_len = int(payload.get("length", 50) or 50)  # frontend defaults to 50
+        _resp = dict(_DEFAULT_FILTER_CACHE)
+        _all_rows = _resp.get("rows", [])
+        _resp["rows"] = _all_rows[_req_start:_req_start + _req_len]
+        _resp["start"] = _req_start
+        _resp["length"] = _req_len
+        resp = jsonify(_resp)
         resp.headers["X-Filter-Cache"] = "default-precompute"
         resp.headers["X-Filter-Total-Ms"] = str(round((_time_mod.perf_counter() - t_start) * 1000, 1))
         return resp
@@ -3588,6 +3673,20 @@ def index():
     if html_path.exists():
         return send_file(html_path)
     return jsonify({"endpoints": ["/api/data", "/api/svg/<row_id>", "/api/health"]})
+
+
+@app.route("/light")
+def light_page():
+    """Skinny survivors-only view: 838 visible rows, client-side filter+sort.
+
+    Loads via /api/filter on the default-precompute fast path (~1s on remote)
+    and never touches the 1M-row pipeline. Designed to be the fast/simple
+    alternative to / for users who only care about the final survivors.
+    """
+    html_path = Path(__file__).parent / "report_light.html"
+    if html_path.exists():
+        return send_file(html_path)
+    return jsonify({"error": "report_light.html not found"}), 404
 
 
 @app.route("/tier2")

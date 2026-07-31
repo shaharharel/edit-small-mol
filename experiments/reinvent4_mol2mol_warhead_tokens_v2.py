@@ -30,6 +30,9 @@ PROJECT = Path("/home/shaharh_quris_ai/edit-small-mol") if Path("/home/shaharh_q
         else Path("/Users/shaharharel/Documents/github/edit-small-mol")
 REINVENT4 = Path("/home/shaharh_quris_ai/REINVENT4") if Path("/home/shaharh_quris_ai/REINVENT4").exists() \
           else Path("/Users/shaharharel/Documents/github/REINVENT4")
+# Insert reinvent package on path BEFORE any torch.load — the prior pickles
+# reference reinvent.* classes (Vocabulary, etc.) and need this to unpickle.
+sys.path.insert(0, str(REINVENT4))
 
 BASE_PRIOR = REINVENT4 / "priors/mol2mol_medium_similarity.prior"
 PATCHED_PRIOR = PROJECT / "data/reinvent4_mol2mol_warhead_tokens_v2_work/mol2mol_vocab_patched_v2.prior"
@@ -42,13 +45,34 @@ SAMPLES_DIR = PROJECT / "data/reinvent4_mol2mol_warhead_tokens_v2_samples"
 SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
 
 CONTROL_TOKENS = ["[ACRYLAMIDE]", "[CHLOROACETAMIDE]", "[VINYL_SULFONAMIDE]", "[EPOXIDE]"]
+# v2.1 (2026-06-04): restored v1's STRICT SMARTS — `[N;!H2]` excludes primary
+# amides (acrylamide-the-monomer NH2 etc.) which is the correct medchem
+# definition. v2's looser `N` form inflated ACRYLAMIDE pool by ~30% with
+# non-pharma matches and helped skew the distribution to 89% acrylamide.
 WARHEAD_SMARTS = {
-    "[ACRYLAMIDE]":        "[CH2]=[CH]C(=O)N",
-    "[CHLOROACETAMIDE]":   "Cl[CH2]C(=O)N",
+    "[ACRYLAMIDE]":        "[CH2]=[CH]C(=O)[N;!H2]",
+    "[CHLOROACETAMIDE]":   "[Cl][CH2]C(=O)[N;!H2]",
     "[VINYL_SULFONAMIDE]": "[CH2]=[CH]S(=O)(=O)N",
-    "[EPOXIDE]":           "[#6]1O[#6]1",
+    "[EPOXIDE]":           "C1OC1",
 }
-TC_MIN_PAIR = 0.5           # Tanimoto floor for source-target pairs
+# Chassis-label warhead-class aliases used in covindb_chassis_labels.csv (v1).
+# Re-introduced in v2.1 after audit found v2's loader silently dropped this
+# source — costing ~19 curated vinyl_sulf entries critical to minority-class
+# coverage.
+CHASSIS_ALIAS = {
+    "[ACRYLAMIDE]":        {"acrylamide", "acrylyl", "acrylate", "acrylonitrile"},
+    "[CHLOROACETAMIDE]":   {"chloroacetamide", "chloroacetyl", "bromoacetyl", "bromoacetamide"},
+    "[VINYL_SULFONAMIDE]": {"vinyl_sulfonamide", "vinyl_sulfone"},
+    "[EPOXIDE]":           {"epoxide"},
+}
+# Tiered Tc threshold by pool size: vinyl_sulf has ~20 mols and uniform 0.5 cuts
+# it to ~15 pairs. Relax for minority classes so they survive while keeping the
+# acrylamide arm strict (preserve Mol2Mol similarity prior).
+TC_FLOOR_BY_POOL_SIZE = [
+    (500, 0.5),   # >=500 mols → strict Tc>=0.5
+    (100, 0.4),   # >=100 mols → relaxed Tc>=0.4
+    (0,   0.3),   # else      → lenient Tc>=0.3 (or no minimum if still empty)
+]
 MAX_PAIRS_PER_CLASS = 5000  # cap per class (no cap if pool is smaller)
 N_PAIRS_PER_CLASS = MAX_PAIRS_PER_CLASS  # alias used in build_tanimoto_filtered_pairs
 PAIRS_PER_ANCHOR = 3        # top-Tc neighbors per anchor mol
@@ -91,10 +115,19 @@ def has_warhead(mol, tok):
 
 
 def load_covindb_warhead_pool():
+    """v2.1: SMARTS scan of CovInDB_All + curated chassis_labels.csv merge.
+
+    v2.0 dropped chassis_labels (silent bug). Restored here so minority
+    classes (vinyl_sulf 19 curated entries, epoxide ~49, chloroacetamide ~76)
+    retain coverage that strict SMARTS misses.
+    """
     pool = {tok: set() for tok in CONTROL_TOKENS}
+
+    # (1) SMARTS scan of CovInDB_All
     cov_all = PROJECT / "data/covbinder/raw_covindb2/CovInDB_All.csv"
     if not cov_all.exists():
         raise SystemExit(f"missing {cov_all}")
+    log(f"  Loading CovInDB_All: {cov_all}")
     df = pd.read_csv(cov_all, low_memory=False)
     for smi in df["SMILES"].dropna().astype(str):
         canon = canonicalize(smi)
@@ -104,20 +137,60 @@ def load_covindb_warhead_pool():
         for tok in CONTROL_TOKENS:
             if has_warhead(m, tok):
                 pool[tok].add(canon)
+    smarts_counts = {tok: len(v) for tok, v in pool.items()}
+    log(f"  SMARTS pool sizes: {smarts_counts}")
+
+    # (2) Curated chassis labels — adds PDB-verified entries for minority classes
+    chassis = PROJECT / "data/covindb_chassis_labels.csv"
+    if chassis.exists():
+        log(f"  Loading chassis labels: {chassis}")
+        cdf = pd.read_csv(chassis, low_memory=False)
+        cdf = cdf.dropna(subset=["ligand_smiles", "warhead_class"])
+        added = {tok: 0 for tok in CONTROL_TOKENS}
+        for _, row in cdf.iterrows():
+            canon = canonicalize(row["ligand_smiles"])
+            if not canon: continue
+            wclass = str(row["warhead_class"]).strip().lower()
+            for tok in CONTROL_TOKENS:
+                if wclass in CHASSIS_ALIAS[tok]:
+                    if canon not in pool[tok]:
+                        added[tok] += 1
+                    pool[tok].add(canon)
+                    break
+        log(f"  Chassis-label additions: {added}")
+    else:
+        log(f"  WARN: chassis_labels.csv not found at {chassis}")
+
+    final_counts = {tok: len(v) for tok, v in pool.items()}
+    log(f"  Final pool sizes (SMARTS + chassis): {final_counts}")
     return {tok: sorted(v) for tok, v in pool.items()}
 
 
+def _tc_floor_for_pool(n: int) -> float:
+    """Tiered Tc threshold: looser for minority classes so they survive."""
+    for cutoff, floor in TC_FLOOR_BY_POOL_SIZE:
+        if n >= cutoff:
+            return floor
+    return 0.0  # fallback: no minimum (shouldn't happen with TC_FLOOR_BY_POOL_SIZE)
+
+
 def build_tanimoto_filtered_pairs():
-    log(f"Building Tc>={TC_MIN_PAIR} pairs per class (target {N_PAIRS_PER_CLASS}/class)...")
+    """v2.1: per-class Tc threshold (tiered) + class-balanced sampling cap.
+
+    Acrylamide pool stays strict (Tc>=0.5, preserve similarity prior).
+    Minority classes get relaxed thresholds so the warhead class actually has
+    enough pairs to learn the conditioning from prefix token → output structure.
+    """
+    log(f"Building tiered-Tc pairs per class (target {N_PAIRS_PER_CLASS}/class)...")
     pool = load_covindb_warhead_pool()
-    for tok, mols in pool.items():
-        log(f"  {tok}: pool={len(mols)}")
     rng = np.random.default_rng(RANDOM_SEED)
     train_rows, val_rows = [], []
     for tok, mols in pool.items():
         if len(mols) < 4:
             log(f"  WARN: {tok} has only {len(mols)} mols — skipping")
             continue
+        tc_floor = _tc_floor_for_pool(len(mols))
+        log(f"  {tok}: pool={len(mols)}, Tc_floor={tc_floor}")
         fps = []
         for s in mols:
             fp = morgan_fp(s)
@@ -132,11 +205,11 @@ def build_tanimoto_filtered_pairs():
             others = [(j, others_fp) for j, (_, others_fp) in enumerate(fps) if j != ai]
             if not others: continue
             sims = DataStructs.BulkTanimotoSimilarity(anchor_fp, [f for _, f in others])
-            eligible = [(others[k][0], sims[k]) for k in range(len(others)) if sims[k] >= TC_MIN_PAIR]
+            eligible = [(others[k][0], sims[k]) for k in range(len(others)) if sims[k] >= tc_floor]
             if not eligible: continue
             # Pick up to 3 neighbors per anchor (top-Tc) to keep training pairs information-dense
             eligible.sort(key=lambda x: -x[1])
-            for nj, tc in eligible[:3]:
+            for nj, tc in eligible[:PAIRS_PER_ANCHOR]:
                 target_smi = fps[nj][0]
                 pairs_for_class.append((f"{tok}{anchor_smi}", target_smi, tok, float(tc)))
                 if len(pairs_for_class) >= N_PAIRS_PER_CLASS + N_VAL_PER_CLASS:
@@ -146,16 +219,27 @@ def build_tanimoto_filtered_pairs():
         rng.shuffle(pairs_for_class)
         val = pairs_for_class[:N_VAL_PER_CLASS]
         train = pairs_for_class[N_VAL_PER_CLASS:N_VAL_PER_CLASS + N_PAIRS_PER_CLASS]
-        log(f"  {tok}: built {len(pairs_for_class)} pairs (Tc range)  → train={len(train)} val={len(val)}")
+        log(f"  {tok}: built {len(pairs_for_class)} pairs (Tc>={tc_floor}) → train={len(train)} val={len(val)}")
         train_rows.extend(train)
         val_rows.extend(val)
     train_df = pd.DataFrame(train_rows, columns=["Source_Mol", "Target_Mol", "warhead_class", "Tc"])
     val_df   = pd.DataFrame(val_rows,   columns=["Source_Mol", "Target_Mol", "warhead_class", "Tc"])
-    # Class-balanced shuffle (interleave by class)
-    train_df = train_df.sample(frac=1, random_state=RANDOM_SEED).reset_index(drop=True)
+    # v2.1: weighted class-balanced sampling so minority classes get equal
+    # gradient weight per epoch. Acrylamide will dominate raw counts; without
+    # weighting, the minority warheads never learn their conditioning.
+    class_counts = train_df["warhead_class"].value_counts().to_dict()
+    if class_counts:
+        max_class_n = max(class_counts.values())
+        # sample weights: every class gets the same effective weight in training
+        weights = train_df["warhead_class"].map(lambda c: max_class_n / max(1, class_counts[c]))
+        train_df = train_df.sample(
+            n=len(train_df), replace=True, weights=weights, random_state=RANDOM_SEED,
+        ).reset_index(drop=True)
+        log(f"  Balanced sampling weights per class (max_class_n={max_class_n}): "
+            f"{ {c: round(max_class_n/max(1,n), 2) for c, n in class_counts.items()} }")
     train_df.to_csv(PAIRS_CSV, index=False)
     val_df.to_csv(PAIRS_VAL_CSV, index=False)
-    log(f"Train pair counts per class:\n{train_df['warhead_class'].value_counts().to_string()}")
+    log(f"Train pair counts per class (post-balance):\n{train_df['warhead_class'].value_counts().to_string()}")
     log(f"Tc stats (train): mean={train_df.Tc.mean():.3f}  min={train_df.Tc.min():.3f}  max={train_df.Tc.max():.3f}")
     return train_df, val_df
 
@@ -165,17 +249,18 @@ def patch_prior_vocab():
     sd = torch.load(BASE_PRIOR, map_location="cpu", weights_only=False)
     voc = sd["vocabulary"]
     old_size = len(voc)
-    existing_ids = set(voc.tokens.values()) if hasattr(voc, "tokens") else set(voc._tokens.values())
-    next_id = max(existing_ids) + 1
+    # Use the same _add() path that v1 used successfully. Vocabulary's
+    # _current_id collision bug requires explicit reset.
     if hasattr(voc, "_current_id"):
-        voc._current_id = next_id
+        voc._current_id = old_size
     new_ids = {}
     for tok in CONTROL_TOKENS:
-        if tok in voc.tokens if hasattr(voc, "tokens") else tok in voc._tokens:
-            new_ids[tok] = voc.tokens[tok] if hasattr(voc, "tokens") else voc._tokens[tok]
-            continue
-        nid = voc.add(tok) if hasattr(voc, "add") else voc._add(tok)
+        try:
+            nid = voc._add(tok)
+        except Exception:
+            nid = voc.add(tok)
         new_ids[tok] = nid
+        log(f"  + {tok!r} -> id {nid}")
     new_size = len(voc)
     log(f"  vocab {old_size} → {new_size}")
     sd["network_parameter"]["vocabulary_size"] = new_size
@@ -233,9 +318,13 @@ def run_transfer_learning(device="cuda"):
         t0 = time.time()
         tot, n = 0.0, 0
         for step, batch in enumerate(train_dl):
+            src, src_mask, trg, trg_mask, _sim = batch
+            src = src.to(device); src_mask = src_mask.to(device)
+            trg = trg.to(device); trg_mask = trg_mask.to(device)
             opt.zero_grad()
-            loss = model.likelihood(batch).mean()
+            loss = model.likelihood(src, src_mask, trg, trg_mask).mean()
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.network.parameters(), 1.0)
             opt.step()
             tot += float(loss.item()); n += 1
             if step % 20 == 0:
@@ -246,7 +335,10 @@ def run_transfer_learning(device="cuda"):
         with torch.no_grad():
             vtot, vn = 0.0, 0
             for batch in val_dl:
-                v = model.likelihood(batch).mean()
+                src, src_mask, trg, trg_mask, _sim = batch
+                src = src.to(device); src_mask = src_mask.to(device)
+                trg = trg.to(device); trg_mask = trg_mask.to(device)
+                v = model.likelihood(src, src_mask, trg, trg_mask).mean()
                 vtot += float(v.item()); vn += 1
             val_nll = vtot / max(1, vn)
         log(f"  EPOCH {epoch}/{NUM_EPOCHS}  train_nll={train_nll:.4f}  val_nll={val_nll:.4f}  ({(time.time()-t0)/60.0:.1f} min)")
