@@ -1,0 +1,17 @@
+# WEIGHTS AND CORPORA ARE NOT SOURCE. This directory is ~18 GB, of which 232 .ckpt files are the
+# bulk (80 MB each) and data/ is a further 667 MB with single CSVs over 130 MB. GitHub rejects
+# files above 100 MB outright, and a repo carrying model weights stops being diffable, which is
+# the entire reason this commit exists: the untracked state blocked verification twice tonight --
+# nobody could diff train_phaseA.py across a mid-session edit to establish whether a behavioural
+# change had occurred, so a reproduction question had to be settled by numeric agreement instead.
+ckpt_*/
+*.ckpt
+data/
+*.jsonl
+__pycache__/
+*.pyc
+
+# Per-run stdout. logs/ (the rescued run logs that PROVE which device a run used) IS tracked --
+# that is provenance, not noise, and its absence from the repo is what forced a device to be
+# inferred from throughput earlier tonight.
+logs_*.log
