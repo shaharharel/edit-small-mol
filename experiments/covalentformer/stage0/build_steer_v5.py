@@ -107,9 +107,19 @@ def main():
                     help='fraction of MURCKO SCAFFOLDS held out; the resulting pair '
                          'fraction is much smaller because cross-boundary pairs are dropped')
     ap.add_argument('--cap', type=int, default=180000, help='max TRAIN rows per param')
+    ap.add_argument('--scaf-slack', type=float, default=1.6,
+                    help='multiplier on the solved scaffold fraction; >1 because pairs are '
+                         'not uniformly distributed over scaffolds and the solved f '
+                         'under-delivers on skewed corpora')
     ap.add_argument('--valid-cap', type=int, default=6000,
                     help='max VALID rows, subsampled uniformly to preserve the natural mix')
     ap.add_argument('--seed', type=int, default=20260916)
+    ap.add_argument('--split-mode', choices=['scaffold', 'random'], default='scaffold',
+                    help='scaffold = both endpoints scaffold-disjoint (HONEST). '
+                         'random = i.i.d. row split, molecules appear on BOTH sides (LEAKY '
+                         'BY CONSTRUCTION). Run both: the difference between them is the size '
+                         'of the retrieval component, which is the number everyone forgets to '
+                         'measure. Do not quote random-split figures as steering.')
     a = ap.parse_args()
     rng = random.Random(a.seed)
     scafcache = {}
@@ -146,7 +156,8 @@ def main():
                     continue
                 per_param[p].append((r['a'], r['b'], d))
 
-    manifest = {'split_version': SPLIT_VERSION, 'seed': a.seed, 'params': {}}
+    manifest = {'split_version': SPLIT_VERSION, 'seed': a.seed,
+                'split_mode': a.split_mode, 'params': {}}
 
     for p, rows in per_param.items():
         if not rows:
@@ -157,19 +168,39 @@ def main():
             scafs.add(skey(a_s)); scafs.add(skey(b_s))
         scafs = sorted(scafs)
         rng.shuffle(scafs)
-        n_valid_scaf = max(1, int(len(scafs) * a.valid_scaf_frac))
+        # HOLD OUT THE SMALLEST SCAFFOLD FRACTION THAT STILL FILLS THE VALID CAP.
+        # Crossing pairs scale as ~2f(1-f) while valid pairs scale as ~f^2, so a generous f
+        # is paid for twice: it discards training pairs AND overfills a valid set that is
+        # capped anyway. Holding out 22% of scaffolds dropped ~31% of pairs to build a
+        # 180k-row valid set that was then truncated to 6k -- pure waste. Solving
+        # f^2 * N ~= valid_cap gives the same eval for a fraction of the loss.
+        # Clamped to [0.02, 0.45]: too small and tiny params get no valid set at all,
+        # too large and we are back to discarding a third of the corpus.
+        f_need = (a.valid_cap / float(len(rows))) ** 0.5 if len(rows) else a.valid_scaf_frac
+        f = min(0.45, max(0.02, f_need * a.scaf_slack))
+        n_valid_scaf = max(1, int(len(scafs) * f))
         valid_scaf = set(scafs[:n_valid_scaf])
 
         tr, va, crossed = [], [], 0
-        for row in rows:
-            sa, sb = skey(row[0]), skey(row[1])
-            ina, inb = sa in valid_scaf, sb in valid_scaf
-            if ina and inb:
-                va.append(row)
-            elif not ina and not inb:
-                tr.append(row)
-            else:
-                crossed += 1
+        if a.split_mode == 'random':
+            # LEAKY BY CONSTRUCTION and that is the point: it is the upper bound a model can
+            # reach by memorising molecules rather than following instructions.
+            idx = list(range(len(rows)))
+            rng.shuffle(idx)
+            n_va = int(len(rows) * 0.05)
+            vset = set(idx[:n_va])
+            tr = [rows[i] for i in idx[n_va:]]
+            va = [rows[i] for i in sorted(vset)]
+        else:
+            for row in rows:
+                sa, sb = skey(row[0]), skey(row[1])
+                ina, inb = sa in valid_scaf, sb in valid_scaf
+                if ina and inb:
+                    va.append(row)
+                elif not ina and not inb:
+                    tr.append(row)
+                else:
+                    crossed += 1
 
         # ---- balance the TRAIN set only ----------------------------------------------
         by_dir = collections.defaultdict(list)
@@ -198,8 +229,15 @@ def main():
                      if skey(a_s) in tr_scaf or skey(b_s) in tr_scaf)
         leak_m = sum(1 for a_s, b_s, _ in va
                      if key(a_s) in tr_mol or key(b_s) in tr_mol)
-        assert leak_s == 0, 'SCAFFOLD LEAK on %s: %d/%d' % (p, leak_s, len(va))
-        assert leak_m == 0, 'MOLECULE LEAK on %s: %d/%d' % (p, leak_m, len(va))
+        if a.split_mode == 'scaffold':
+            assert leak_s == 0, 'SCAFFOLD LEAK on %s: %d/%d' % (p, leak_s, len(va))
+            assert leak_m == 0, 'MOLECULE LEAK on %s: %d/%d' % (p, leak_m, len(va))
+        else:
+            # Do not assert -- MEASURE and record. The random arm exists to quantify this.
+            manifest.setdefault('random_leak', {})[p] = {
+                'valid_rows': len(va),
+                'rows_touching_a_train_molecule': leak_m,
+                'pct': round(100.0 * leak_m / max(len(va), 1), 2)}
         # BOTH are asserted: scaffold-disjoint should IMPLY molecule-disjoint, and checking
         # the implication is how you find out the scaffold key is doing something unexpected.
 
@@ -236,7 +274,13 @@ def main():
     with open(os.path.join(a.outdir, 'MANIFEST.json'), 'w') as fo:
         json.dump(manifest, fo, indent=2)
     print('\nwrote %s  (%s)' % (a.outdir, SPLIT_VERSION))
-    print('every param asserted 0 leak: both endpoints stereo/isotope-blind unseen')
+    if a.split_mode == 'scaffold':
+        print('every param asserted 0 leak, scaffold AND molecule level')
+    else:
+        print('RANDOM split -- leak MEASURED, not asserted:')
+        for k, v in manifest.get('random_leak', {}).items():
+            print('   %-20s %5.1f%% of valid rows touch a train molecule' % (k, v['pct']))
+        print('   These numbers are a RETRIEVAL CEILING, not steering.')
 
 
 if __name__ == '__main__':
