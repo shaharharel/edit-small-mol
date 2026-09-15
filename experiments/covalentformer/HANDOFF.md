@@ -180,3 +180,43 @@ confident wrong number.** Not crashes. Assume this is the default failure mode.
 - Do not describe the corpus as "covalent" until the filter has been applied and verified.
 - Do not quote a pooled contamination rate: reference jumping is ~2% pooled and **38% on the rows
   that carry training signal**. Anyone quoting the pooled figure concludes the corpus is safe.
+
+---
+
+# ADDENDUM — 2026-09-15, corpus v2 (commits 5936ce7, 3adf0b2)
+
+## DONE
+1. **Filter wired into BOTH branches** (5936ce7). The CovInDB branch was writing pairs
+   unconditionally — covalent by annotation, never checked by structure. Half of CovInDB
+   (78,678 / 154,895) does not carry a structurally covalent warhead.
+2. **Corpus rebuilt** (`stage0/rebuild_v2.sh`, ~90 s end-to-end):
+   `data/covalent_final_v2/pairs.jsonl` — **1,101,089 pairs / 19,538 molecules**.
+3. **Step-2 gate PASSED**: contaminant match **37.69% → 0.00%**, terminal acrylamide
+   **15.16% → 43.22%**, sunitinib/NEM gone, MW median 482, 1.7% under 250 Da.
+   NOTE: "100% accepted warhead" is TAUTOLOGICAL — the filter gated the build.
+4. **Molecule params labelled**, 19,538 rows → `data/labels/molecule_params_v2.csv`.
+
+## PARAM VERDICTS FROM THE LABEL DISTRIBUTIONS
+- `acyl_N_motif` — **9 levels, well spread.** Exocyclic↔endocyclic populated both sides. BUILD.
+- `linker_atom_count` — 15 levels, 84% in {2,3,0}. Directed; span's flip is unreachable. BUILD.
+- `michael_subst_class` — **99.3% in two values.** Same degeneracy that killed `warhead_span`.
+  Use as a pair PRECONDITION, do NOT train as a steering target.
+
+## OPEN, AND IT BLOCKS THE PLANARITY ARM
+`label_planarity.py` on the v2 corpus prints `acryl %` and `embed_ok %` **identical to 3 s.f.
+at every checkpoint** (81.3/81.3, 90.7/90.7, 93.8/93.8). embed_ok is a SUBSET of acryl_match,
+so equality means ETKDG never failed — against a filed prior of **71.7% embed_ok**. Either
+embedding genuinely always succeeds on this cleaner pool, or embed_ok is being set from the
+acrylamide match without the embed being checked. **RESOLVE BEFORE QUOTING ANY PLANARITY
+NUMBER.** Read `_compute_2d_one` in `scripts/compute_planar_2d_e2.py` and confirm embed_ok is
+written from an actual EmbedMolecule return code.
+
+## NEXT
+1. Resolve the embed_ok question above.
+2. Pocket params on the 5,758 pocket pairs — buried SASA first. **Add θ_BD (Bürgi–Dunitz
+   approach angle).** The manuscript's pose vector is (d_Sγ–Cβ, θ_BD, φ_planar); d_Sγ–Cβ is the
+   formed C–S bond (1.797 Å, sd 0.106) so it is a constant, φ is validated, and **θ_BD has never
+   been measured or killed** — it is the one live geometry channel with no verdict.
+3. Pair-level deltas + molecule-disjoint split (both endpoints unseen).
+4. Train: `acyl_N_motif`, `linker_atom_count`, planarity. NOT span, NOT flex,
+   NOT michael_subst_class.
