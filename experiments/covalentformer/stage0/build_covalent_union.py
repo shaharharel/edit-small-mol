@@ -14,6 +14,8 @@ co-occurs with another electrophile, and dropped when it is the only match.
 import os, sys, json, argparse
 from rdkit import Chem, RDLogger
 RDLogger.DisableLog('rdApp.*')
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from covalent_filter import classify, PANEL_VERSION   # noqa: E402
 
 WARHEADS = {
     'acrylamide_michael': '[CX3]=[CX3][CX3](=O)[NX3,OX2]',
@@ -33,14 +35,22 @@ _C = {}
 
 
 def warheads(smi):
+    """Covalent-plausible? -> list of accepted warhead classes, or [] / None.
+
+    NOW DELEGATES TO covalent_filter.classify(). The old local panel used
+    [CX3]=[CX3][CX3](=O)[NX3,OX2] for "acrylamide/Michael", which does not separate a TERMINAL
+    vinyl from an ARYL-CONJUGATED alkene. Measured on the corpus it built: 37.69% of molecules
+    matched a contaminant class against 15.16% genuine terminal acrylamide -- it admitted
+    SUNITINIB (marketed NON-covalent), nintedanib's oxindole, rhodanines/TZDs and
+    N-ethylmaleimide (a reagent).
+    AND THE COVINDB BRANCH BELOW NOW GOES THROUGH THIS TOO. It previously wrote every CovInDB
+    pair unconditionally -- covalent by ANNOTATION, never checked by structure -- which is where
+    the "every molecule has a warhead by construction" claim came from and why it was false.
+    """
     if smi in _C:
         return _C[smi]
-    m = Chem.MolFromSmiles(smi)
-    if m is None:
-        _C[smi] = None; return None
-    strong = [k for k in WARHEADS if PAT[k] is not None and m.HasSubstructMatch(PAT[k])]
-    weak = [k for k in WEAK if m.HasSubstructMatch(PAT[k])]
-    _C[smi] = strong + (weak if strong else [])
+    r = classify(smi)
+    _C[smi] = (r['accepted'] if r and r['ok'] else ([] if r else None))
     return _C[smi]
 
 
@@ -54,10 +64,13 @@ def main():
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
 
     seen_pair, mols, kept, src = set(), set(), 0, {'covindb': 0, 'chembl_covalent': 0}
-    n_cov = n_chem = chem_drop = 0
+    n_cov = n_chem = chem_drop = cov_drop = 0
     with open(a.out, 'w') as out:
         for line in open(a.covindb):
             r = json.loads(line); n_cov += 1
+            wa, wb = warheads(r['input_smiles']), warheads(r['output_smiles'])
+            if not wa or not wb:      # SAME GATE AS ChEMBL -- see warheads() docstring
+                cov_drop += 1; continue
             k = (r['input_smiles'], r['output_smiles'])
             if k in seen_pair: continue
             seen_pair.add(k); mols.update(k); kept += 1; src['covindb'] += 1
@@ -78,7 +91,9 @@ def main():
                 print('  ... %d pairs, %d unique molecules' % (kept, len(mols)), flush=True)
 
     print('=== COVALENT UNION CORPUS ===')
-    print('  CovInDB pairs read      %8d   kept %8d' % (n_cov, src['covindb']))
+    print('  PANEL: %s' % PANEL_VERSION)
+    print('  CovInDB pairs read      %8d   kept %8d   dropped (not covalent-plausible) %8d'
+          % (n_cov, src['covindb'], cov_drop))
     print('  ChEMBL  pairs read      %8d   kept %8d   dropped (a side not covalent) %8d'
           % (n_chem, src['chembl_covalent'], chem_drop))
     print('  UNIQUE PAIRS            %8d' % kept)
@@ -86,8 +101,8 @@ def main():
     print('  wrote %s' % a.out)
     json.dump(dict(unique_pairs=kept, unique_molecules=len(mols), by_source=src,
                    chembl_read=n_chem, chembl_dropped_not_covalent=chem_drop,
-                   covindb_read=n_cov, strong_warheads=sorted(WARHEADS),
-                   weak_only_excluded=sorted(WEAK)),
+                   covindb_read=n_cov, covindb_dropped_not_covalent=cov_drop,
+                   panel_version=PANEL_VERSION),
               open(a.out.replace('.jsonl', '_meta.json'), 'w'), indent=2)
     return 0
 
