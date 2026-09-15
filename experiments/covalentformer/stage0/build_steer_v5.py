@@ -249,17 +249,23 @@ def main():
         assert len(tr_bal) >= 400, \
             'UNTRAINABLE SPLIT on %s: only %d train rows' % (p, len(tr_bal))
 
+        # Cap valid for scoring speed. Subsampled UNIFORMLY, never per-class: stratifying
+        # here would rebalance the valid mix and make every pooled number a mix artifact.
+        # MUST RUN BEFORE THE CSV WRITE. It was previously placed after, so the manifest
+        # said 6,000 while the file on disk held 23,260 -- a reported number that did not
+        # describe the artifact it named.
+        # (orig comment below retained)
+        # Cap valid for scoring speed. Subsampled UNIFORMLY, never per-class: stratifying
+        # here would rebalance the valid mix and make every pooled number a mix artifact.
+        if len(va) > a.valid_cap:
+            rng.shuffle(va); va = va[:a.valid_cap]
+
         for name, data in (('train', tr_bal), ('valid', va)):
             fp = os.path.join(a.outdir, '%s_%s.csv' % (p, name))
             with open(fp, 'w', newline='') as fo:
                 w = csv.writer(fo); w.writerow(['anchor', 'target', 'instr'])
                 for a_s, b_s, d in data:
                     w.writerow([a_s, b_s, d])
-
-        # Cap valid for scoring speed. Subsampled UNIFORMLY, never per-class: stratifying
-        # here would rebalance the valid mix and make every pooled number a mix artifact.
-        if len(va) > a.valid_cap:
-            rng.shuffle(va); va = va[:a.valid_cap]
 
         cnt_tr = collections.Counter(d for _, _, d in tr_bal)
         cnt_va = collections.Counter(d for _, _, d in va)
