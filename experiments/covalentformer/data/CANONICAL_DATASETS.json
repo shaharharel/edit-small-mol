@@ -1,0 +1,62 @@
+{
+  "created": "2026-09-15T21:55:49",
+  "STATUS": "CANONICAL as of this commit. Everything under data/chembl36_pairs_v3 and _v4* is SUPERSEDED and must not be used for new arms. DEFECTS D1-D4 ARE BLOCKERS: do not label until D4 is fixed and D2/D3 are filtered or tagged.",
+  "params_agreed": {
+    "warhead_span": "bond path electrophile -> ring system. ANCHOR = WARHEAD ELECTROPHILE (replaces the old \"non-ring atom at max distance from any ring\").",
+    "warhead_linker_flex": "rotatable bonds with BOTH endpoints within 3 bonds of that path.",
+    "warhead_planarity": "Michael-acceptor dihedral, DEFINITION PINNED to scripts/compute_planar_2d_e2.py, which reproduces the stored manuscript column to 1e-6 (215/215 rows). Quote the MEDIAN (2.62 deg for v2_cond), not the mean (26.0), and state the 28% embed-failure rate.",
+    "exit_vector_angle": "angle at which the warhead arm departs the core ring system. One attempt with the new anchor; previously 0% coverage.",
+    "pocket": "buried SASA, pocket occupancy, shape complementarity -- on pocket_pairs only."
+  },
+  "split_rule": "MOLECULE-DISJOINT, BOTH ENDPOINTS UNSEEN: a valid/test pair counts only if NEITHER molecule appears anywhere in train. Stereo- and isotope-blind key.",
+  "KNOWN_DEFECTS": [
+    "D1 NO-ANCHOR RATE is 4.82%, NOT the 12.39% first reported. 61% of the original gap was a too-narrow warhead panel, not corpus contamination: alpha-ketoamide/ketoester 956 molecules (HCV/Mpro-style reversible covalent, a major class), beta-lactam 324, activated ketone 148. THE SHARPENED POINT SURVIVES: THE WARHEAD PANEL IS PART OF THE PARAM DEFINITION. Going from reachability.WARHEADS (5 patterns) to 23 moves the anchor on a large minority of the corpus and every span/flex label changes with it. STAMP THE PANEL VERSION or two corpora are not poolable.",
+    "D2 ANCHOR CORRESPONDENCE IS UNDETERMINED ON A QUARTER OF PAIRS (n=22,042 evaluable of 25,000): CLEAN (one symmetry-distinct electrophile both sides, same class) 16,517 = 74.93%; ANCHOR AMBIGUOUS (>1 on a side) 3,652 = 16.57%; ANCHOR CLASS DIFFERS between A and B 1,873 = 8.50%.",
+    "D3 REFERENCE JUMPING -- LOW RATE, CATASTROPHIC MAGNITUDE. On MCS ground truth over 1,090 clean pairs: anchor maps A->B 676 (62%); anchor OUTSIDE the MCS 157 (14.4%); A's reference ring has NO image in B 254 (23%, unanswerable); REFERENCE JUMPED 32/836 answerable = 3.83%. Label error on jumped pairs: median 4 bonds, mean 5.41, max 13 -- against a span whose OWN median is 3 and mean 2.39, with 87% of mass in 0-6. THE ERROR IS LARGER THAN THE QUANTITY: on a jumped pair the label is not a perturbation of the truth, it is unrelated to it. Rate is low enough to DROP.",
+    "D4 NEW, INDEPENDENT OF PAIRING, AND CHEAP TO FIX -- flex depends on an ARBITRARY SHORTEST PATH. Chem.GetShortestPath returns ONE path; ties are an RDKit traversal detail. Over 17,236 molecules: >1 equal-length anchor->ring path in 2,212 = 12.83%; flex CHANGES with the choice in 1,159 = 6.72%, mean spread 1.10 rotatable bonds against a flex median of 3 -- ~30% of the median value decided by traversal order. FIX: define the neighbourhood over the UNION of all shortest anchor->ring paths (deterministic, order-free). One function, no dependency on any pairing decision. DO THIS FIRST."
+  ],
+  "datasets": {
+    "ligand_pairs_CANONICAL": {
+      "path": "data/covalent_final/pairs_mw800.jsonl",
+      "producer": [
+        "stage0/build_covalent_union.py",
+        "stage0/pair_covalent_allvsall.py",
+        "stage0/filter_covalent_pairs.py"
+      ],
+      "rule": "TC>=0.4 AND |dMW|<=100 Da AND MW<=800 Da. NO same-target, NO single-cut MMP, NO shared-scaffold, NO stratification, NO descriptor-null gate.",
+      "supersedes": "data/chembl36_pairs_v4e/** and every v3/v4a-e corpus",
+      "file": {
+        "sha256": "d9e0da8e5fd3c68ae99d9321f589f6b1e64748f6f5424bb29ddefb3e56e0d2e0",
+        "bytes": 301419972,
+        "lines": 1470338
+      }
+    },
+    "pocket_pairs_CANONICAL": {
+      "path": "data/pocket_pairs/pairs.jsonl",
+      "producer": [
+        "(inline, see stage0/ \u2014 to be moved into a named producer)"
+      ],
+      "rule": "SAME PROTEIN (mandatory: burial/occupancy/complementarity are only comparable within one pocket). TC>=0.3. NO MW window -- the \"one med-chem move\" argument does not apply when the instruction is \"bury deeper in THIS pocket\". Both ligands must have a parsed PDB complex.",
+      "supersedes": "nothing -- first of its kind",
+      "file": {
+        "sha256": "e1755305f69229044da38260e72bd31820d0c265b5137ad3aeff9e02634256bb",
+        "bytes": 1280343,
+        "lines": 5758
+      }
+    },
+    "union_pool": {
+      "path": "data/covalent_union/pairs.jsonl",
+      "producer": [
+        "stage0/build_covalent_union.py"
+      ],
+      "rule": "CovInDB (ALL pairs, unfiltered -- SEE KNOWN DEFECT) + ChEMBL pairs where BOTH sides match a strong warhead SMARTS.",
+      "file": {
+        "sha256": "48f32e11049e47cd8b31d116fe3fa3884fc8ebcdd931aa40c38477bc56ac55a9",
+        "bytes": 108876427,
+        "lines": 199602
+      }
+    }
+  },
+  "ADJUDICATION_METHOD": "Cheap per-molecule flags as a PREFILTER, MCS only on what they flag. The consultant's ring-system-key test alone scores PRECISION 56% (14/25) and RECALL 44% (14/32) against rdFMCS -- it over-flags on generic rings (A's reference is a benzene, B has a different benzene). So MCS IS required for adjudication, contrary to the first interim; it is the cost that must be avoided, not the instrument.",
+  "OPEN_CANDIDATE": "MURCKO-SCAFFOLD reference instead of 'nearest ring system': gives the SAME delta on 95.6% of clean pairs, so it is not a different quantity -- it is the same quantity with a CONNECTED, well-defined reference object, which may make D3 structurally impossible rather than filtered. Decide on the steerable-row numbers, not the all-row numbers."
+}
