@@ -2,6 +2,7 @@
 """Pocket/complex steering params, labelled as RELATIVE instructions on same-protein pairs.
 
     theta_bd          Burgi-Dunitz approach angle at the attacked carbon
+    d_cys_scaffold    nucleophile -> nearest SCAFFOLD ring atom (NOT the formed bond)
     buried_sasa       % of ligand SASA occluded by the protein
     pocket_occupancy  ligand heavy-atom volume / enclosing pocket volume
 
@@ -33,9 +34,29 @@ import os, sys, json, math, argparse, collections, statistics
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pocket_param_gate import parse_pdb, dist, angle, sasa, NUC, PDB_DIR, VDW  # noqa: E402
+from rdkit import Chem, RDLogger                                               # noqa: E402
+from rdkit.Chem.Scaffolds import MurckoScaffold                                # noqa: E402
+RDLogger.DisableLog('rdApp.*')
 
-POCKET_VERSION = 'pocket-v1-2026-09-15'
-DEADBAND = {'theta_bd': 3.0, 'buried_sasa': 3.0, 'pocket_occupancy': 0.03}
+POCKET_VERSION = 'pocket-v2-2026-09-16'
+DEADBAND = {'theta_bd': 3.0, 'buried_sasa': 3.0, 'pocket_occupancy': 0.03,
+            'd_cys_scaffold': 0.35}
+
+# ---- d_cys, REINSTATED UNDER A DEFINITION THAT IS NOT A BOND LENGTH ----------------
+# The original d_cys measured nucleophile -> ELECTROPHILE. In a crystal structure of an
+# ADDUCT that distance IS the formed covalent bond: 1.797 A, sd 0.106, with every residue
+# type sitting on its textbook C-X value. There was nothing to steer, and no amount of
+# size-matching creates range that valence chemistry forbids.
+#
+# But that killed a FORMULA, not the DIRECTION -- the same mistake that was made with
+# warhead_span. The medchem question was never "how long is the bond". It is "how far does
+# the RECOGNITION SCAFFOLD sit from the nucleophile", i.e. does the core press up against
+# the catalytic residue or stand off from it. That distance runs through the linker, is
+# free to vary, and is exactly what a linker edit moves.
+#
+# So: nucleophile -> nearest atom of the ligand's Murcko ring system. Deadband 0.35 A,
+# comfortably above crystallographic coordinate error (~0.1-0.2 A at typical resolution)
+# and far below the range a linker edit produces.
 
 
 def ligand_of(het):
@@ -63,7 +84,8 @@ def measure(pdb):
     lig = ligand_of(het)
     if not prot or not lig:
         return None
-    out = {'theta_bd': None, 'buried_sasa': None, 'pocket_occupancy': None}
+    out = {'theta_bd': None, 'buried_sasa': None, 'pocket_occupancy': None,
+           'd_cys_scaffold': None}
 
     # theta_BD -- nucleophile / attacked carbon / alpha carbon
     best = None
@@ -81,6 +103,24 @@ def measure(pdb):
                       key=lambda l: dist(l[4:7], catom[4:7]))
         if nbrs:
             out['theta_bd'] = angle(nuc[4:7], catom[4:7], nbrs[0][4:7])
+
+    # d_cys_scaffold -- nucleophile to the nearest RING atom of the ligand.
+    # Ring membership is taken from the COORDINATES (an atom in a closed cycle of the
+    # ligand's own bond graph, inferred by distance), because HETATM records carry no bond
+    # orders and the SMILES atom order does not map onto PDB atom order. A ring atom here
+    # is one with >=2 ligand neighbours within 1.75 A that lies in a cycle -- approximated
+    # by requiring >=2 such neighbours which themselves have >=2. That is deliberately
+    # conservative: it may MISS a ring, it will not invent one.
+    if best is not None:
+        nuc = best[1]
+        adj = {}
+        for i, l1 in enumerate(lig):
+            adj[i] = [j for j, l2 in enumerate(lig)
+                      if j != i and dist(l1[4:7], l2[4:7]) < 1.75]
+        ring_like = [i for i in adj if len(adj[i]) >= 2 and
+                     sum(1 for j in adj[i] if len(adj[j]) >= 2) >= 2]
+        if ring_like:
+            out['d_cys_scaffold'] = min(dist(nuc[4:7], lig[i][4:7]) for i in ring_like)
 
     near = [p for p in prot if any(dist(p[4:7], l[4:7]) < 12.0 for l in lig[:6])]
     free = sasa(lig)
@@ -146,7 +186,7 @@ def main():
             row = {'a': r['a'], 'b': r['b'], 'protein': r['protein'],
                    'pdb_a': r['pdb_a'], 'pdb_b': r['pdb_b'], 'tc': r.get('tc'),
                    'pocket_version': POCKET_VERSION}
-            for p in ('theta_bd', 'buried_sasa', 'pocket_occupancy'):
+            for p in ('theta_bd', 'buried_sasa', 'pocket_occupancy', 'd_cys_scaffold'):
                 va, vb = ma[p], mb[p]
                 if va is None or vb is None:
                     row[p + '_dir'] = None; row[p + '_delta'] = None
@@ -163,7 +203,7 @@ def main():
     print('  pair rows with BOTH complexes measured: %d / %d' % (n, len(rows)))
     print('  deadbands %s' % DEADBAND)
     print('\n  %-18s %8s %8s %8s %8s   %s' % ('param', 'labelled', 'UP', 'DOWN', 'MOVED%', 'balance'))
-    for p in ('theta_bd', 'buried_sasa', 'pocket_occupancy'):
+    for p in ('theta_bd', 'buried_sasa', 'pocket_occupancy', 'd_cys_scaffold'):
         c = stats[p]; tot = sum(c.values())
         up, dn = c.get('UP', 0), c.get('DOWN', 0)
         mv = up + dn
