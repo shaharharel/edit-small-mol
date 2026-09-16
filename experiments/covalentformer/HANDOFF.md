@@ -170,6 +170,40 @@ DOWN, so the token carries information the anchor does not.
 
 ---
 
+## 9b. ROLE STEERING — WEIGHTS EXIST, TWO GOTCHAS
+
+Weights are `ckpt_A_role/`, `ckpt_A_role_strat/`, `ckpt_A_role_conv/` (13 epochs) plus the
+MATCHED CONTROL `ckpt_A0_strat/`. Role is the only param that already has its unconditioned
+control trained.
+
+  * THE FILES ARE `.ckpt`, NOT `.pt`. A `ls ckpt_A_role/*.pt` glob returns nothing and reads
+    like the weights are gone. They are not.
+  * THE KEY IS `model_state`, NOT `network_state`, and the conditioning table is `role_emb`
+    (PhaseA), not `instr_emb` (SteerNet). Both loaders use strict=False, so feeding one to
+    the other SUCCEEDS SILENTLY with a RANDOM embedding -- valid molecules, meaningless
+    numbers. `cohort_shift.load()` now detects the type from the weights and ASSERTS the
+    conditioning tensor came from the file.
+
+  ROLE COHORT SHIFT MUST BE REPORTED PER ROLE. train_strat is
+  WARHEAD 149,953 / DECORATION 73,967 / SCAFFOLD 35,993 / LINKER 3,335 (45x spread) and
+  valid_strat is deliberately REBALANCED (LINKER ~10x enriched). Any pooled role number is a
+  MIX ARTIFACT. Data: `data/roles/train_strat.csv` 263,248 rows, `valid_strat.csv` 3,169.
+
+## 9c. FIRST COHORT-SHIFT RESULT (linker_atom_count, 120 anchors, OLD broken labels)
+
+    cohort        mean   median
+    instr_UP     3.635    3.0
+    none         3.135    3.0     <- unsteered baseline
+    instr_DOWN   2.711    2.0
+
+    UP vs DOWN    mean +0.92   KS p 6.2e-13
+    UP vs none    mean +0.50   KS p 0.0008
+    DOWN vs none  mean -0.42   KS p 0.003
+
+The steered cohorts BRACKET the baseline in both directions, near-symmetrically. This is the
+strongest steering evidence in the project and it was produced on the BROKEN labels, so it
+should improve after the relabel. Redo at n=5000 on `molecule_params_v3.csv`.
+
 ## 10. KEY FILES
 
     stage0/covalent_filter.py        warhead panel, 9/9 on named drugs
@@ -182,6 +216,8 @@ DOWN, so the token carries information the anchor does not.
     stage0/train_steer_v5.py         one arm per param, fine-tunes the mol2mol prior
     stage0/generate_and_score.py     cohort generation + both scoring panels
     stage0/theta_bd_falsifier.py     the pre-registered test theta_bd survived
+    stage0/cohort_shift.py           COHORT-LEVEL eval: steered vs unsteered distributions,
+                                     KS test, per-role mode, conditioning-load guard
     stage0/run_v7.sh                 matched warm-start + oversample pocket rescue
     data/covalent_final_v2/          1,101,089 pairs / 19,538 molecules, 0.00% contaminant
     data/labels/molecule_params_v3.csv   RELABELLED — USE THIS ONE
