@@ -154,8 +154,10 @@ DOWN, so the token carries information the anchor does not.
 
 ## 9. ORDER OF OPERATIONS FOR THE NEXT SESSION
 
-1. **Rebuild instructions + splits from `molecule_params_v3.csv`** and **RESHUFFLE every valid
-   CSV** (§7).
+1. **Rebuild instructions + splits from `molecule_params_v3.csv`.**
+   RESHUFFLE IS ALREADY DONE (`stage0/reshuffle_valids.py`, seed 20260916): v5 head-MW went
+   217 -> 472 against a corpus mean of 489; v6 files were already shuffled by their builder.
+   Re-run the script after ANY rebuild -- it is idempotent and verifies corr(MW, row index).
 2. **Replicate ROLE steering on the clean corpus** — the anchor result and the only proven one.
    `build_roles.py` + `train_phaseA.py --mode role`.
 3. **Retrain `linker_atom_count`** on corrected labels.
@@ -183,6 +185,42 @@ DOWN, so the token carries information the anchor does not.
    while neither cohort differs from an unsteered baseline. `none_vs_prior` tells you how
    much is the covalent fine-tuning rather than the instruction.
 9. Only then: joint / alternating multi-instruction training.
+
+## 9e. PLANARITY — ITERATE UNTIL RESOLVED. LADDER, IN ORDER.
+
+FIVE THINGS WE NOW KNOW, and every rung below uses one of them:
+  1. HEADROOM IS LARGE. Corpus planar_dev median 24.89 deg, p95 66.0, 41.9% over 30, only
+     21.4% under 5. "No room to steer" is REFUTED -- do not re-propose it.
+  2. THE TOKEN IS REDUNDANT, NOT IGNORED. UP anchors average 13.90 deg, DOWN anchors 44.02.
+     The direction is inferable from the input, which is what a GAP of ~0 looks like.
+  3. THE MARGIN FILTER DOES NOT FIX IT. 216,550 large-effect rows (>=25 deg) still give
+     +0.0026 against a 0.002 floor.
+  4. planar_dev COLLAPSES s-cis AND s-trans (min(|d|,|180-d|)). Correct for "is the enone
+     conjugated"; it throws away rotamer identity, which is what the POCKET actually picks.
+  5. "UP" HAS A PATHOLOGICAL CHEAPEST EDIT. More twisted = less conjugated = less
+     electrophilic. beta,beta-disubstitution satisfies UP and gives a dead warhead. So a
+     model that obeys UP may be doing something a chemist would reject.
+
+RUNG A -- ANCHOR-STRATIFIED (BUILT, see 9d). Tests (2) directly.
+RUNG B -- DOWN-ONLY, ASYMMETRIC. Train only "make it more planar". This is the
+  medicinally meaningful direction and it sidesteps (5) entirely. If DOWN alone steers, the
+  product claim survives even if UP never does -- and "make the warhead planar" is the
+  instruction a chemist would actually issue.
+RUNG C -- ROTAMER AS A CATEGORICAL {s_cis, s_trans} instead of a continuous deviation.
+  Tests (4). If the pocket picks the rotamer, rotamer is the steerable thing.
+RUNG D -- 2D SUBSTITUTION CATEGORICAL, conformer-free: ortho substituents on the acylated
+  N-aryl (0/1/2) + alpha-substituted (y/n) + beta-substitution pattern. Same chemistry, no
+  ETKDG dependence, no 0/180 wrap. If THIS steers and the torsion does not, the conclusion is
+  that the label was the problem, not the axis.
+RUNG E -- THE DISAMBIGUATOR, run whenever a rung fails: retrain the m25 arm at the FAILING
+  RUNG'S ROW COUNT. A null at 17k rows is ambiguous between "token useless" and "too few
+  rows"; a matched-row m25 arm separates them. Do not skip this -- it is the difference
+  between a finding and a shrug.
+
+STOPPING RULE, stated in advance: planarity is CLOSED when either (i) some rung shows
+cohort shift vs the unsteered `none` arm with KS p<0.01 in the DOWN direction, or (ii)
+rungs A-D all fail AND rung E shows the failure is not row count. Anything else is an
+unfinished investigation, not a negative result.
 
 ## 9d. PLANARITY FIX IS BUILT AND READY TO TRAIN
 
