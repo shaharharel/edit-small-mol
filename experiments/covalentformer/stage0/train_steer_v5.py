@@ -229,11 +229,16 @@ def main():
         hist.append(rec)
         print('  ep%d  train %.4f  valid %.4f  GAP_perm %+.4f  GAP_flip %+.4f  (%.0fs)'
               % (ep, rec['train'], v, gp, gf, rec['secs'])); sys.stdout.flush()
-        torch.save({'network_state': model.state_dict(), 'network_parameter': npm,
-                    'vocabulary': ck['vocabulary'], 'mode': a.mode, 'param': a.param,
-                    'seed': a.seed, 'epoch': ep, 'instr_vocab': INSTR,
-                    'train_file': trf, 'valid_file': vaf, 'history': hist},
-                   '%s_ep%d.pt' % (a.out, ep))
+        # SAVE ONLY THE BEST-SO-FAR, OVERWRITING. Saving every epoch filled a 291 GB disk to
+        # 100% during a 25-epoch run and killed 13 of 16 arms with a torch.save error that
+        # reads like corruption ("unexpected pos 128 vs 0"), not like out-of-space. The
+        # per-epoch METRICS are all retained in history/, which is kilobytes.
+        if v is not None and v <= min(r['valid'] for r in hist):
+            torch.save({'network_state': model.state_dict(), 'network_parameter': npm,
+                        'vocabulary': ck['vocabulary'], 'mode': a.mode, 'param': a.param,
+                        'seed': a.seed, 'epoch': ep, 'instr_vocab': INSTR,
+                        'train_file': trf, 'valid_file': vaf, 'history': hist},
+                       '%s_best.pt' % a.out)
     with open('%s_history.json' % a.out, 'w') as fo:
         json.dump({'param': a.param, 'mode': a.mode, 'seed': a.seed,
                    'train_rows': len(tr), 'valid_rows': len(va),

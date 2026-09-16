@@ -128,6 +128,33 @@ def linker_atom_count(mol, e_idx):
     target = set(i for i in scaf_match if mol.GetAtomWithIdx(i).IsInRing())
     if not target:
         return None
+
+    # EXCLUDE THE RING SYSTEM THE ELECTROPHILE BELONGS TO OR IS FUSED TO.
+    # Without this, a CYCLIC warhead terminates the BFS on its own ring at distance 0 and the
+    # param is a CONSTANT. Measured on the v2 corpus: beta_lactam 814/814 = 100.0% zero with
+    # ONE distinct value, epoxide 266/266 = 100.0% zero with ONE distinct value, 1,140
+    # molecules in total carrying a label that cannot move. Those rows can only ever produce
+    # ties at generation time, which is what a 34/37 tie rate on the first cohort showed.
+    # This is the SAME defect already fixed in label_pocket_pairs.d_cys_scaffold; it was fixed
+    # there and not carried across to here.
+    ri = mol.GetRingInfo()
+    e_rings = [set(r) for r in ri.AtomRings() if e_idx in r]
+    if not e_rings:
+        # electrophile is acyclic but may sit ON a ring atom's neighbour; exclude any ring it
+        # is directly bonded into, otherwise the same collapse happens one bond out.
+        nb = {n.GetIdx() for n in mol.GetAtomWithIdx(e_idx).GetNeighbors()}
+        e_rings = [set(r) for r in ri.AtomRings() if nb & set(r)]
+    banned = set()
+    changed = True
+    while changed:                       # grow across FUSED rings
+        changed = False
+        for r in (set(x) for x in ri.AtomRings()):
+            if r & banned or any(r & er for er in e_rings):
+                if not r <= banned:
+                    banned |= r; changed = True
+    target = target - banned
+    if not target:
+        return None      # the only ring system IS the warhead -> genuinely not applicable
     # BFS from the electrophile
     seen, frontier, dist = {e_idx}, [e_idx], 0
     while frontier:

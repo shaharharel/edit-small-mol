@@ -1,222 +1,202 @@
-# CovalentFormer — HANDOFF
+# CovalentFormer — HANDOFF (2026-09-16)
 
-**Written at commit `d31402d`. Read this before touching anything.**
+**Goal: a generative editor that follows a covalent-medchem steering instruction.**
+Not "invent sophisticated covalent descriptors". Every param below is judged against
+"would a medicinal chemist issue this instruction during hit-to-lead, and does the model
+obey it in GENERATED molecules".
 
-The goal is not sophisticated covalent descriptors. It is a **generative editor that follows a
-steering instruction** a medicinal chemist would actually give during hit-to-lead. Every decision
-below was made against that test, and several params were killed by it.
+Supersedes `HANDOFF_prev.md` (2026-09-15).
 
 ---
 
-## 1. STATE: what is on disk right now
+## 1. STATUS PER STEERING PARAM
 
-| artifact | path | rows | status |
+| param | train rows | verdict | evidence |
 |---|---|---|---|
-| ligand pairs | `data/covalent_final/pairs_mw800.jsonl` | 1,470,338 | **CONTAMINATED — rebuild first** |
-| pocket pairs | `data/pocket_pairs/pairs.jsonl` | 5,758 | ready to label |
-| planarity labels | `data/labels/planarity_by_molecule.csv` | 36,446 molecules | valid, but re-derive on the clean pool |
-| covalent filter | `stage0/covalent_filter.py` | — | **validated 9/9, ready to use** |
-| manifest | `data/CANONICAL_DATASETS.json` | — | D1–D11, read it |
+| **role** (WARHEAD/LINKER/SCAFFOLD/DECORATION) | large | **WORKS** | 82.0%/77.1% obedience on a contradicted token vs ~27% ignore-floor. **NOT yet replicated on the clean v2 corpus — do this FIRST, it is the anchor result** |
+| **acyl_N_motif** | 180,000 | **WORKS** | BENEFIT +0.0077 (MPS) / +0.0068 (V100), GAP_perm +0.006, GAP_flip +0.005. Replicated on two devices. Labels NOT affected by the ring bug |
+| **linker_atom_count** | 113,181 | **MUST RE-EARN** | +0.0103/+0.0111 was real but measured on BROKEN labels (§3). Relabelled; retrain pending |
+| **warhead_planarity** | 216,550 | **NULL twice, CAUSE DIAGNOSED** | +0.0026 vs ~0.002 noise floor even on large-effect-only data. Cause is NOT saturation (§4) |
+| **theta_bd** | 2,296 | undecided | survived a pre-registered falsifier; arm underpowered. v7 running |
+| **buried_sasa** | 1,900 | undecided | 100% coverage, best-covered pocket param. v7 running |
+| **pocket_occupancy** | 1,374 | undecided | noisiest denominator (cavity volume). v7 running |
+| **d_cys_scaffold** | 1,251 | undecided | ring bug fixed, labels 4,516 → 1,469. v7 running |
+| **polar_contacts** | ~5,700 | BUILT, NEVER TRAINED | 100% coverage, 69% moved, balance 0.77 |
+| **buried_sasa_per_ha** | ~5,700 | BUILT, NEVER TRAINED | 100% coverage, 80% moved, size-normalised burial |
 
-**Nothing is running. No GPU is booked. `ai-chem`, `ai-chem2`, `ai-gpu-a100` are TERMINATED.**
+**DEAD, do not rebuild:** `warhead_span`, `warhead_linker_flex`, `d_cys` (electrophile→Cys IS
+the formed bond, 1.797 A sd 0.106), `extent`/warhead_reach_3d, `michael_subst_class`
+(99.3% of mass in two values — keep as a pair PRECONDITION only).
 
-Everything under `data/chembl36_pairs_v3/` and `data/chembl36_pairs_v4*` is **SUPERSEDED**. Do not
-train new arms on it.
-
----
-
-## 2. THE BLOCKER: the corpus is 37.7% non-covalent
-
-Measured on 16,348 unique molecules of `pairs_mw800.jsonl`:
-
-- **15.16%** genuine terminal acrylamide
-- **37.69%** match a contaminant class — 2.5 contaminants per real warhead
-
-It contains **sunitinib** (a marketed *non-covalent* kinase inhibitor), nintedanib's oxindole,
-rhodanines/TZDs (textbook PAINS), and N-ethylmaleimide (a thiol-capping *reagent*).
-
-Cause: `build_covalent_union.py` used `[CX3]=[CX3][CX3](=O)[NX3,OX2]`, which does not separate a
-**terminal vinyl** (designed TCI warhead) from a **β-substituted or aryl-conjugated** alkene.
-Patterns were written without anyone looking at what they matched.
-
-**Fix is built and tested:** `stage0/covalent_filter.py`, `PANEL_VERSION cf-warheads-v1-2026-09-15`.
-15 accepted warhead classes, 7 rejected contaminant motifs, conjugation status returned separately.
-Validated on named drugs — ibrutinib / osimertinib / afatinib / sotorasib pass; nirmatrelvir /
-sunitinib / cinnamamide / N-ethylmaleimide / rhodanine rejected, each with the reason named.
-
-**The panel version IS part of every param definition.** Two corpora built under different
-`PANEL_VERSION` are not poolable. Bump it on any edit.
+**Target is role + 2-3 ligand + 1-2 complex. Currently 1 proven, 1 solid, 1 recoverable,
+1 diagnosed. THE GAP IS ON THE COMPLEX SIDE.**
 
 ---
 
-## 3. PARAM STATUS — what to build, what is dead
+## 2. WHAT THE TWO WORKING PARAMS MEAN
 
-### BUILD THESE
-
-| param | what it is | why |
-|---|---|---|
-| **warhead_planarity** | Michael-acceptor dihedral C=C–C(=O)–N | **The only param with a demonstrated steering effect**: unconditioned 61.8–63.5° → conditioned **2.62° median**. Producer pinned to `scripts/compute_planar_2d_e2.py`, verified to reproduce the stored manuscript column to **1e-6 on 215/215 rows** |
-| **acyl_N_motif** | categorical {ArNH-, alkyl-NH-, N-Me-aryl, endocyclic ring-4/5/6, fused/indoline} | The real named move: exocyclic NH → endocyclic ring N. This is the ibrutinib / sotorasib / futibatinib warhead in one variable |
-| **linker_atom_count** | atoms between the electrophilic C and the first ring, walking **through the carbonyl and acyl heteroatom toward the Murcko scaffold** | "Reading A done correctly" — the direction restriction makes reference-jumping *impossible by construction* rather than filtered at 97% cost |
-| **michael_subst_class** | categorical {terminal, β-aryl/conjugated, β-amino, α-cyano, α-substituted, ring-embedded} | Separates ibrutinib from a rhodanine. Currently collapsed *into* span, which is why span appeared to move |
-| **pocket ×3** | buried SASA, pocket occupancy, shape complementarity | On the 5,758 pocket pairs. **Buried SASA first** — it's the robust one; occupancy needs a pocket detector, complementarity needs surface normals |
-
-**Precondition on every linker/placement instruction: warhead class AND conjugation status must be
-IDENTICAL between A and B.** In a sampled DOWN set, 16/20 pairs flipped conjugation. Without this
-you are training warhead swap under a linker instruction.
-
-### DEAD — do not rebuild, do not train
-
-**`warhead_span`** (bond path to nearest ring system) and **`warhead_linker_flex`**.
-
-Killed by a covalent medicinal chemist on four measurements:
-
-1. **Not a length — a 3-level categorical.** span=1 40.4%, span=3 27.5%, span=4 25.7% = 93.6%.
-   There is no ladder to climb.
-2. **The span=1 bucket is not covalent chemistry** — 78% arylidene/β-aryl Michael acceptors.
-3. **Every approved TCI sits in one unit of it.** ibrutinib/zanubrutinib/acalabrutinib/ritlecitinib/
-   sotorasib/adagrasib/futibatinib = 3; osimertinib/afatinib/neratinib = 4; dacomitinib = 2.
-4. **The path points the wrong way half the time.** For span ≥ 2 it runs toward the scaffold in only
-   **49.6%** of molecules; the rest runs *outward along the warhead tail*. `min` over directions
-   silently switches between two opposite quantities. **The defect is in the definition, not the data.**
-
-The unanswerable demonstration: afatinib (span 4) and dacomitinib (span 2) are the same EGFR series
-making the same move — a basic amine tail on the β-carbon. One tail is acyclic, one cyclic. The param
-disagrees with itself inside a single marketed drug series. **You cannot filter your way out of a
-definition.**
-
-The *design axis* those params reached for is real and survives as `linker_atom_count` +
-`acyl_N_motif`. Two formulas were lost, not two directions.
-
-### Also dead
-- `extent` / warhead_reach_3d — six independent constructions put it at or below its size-matched control
-- `d_cys` — it is the covalent **bond length**. CYS 1.800 Å, sd 0.106, and every residue type hits its
-  textbook value. Nothing to steer
-- `wclass` — user's call; warhead swap is the role-token machinery that already works
+- **`linker_atom_count`** — atoms strictly between the warhead's electrophilic carbon and the
+  first Murcko scaffold ring, walking TOWARD the scaffold. "How far the electrophile is held
+  off the recognition core." Instruction is UP/DOWN, **direction only, magnitude unspecified**.
+- **`acyl_N_motif`** — 9 classes for what hangs off the warhead's amide N. In one sentence:
+  *take the N-H dangling off the warhead and tuck that nitrogen into a ring* — which stiffens
+  the vector the warhead points along and makes the acrylamide more electrophilic.
 
 ---
 
-## 4. ORDER OF OPERATIONS
+## 3. THE BUG THAT INVALIDATES `linker_atom_count`'s NUMBER
 
-1. **Rebuild the corpus under `cf-warheads-v1`** (~10 min). Re-run union → all-vs-all → filter with
-   `covalent_filter.classify()` gating **both** sides. Expect the 37,035-molecule pool and the 1.47M
-   pairs to drop substantially. **Smaller and actually covalent is the correct direction.**
-2. **Verify contamination is near zero** on the new set *before labelling anything* (~10 min).
-3. **Label in parallel** (boot the machines first):
-   - **local** — pocket params on 5,758 pairs, buried SASA first
-   - **ai-chem** — `acyl_N_motif` + `michael_subst_class` (pure SMARTS, cheap)
-   - **ai-chem2** — `linker_atom_count` + planarity relabel
-4. **Split** — molecule-disjoint, **both endpoints unseen**, stereo/isotope-blind key.
-5. **Train** on ai-gpu / ai-gpu2 / a100.
-6. **GENERATE AND SCORE.** Never once run. The only test that answers whether anything steers.
+A CYCLIC warhead **is** a ring, so the BFS from the electrophile terminated on the warhead's
+own ring at distance 0. Measured per warhead class on the v2 labels:
 
-Steps 1–4 are ~3 hours of mechanical execution. The judgement calls are made and recorded.
+    beta_lactam   814/814 = 100.0% zero, ONE distinct value
+    epoxide       266/266 = 100.0% zero, ONE distinct value
+    nitrile_act.  59.2% zero   ketoamide 52.6%   sulfonyl_fluoride 74.6%
+    POOLED 25.6% of the corpus pinned at zero
 
----
+1,140 molecules carried a CONSTANT label; those rows can only produce ties.
 
-## 5. FIXES OWED, INDEPENDENT OF EVERYTHING ABOVE
+**FIXED** in `label_molecule_params.linker_atom_count` — excludes the ring system containing
+or fused to the electrophile. Verified on 3,000 molecules: beta_lactam 100% → **0.0%** zero
+with 7 distinct values; every class 0.0%. Full relabel **DONE** →
+`data/labels/molecule_params_v3.csv`.
 
-- **Rotor SMARTS counts the amide C–N as rotatable.** `C=CC(=O)Nc1ccccc1` → 3 by ours, 2 by RDKit
-  default *and* Strict. Every acrylamide carries +1. Cancels in deltas; inflates every **level** quoted.
-- **`flex` uses one arbitrary shortest path.** 12.83% of molecules have >1 equal-length path; flex
-  changes with the choice in 6.72%, mean spread 1.10 against a median of 3 — ~30% of the median,
-  decided by RDKit traversal order. Fix: **union of all shortest paths**.
-- **Tautomers decide whether the anchor EXISTS** — the span value is robust (0.73%) but 12.27% of
-  molecules lose the warhead or ring under canonical tautomer. 228,445 pairs are cross-source
-  (ChEMBL × CovInDB), each database recording its curator's tautomer, so this is a **silent coverage
-  bias correlated with `pair_source`**. Canonicalise once at build; stamp the enumerator.
-- **`valid_frac_realised`** in `build_steer_v4.py` measures post-stratification row share, not the
-  split fraction. Two of three params read *below* the request, which an overshoot cannot produce.
+**HOW IT WAS MISSED:** QA printed POOLED distributions ("15 levels, 84% in {2,3,0}") which
+looks healthy. The degeneracy exists only PER WARHEAD CLASS. **Always split the histogram by
+class.** Same defect was found and fixed in `d_cys_scaffold` an hour earlier and not carried
+across.
 
 ---
 
-## 6. TRAPS SPECIFIC TO THIS CODEBASE
+## 4. WHY PLANARITY DOES NOT STEER (diagnosed; fix designed, NOT run)
 
-**Nine bugs tonight were the same shape: code that runs, writes a valid-looking file, and reports a
-confident wrong number.** Not crashes. Assume this is the default failure mode.
+Headroom is NOT the problem — corpus planar_dev median 24.89 deg, p95 66.0, **41.9% over 30
+deg**, only 21.4% under 5.
 
-- **Smoke-test everything on 200 rows and READ THE OUTPUT.** The planarity labeller reported
-  *100.00% acrylamide, 100.00% embed_ok* — a dict unpacked as a tuple. A perfect rate on two
-  independent quantities is a parse error, not a result. Four seconds to catch.
-- **If a result looks too good, hunt the artifact.** CYS burial sd 58.8 against mean 31.8 was 18 NMR
-  files whose MODELs were being stacked.
-- **A stalled job looks identical to a slow one.** Check CPU time, not log mtime — several producers
-  buffer all output until exit. And check the *right PID*: I once declared a healthy job dead by
-  piping `ps` through `tail -1` and reading the wrong row.
-- **Never default a failed label to 0.** Return `None` and filter. A bare `except` emitting 0.0 turns
-  an RDKit failure into a confident "perfectly planar" and a cohort of those reads as a real
-  distribution.
-- **Do not edit a producer while its arms are mid-flight** — that is an estimator straddle. Stamp
-  instead, and re-push to every remote so md5s match before any chained job fires.
-- **`git add` under `experiments/covalentformer/data/` is gitignored.** It silently drops the file if
-  you swallow stderr. Use `-f` for the manifest.
-- **`SendMessage` to `"main"` is REJECTED** — *"You are the main conversation."* Use `"team-lead"`.
-  This lost five QA reports.
-- **A comment asserting what the code does is not evidence it does it.** This happened ten times
-  tonight, including in a stamp added to prevent exactly that (it reported a level *count* and
-  asserted a value *set*; the values were wrong).
+**UP and DOWN are applied to disjoint populations:**
+
+    UP   (-> more twisted)  n=65,729   anchor planarity mean 13.90  median  8.03
+    DOWN (-> more planar)   n=60,001   anchor planarity mean 44.02  median 36.90
+
+An 8-deg anchor can only go UP; a 37-deg anchor can only go DOWN. **The token is REDUNDANT
+given the anchor, not ignored.** That is why GAP ~ 0.
+
+**FIX: anchor-stratified pairs** — within each bin of anchor planarity include both UP and
+DOWN, so the token carries information the anchor does not.
 
 ---
 
-## 7. NUMBERS THAT ARE SETTLED — quote these, not older ones
+## 5. RUNNING AT HANDOFF TIME
 
-- **Obedience floor (v3 attach_path, full valid, all arms converged): 0.668173** — A4, not A.
-  The on-disk `floor_to_quote` of 0.6550 and filed 0.6544 are the superseded rule.
-- **GAP_det, v3, full valid:** attach_path +0.0387/+0.0504/+0.0575 · wclass +0.0039/+0.0188/+0.0272 ·
-  attach_flex +0.0053/+0.0099/+0.0121. **Dependence, not benefit.** Do **not** quote the ep0→ep2 rise
-  as a decomposition — that is an arithmetic identity, and it reverses on attach_flex.
-- **Planarity: 2.62° is the MEDIAN.** The mean is 26.02, the distribution is heavily skewed, and
-  `embed_ok` is 7,174/10,000. Always quote median + embed-failure rate.
-- **v4e leaks 0.00%** on every channel with working controls — but it is **core-disjoint, not
-  protein-disjoint** (99.77% of valid targets appear in train). No new-pocket claim.
-- **Scope, unavoidable:** v4e is **4.77% acrylamide**. It is generic ChEMBL matched-pair medicinal
-  chemistry. The new covalent corpus exists to fix exactly this.
+- **ai-gpu (34.57.253.170)** — `stage0/run_v7.sh`, 7/16 arms done, ETA ~22 min.
+  Two rescues per pocket param: **matched warm-start** (BOTH arms init from the trained linker
+  arm — v6 warm-started only `instr`, which is why it must be re-run) and **oversampling**
+  (12 ep, bs16, lr5e-5 — is the null undertraining?). Results land in `ckpt_v7/*_history.json`.
+- **ai-gpu2 (34.28.139.166)** — being provisioned, then planarity m25 arms → `ckpt_g2/`.
+  Repo did not exist there; `xxhash` was missing (same as ai-gpu).
+- **local** — idle; relabel finished.
 
----
-
-## 8. WHAT NOT TO CLAIM
-
-- Do not call anything "linker steering" until a param survives chemist review. Currently none has.
-- Do not describe the corpus as "covalent" until the filter has been applied and verified.
-- Do not quote a pooled contamination rate: reference jumping is ~2% pooled and **38% on the rows
-  that carry training signal**. Anyone quoting the pooled figure concludes the corpus is safe.
+**GPU IPs ARE EPHEMERAL AND `~/.ssh/config` IS STALE.** Get them from
+`gcloud compute instances list`; connect by IP with `-i ~/.ssh/google_compute_engine`.
 
 ---
 
-# ADDENDUM — 2026-09-15, corpus v2 (commits 5936ce7, 3adf0b2)
+## 6. WITHDRAWN TODAY — DO NOT QUOTE
 
-## DONE
-1. **Filter wired into BOTH branches** (5936ce7). The CovInDB branch was writing pairs
-   unconditionally — covalent by annotation, never checked by structure. Half of CovInDB
-   (78,678 / 154,895) does not carry a structurally covalent warhead.
-2. **Corpus rebuilt** (`stage0/rebuild_v2.sh`, ~90 s end-to-end):
-   `data/covalent_final_v2/pairs.jsonl` — **1,101,089 pairs / 19,538 molecules**.
-3. **Step-2 gate PASSED**: contaminant match **37.69% → 0.00%**, terminal acrylamide
-   **15.16% → 43.22%**, sunitinib/NEM gone, MW median 482, 1.7% under 250 Da.
-   NOTE: "100% accepted warhead" is TAUTOLOGICAL — the filter gated the build.
-4. **Molecule params labelled**, 19,538 rows → `data/labels/molecule_params_v2.csv`.
+- **v6 pocket "BENEFIT +0.03..+0.08"** — the launch script warm-started ONLY the `instr` arm,
+  so BENEFIT measured the WARM START. GAP_perm was ~0 in all four arms, i.e. the instruction
+  was ignored. Unmatched control; best-looking worthless number of the run.
+- **"generated MW 261 vs corpus 482, model is truncating"** — false twice over. The valid CSV
+  is in MW-ASCENDING corpus order and `--n 60` took the 60 SMALLEST rows. Sampled correctly,
+  train/valid/corpus are all ~480-490 Da. **There is no MW bug.**
+- **"34/37 ties at generation"** — same unrepresentative head sample.
 
-## PARAM VERDICTS FROM THE LABEL DISTRIBUTIONS
-- `acyl_N_motif` — **9 levels, well spread.** Exocyclic↔endocyclic populated both sides. BUILD.
-- `linker_atom_count` — 15 levels, 84% in {2,3,0}. Directed; span's flip is unreachable. BUILD.
-- `michael_subst_class` — **99.3% in two values.** Same degeneracy that killed `warhead_span`.
-  Use as a pair PRECONDITION, do NOT train as a steering target.
+---
 
-## OPEN, AND IT BLOCKS THE PLANARITY ARM
-`label_planarity.py` on the v2 corpus prints `acryl %` and `embed_ok %` **identical to 3 s.f.
-at every checkpoint** (81.3/81.3, 90.7/90.7, 93.8/93.8). embed_ok is a SUBSET of acryl_match,
-so equality means ETKDG never failed — against a filed prior of **71.7% embed_ok**. Either
-embedding genuinely always succeeds on this cleaner pool, or embed_ok is being set from the
-acrylamide match without the embed being checked. **RESOLVE BEFORE QUOTING ANY PLANARITY
-NUMBER.** Read `_compute_2d_one` in `scripts/compute_planar_2d_e2.py` and confirm embed_ok is
-written from an actual EmbedMolecule return code.
+## 7. TRAPS (each cost real time today)
 
-## NEXT
-1. Resolve the embed_ok question above.
-2. Pocket params on the 5,758 pocket pairs — buried SASA first. **Add θ_BD (Bürgi–Dunitz
-   approach angle).** The manuscript's pose vector is (d_Sγ–Cβ, θ_BD, φ_planar); d_Sγ–Cβ is the
-   formed C–S bond (1.797 Å, sd 0.106) so it is a constant, φ is validated, and **θ_BD has never
-   been measured or killed** — it is the one live geometry channel with no verdict.
-3. Pair-level deltas + molecule-disjoint split (both endpoints unseen).
-4. Train: `acyl_N_motif`, `linker_atom_count`, planarity. NOT span, NOT flex,
-   NOT michael_subst_class.
+- **A full disk reports as file corruption.** ai-gpu hit 100% of 291 GB; torch.save died with
+  `unexpected pos 128 vs 0`, killing 13 of 16 arms. Trainer now saves BEST-ONLY. Box is still
+  at 98% and the 283 GB has NOT been traced.
+- **`ssh host "job & sleep 50; check"` hangs the ssh session** and dies on the tool timeout
+  even though the job launched. Fire-and-forget, poll separately.
+- **zsh does not word-split unquoted expansions** — `set -- $pair` gives `$1`=whole string.
+- **`scp host:dir/*.json` is glob-expanded LOCALLY by zsh** — quote the remote path.
+- **REMARK 2:** `line.split()` grabs the `2` of "REMARK   2" before the resolution. Every
+  structure came back 2.0 A. No real PDB set has one resolution — that is the tell.
+- **A leak check does not check usability.** The first molecule-disjoint split asserted ZERO
+  leak with **248 train rows against 575,777 valid**. Both assertions now exist.
+- **A molecule-disjoint split is IMPOSSIBLE here** — all-vs-all puts 99.9% of pairs in ONE
+  connected component. Scaffold-disjoint is used and is stricter.
+- **Decoder:** EOS `$`=2, PAD `*`=0, BOS `^`=1. `vocab.decode` returns a token LIST; calling
+  `.replace()` raised and a bare except made every molecule None — reported as 0.0% validity.
+- **VALID CSVs ARE IN MW-ASCENDING ORDER.** Reshuffle them. This produced three separate
+  unrepresentative-sample errors today.
+
+---
+
+## 8. WHAT THE METRICS MEAN
+
+- **GAP_perm** — same model, instructions permuted within batch. DEPENDENCE: does the model
+  use the token? The arm's own null. Noise floor ~0.002.
+- **GAP_flip** — same model, instruction replaced by its opposite. DIRECTIONALITY.
+  **INVALID WHEN `SAME` DOMINATES** — flip leaves SAME rows unchanged, so at 65% SAME
+  (d_cys_scaffold) and 66% (pocket_occupancy) GAP_flip collapses onto GAP_perm. They came back
+  equal to 4 dp, which exposed it. v6 caps SAME at 20% of train AND valid.
+- **BENEFIT** — `none`-arm valid loss minus `instr`-arm valid loss, both at their own best
+  epoch on the same rows. Between models. **IT IS A PROXY AND IT MISLED HERE**: linker showed
+  +0.0103 BENEFIT while its cohorts tied. Loss asks "does the token help predict the reference
+  product", never "do UP and DOWN produce different molecules".
+- **OBEDIENCE (generation)** — fraction of anchors where param(B_up) > param(B_down).
+  **NULL IS 0.5, NOT 0.** This is the metric that decides, and it is barely exercised.
+
+---
+
+## 9. ORDER OF OPERATIONS FOR THE NEXT SESSION
+
+1. **Rebuild instructions + splits from `molecule_params_v3.csv`** and **RESHUFFLE every valid
+   CSV** (§7).
+2. **Replicate ROLE steering on the clean corpus** — the anchor result and the only proven one.
+   `build_roles.py` + `train_phaseA.py --mode role`.
+3. **Retrain `linker_atom_count`** on corrected labels.
+4. **Read v7** — does any pocket param show GAP > noise under a MATCHED control?
+5. **Build anchor-stratified planarity** (§4) and retrain.
+6. **Train `polar_contacts` + `buried_sasa_per_ha`** — built, 100% coverage, never trained.
+7. **5k cohorts** for survivors: obedience vs 0.5, tie rate, **steered-vs-unsteered cohort
+   shift** (the comparison that answers "did steering help"), plus validity/uniqueness/
+   novelty/QED and the manuscript panel. Also **base-mol2mol vs covalent-FT vs steered** on
+   planarity — never run, and it is the comparison that matches the manuscript claim.
+8. Only then: joint / alternating multi-instruction training.
+
+---
+
+## 10. KEY FILES
+
+    stage0/covalent_filter.py        warhead panel, 9/9 on named drugs
+    stage0/build_covalent_union.py   BOTH branches gated (CovInDB was unfiltered: 50.8% dropped)
+    stage0/label_molecule_params.py  ligand params — RING FIX HERE
+    stage0/label_pocket_pairs.py     pocket params — RING FIX HERE TOO
+    stage0/label_pocket_extra.py     polar_contacts, buried_sasa_per_ha
+    stage0/build_steer_v5.py         scaffold-disjoint + random splits
+    stage0/build_steer_v6.py         large-effect-only, SAME capped at 20%
+    stage0/train_steer_v5.py         one arm per param, fine-tunes the mol2mol prior
+    stage0/generate_and_score.py     cohort generation + both scoring panels
+    stage0/theta_bd_falsifier.py     the pre-registered test theta_bd survived
+    stage0/run_v7.sh                 matched warm-start + oversample pocket rescue
+    data/covalent_final_v2/          1,101,089 pairs / 19,538 molecules, 0.00% contaminant
+    data/labels/molecule_params_v3.csv   RELABELLED — USE THIS ONE
+
+---
+
+## 11. SETTLED NUMBERS
+
+- Corpus v2: **1,101,089 pairs / 19,538 molecules**; contaminant match **37.69% → 0.00%**;
+  terminal acrylamide **15.16% → 43.22%**; MW median 482.
+- theta_bd survives its falsifier: sd **10.379 deg at <=1.8 A** vs 11.228 pooled, FLAT across
+  four resolution bins. Not restraint slop.
+- Pocket instruction yields (5,689 same-protein pairs): theta_bd 67.6% moved / balance 0.98 ·
+  buried_sasa 66.5% / 0.94 · pocket_occupancy 37.7% / 0.96 · d_cys_scaffold 31.1% / 0.64.
+- **280 proteins**, but **P0DTD1 is 38.5% of pairs**; 45 have >=20 pairs, 8 have >=100.
+  (Bears on any per-protein or MAML plan.)
+- Generation panel (linker arm, small sample): validity 96.7%, uniqueness 94.0%,
+  novelty 94.6%, QED 0.758, warhead retention 75%.

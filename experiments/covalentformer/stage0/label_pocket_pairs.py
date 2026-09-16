@@ -38,7 +38,7 @@ from rdkit import Chem, RDLogger                                               #
 from rdkit.Chem.Scaffolds import MurckoScaffold                                # noqa: E402
 RDLogger.DisableLog('rdApp.*')
 
-POCKET_VERSION = 'pocket-v2-2026-09-16'
+POCKET_VERSION = 'pocket-v3-2026-09-16'
 DEADBAND = {'theta_bd': 3.0, 'buried_sasa': 3.0, 'pocket_occupancy': 0.03,
             'd_cys_scaffold': 0.35}
 
@@ -112,15 +112,40 @@ def measure(pdb):
     # by requiring >=2 such neighbours which themselves have >=2. That is deliberately
     # conservative: it may MISS a ring, it will not invent one.
     if best is not None:
-        nuc = best[1]
+        nuc, catom = best[1], best[2]
+        ci = lig.index(catom)
         adj = {}
         for i, l1 in enumerate(lig):
             adj[i] = [j for j, l2 in enumerate(lig)
                       if j != i and dist(l1[4:7], l2[4:7]) < 1.75]
-        ring_like = [i for i in adj if len(adj[i]) >= 2 and
-                     sum(1 for j in adj[i] if len(adj[j]) >= 2) >= 2]
-        if ring_like:
-            out['d_cys_scaffold'] = min(dist(nuc[4:7], lig[i][4:7]) for i in ring_like)
+        # TRUE cycle membership by iterative leaf-pruning: repeatedly delete degree<=1 atoms
+        # and whatever survives is the ring systems. The previous rule -- ">=2 neighbours,
+        # two of which have >=2" -- also accepts CHAIN atoms in the middle of a linker, which
+        # is part of why 37.3% of values landed on the covalent bond.
+        deg = {i: set(v) for i, v in adj.items()}
+        changed = True
+        while changed:
+            changed = False
+            for i in list(deg):
+                if len(deg[i]) <= 1:
+                    for j in deg[i]:
+                        deg[j].discard(i)
+                    del deg[i]; changed = True
+        ring_atoms = set(deg)
+
+        # EXCLUDE THE RING SYSTEM THE ELECTROPHILE BELONGS TO OR TOUCHES.
+        # Epoxide and beta-lactam ARE rings, so without this the "recognition scaffold"
+        # distance is the covalent bond -- the exact param already killed as a bond length.
+        banned, frontier = set(), {ci} | (set(adj[ci]) & ring_atoms)
+        while frontier:
+            i = frontier.pop()
+            if i in banned or i not in ring_atoms:
+                banned.add(i); continue
+            banned.add(i)
+            frontier |= (set(adj[i]) & ring_atoms) - banned
+        far = [i for i in ring_atoms if i not in banned]
+        if far:
+            out['d_cys_scaffold'] = min(dist(nuc[4:7], lig[i][4:7]) for i in far)
 
     near = [p for p in prot if any(dist(p[4:7], l[4:7]) < 12.0 for l in lig[:6])]
     free = sasa(lig)
