@@ -17,10 +17,10 @@ Supersedes `HANDOFF_prev.md` (2026-09-15).
 | **acyl_N_motif** | 180,000 | **WORKS** | BENEFIT +0.0077 (MPS) / +0.0068 (V100), GAP_perm +0.006, GAP_flip +0.005. Replicated on two devices. Labels NOT affected by the ring bug |
 | **linker_atom_count** | 113,181 | **MUST RE-EARN** | +0.0103/+0.0111 was real but measured on BROKEN labels (§3). Relabelled; retrain pending |
 | **warhead_planarity** | 216,550 | **NULL twice, CAUSE DIAGNOSED** | +0.0026 vs ~0.002 noise floor even on large-effect-only data. Cause is NOT saturation (§4) |
-| **theta_bd** | 2,296 | undecided | survived a pre-registered falsifier; arm underpowered. v7 running |
-| **buried_sasa** | 1,900 | undecided | 100% coverage, best-covered pocket param. v7 running |
-| **pocket_occupancy** | 1,374 | undecided | noisiest denominator (cavity volume). v7 running |
-| **d_cys_scaffold** | 1,251 | undecided | ring bug fixed, labels 4,516 → 1,469. v7 running |
+| **pocket_occupancy** | 1,374 | **BEST POCKET CANDIDATE** | v7 oversample arm clears ALL THREE bars: GAP_perm +0.0035, GAP_flip +0.0048, BENEFIT **+0.0052**. First pocket param to use the token, know the direction, AND beat its matched control. n=1 — REPLICATE before claiming |
+| **buried_sasa** | 1,900 | responds but OVERFITS | GAP_perm +0.0049, GAP_flip +0.0065 (both directional) but BENEFIT −0.0068 |
+| **d_cys_scaffold** | 1,251 | responds but OVERFITS | GAP_perm +0.0025, GAP_flip +0.0042, BENEFIT −0.0099 |
+| **theta_bd** | 2,296 | **NULL under both treatments** | −0.0019/−0.0048 oversample, +0.0001/−0.0025 warmboth. Survived its falsifier (the geometry is real) but the instruction is not learnable at 2,296 rows |
 | **polar_contacts** | ~5,700 | BUILT, NEVER TRAINED | 100% coverage, 69% moved, balance 0.77 |
 | **buried_sasa_per_ha** | ~5,700 | BUILT, NEVER TRAINED | 100% coverage, 80% moved, size-normalised burial |
 
@@ -197,6 +197,25 @@ null, so a failure here is ambiguous between "the token still does not help" and
 rows". Decide which by comparing GAP against the m25 arm at MATCHED row count.
 
 ---
+
+## 9a. v7 READ IN FULL — 16/16 ARMS
+
+    arm                          GAP_perm  GAP_flip   BENEFIT   verdict
+    pocket_occupancy_over         +0.0035   +0.0048   +0.0052   USES + DIRECTIONAL + POSITIVE
+    buried_sasa_over              +0.0049   +0.0065   -0.0068   uses + directional, overfits
+    d_cys_scaffold_over           +0.0025   +0.0042   -0.0099   uses + directional, overfits
+    theta_bd_over                 -0.0019   -0.0048   -0.0006   null
+    ALL FOUR *_warmboth            ~0        ~0        ~0       null
+
+TWO CLEAN READINGS:
+  1. OVERSAMPLING IS WHAT WAKES THE POCKET CHANNEL. Every positive is an `over` arm
+     (12 ep, bs16, lr5e-5); every matched warm-start arm is null. The pocket nulls were
+     partly UNDERTRAINING, not absent signal.
+  2. The matched-control `warmboth` arms CONFIRM the v6 withdrawal: with both arms sharing
+     an init, BENEFIT collapses from +0.03..+0.08 to ~0. v6 measured the warm start.
+
+pocket_occupancy is the FIRST complex-side candidate. n=1, 1,374 rows. Replicate across
+seeds before it is quoted, and run cohort_shift on it.
 
 ## 9b. ROLE STEERING — WEIGHTS EXIST, TWO GOTCHAS
 
