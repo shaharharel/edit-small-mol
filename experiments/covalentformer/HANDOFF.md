@@ -166,7 +166,35 @@ DOWN, so the token carries information the anchor does not.
    shift** (the comparison that answers "did steering help"), plus validity/uniqueness/
    novelty/QED and the manuscript panel. Also **base-mol2mol vs covalent-FT vs steered** on
    planarity — never run, and it is the comparison that matches the manuscript claim.
-8. Only then: joint / alternating multi-instruction training.
+8. **FULL EVALUATION SWEEP — `bash stage0/run_full_eval.sh`** (PY=... N=5000). One command,
+   one table for every steering param. It generates 5k cohorts per arm and scores:
+     - COHORT SHIFT vs the unsteered `none` arm  <- THE PRODUCT CLAIM
+     - COHORT SHIFT vs the raw mol2mol PRIOR      <- separates steering from covalent FT
+     - generation panel (validity / uniqueness / novelty / QED)
+     - manuscript panel (warhead retention, planarity)
+   THE PRIOR COHORT IS GENERATED ONCE and reused for every param: it does not depend on
+   which param is steered, so a per-param baseline would be 8x the compute for identical
+   numbers AND would make cross-param comparison a SEED contrast rather than a PARAM one.
+   ROLE RUNS FIRST because it is the only param with a known answer (82.0%/77.1% vs a ~27%
+   floor). A harness that cannot reproduce role is not trustworthy on anything else.
+   Summarise with `python3 stage0/summarise_eval.py results/full_eval`.
+   READ IT AS: `UP_vs_none` / `DOWN_vs_none` are the product claim. `UP_vs_DOWN` is easier
+   to move and is NOT the same statement -- a model can separate its own two instructions
+   while neither cohort differs from an unsteered baseline. `none_vs_prior` tells you how
+   much is the covalent fine-tuning rather than the instruction.
+9. Only then: joint / alternating multi-instruction training.
+
+## 9d. PLANARITY FIX IS BUILT AND READY TO TRAIN
+
+`data/steer_v6_strat/` — 17,403 train / 2,813 valid, ANCHOR-STRATIFIED over 8 bins
+(`build_steer_v6.py --anchor-stratify warhead_planarity`). Within each bin of ANCHOR
+planarity, UP and DOWN are equalised, so the direction is no longer inferable from the input
+and the token must be read. Cost: 221,631 one-sided rows dropped to keep 25,198 balanced --
+and that cost IS the fix, since those rows were teaching the model to ignore the instruction.
+
+CAVEAT TO STATE UP FRONT: 17k rows is an order of magnitude below the 216k that produced the
+null, so a failure here is ambiguous between "the token still does not help" and "too few
+rows". Decide which by comparing GAP against the m25 arm at MATCHED row count.
 
 ---
 

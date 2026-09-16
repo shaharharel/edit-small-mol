@@ -76,6 +76,11 @@ def main():
     ap.add_argument('--outdir', default='data/steer_v6')
     ap.add_argument('--valid-cap', type=int, default=6000)
     ap.add_argument('--seed', type=int, default=20260916)
+    ap.add_argument('--anchor-stratify', default='',
+                    help='PARAM NAME to anchor-stratify, e.g. warhead_planarity. Within each '
+                         'bin of the ANCHOR value, keep equal numbers of UP and DOWN. See the '
+                         'ANCHOR STRATIFICATION note below.')
+    ap.add_argument('--anchor-bins', type=int, default=8)
     a = ap.parse_args()
     rng = random.Random(a.seed)
     os.makedirs(a.outdir, exist_ok=True)
@@ -100,8 +105,21 @@ def main():
         for p, rows in load(path, params, pre).items():
             per[p] = rows
 
+    # Anchor values for stratification: the param's value on the INPUT molecule.
+    anchor_val = {}
+    if a.anchor_stratify == 'warhead_planarity':
+        import csv as _csv
+        for r in _csv.DictReader(open('data/labels/planarity_v2.csv')):
+            if r.get('acryl_match') in ('1', 'True') and r.get('embed_ok') in ('1', 'True') \
+               and r.get('planar_dev_deg'):
+                try:
+                    anchor_val[r['smiles']] = float(r['planar_dev_deg'])
+                except ValueError:
+                    pass
+        print('anchor values loaded for stratification: %d molecules' % len(anchor_val))
+
     manifest = {'version': V6, 'margins': MARGIN, 'same_frac_cap': SAME_FRAC_CAP,
-                'seed': a.seed, 'params': {}}
+                'seed': a.seed, 'anchor_stratify': a.anchor_stratify, 'params': {}}
 
     for p, rows in per.items():
         m = MARGIN.get(p)
@@ -113,6 +131,45 @@ def main():
                 kept.append((a_s, b_s, d, prot)); continue
             if m is None or delta is None or abs(delta) >= m:
                 kept.append((a_s, b_s, d, prot))
+        # -------- ANCHOR STRATIFICATION ----------------------------------------------
+        # WHY THIS EXISTS. warhead_planarity is a clean NULL twice over, and the cause is not
+        # saturation -- headroom is large (corpus median 24.89 deg, 41.9% over 30). The cause
+        # is that UP and DOWN sit on DISJOINT ANCHOR POPULATIONS:
+        #     UP   (-> more twisted)  n=65,729  anchor mean 13.90  median  8.03
+        #     DOWN (-> more planar)   n=60,001  anchor mean 44.02  median 36.90
+        # An 8-deg anchor can only go UP; a 37-deg anchor can only go DOWN. So the direction
+        # is inferable from the input and the token is REDUNDANT, not ignored -- which is
+        # exactly what a GAP of ~0 against a 0.002 floor looks like.
+        # THE FIX: bin by ANCHOR value and, within each bin, keep equal UP and DOWN. Then at
+        # any given starting planarity both instructions exist, and the only way to predict
+        # the target is to READ THE TOKEN.
+        # This COSTS ROWS -- bins where one direction is absent contribute nothing. That is
+        # the point: those rows were teaching the model to ignore the instruction.
+        if a.anchor_stratify and p == a.anchor_stratify and anchor_val:
+            have = [r for r in kept if r[0] in anchor_val and r[2] in ('UP', 'DOWN')]
+            same = [r for r in kept if r[2] == 'SAME']
+            if len(have) > 50:
+                vals = sorted(anchor_val[r[0]] for r in have)
+                qs = [vals[int(len(vals) * i / a.anchor_bins)] for i in range(1, a.anchor_bins)]
+                def binof(v):
+                    b = 0
+                    for q in qs:
+                        if v >= q: b += 1
+                    return b
+                byb = collections.defaultdict(lambda: collections.defaultdict(list))
+                for r in have:
+                    byb[binof(anchor_val[r[0]])][r[2]].append(r)
+                out_rows, dropped = [], 0
+                for b, d in sorted(byb.items()):
+                    u, dn = d.get('UP', []), d.get('DOWN', [])
+                    k = min(len(u), len(dn))
+                    rng.shuffle(u); rng.shuffle(dn)
+                    out_rows += u[:k] + dn[:k]
+                    dropped += (len(u) - k) + (len(dn) - k)
+                print('  [anchor-stratify %s] %d bins | kept %d balanced rows, dropped %d '
+                      'one-sided' % (p, len(byb), len(out_rows), dropped))
+                kept = out_rows + same
+
         # -------- scaffold split, adaptive holdout (same logic as v5) -----------------
         scafs = sorted({skey(x[0]) for x in kept} | {skey(x[1]) for x in kept})
         rng.shuffle(scafs)
