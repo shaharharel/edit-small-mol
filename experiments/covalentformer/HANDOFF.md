@@ -130,8 +130,20 @@ DOWN, so the token carries information the anchor does not.
   connected component. Scaffold-disjoint is used and is stricter.
 - **Decoder:** EOS `$`=2, PAD `*`=0, BOS `^`=1. `vocab.decode` returns a token LIST; calling
   `.replace()` raised and a bare except made every molecule None — reported as 0.0% validity.
-- **VALID CSVs ARE IN MW-ASCENDING ORDER.** Reshuffle them. This produced three separate
-  unrepresentative-sample errors today.
+- **VALID CSVs ARE IN MW-ASCENDING ORDER.** Reshuffle them (`stage0/reshuffle_valids.py`,
+  DONE: v5 head-MW 217 -> 472). This produced three unrepresentative-sample errors.
+- **PGREP SELF-MATCH, FOURTH AND FIFTH OCCURRENCE.** `pgrep -fc train_steer_v5.py` over ssh
+  matches the ssh command's OWN argv, because the pattern is inside the command string. The
+  count never reaches 0. Anchoring the regex DID NOT FIX IT -- it hung a second time for 90
+  minutes. The working fix is to POLL FOR THE ARTIFACT FILE, not the process: a file either
+  exists or it does not, and that has no self-match failure mode.
+- **THE RAW PRIOR HAS NO CONDITIONING TABLE.** Passing it as `--prior-ckpt` tripped
+  cohort_shift's guard, which is correct: it IS the unconditioned baseline and must load with
+  mode='none'. Without the guard it would have loaded a RANDOM embedding and every
+  "prior cohort" number would have been noise.
+- **cohort_shift had no `role` outcome**, so every role row was excluded and role.json came
+  out empty. Role is categorical -- the cohort-level quantity that differs by role is how
+  much of the molecule moved (|delta heavy-atom count| vs the anchor).
 
 ---
 
@@ -186,6 +198,28 @@ DOWN, so the token carries information the anchor does not.
    much is the covalent fine-tuning rather than the instruction.
 9. Only then: joint / alternating multi-instruction training.
 
+## 9f. ALL FOUR POCKET PARAMS HAVE PLANARITY'S DISEASE — MEASURED, DATA BUILT
+
+The four pocket nulls are ONE data-construction problem, not four dead params. Anchor
+separation between UP and DOWN populations (planarity was ~1.5 sd; stratifying it took
+GAP_flip +0.0033 -> +0.0290 on 12x FEWER rows):
+
+    pocket_occupancy  UP 0.266  DOWN 0.341   1.42 sd   stratified: 514 train / 61 valid
+    theta_bd          UP 105.9  DOWN 117.9   1.20 sd   stratified: 852 / 108
+    buried_sasa       UP  67.8  DOWN  79.0   1.10 sd   stratified: 1419 / 180
+    d_cys_scaffold    UP  4.25  DOWN  6.08   0.95 sd   too small after split
+
+NOT MODE COLLAPSE -- targets are richly distributed (buried_sasa 1,257 distinct values,
+theta_bd 892, IQR 11.7 pts and 8.1 deg). The LABELS are fine; the PAIRING taught the model
+to ignore the token.
+
+Data: `data/steer_v7_pocketstrat/`. Stratifying costs 70-80% of rows, which is why
+d_cys_scaffold falls below a trainable split -- same trade that worked for planarity.
+
+STATUS CORRECTION, two distinct claims that were run together earlier:
+  * the v7 pocket_occupancy NUMBER (+0.0052) stays WITHDRAWN -- 0/3 seeds replicate
+  * the PARAM is NOT dead -- it has a diagnosed cause and a built dataset
+
 ## 9e. PLANARITY — ITERATE UNTIL RESOLVED. LADDER, IN ORDER.
 
 FIVE THINGS WE NOW KNOW, and every rung below uses one of them:
@@ -221,6 +255,21 @@ STOPPING RULE, stated in advance: planarity is CLOSED when either (i) some rung 
 cohort shift vs the unsteered `none` arm with KS p<0.01 in the DOWN direction, or (ii)
 rungs A-D all fail AND rung E shows the failure is not row count. Anything else is an
 unfinished investigation, not a negative result.
+
+## 9g. PLANARITY RUNGS A AND B — RESULTS IN, RUNG A WORKS
+
+    rung                         train   GAP_perm  GAP_flip   BENEFIT
+    unstratified m25 (null)     216550    +0.0019   +0.0033   +0.0026
+    RUNG A anchor-stratified     17403    +0.0117   +0.0290   +0.0017
+    RUNG B DOWN-only             10041    -0.0002   +0.0900   +0.0015
+
+GAP_flip rose ~9x on 12x FEWER rows. If this were data volume it would go the other way, so
+the redundancy diagnosis is CONFIRMED. BENEFIT stays small -- the token is USED far more, but
+is still worth little in held-out loss; the cohort eval decides whether it moves molecules.
+
+RUNG B's +0.0900 is the largest directional number in the project and is NOT yet
+interpretable: with only DOWN and SAME, GAP_flip and "does it no-op" are nearly the same
+test. Separate those before anyone quotes it.
 
 ## 9d. PLANARITY FIX IS BUILT AND READY TO TRAIN
 

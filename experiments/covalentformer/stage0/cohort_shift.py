@@ -67,6 +67,13 @@ def load(ckpt, dev):
     sd = ck.get('network_state', ck.get('model_state'))
     assert sd is not None, 'no weights in %s (keys: %s)' % (ckpt, list(ck)[:8])
     is_role = any(k.startswith('role_emb') for k in sd)
+    # THE RAW PRIOR HAS NEITHER CONDITIONING TABLE -- it IS the unconditioned baseline, so
+    # force mode='none' rather than asserting. The assert below is for a checkpoint that
+    # CLAIMS to be conditioned and is not; this is a model that never claimed to be.
+    if not is_role and not any(k.startswith('instr_emb') for k in sd):
+        m = SteerNet(mode='none', **dict(ck['network_parameter']))
+        m.load_state_dict(sd, strict=False)
+        return m.to(dev).eval(), vocab, SMILESTokenizer(), 'none', None
     if is_role:
         from train_phaseA import PhaseA, ROLES
         mode = ck.get('mode', 'role')
@@ -170,9 +177,20 @@ def main():
     vals, excl = {}, {}
     for tag, smis in cohorts.items():
         vv, bad = [], collections.Counter()
-        for s in smis:
-            if not s or Chem.MolFromSmiles(s) is None:
+        for idx, s in enumerate(smis):
+            m = Chem.MolFromSmiles(s) if s else None
+            if m is None:
                 bad['invalid_smiles'] += 1; continue
+            if a.param == 'role':
+                # ROLE IS CATEGORICAL -- there is no scalar to order. The cohort-level
+                # quantity that DOES differ by role is HOW MUCH OF THE MOLECULE MOVED:
+                # heavy-atom delta against the anchor. EDIT_WARHEAD should shift a small,
+                # specific region; EDIT_SCAFFOLD a large one. Reported as |delta HAC|.
+                am = Chem.MolFromSmiles(anchors[idx]) if idx < len(anchors) else None
+                if am is None:
+                    bad['anchor_unparseable'] += 1; continue
+                vv.append(abs(m.GetNumHeavyAtoms() - am.GetNumHeavyAtoms()))
+                continue
             p = param_value(s, a.param)
             if p is None:
                 bad['param_not_computable'] += 1; continue
