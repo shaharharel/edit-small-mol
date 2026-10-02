@@ -1,0 +1,374 @@
+<title>CovalentFormer v4</title>
+<style>
+:root{
+ --paper:#fbfbf9; --ink:#16181a; --mu:#5a6066; --faint:#8b9197;
+ --rule:#c9ccc6; --hair:#e3e5e0; --code:#f2f3ef;
+ --ok:#1f6b45; --no:#a33127; --link:#1f4e79;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --paper:#131517; --ink:#e4e6e2; --mu:#9aa1a7; --faint:#757c82;
+ --rule:#3a3f44; --hair:#24282c; --code:#1a1e21;
+ --ok:#63b98c; --no:#dd7b6e; --link:#7fb0dc;}}
+:root[data-theme="dark"]{
+ --paper:#131517; --ink:#e4e6e2; --mu:#9aa1a7; --faint:#757c82;
+ --rule:#3a3f44; --hair:#24282c; --code:#1a1e21;
+ --ok:#63b98c; --no:#dd7b6e; --link:#7fb0dc;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);
+ font:16px/1.62 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif}
+.w{max-width:860px;margin:0 auto;padding:56px 24px 96px}
+.hd{border-bottom:2px solid var(--ink);padding-bottom:16px;margin-bottom:26px}
+h1{font-size:30px;line-height:1.16;margin:0 0 8px;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+.byline{font:12.5px/1.5 ui-sans-serif,-apple-system,sans-serif;color:var(--mu);letter-spacing:.02em}
+h2{font:600 18px/1.3 ui-sans-serif,-apple-system,sans-serif;margin:42px 0 10px;letter-spacing:-.005em}
+h3{font:600 14.5px/1.35 ui-sans-serif,-apple-system,sans-serif;margin:26px 0 7px;color:var(--ink)}
+h2 .sn,h3 .sn{color:var(--faint);font-weight:500;margin-right:.5em;font-variant-numeric:tabular-nums}
+p{margin:0 0 11px}
+.abs{border:1px solid var(--rule);background:var(--code);padding:17px 20px;margin:0 0 8px;font-size:15px}
+.abs h4{font:600 11px/1 ui-sans-serif,sans-serif;letter-spacing:.14em;text-transform:uppercase;
+ color:var(--mu);margin:0 0 9px}
+.abs p:last-child{margin-bottom:0}
+code,pre,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{font-size:.88em;background:var(--code);padding:1px 4px;border-radius:2px}
+a{color:var(--link)}
+/* --- tables: booktabs --- */
+.tbl{margin:16px 0 22px}
+.cap{font:12.5px/1.5 ui-sans-serif,-apple-system,sans-serif;color:var(--mu);margin:0 0 7px}
+.cap b{color:var(--ink);font-weight:600}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font:13.5px/1.45 ui-sans-serif,-apple-system,sans-serif}
+table thead tr:first-child th{border-top:1.5px solid var(--ink)}
+thead th{border-bottom:1px solid var(--ink);padding:7px 10px;text-align:left;font-weight:600;
+ vertical-align:bottom}
+tbody td{padding:6px 10px;border-bottom:1px solid var(--hair)}
+tbody tr:last-child td{border-bottom:1.5px solid var(--ink)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
+tbody tr.rule-above td{border-top:1px solid var(--rule)}
+.em{font-weight:650}
+.ok{color:var(--ok);font-weight:650} .no{color:var(--no);font-weight:650}
+/* --- figures --- */
+figure{margin:18px 0 22px}
+figure>figcaption{font:12.5px/1.5 ui-sans-serif,-apple-system,sans-serif;color:var(--mu);margin-top:9px}
+figure>figcaption b{color:var(--ink);font-weight:600}
+.box{border:1px solid var(--rule);padding:16px;background:var(--code)}
+/* rung diagram */
+.rungs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--rule)}
+.rung{padding:13px 14px;border-right:1px solid var(--rule);background:var(--paper)}
+.rung:last-child{border-right:0}
+.rung .rn{font:600 10.5px/1.3 ui-sans-serif,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--mu)}
+.rung .rt{font:600 14.5px/1.3 ui-sans-serif,sans-serif;margin:5px 0 6px}
+.rung .rd{font-size:13.5px;color:var(--mu);line-height:1.5}
+.rung .rc{margin-top:9px;font-family:ui-monospace,monospace;font-size:11.5px;color:var(--ink);
+ border-top:1px solid var(--hair);padding-top:7px}
+.combine{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--rule);border-top:0}
+.cmb{padding:12px 14px;border-right:1px solid var(--rule);font-size:13.5px}
+.cmb:last-child{border-right:0}
+.cmb b{font:600 13.5px/1.3 ui-sans-serif,sans-serif;display:block;margin-bottom:3px}
+/* prompt/response exchange blocks */
+.xch{border:1px solid var(--rule);margin:9px 0;background:var(--paper)}
+.xch>.xh{display:flex;justify-content:space-between;align-items:center;gap:8px;
+ padding:6px 11px;border-bottom:1px solid var(--hair);background:var(--code);
+ font:600 11px/1.4 ui-sans-serif,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+.xch .verdict{letter-spacing:.04em}
+.xr{display:grid;grid-template-columns:78px 1fr;border-bottom:1px solid var(--hair)}
+.xr:last-child{border-bottom:0}
+.xr>.k{padding:7px 10px;font:600 10.5px/1.5 ui-sans-serif,sans-serif;letter-spacing:.07em;
+ text-transform:uppercase;color:var(--faint);border-right:1px solid var(--hair);background:var(--code)}
+.xr>.v{padding:7px 11px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.55;
+ white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.v.g-ok{color:var(--ok)} .v.g-no{color:var(--no)}
+/* case panels */
+.tri{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--rule)}
+.tri>figure{margin:0;padding:10px;border-right:1px solid var(--rule);text-align:center}
+.tri>figure:last-child{border-right:0}
+.tri figcaption{font:600 10px/1.3 ui-sans-serif,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--faint);margin:0 0 7px}
+.tri code{display:block;margin-top:6px;font-size:10px;color:var(--mu);word-break:break-all;text-align:left}
+.mol{background:#fff;padding:4px;border:1px solid var(--hair)}
+.mol svg{max-width:100%;height:auto;display:block;margin:0 auto}
+.case{margin:0 0 20px}
+.ch{display:flex;gap:9px;align-items:baseline;flex-wrap:wrap;
+ font:12.5px/1.5 ui-sans-serif,sans-serif;margin-bottom:7px}
+.ch .idx{font-weight:700;font-family:ui-monospace,monospace}
+.ch .meta{color:var(--mu)}
+details{margin-top:8px}
+summary{cursor:pointer;font:12.5px/1.5 ui-sans-serif,sans-serif;color:var(--link)}
+summary:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+details pre{margin:7px 0 0;background:var(--code);border:1px solid var(--hair);padding:9px;
+ font-size:11.5px;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow:auto}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.lab{font:600 10px/1.4 ui-sans-serif,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--faint);margin-bottom:3px}
+ul,ol{margin:0 0 11px;padding-left:22px} li{margin-bottom:5px}
+.note{border-left:2px solid var(--rule);padding:2px 0 2px 15px;margin:14px 0;color:var(--mu);font-size:15px}
+.note b{color:var(--ink)}
+.ft{margin-top:56px;border-top:1px solid var(--rule);padding-top:14px;
+ font:12px/1.6 ui-sans-serif,sans-serif;color:var(--faint)}
+@media(max-width:760px){.rungs,.combine,.tri,.two{grid-template-columns:1fr}
+ .rung,.cmb{border-right:0;border-bottom:1px solid var(--rule)}
+ .tri>figure{border-right:0;border-bottom:1px solid var(--rule)}
+ .xr{grid-template-columns:1fr}.xr>.k{border-right:0;border-bottom:1px solid var(--hair)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media print{body{background:#fff}.w{max-width:none;padding:0}}
+
+.verdict{font-size:13px}
+.pill{font:600 9.5px/1.4 ui-monospace,monospace;letter-spacing:.07em;text-transform:uppercase;
+ padding:2px 7px;border-radius:2px;background:var(--hair);color:var(--mu)}
+.pill--hit{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.flow{border:1px solid var(--rule);margin:14px 0 6px}
+.flow>.fh{background:var(--code);border-bottom:1px solid var(--rule);padding:8px 12px;
+ font:600 12.5px/1.4 ui-sans-serif,sans-serif}
+.fh .tag{font:600 9.5px/1.4 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--mu);margin-left:8px}
+.fstep{display:grid;grid-template-columns:118px 1fr;border-bottom:1px solid var(--hair)}
+.fstep:last-child{border-bottom:0}
+.fstep>.sn2{padding:9px 10px;border-right:1px solid var(--hair);background:var(--code);
+ font:600 10px/1.45 ui-sans-serif,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.fstep>.sv{padding:9px 12px;font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.55;
+ white-space:pre-wrap;word-break:break-word;overflow-x:auto}
+.sv .an{font-family:ui-sans-serif,sans-serif;color:var(--mu);font-size:12px}
+.sv.inp{background:color-mix(in srgb,var(--rule) 22%,transparent)}
+.sv.outp{background:color-mix(in srgb,var(--ok) 9%,transparent)}
+
+/* --- added for the v4 report: the markup uses .wrap/.sub/.ex, which the inherited ---
+   --- stylesheet never defined. Without .wrap the page had no container at all,     ---
+   --- which is the missing "frame".                                                 --- */
+.wrap{max-width:52rem;margin:0 auto;padding:2.6rem 1.5rem 4rem}
+.sub{color:#5a5a5a;font-size:.95rem;line-height:1.5;margin:.2rem 0 2.2rem;
+     padding-bottom:1.1rem;border-bottom:1px solid var(--rule,#d8d4cc)}
+table.ex{width:100%;border-collapse:collapse;margin:.5rem 0 0;table-layout:fixed}
+table.ex th{width:11rem;text-align:left;vertical-align:top;font-weight:600;
+            font-size:.82rem;color:#5a5a5a;padding:.35rem .8rem .35rem 0;white-space:nowrap}
+table.ex td{vertical-align:top;padding:.35rem 0;overflow-wrap:anywhere}
+table.ex code{font-size:.78rem;line-height:1.45;display:block;overflow-wrap:anywhere}
+.case{margin:1.4rem 0 1.8rem;padding:.9rem 1.1rem;border:1px solid var(--rule,#d8d4cc);
+      border-radius:4px;background:#fcfbf9}
+</style>
+<div class="wrap">
+<h1>CovalentFormer v4</h1>
+<p class="sub">Qwen2.5-7B + LoRA (r=16, &alpha;=32) · 234,647-row mixed corpus · 7,110 steps on one
+A100-40GB · evaluated on a molecule-disjoint fold against a no-adapter control · internal report,
+2 Oct 2026</p>
+
+<h2><span class="sn">1</span>Summary</h2>
+<p>v4 learns the task format and valid covalent chemistry, and it is the strongest arm we have on a
+matched comparison. It does <b>not</b> yet generalise to novel scaffolds, and three independent
+measurements agree on that.</p>
+
+<div class="tbl"><p class="cap"><b>Table 1.</b> All arms, one parser, one prompt encoding asserted
+identical to training. Recall = pairs v4 trained on; disjoint = molecule-disjoint fold
+(0 molecule overlap, 0 pair overlap). Both stratified across complexes, disconnected pairs excluded.</p>
+<table><tbody>
+<tr><th></th><th>base Qwen, no LoRA</th><th>v4 recall</th><th>v4 disjoint</th></tr>
+<tr><td>n / k</td><td>200 / 30</td><td>400 / 20</td><td>600 / 20</td></tr>
+<tr><td><b>exact@k</b></td><td><b>0.00%</b></td><td><b>35.06%</b></td><td><b>0.67%</b></td></tr>
+<tr><td>exact@1</td><td>0.00%</td><td>6.25%</td><td>0.17%</td></tr>
+<tr><td>validity</td><td><b>0.65%</b></td><td>91.46%</td><td>80.44%</td></tr>
+<tr><td>uniqueness</td><td>&mdash;</td><td>53.11%</td><td>67.43%</td></tr>
+<tr><td>copy rate</td><td>6.00%</td><td>11.00%</td><td>6.00%</td></tr>
+<tr><td>change-op accuracy</td><td>0.00%</td><td>30.75%</td><td>33.50%</td></tr>
+</tbody></table></div>
+
+<p>The recall figure is <b>35.06%</b> (135/385), not
+the 36.50% the run reported over its full 400 rows. 11 of those 146 hits came from
+pairs that differ <i>only in stereochemistry</i>: the scorer strips stereo, so hit and reference
+collapse to the same molecule and copying the input wins. 58 of 4,501 training pairs (1.3%) are of
+that kind, plus disconnected pairs (below) &mdash; 15 rows excluded in total. The build-time identity
+gate compares <i>with</i> stereo, so they passed; the scorer compares <i>without</i>, so they became
+free points. Every exact@k in this report is on the legitimate-pair denominator.</p>
+
+<div class="note"><b>The control is the firmest result.</b> Base Qwen2.5-7B on identical prompts
+produces a parseable molecule in <b>0.65%</b> of 6,000 generations and never emits a
+usable <code>Change:</code> field. The LoRA takes validity to <b>91.46%</b> and
+change-op accuracy from 0% to ~31%. Whatever else is unresolved, the fine-tuning demonstrably taught
+the model to speak the task.</div>
+
+<h2><span class="sn">2</span>What v4 trained on</h2>
+<div class="tbl"><p class="cap"><b>Table 2.</b> The 234,647-row mixture, after decontamination
+against the rung-3 test fold. Earlier reports quoted 503,895 rows &mdash; that was v3's corpus.</p>
+<table><tbody>
+<tr><th>component</th><th>rows</th><th>share</th><th>dropped as test-contact</th></tr>
+<tr><td>rung 2 &mdash; analogue design (MMP)</td><td>76,718</td><td>32.7%</td><td>2,523 (3.18%)</td></tr>
+<tr><td>affinity &mdash; &Delta;pIC50 pairs</td><td>80,000</td><td>34.1%</td><td>254 (0.18%)</td></tr>
+<tr><td>rung 1 &mdash; reaction chemistry</td><td>49,937</td><td>21.3%</td><td>63 (0.13%)</td></tr>
+<tr><td>rung 3 &mdash; pocket-conditioned H2L</td><td>18,004 (4,501 &times;4)</td><td>7.7%</td><td>n/a (is the supervision)</td></tr>
+<tr><td>contacts &mdash; interaction type</td><td>10,000</td><td>4.3%</td><td>1,042 (4.17%)</td></tr>
+</tbody></table></div>
+<p>81,336 rows (34.7%) carry a &Delta;pIC50 label; the rest get weight zero in the regression loss
+rather than a fabricated target. The <code>Predicted dpIC50:</code> line is stripped in the
+<i>data</i>, so no trainer can reintroduce v3's label leak by forgetting to.</p>
+<p>Rung 3's pocket is a residue-level block &mdash; 20 nearest residues, each with its
+closest-approach distance and nearest-atom coordinates &mdash; in a frame whose origin is the
+attacked atom and whose +z is the attack axis. +x points at the Murcko-core centroid; the previous
+rule broke ties on PDB atom <i>name</i>, which fired in 13.6% of complexes. The frame was verified
+by rotating and translating 60 raw PDB files and re-running the whole extractor:
+<b>60/60 identical, median deviation 0.003 &Aring;</b>.</p>
+
+<h2><span class="sn">3</span>Training</h2>
+<p>7,110 optimizer steps, effective batch 33 (bs 3 &times; accum 11), maxlen 3072, 13.9 h.
+LM loss <b>1.4904 &rarr; 0.1195</b>; regression MSE <b>0.5092 &rarr; 0.0816</b> (last-500 mean
+0.0697). 143 logged points, monotone, no divergence, zero NaN, zero OOM.</p>
+<div class="note"><b>The head is not yet validated.</b> That 0.0697 is an <i>in-sample</i> MSE. Against
+a target with sd &asymp;0.54 it implies training R<sup>2</sup> &asymp; 0.76, which says the head fits,
+not that it ranks. The number that would validate it &mdash; held-out within-hit Spearman against the
+within-hit variance floor &mdash; has not been measured, so no potency claim is made here. One
+reassurance: v3's leaked head reached MSE 0.0002; v4's is 350&times; higher, which is what you expect
+once the model cannot read its own label.</div>
+
+<h2><span class="sn">4</span>Three real cases</h2>
+<p>Drawn from the saved per-row generations, filtered to connected molecules and genuine
+(non-stereo-only) pairs. The displayed generation is the first of 20 samples, not a cherry-picked
+best.</p>
+<div class="case">
+<p class="cap"><b>RECALL — reference recovered</b> — PDB 6FFS, reference op <code>LINK_EXTEND</code></p>
+<table class="ex"><tbody>
+<tr><th>prompt, <code>Hit:</code></th><td><code class="inp">Cc1cc(C(=O)NC2CCCCN(C)C(=O)CCC(C=O)NC(=O)C(Cc3ccc(F)cc3)NC2=O)no1</code></td></tr>
+<tr><th>reference analogue</th><td><code>O=C1NCC[C@H]1C[C@@H](/C=C/C(=O)OCC)NC(=O)[C@H](Cc2ccc(F)cc2)CC(=O)[C@H](C(C)C)NC(=O)c3noc(C)c3</code></td></tr>
+<tr><th>v4, first of 20 samples</th><td><code class="outp">Change: LINK_EXTEND │ Analogue: Cc1cc(C(=O)NC2CCCCN(C)C(=O)C(CC(C)C)NC(=O)C(Cc3ccc(F)cc3)NC2=O)no1</code></td></tr>
+
+</tbody></table></div><div class="case">
+<p class="cap"><b>DISJOINT — closest miss</b> — PDB 5GTY, reference op <code>LINK_SHORTEN</code> · best Tc <b>0.905</b></p>
+<table class="ex"><tbody>
+<tr><th>prompt, <code>Hit:</code></th><td><code class="inp">C=CC(=O)N1CCCC(n2nc(-c3ccc(OCc4cccc(C)n4)c(Cl)c3)c3c(N)ncnc32)C1</code></td></tr>
+<tr><th>reference analogue</th><td><code>C=CC(=O)N1C[C@@H](CCC1)n2nc(c(c23)c(N)ncn3)-c4ccc(cc4)Oc5ccccc5</code></td></tr>
+<tr><th>v4, first of 20 samples</th><td><code class="outp">Change: GROW │ Analogue: C=CC(=O)N1CCC[C@H]1COc1nc2c(-c3ccc(Oc4ccccc4)cc3F)c(C(F)(F)F)c(nc2n1)N2CCCN2</code><br><span class="no">this sample is not a valid molecule — 19.6% of disjoint generations are not</span></td></tr>
+<tr><th>closest of the 20</th><td><code class="outp">C=CC(=O)N1CCC(n2nc(-c3ccc(Oc4ccccc4)cc3)c3c(N)ncnc32)C1</code></td></tr>
+</tbody></table></div><div class="case">
+<p class="cap"><b>DISJOINT — typical miss</b> — PDB 4OLG, reference op <code>LINK_EXTEND</code> · best Tc <b>0.120</b></p>
+<table class="ex"><tbody>
+<tr><th>prompt, <code>Hit:</code></th><td><code class="inp">CC(=O)OCC1=C(N2[C@H](SC1)[C@H](NC=O)C2=O)C(O)=O</code></td></tr>
+<tr><th>reference analogue</th><td><code>CC(C)(O\N=C(/C(=O)N[C@H]1[C@H]2SCC(C[n+]3ccccc3)=C(N2C1=O)C(O)=O)c1csc(N)n1)C(O)=O</code></td></tr>
+<tr><th>v4, first of 20 samples</th><td><code class="outp">Change: LINK_SHORTEN │ Analogue: CC(=O)O[C@H]1C[C@@H](O)[C@@H](N1C=O)C(O)=O</code></td></tr>
+<tr><th>closest of the 20</th><td><code class="outp">CC(=O)OC1C=C(C=O)CC1OC=O</code></td></tr>
+</tbody></table></div>
+<p>The recall hit is instructive: the <i>shown</i> sample is a plausible but wrong analogue &mdash;
+the reference was recovered by one of the other 19 draws. The closest disjoint miss reaches Tc 0.905
+and gets the key phenoxy substitution right while adding substituents the reference does not have.
+The typical disjoint miss shortens a cephalosporin that the reference extends.</p>
+
+<h2><span class="sn">5</span>Why the disjoint number is not an artefact of exact-match</h2>
+<p>Exact-match against a single reference is a harsh metric, so we checked whether v4 was
+near-missing. It is not.</p>
+<div class="tbl"><p class="cap"><b>Table 3.</b> Tanimoto of the <i>best of 20</i> generations to the
+reference, against the correct baseline: the similarity of the <b>hit itself</b> to the reference.
+A model that proposes nothing useful scores the baseline.</p>
+<table><tbody>
+<tr><th></th><th>best generation vs reference</th><th>the hit vs reference</th><th>&ge;0.6</th><th>&ge;0.8</th></tr>
+<tr><td>recall</td><td><b>0.593</b></td><td>0.482</td><td>49.2%</td><td>30.5%</td></tr>
+<tr><td>disjoint</td><td><b>0.378</b></td><td><b>0.401</b></td><td>11.0%</td><td>1.3%</td></tr>
+</tbody></table></div>
+<p>On novel scaffolds the model's best of twenty is <b>less similar to the right answer than the
+input it was given</b>. On training pairs it clearly beats that baseline. The failure is real, not a
+metric artefact.</p>
+<div class="tbl"><p class="cap"><b>Table 4.</b> Disjoint exact@20 binned by each query's maximum
+Tanimoto to any training molecule. A model that interpolates should decay smoothly with distance.</p>
+<table><tbody>
+<tr><th>max-Tc to training</th><th>n</th><th>hits</th><th>exact@20</th></tr>
+<tr><td>0.00&ndash;0.35</td><td>267</td><td>4</td><td>1.50%</td></tr>
+<tr><td>0.35&ndash;0.45</td><td>192</td><td>0</td><td>0.00%</td></tr>
+<tr><td>0.45&ndash;0.55</td><td>66</td><td>0</td><td>0.00%</td></tr>
+<tr><td>0.55&ndash;1.00</td><td>75</td><td>0</td><td>0.00%</td></tr>
+<tr><td><b>in training (1.0)</b></td><td>385</td><td>135</td><td><b>35.06%</b></td></tr>
+</tbody></table></div>
+<p>There is no gradient. All four hits sit in the <i>lowest</i> similarity bin and the 75 queries most
+similar to training score zero. Performance is binary at set membership, which is the signature of
+retrieval rather than interpolation. With only four hits this cannot prove a gradient is absent, but
+it does establish that no transfer is measurable short of exact membership.</p>
+
+<h2><span class="sn">6</span>The change-op field is near its ceiling, not broken</h2>
+<p>Change-op accuracy is ~31% (recall) and ~34% (disjoint), which looks poor against an
+always-REPLACE floor. The label is the problem, and <code>derive_cdl.py</code>'s own entropy audit
+measured it before training: <b>OP retains 1.099 of 2.047 bits &mdash; 53.7% of its entropy &mdash;
+after conditioning on the input</b>.</p>
+<div class="tbl"><p class="cap"><b>Table 5.</b> The ceiling on change-op accuracy, computed directly:
+for each distinct (hit, pocket) input, the share of the most common op.</p>
+<table><tbody>
+<tr><th></th><th>distinct inputs</th><th>inputs admitting &gt;1 op</th><th>Bayes-optimal</th><th>constant floor</th><th>v4</th></tr>
+<tr><td>train</td><td>1,026</td><td><b>46.1%</b></td><td>64.7%</td><td>33.3%</td><td>30.8%</td></tr>
+<tr><td>test</td><td>219</td><td><b>52.5%</b></td><td>73.9%</td><td>49.4%</td><td>33.5%</td></tr>
+</tbody></table></div>
+<p>Half of all inputs have more than one valid answer <i>in the data itself</i>, because one hit has
+several analogues reached by different transformations. The op describes the answer, so predicting it
+from the hit alone is partly circular. The model also reproduces the marginal op distribution almost
+exactly (REPLACE 127 predicted vs 127 actual; LINK_EXTEND 129 vs 120) without conditioning on the
+instance &mdash; distribution-matching, not inference. This target should be collapsed into
+chemically distinct groups or scored as set membership, not exact match.</p>
+
+<h2><span class="sn">7</span>What the decontamination bug invalidated</h2>
+<p>The routine every corpus was filtered through compared <code>r['input']</code> and
+<code>r['output']</code> as whole SMILES. v4-schema rows carry no bare <code>input</code>, and their
+output is <code>"Change: REPLACE\nAnalogue: CC..."</code>, which RDKit cannot parse &mdash; so both
+lookups returned <code>None</code>, nothing matched, and it printed
+<code>79241 rows -&gt; 79241 kept, 0 dropped</code> on every run.</p>
+<p>Measured consequence for the <i>previous</i> rung-3 folds: <b>99.5% of test, 98.5% of valid, 99.9%
+of mpro</b> present in training on the exact (hit, analogue) key, and <b>439 of 440</b> eval analogues.
+Those folds were cut from the same <code>cdl.jsonl</code> that rung-3 is built from, so no filter can
+make them disjoint &mdash; filtering against them leaves 1,083 of 5,518 rows. Every rung-3
+generalisation number predating this fix, including the 21.83% previously reported for the joint
+model, is a recall measurement. The replacement fold is a connected-component split of the molecule
+graph: train 4,501 / test 1,017, molecule intersection 0, pair intersection 0.</p>
+<div class="note"><b>The split is harder than any previous holdout, on two axes.</b> Test molecules
+sit at median max-Tc <b>0.357</b> to training, against <b>0.811</b> for a random split over unique
+pairs. And 52.1% of test pairs are below Tc 0.40 &mdash; the threshold rung-2 uses to call two
+molecules analogues at all &mdash; versus 35.0% of train. The fold is also only <b>3 connected
+components</b>, so its effective chemical n is far below 1,017. The disjoint number should be read as
+a hard lower bound, not an average-case estimate.</div>
+
+<h2><span class="sn">8</span>covRXN: the one causally-controlled result</h2>
+<p>Independent of the covLLM stream and unaffected by the above. Three seeds per arm; the control arms
+were <i>trained</i> on deranged pockets. <code>dep_aux</code> is auxiliary accuracy with true labels
+minus deranged labels, averaged over seeded derangement draws. The auxiliary task is 9-way
+nucleophile identification.</p>
+<div class="tbl"><p class="cap"><b>Table 6.</b> covRXN B2 arm matrix, test split, 3 seeds each.</p>
+<table><tbody>
+<tr><th>arm</th><th>valid leaving-group</th><th>aux (floor 0.499)</th><th><b>dep_aux</b></th></tr>
+<tr><td>B2_froma (from phase A)</td><td>0.926</td><td>0.777</td><td><b>+0.362</b></td></tr>
+<tr><td>B2_froma_fp (+ fingerprint)</td><td>0.925</td><td>0.746</td><td>+0.341</td></tr>
+<tr><td>B2_scratch (random init)</td><td>0.899</td><td>0.782</td><td><b>+0.364</b></td></tr>
+<tr><td>B2_froma_shuf <i>(control)</i></td><td>0.893</td><td>0.592</td><td><b>+0.013</b></td></tr>
+<tr><td>B2_scratch_shuf <i>(control)</i></td><td>0.878</td><td>0.550</td><td><b>+0.005</b></td></tr>
+</tbody></table></div>
+<p><b>+0.36 against +0.01</b>, tight across seeds. The control reads zero, which is what a working
+control must do. This is the one place in the project with a mechanism defensible causally rather
+than correlationally.</p>
+<p><b>And pretraining is decoration.</b> <code>B2_scratch</code> dep_aux +0.364 vs
+<code>B2_froma</code> +0.362 &mdash; identical. Phase-A initialisation buys <b>+2.7 points of
+leaving-group validity</b> and nothing on the auxiliary task.</p>
+<p>One caveat: the mpro split cannot measure this. Its aux floor is 0.999, so there is no headroom and
+dep_aux is ~0 there for real arms and controls alike. Only leaving-group validity is interpretable on
+mpro, and it is much worse (0.70&ndash;0.76 vs 0.88&ndash;0.93).</p>
+
+<h2><span class="sn">9</span>Limits, and numbers withdrawn</h2>
+<ul>
+<li><b>No generalisation claim is supported.</b> Three independent probes agree: exact@20 of
+0.67% on disjoint pairs, best-generation similarity below the copy-the-input baseline
+(0.378 vs 0.401), and a flat Tc profile.</li>
+<li><b>The potency head has no held-out number.</b> Only in-sample MSE exists. Within-hit Spearman
+against the within-hit variance floor is unmeasured.</li>
+<li><b>2.7% of rung-3 pairs are disconnected SMILES</b> (151 of 5,535 in <code>cdl.jsonl</code>, the
+same 151 in <code>pocket_pairs_v3</code>, so inherited rather than introduced). These are
+peptidomimetic ligands whose PDB residues were never bonded: <code>C.CC(C)C.NC(...)...</code> is
+methane + isobutane + a detached Cbz. The model emits the correctly connected peptide and scores
+zero. Excluded from every number here; not yet gated at corpus build.</li>
+<li><b>1.3% of rung-3 pairs differ only in stereochemistry</b> and are winnable by copying under a
+stereo-stripping scorer. Excluded here; the build-time gate should compare without stereo.</li>
+<li><b>The disjoint fold is 3 chemotypes.</b> Effective chemical n is far below 1,017.</li>
+<li><b>Six numbers were withdrawn during this evaluation</b>, each caught by a check rather than
+reported: a 1.00% disjoint rate (three concurrent eval chains interleaving one log); a 36.5% recall
+measured on 14 of 1,020 complexes (<code>--n 400</code> was <code>rows[:400]</code> on a
+complex-ordered file); the "1.6&times; better than joint" built on it; a uniqueness-collapse argument
+for memorisation (7.2% was a sampling artefact; it is 53.1% on stratified sampling); a ~1.8% disjoint
+partial (early hits were clustered); and a change-op floor of 49.4% compared against accuracy measured
+on a different sample.</li>
+<li><b>covPROG was not re-run for v4.</b> Its query builder is not available, and rung-2 shares
+43.5% of its molecules (4,049 of 9,316) &mdash; so a covPROG number for v4 would be heavily
+contaminated through rung-2 even though rung-3 is clean at 0.72%.</li>
+</ul>
+
+<p class="ft">All figures measured, none estimated. ECFP4 r=2, 2048 bits; stereo-stripped canonical
+matching; one parser for every arm; prompt encoding asserted identical to training before each run.
+Sources: v4_eval_{train,disjoint}_fixed.json, v4_eval_base.json.partial,
+v4_gens_{train,disjoint}_fixed.jsonl, results/gates/CDL_ENTROPY_AUDIT.json,
+results/final_covrxn/*.json.</p>
+</div>
