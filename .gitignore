@@ -164,3 +164,20 @@ paper/manuscript/*.fdb_latexmk
 paper/manuscript/*.fls
 paper/manuscript/*.synctex.gz
 paper/manuscript/*.toc
+
+# 674 MB: committed in a9366e2 (2026-09-15) and made the whole branch unpushable --
+# GitHub rejects any file over 100 MB. Purged from history 2026-10-03.
+experiments/covalentformer/data/instructions/pairs_v2.jsonl
+
+# MODEL WEIGHTS ARE NEVER COMMITTED. The audit that followed the purge above found 400 files
+# over 50 MB sitting untracked but unignored -- 210 *.prior, 181 *.chkpt, 3 *.tgz, mostly under
+# data/ and models/ -- so a single `git add -A` would have recreated the same unpushable branch.
+# Nothing of these extensions was tracked at the time these rules were added (verified), so they
+# mask no history. Weights belong in GCS or on the training box, not in git.
+*.chkpt
+*.ckpt
+*.prior
+*.pt
+*.pth
+*.safetensors
+*.tgz

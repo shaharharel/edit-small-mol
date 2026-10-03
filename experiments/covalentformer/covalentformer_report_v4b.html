@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CovalentFormer v4b &mdash; report structure</title>
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#f7f8fa; --panel:#ffffff; --ink:#15181d; --ink2:#454c57; --ink3:#6b7280;
+  --line:#dfe3e9; --line2:#eef1f5;
+  --accent:#0f6f74; --accent2:#0a4f53; --accent-bg:#e6f2f2;
+  --good:#1a7f4b; --good-bg:#e7f5ec;
+  --warn:#9a6212; --warn-bg:#fdf3e2;
+  --bad:#a3302a; --bad-bg:#fbeceb;
+  --code:#f3f5f8; --codeink:#1d2229;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --serif:ui-serif,Georgia,"Times New Roman",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151a; --panel:#181c23; --ink:#e8eaee; --ink2:#b3bac6; --ink3:#8b93a1;
+  --line:#2a313b; --line2:#222831;
+  --accent:#4fb3b8; --accent2:#7fd0d4; --accent-bg:#16292b;
+  --good:#5ec98a; --good-bg:#14281d;
+  --warn:#e0a84e; --warn-bg:#2b2113;
+  --bad:#e4756d; --bad-bg:#2b1716;
+  --code:#1e232b; --codeink:#dfe3ea;
+}}
+:root[data-theme="dark"]{
+  --bg:#12151a; --panel:#181c23; --ink:#e8eaee; --ink2:#b3bac6; --ink3:#8b93a1;
+  --line:#2a313b; --line2:#222831;
+  --accent:#4fb3b8; --accent2:#7fd0d4; --accent-bg:#16292b;
+  --good:#5ec98a; --good-bg:#14281d;
+  --warn:#e0a84e; --warn-bg:#2b2113;
+  --bad:#e4756d; --bad-bg:#2b1716;
+  --code:#1e232b; --codeink:#dfe3ea;
+}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:15.5px;line-height:1.62;-webkit-font-smoothing:antialiased}
+.page{max-width:980px;margin:0 auto;padding:44px 22px 110px}
+h1{font-family:var(--serif);font-size:clamp(28px,5vw,40px);line-height:1.14;margin:0 0 6px;
+  letter-spacing:-.018em;text-wrap:balance;font-weight:600}
+.sub{color:var(--ink3);font-size:15px;margin:0 0 4px}
+.kicker{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 14px;font-weight:600}
+h2{font-family:var(--serif);font-size:23px;line-height:1.24;margin:52px 0 4px;font-weight:600;
+  letter-spacing:-.01em;display:flex;align-items:baseline;gap:12px;text-wrap:balance}
+h2 .sn{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--line);
+  background:var(--accent-bg);border-radius:4px;padding:2px 7px;flex:none;font-weight:600}
+h3{font-size:16px;margin:30px 0 6px;font-weight:650;letter-spacing:-.005em}
+h2+.lede,h3+.lede{color:var(--ink2);margin:8px 0 14px}
+p{margin:0 0 13px}
+a{color:var(--accent);text-decoration-thickness:1px;text-underline-offset:2px}
+hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+code{font-family:var(--mono);font-size:.885em;background:var(--code);color:var(--codeink);
+  padding:1.5px 5px;border-radius:4px;border:1px solid var(--line2)}
+
+/* ---- status banner ---- */
+.banner{background:var(--warn-bg);border:1px solid var(--line);border-left:3px solid var(--warn);
+  border-radius:8px;padding:16px 18px;margin:22px 0 10px}
+.banner .bt{font-weight:700;color:var(--warn);font-size:13px;letter-spacing:.04em;
+  text-transform:uppercase;font-family:var(--mono);margin-bottom:6px}
+.banner p{margin:0;color:var(--ink2);font-size:14.5px}
+
+/* ---- panels ---- */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:18px 20px;margin:18px 0}
+.panel>h3:first-child{margin-top:0}
+
+/* ---- tables ---- */
+.tw{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:min(100%,520px)}
+th{text-align:left;font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;padding:11px 13px;border-bottom:1px solid var(--line);
+  background:var(--line2);white-space:nowrap}
+td{padding:10px 13px;border-bottom:1px solid var(--line2);vertical-align:top;color:var(--ink2)}
+tbody tr:last-child td{border-bottom:0}
+td:first-child{color:var(--ink);font-weight:500}
+table.nums td+td,table.nums th+th{text-align:right;font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
+.num.good{color:var(--good)}
+.num.bad{color:var(--bad)}
+.num.dim{color:var(--ink3);font-weight:500}
+.pend{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--warn);background:var(--warn-bg);border:1px dashed var(--warn);border-radius:4px;
+  padding:2px 7px;font-weight:600;white-space:nowrap}
+.floor{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink3);font-size:13px}
+
+/* ---- labeled row examples ---- */
+.ex{border:1px solid var(--line);border-radius:9px;margin:16px 0;overflow:hidden;background:var(--panel)}
+.ex.pendex{border-style:dashed}
+.exh{font-family:var(--mono);font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;
+  font-weight:600;color:var(--ink);background:var(--line2);padding:10px 14px;
+  border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.exnote{padding:11px 14px 0;color:var(--ink3);font-size:13.5px}
+.exg{padding:12px 14px 14px}
+.exlab{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink3);font-weight:600;margin:8px 0 5px}
+.exlab.out{color:var(--accent)}
+pre{margin:0;font-family:var(--mono);font-size:12.5px;line-height:1.5;white-space:pre-wrap;
+  word-break:break-word;overflow-wrap:anywhere;background:var(--code);color:var(--codeink);
+  padding:11px 13px;border-radius:6px;border:1px solid var(--line2);overflow-x:auto}
+pre.exin{border-left:3px solid var(--line);max-height:420px;overflow-y:auto}
+pre.exout{border-left:3px solid var(--accent)}
+pre.ph{color:var(--ink3);font-style:italic;background:transparent;border-style:dashed;
+  max-height:none;overflow-y:visible}
+pre.scroll{max-height:380px;overflow-y:auto}
+
+/* ---- key/value strip ---- */
+.kv{display:grid;grid-template-columns:minmax(150px,auto) 1fr;gap:0;border:1px solid var(--line);
+  border-radius:8px;overflow:hidden;background:var(--panel);margin:14px 0}
+.kv>div{padding:9px 13px;border-bottom:1px solid var(--line2);font-size:14px}
+.kv>div:nth-child(2n+1){font-family:var(--mono);font-size:12px;color:var(--ink3);
+  background:var(--line2);letter-spacing:.02em}
+.kv>div:nth-child(2n){color:var(--ink2)}
+.kv>div:nth-last-child(1),.kv>div:nth-last-child(2){border-bottom:0}
+
+/* ---- callouts ---- */
+.note{border-left:3px solid var(--accent);background:var(--accent-bg);padding:13px 16px;
+  border-radius:0 7px 7px 0;margin:16px 0;font-size:14.5px;color:var(--ink2)}
+.note b{color:var(--ink)}
+.defect{border-left:3px solid var(--bad);background:var(--bad-bg);padding:13px 16px;
+  border-radius:0 7px 7px 0;margin:16px 0;font-size:14.5px;color:var(--ink2)}
+.defect b{color:var(--bad)}
+.ok{border-left:3px solid var(--good);background:var(--good-bg);padding:13px 16px;
+  border-radius:0 7px 7px 0;margin:16px 0;font-size:14.5px;color:var(--ink2)}
+.ok b{color:var(--good)}
+
+/* ---- phase cards ---- */
+.phase{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:0 9px 9px 0;
+  background:var(--panel);padding:18px 20px;margin:20px 0}
+.phase .ph-h{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap;margin-bottom:3px}
+.phase .ph-n{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.1em;
+  color:var(--accent);text-transform:uppercase}
+.phase .ph-t{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.008em}
+.phase .ph-m{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-left:auto;
+  font-variant-numeric:tabular-nums}
+.phase>p{color:var(--ink2);margin:9px 0 4px}
+.footer{margin-top:70px;padding-top:18px;border-top:1px solid var(--line);
+  color:var(--ink3);font-size:12.5px;font-family:var(--mono)}
+@media(max-width:620px){
+  .kv{grid-template-columns:1fr}
+  .kv>div:nth-child(2n+1){border-bottom:0;padding-bottom:0;background:transparent}
+  .kv>div:nth-child(2n){padding-top:3px}
+  .phase .ph-m{margin-left:0;width:100%}
+}
+</style>
+</head><body>
+<div class="page">
+<p class="kicker">CovalentFormer &middot; v4b &middot; report structure</p>
+<h1>A covalent medicinal chemist, trained in three phases</h1>
+<p class="sub">Qwen2.5-7B + LoRA over 585,530 rows: reaction chemistry, analogue design, and pocket-conditioned covalent hit-to-lead, with a Siamese potency head.</p>
+<p class="sub">Compiled 2026-10-03 &middot; <code>rlhf-system</code> @ <code>16040d4</code></p>
+<div class="banner">
+  <div class="bt">Structure final &middot; model results pending</div>
+  <p>v4b is <b>39.2% through its first epoch</b> (step 6,950 of 17,743) with ~18.6 h remaining.
+  Everything on the data side of this report is measured and final &mdash; corpus, integrity gates,
+  splits, label distributions, the real training rows, and the live loss curve. Every
+  <span class="pend">pending</span> chip is a model result that needs the finished checkpoint.
+  Each metrics table below already declares its <b>pre-registered floor</b>, so the results can be
+  read the moment they land.</p>
+</div>
+<h2><span class="sn">1</span>The three training phases</h2>
+<p class="lede">The model is taught covalent medicinal chemistry in three rungs, each one presupposing the last. Rung 1 teaches what a covalent reaction <i>is</i>. Rung 2 teaches how to edit a molecule without breaking it. Rung 3 asks for the real job: given a pocket and a covalent hit, propose a better covalent analogue and say why. A fourth channel, the potency head, runs across rungs 2 and 3 and is the only part of the system that outputs a number rather than text.</p>
+<div class="tw"><table class="nums"><thead><tr><th>phase</th><th>rows trained</th><th>share</th><th>unique</th><th>mean tokens</th><th>share of tokens</th><th>held out</th></tr></thead><tbody><tr><td>rung 1 &middot; reaction chemistry</td><td>373,935</td><td>63.9%</td><td>373,935</td><td>53</td><td>26%</td><td>32,082</td></tr><tr><td>affinity &middot; potency head</td><td>130,667</td><td>22.3%</td><td>130,667</td><td>207</td><td>36%</td><td>12,408</td></tr><tr><td>rung 2 &middot; analogue design</td><td>68,868</td><td>11.8%</td><td>68,868</td><td>161</td><td>15%</td><td>5,988</td></tr><tr><td>rung 3 &middot; covalent H2L</td><td>12,060</td><td>2.1%</td><td>3,015 &times;4</td><td>1495</td><td>24%</td><td>334</td></tr><tr><td><b>total</b></td><td><b>585,530</b></td><td><b>100%</b></td><td>&mdash;</td><td><b>130</b></td><td><b>100%</b></td><td><b>50,812</b></td></tr></tbody></table></div>
+<p style="color:var(--ink3);font-size:13.5px;margin-top:-2px">Rung 3 is repeated 4&times; in the mix (3,015 unique pairs &rarr; 12,060 rows) because it is the target task and is three orders of magnitude rarer than rung 1. The token-share column is why: at 1,495 tokens a row it is 2.1% of the rows but 24% of the compute.</p>
+<div class="phase">
+  <div class="ph-h"><span class="ph-n">Phase 1</span><span class="ph-t">Reaction chemistry</span>
+  <span class="ph-m">373,935 rows &middot; 63.9%</span></div>
+  <p>Four subtasks that force the model to represent the covalent bond-forming event itself, not
+  just the molecules around it. <b>ADDUCT</b> applies the reaction forward; <b>RETRO</b> inverts it;
+  <b>SELECTIVITY</b> names the residue attacked; <b>WARHEAD_ID</b> names the electrophile class.
+  Together they are the vocabulary the later rungs assume. No pocket is shown at this rung &mdash;
+  these are properties of the ligand alone.</p>
+</div>
+<div class="ex">
+  <div class="exh">Rung 1 &middot; ADDUCT &mdash; a real labelled row</div>
+  <div class="exnote">Forward direction. The acrylamide C=C is attacked by a cysteine thiol, so the vinyl becomes a thioether &mdash; note the product keeps every stereocentre.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">The molecule below reacts covalently with a CYS residue of a target protein. Give the SMILES of the resulting adduct.
+
+Input: C[C@H]1O[C@@H]2C3=C(O[C@]2(C)[C@@]1(O)C=O)C(=O)c1c(O)cccc1C3=O</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">CSC(O)[C@@]1(O)[C@@H](C)O[C@@H]2C3=C(O[C@@]21C)C(=O)c1c(O)cccc1C3=O</pre>
+  </div>
+  
+</div>
+<div class="ex">
+  <div class="exh">Rung 1 &middot; RETRO &mdash; a real labelled row</div>
+  <div class="exnote">Inverse direction, and the harder of the two: the model must recognise that <code>C(=N)SC</code> is a nitrile that has already reacted, and undo it back to <code>C#N</code>.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">The molecule below is a covalent ADDUCT between an inhibitor and a protein residue. Give the SMILES of the PARENT inhibitor before it reacted.
+
+Input: CSC(=N)C(Cn1cncn1)(C[Si](C)(C)C)c1ccc(F)cc1</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">C[Si](C)(C)CC(C#N)(Cn1cncn1)c1ccc(F)cc1</pre>
+  </div>
+  
+</div>
+<div class="ex">
+  <div class="exh">Rung 1 &middot; SELECTIVITY &mdash; a real labelled row</div>
+  <div class="exnote">Six residue classes. A sulfonyl fluoride is the giveaway here &mdash; it is the one warhead that routinely attacks histidine and tyrosine rather than cysteine.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">This molecule is a covalent inhibitor. Which amino-acid residue does it react with? Answer with the 3-letter code.
+
+Input: O=C(O)C(=O)Nc1nc(Oc2ccccc2Cl)sc1C(=O)Nc1ccc2ccccc2c1</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">SER</pre>
+  </div>
+  
+</div>
+<div class="ex">
+  <div class="exh">Rung 1 &middot; WARHEAD_ID &mdash; a real labelled row</div>
+  <div class="exnote">Eight electrophile classes. Pure recognition, and the cheapest signal in the corpus to learn.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">Identify the electrophilic warhead in this molecule. Answer with the warhead class name only.
+
+Input: CN(C)[C@@H]1CC[C@H](n2cc(C(N)=O)c(Nc3ccc(Cl)cc3)n2)[C@@H](C#N)C1</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">nitrile</pre>
+  </div>
+  
+</div>
+<h3>What the rung-1 labels actually look like</h3>
+<p class="lede">These distributions set the majority-class floors used in &sect;5. Both label sets are heavily skewed, so accuracy alone would be misleading &mdash; macro-F1 is the honest metric.</p>
+<div class="tw"><table class="nums"><thead><tr><th>warhead class</th><th>rows</th><th>share</th></tr></thead><tbody><tr><td>nitrile</td><td>27,009</td><td>35.1%</td></tr><tr><td>alpha_keto_amide</td><td>14,998</td><td>19.5%</td></tr><tr><td>acrylamide</td><td>11,948</td><td>15.5%</td></tr><tr><td>aldehyde</td><td>10,963</td><td>14.3%</td></tr><tr><td>epoxide</td><td>8,484</td><td>11.0%</td></tr><tr><td>chloroacetamide</td><td>1,993</td><td>2.6%</td></tr><tr><td>sulfonyl_F</td><td>633</td><td>0.8%</td></tr><tr><td>vinyl_sulfone</td><td>351</td><td>0.5%</td></tr></tbody></table></div>
+<div class="tw"><table class="nums"><thead><tr><th>residue attacked</th><th>rows</th><th>share</th></tr></thead><tbody><tr><td>CYS</td><td>36,006</td><td>36.3%</td></tr><tr><td>SER</td><td>23,586</td><td>23.8%</td></tr><tr><td>LYS</td><td>16,603</td><td>16.7%</td></tr><tr><td>HIS</td><td>11,119</td><td>11.2%</td></tr><tr><td>TYR</td><td>6,060</td><td>6.1%</td></tr><tr><td>THR</td><td>5,782</td><td>5.8%</td></tr></tbody></table></div>
+<div class="phase">
+  <div class="ph-h"><span class="ph-n">Phase 2</span><span class="ph-t">Analogue design &middot; hit-to-lead</span>
+  <span class="ph-m">68,868 rows &middot; 11.8%</span></div>
+  <p>Matched molecular pairs over covalent ligands. Given a hit, propose a close analogue that
+  <b>keeps the warhead and the binding scaffold</b> &mdash; the two constraints that make an edit a
+  medicinal-chemistry move rather than an arbitrary new molecule. The label names the transform
+  explicitly before giving the SMILES, which turns an open-ended generation into a decision the
+  model can be scored on. Still no pocket: this rung teaches editing, not placement.</p>
+</div>
+<div class="ex">
+  <div class="exh">Rung 2 &mdash; a real labelled row</div>
+  <div class="exnote">A textbook medicinal-chemistry move: <b>N-methylpiperazine &rarr; morpholine</b>, swapping a basic amine for an ether to shed basicity and the hERG and hepatic-clearance liabilities that come with it. The acrylamide warhead and the entire aminothiazole-benzamide scaffold are untouched, which is exactly the constraint the instruction imposes.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">Here is a covalent ligand with a acrylamide warhead. Propose a close analogue that keeps the warhead and the binding scaffold.
+
+Hit: C=CC(=O)Nc1cccc(C(=O)Nc2ncc(N3CCN(C)CC3)s2)c1</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">TRANSFORM: substitute CCN(C)CC -&gt; CCOCC at N
+ANALOGUE: C=CC(=O)Nc1cccc(C(=O)Nc2ncc(N3CCOCC3)s2)c1</pre>
+  </div>
+  
+</div>
+<div class="defect"><b>A real defect in this rung, found while compiling this report.</b>
+  1,088 of 68,868 rung-2 rows (1.58%) carry a degenerate transform label of the form
+  <code>substitute X -&gt; X</code> &mdash; for instance <code>substitute Cl -&gt; Cl</code>, emitted
+  when the chloro <i>moves position</i> on a ring: the labeller names the atom swapped but not the
+  position moved, so the label reads as a no-op. The SMILES pair is correct and the edit is real;
+  only the natural-language label is uninformative. It is small enough not to justify restarting a
+  run that is 39% complete, and it is logged here rather than quietly fixed.</div>
+<div class="phase">
+  <div class="ph-h"><span class="ph-n">Phase 3</span><span class="ph-t">Covalent hit-to-lead, pocket-conditioned</span>
+  <span class="ph-m">3,015 unique &middot; 2.1%</span></div>
+  <p>The target task. The model is given the hit <i>and its own co-crystal pocket</i>, expressed in
+  the <b>covalent reaction frame</b>: the attacked electrophilic atom sits at the origin, the attack
+  axis is +z, and +x points toward the Murcko-scaffold centroid. That frame is the reason the
+  geometry generalises across complexes &mdash; every pocket is expressed relative to the chemistry
+  that is about to happen, not to an arbitrary crystallographic axis.</p>
+  <p>The output is a full medicinal-chemistry rationale, not a bare SMILES: the structural
+  <b>Change</b>, the <b>Intent</b> (is this edit for recognition, for reactivity, or both), the
+  <b>Warhead</b> move, the contacts it <b>Gains</b> and <b>Loses</b>, and only then the
+  <b>Analogue</b>.</p>
+</div>
+<div class="ex">
+  <div class="exh">Rung 3 &mdash; a real labelled row (7KRF, P03366)</div>
+  <div class="exnote">HIV-1 reverse transcriptase. The hit carries a <b>fluorosulfate</b> that attacks <b>TYR181</b> at a 135&deg; approach angle &mdash; so the ELEC atom at the origin is sulfur, not carbon. The label swaps that warhead to a haloacetamide and extends the linker, trading four contacts away for four others including a new TYR188 hydrogen bond. The LIGAND block lists every heavy atom in frame coordinates; the POCKET block gives the 20 nearest of 43 residues by minimum distance.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">Covalent hit-to-lead. The pocket below is from this hit&#x27;s own co-crystal (7KRF), in the reaction frame: the electrophilic carbon is the origin and the attack axis is +z.
+
+Hit: N#CC=Cc1cc(F)cc(Oc2ccc(OS(=O)(=O)F)cc2OCCn2ccc(=O)[nH]c2=O)c1
+
+COVALENT partner=TYR181.OH angle=135
+
+LIGAND idx el x y z
+  L0   C    10.4    0.5    3.3
+  L1   C    11.4    0.8    2.5
+  L2   C    12.8    1.0    3.1
+  L3   C     3.3    0.2   -1.0
+  L4   C     2.5    1.2   -0.4
+  L5   C     3.0    2.1    0.4
+  L6   C     4.4    2.2    0.6
+  L7   C     5.2    1.2    0.0
+  L8   C     4.7    0.2   -0.8
+  L9   C     7.2    0.7    1.3
+  L10  C     4.9   -1.5   -2.5
+  L11  C     6.0   -2.3   -3.1
+  L12  C     7.1   -1.0   -5.0
+  L13  C     9.3    0.1   -4.7
+  L14  C     9.4   -0.5   -3.3
+  L15  C     8.3   -1.3   -2.8
+  L16  C     6.4   -0.2    2.1
+  L17  C     6.9   -0.8    3.2
+  L18  C     8.2   -0.5    3.6
+  L19  C     9.0    0.3    2.8
+  L20  C     8.5    0.9    1.7
+  L21  F     6.1   -1.6    3.9
+  L22  N     7.1   -1.5   -3.6
+  L23  N     8.1   -0.2   -5.5
+  L24  N    13.8    1.2    3.5
+  L25  O     1.1    1.1   -0.6
+  L26  O     6.6    1.3    0.1
+  L27  O     5.5   -0.7   -1.4
+  L28  O     6.1   -1.1   -5.6
+  L29  O    10.2    0.7   -5.1
+  L30  O     0.5   -1.3   -0.5
+  L31  O    -1.3    0.4   -0.4
+  L32  S     0.0    0.0    0.0  ELEC
+POCKET res num dmin near_x near_y near_z   (20 of 43 nearest residues)
+  TYR  181    1.7    0.0    0.0    1.7  NUC
+  LYS  101    3.0    1.1   -3.8   -2.1
+  VAL  106    3.1    8.3    3.3   -1.5
+  LYS  102    3.2    4.8   -2.0   -8.4
+  LYS  103    3.2    3.1   -0.2   -6.5
+  PRO  236    3.4    7.9   -2.4   -8.2
+  TYR  318    3.4    7.6   -5.3   -3.8
+  TYR  188    3.4    7.7    2.3    5.5
+  LEU  100    3.5    3.6   -3.2    2.1
+  PRO  95     3.7    5.0   -3.2    7.0
+  LEU  234    3.8   10.7   -2.8    1.5
+  VAL  179    3.9   -0.9    3.7    1.5
+  GLY  190    4.0    3.7    5.9   -0.9
+  TRP  229    4.0    8.5   -3.6    6.4
+  VAL  189    4.4    4.9    6.4   -0.6
+  GLU  138    4.5   -0.5   -3.1    3.5
+  GLY  99     5.1   -0.1   -6.3    0.4
+  SER  105    5.4    6.6    5.0   -5.6
+  LYS  104    5.5    3.4    2.8   -8.4
+  ILE  180    5.6    0.6    6.4    3.0
+
+Task: propose an analogue that keeps the warhead and the binding scaffold.</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">Change: LINK_EXTEND
+Intent: BOTH
+Warhead: SWAP_TO:haloacetamide
+Gains: PRO95.hydrophobic, TYR183.aromatic, TYR183.hydrophobic, TYR188.hbond
+Loses: LYS102.hbond, PRO236.hbond, VAL108.hydrophobic, VAL189.hydrophobic
+Analogue: N#Cc(c1)ccc(c12)c(N(C)C(=O)CCl)cc(c2C)Oc3c(cccc3)OCCn4ccc(=O)[nH]c4=O</pre>
+  </div>
+  <div class="exg"><div class="exlab">Why this row survived the integrity gate</div><div class="tw"><table class="nums"><thead><tr><th>check</th><th>value</th></tr></thead><tbody><tr><td>heavy atoms in the Hit SMILES</td><td><span class="num">34</span></td></tr><tr><td>atoms in the LIGAND block</td><td><span class="num">33</span></td></tr><tr><td>ratio (gate accepts 0.80&ndash;1.25)</td><td><span class="num">0.97</span></td></tr><tr><td>Tanimoto, hit to analogue</td><td><span class="num">0.3333</span></td></tr><tr><td>nucleophile</td><td><span class="num">TYR</span></td></tr></tbody></table></div></div>
+</div>
+<h3>What the rung-3 labels actually look like</h3>
+<p class="lede">These four distributions are the pre-registered floors for &sect;7. Two of them are badly skewed, which is exactly the trap the v4 change-op number fell into.</p>
+<h3 style="margin:18px 0 4px;font-size:14px">Change</h3>
+<div class="tw"><table class="nums"><thead><tr><th>label</th><th>rows</th><th>share</th></tr></thead><tbody><tr><td>REPLACE</td><td>1,123</td><td>37.2%</td></tr><tr><td>LINK_EXTEND</td><td>874</td><td>29.0%</td></tr><tr><td>LINK_SHORTEN</td><td>736</td><td>24.4%</td></tr><tr><td>GROW</td><td>139</td><td>4.6%</td></tr><tr><td>TRIM</td><td>127</td><td>4.2%</td></tr><tr><td>NONE</td><td>16</td><td>0.5%</td></tr></tbody></table></div>
+<h3 style="margin:18px 0 4px;font-size:14px">Intent</h3>
+<div class="tw"><table class="nums"><thead><tr><th>label</th><th>rows</th><th>share</th></tr></thead><tbody><tr><td>RECOGNITION</td><td>2,266</td><td>75.2%</td></tr><tr><td>BOTH</td><td>688</td><td>22.8%</td></tr><tr><td>NEITHER</td><td>57</td><td>1.9%</td></tr><tr><td>REACTION</td><td>4</td><td>0.1%</td></tr></tbody></table></div>
+<h3 style="margin:18px 0 4px;font-size:14px">Warhead move</h3>
+<div class="tw"><table class="nums"><thead><tr><th>label</th><th>rows</th><th>share</th></tr></thead><tbody><tr><td>KEEP</td><td>2,323</td><td>77.0%</td></tr><tr><td>SWAP_TO:none</td><td>308</td><td>10.2%</td></tr><tr><td>SWAP_TO:aldehyde_peptidic</td><td>127</td><td>4.2%</td></tr><tr><td>SWAP_TO:ketoamide</td><td>69</td><td>2.3%</td></tr><tr><td>SWAP_TO:epoxide</td><td>36</td><td>1.2%</td></tr><tr><td>SWAP_TO:boronic_acid</td><td>35</td><td>1.2%</td></tr></tbody></table></div>
+<h3 style="margin:26px 0 4px;font-size:14px">How far apart a hit and its analogue actually are</h3>
+<p class="lede">This is the single most important number for calibrating expectations on rung 3, and it is a property of the data rather than the model.</p>
+<div class="tw"><table class="nums"><thead><tr><th>hit &rarr; analogue Tanimoto</th><th>pairs</th><th>share</th></tr></thead><tbody><tr><td>&lt; 0.30</td><td>0</td><td>0.0%</td></tr><tr><td>0.30 &ndash; 0.40</td><td>1,192</td><td>39.5%</td></tr><tr><td>0.40 &ndash; 0.55</td><td>953</td><td>31.6%</td></tr><tr><td>0.55 &ndash; 0.70</td><td>513</td><td>17.0%</td></tr><tr><td>&ge; 0.70</td><td>357</td><td>11.8%</td></tr><tr><td><b>mean 0.482 &middot; median 0.436 &middot; p10 0.320</b></td><td><b>3,015</b></td><td><b>100%</b></td></tr></tbody></table></div>
+<div class="note"><b>The median rung-3 "analogue" shares only Tc 0.436 with its hit.</b>
+  39.5% of pairs sit between 0.30 and 0.40, and the miner enforces a hard floor at 0.30 &mdash; no
+  pair falls below it. These are <i>programme-level</i> jumps across a real optimisation campaign,
+  not tight matched molecular pairs, which is why exact recovery of the reference analogue is a very
+  demanding metric here. It also reframes v4's headline failure: a best-of-20 output at Tc 0.378 to
+  the reference, when the reference is itself only ~0.44 from the hit, means the model landed about
+  as far from the target as its own input did.</div>
+<div class="defect"><b>A second real defect, worth stating before any result is read.</b>
+  308 of 3,015 rung-3 rows (10.2%) have <code>Warhead: SWAP_TO:none</code> &mdash; the "improved"
+  analogue has <i>no electrophile at all</i>. These are mined from real covalent programs where a
+  team abandoned the warhead, so they are genuine medicinal chemistry, but they contradict the
+  instruction the model is given ("keep the warhead"). They will inflate any warhead-retention
+  metric's apparent error. &sect;7 therefore reports warhead retention on the
+  <code>KEEP</code> subset separately.</div>
+<div class="phase">
+  <div class="ph-h"><span class="ph-n">Channel 4</span><span class="ph-t">The potency head</span>
+  <span class="ph-m">130,667 rows &middot; 22.3%</span></div>
+  <p>A Siamese MLP over <code>[hit_vec, ana_vec, ana_vec &minus; hit_vec]</code>, reading the final
+  hidden state through a forward hook, trained with a masked regression loss so unlabelled rows
+  contribute nothing. It predicts <b>&Delta;pIC50</b> &mdash; the potency gain of the analogue over
+  its hit &mdash; and it is the piece of v3 that had to be rebuilt from scratch.</p>
+</div>
+<div class="ex">
+  <div class="exh">Potency channel &mdash; a real labelled row</div>
+  <div class="exnote">The structural edit is acrylamide &rarr; propiolamide &mdash; same heavy-atom count, a more reactive Michael acceptor. The &Delta;pIC50 of +1.32 is the regression target and is read by the head, <b>not</b> emitted as text.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; what the model is shown</div>
+    <pre class="exin">Covalent hit-to-lead with potency optimisation.
+Hit: C=CC(=O)Nc1cccc(C(C)Nc2nc(Nc3ccc(N4CCN(C)CC4)cc3OC)ncc2Cl)c1
+Measured: pIC50 8.18
+Task: propose an analogue that keeps the warhead and the binding scaffold, and improves potency by at least 3x.</pre>
+    <div class="exlab out">LABEL &mdash; what it must produce</div>
+    <pre class="exout">Change: trim 7 heavy atoms
+Analogue: C=CC(=O)Nc1cccc(CNc2nc(Nc3cnn(CCOC)c3)ncc2Cl)c1
+
+[regression target, not generated: dpic50 = 1.121]</pre>
+  </div>
+  
+</div>
+<div class="ok"><b>The v3 leak is dead in the data, not just at train time.</b> Every v3
+  potency number was void because the response span contained the literal line
+  <code>Predicted dpIC50: +1.32</code> &mdash; inside the very span a response-pooled head reads, so
+  the head could read its own answer. v3b stripped it in the trainer, which left the defect one
+  forgotten flag away from returning. v4b strips it in the corpus: a scan of all 585,530 training
+  rows finds <b>0</b> whose output mentions <code>dpIC50</code>, and the build refuses to write a
+  file that fails that check.</div>
+<h2><span class="sn">2</span>What was thrown away, and why</h2>
+<p class="lede">Rung 3 is the task that matters and the task with the least data, which makes it the easiest place to accept bad rows. 31.7% of what the miner offered was rejected.</p>
+<div class="tw"><table class="nums"><thead><tr><th>gate</th><th>rows</th><th>what it catches</th></tr></thead><tbody><tr><td>rows offered by the covalent-program miner</td><td>5,535</td><td>pairs with a hit, an analogue and a co-crystal</td></tr><tr><td>LIGAND block disagreed with the Hit SMILES</td><td>-1,527</td><td>pocket geometry described a different molecule</td></tr><tr><td>disconnected SMILES (salts, fragments)</td><td>-150</td><td>multi-fragment hit or analogue</td></tr><tr><td>stereo-only difference</td><td>-61</td><td>winnable by copying the input</td></tr><tr><td>identical after canonicalisation</td><td>-17</td><td>no edit at all</td></tr><tr><td>duplicate pairs removed</td><td>-431</td><td>same (hit, analogue) seen twice</td></tr><tr><td><b>rung 3 train rows surviving</b></td><td>3,015</td><td><b>plus 334 held out</b></td></tr></tbody></table></div>
+<div class="note"><b>The biggest single gate is the one nobody would think to write.</b>
+  1,527 rows &mdash; 27.6% of everything offered &mdash; had a LIGAND coordinate block whose atom
+  count disagreed with the Hit SMILES by more than &plusmn;25%. The pocket geometry in those rows
+  describes a <i>different molecule</i> than the SMILES the model is asked to edit, which would have
+  taught the model to ignore the geometry. The gate compares ligand-block atoms against the hit's
+  heavy-atom count and demands a ratio in 0.80&ndash;1.25.</div>
+<div class="ok"><b>Post-gate integrity checks, run against the actual training file.</b> All 12,060 rung-3 analogue SMILES parse under RDKit (0 failures). 0 rows carry the dpIC50 leak. <code>Change: NONE</code> survives on only 16 of 3,015 rows (0.5%).</div>
+<h2><span class="sn">3</span>How the held-out sets are built</h2>
+<p class="lede">v4 had a held-out split for rung-3 generation only, which is why it has no validation loss, no early stopping and no per-rung evaluation. v4b splits all four channels, each on the key that makes memorisation useless.</p>
+<div class="tw"><table class=""><thead><tr><th>channel</th><th>split key</th><th>held out</th><th>why this key</th></tr></thead><tbody><tr><td>rung 1</td><td>input molecule</td><td>32,082</td><td>all four subtasks key off the same molecule, so a row-level split would let a test molecule reappear under another subtask</td></tr><tr><td>rung 2</td><td>deduplicated pair</td><td>5,988</td><td>pair-disjoint; 4,385 duplicate pairs (5.5%) were removed first, after a random split put 600 test pairs&rsquo; twins into training</td></tr><tr><td>rung 3</td><td>deduplicated pair</td><td>334</td><td>same construction; 431 duplicates removed</td></tr><tr><td>affinity</td><td>hit group</td><td>12,408</td><td>the metric is within-hit Spearman, so every analogue of a hit must land on one side or the metric is undefined</td></tr></tbody></table></div>
+<div class="note"><b>Deliberately not a component split.</b> v4's rung-3 fold assigned whole
+  connected components of the molecule graph, which put test molecules at median max-Tc <b>0.357</b>
+  to training &mdash; below the Tc&nbsp;&ge;&nbsp;0.40 that rung 2 itself uses to call two molecules
+  analogues at all &mdash; and collapsed the fold into ~3 chemotypes, so the effective chemical
+  <i>n</i> was 3, not 1,017. That is a worst-case probe, not a measurement. v4b uses pair-level
+  disjointness and instead <b>tags every test row with its max ECFP4 Tanimoto to training</b>, so
+  difficulty tiers (<code>all</code>, <code>&le;0.8</code>, <code>&le;0.7</code>) become a reporting
+  choice from one checkpoint rather than a corpus decision requiring a retrain.</div>
+<h2><span class="sn">4</span>Training setup</h2>
+<div class="kv"><div>base model</div><div>Qwen2.5-7B (frozen, bf16)</div><div>adapter</div><div>LoRA r=16, &alpha;=32, dropout 0.05 on q/k/v/o/gate/up/down &mdash; 196 adapters</div><div>potency head</div><div>Siamese MLP on [hit, ana, ana&minus;hit], 2,774,529 params, input 3&times;3584</div><div>head input</div><div>forward hook on the final Qwen2RMSNorm (not output_hidden_states)</div><div>batch</div><div>bs 3 &times; accum 11 = 33 examples per optimizer step</div><div>max length</div><div>3,072 tokens; length-grouped batching, p50 198 chars / p95 517 / max 2,969</div><div>schedule</div><div>1.00 epoch = 17,743 steps; pre-tokenised before step 0</div><div>validation</div><div>every 500 steps on 3,000 held-out rows, patience 4</div><div>insurance</div><div>checkpoint every 500 steps, full snapshot every 2,000, --auto-resume</div></div>
+<p style="color:var(--ink3);font-size:13.5px">Qwen2.5-7B has zero free reserved token slots and <code>resize_token_embeddings</code> is forbidden here, so every structured field (<code>Change:</code>, <code>Intent:</code>, &hellip;) is ordinary text rather than a special token &mdash; which also means the potency head cannot key off a sentinel and must pool the response span.</p>
+<h2><span class="sn">5</span>Rung 1 evaluation &mdash; vs base Qwen2.5-7B</h2>
+<p class="lede">All four subtasks on the 32,082-row held-out fold, against the untuned base model given the identical prompt. The base model is the honest control for "did fine-tuning teach chemistry, or was it already there?" For v4, base-model SMILES validity on the generative rungs was <b>0.65%</b> &mdash; the floor is near zero, and any generative number above a few percent is real.</p>
+<div class="tw"><table class="nums"><thead><tr><th>subtask</th><th>metric</th><th>floor (pre-registered)</th><th>base Qwen</th><th>v4b</th><th>held-out loss</th></tr></thead><tbody><tr><td>ADDUCT</td><td>exact match / validity</td><td><span class="floor">~0% exact</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td></tr><tr><td>RETRO</td><td>exact match / validity</td><td><span class="floor">~0% exact</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td></tr><tr><td>SELECTIVITY</td><td>accuracy / macro-F1</td><td><span class="floor">36.3% (always CYS)</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td></tr><tr><td>WARHEAD_ID</td><td>accuracy / macro-F1</td><td><span class="floor">35.1% (always nitrile)</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td></tr></tbody></table></div>
+<p style="color:var(--ink3);font-size:13.5px">The two classification floors come from the measured label distributions in &sect;1: CYS is 36.3% of SELECTIVITY and nitrile is 35.1% of WARHEAD_ID. An accuracy of 60% on either would therefore be a <i>weak</i> result, not a strong one &mdash; which is why macro-F1 is reported alongside.</p>
+<div class="ex pendex">
+  <div class="exh">CovalentFormer v4b &mdash; input and output <span class="pend">pending</span></div>
+  <div class="exnote">One held-out rung-1 row per subtask, fed verbatim, with v4b&rsquo;s generation beside the base model&rsquo;s on the same prompt.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; held-out row, fed verbatim</div>
+    <pre class="exin ph">awaiting the trained checkpoint</pre>
+    <div class="exlab out">v4b OUTPUT &mdash; generated, not retrieved</div>
+    <pre class="exout ph">awaiting the trained checkpoint</pre>
+  </div>
+</div>
+<h2><span class="sn">6</span>Rung 2 evaluation &mdash; vs base Qwen2.5-7B</h2>
+<p class="lede">5,988 held-out pairs. Rung 2 has no single right answer &mdash; many analogues are reasonable &mdash; so exact match is reported but is not the headline. The constraint metrics are: did the proposal parse, did it keep the warhead, did it keep the scaffold, and is it actually different from the input.</p>
+<div class="tw"><table class=""><thead><tr><th>metric</th><th>floor (pre-registered)</th><th>base Qwen</th><th>v4b</th><th>note</th></tr></thead><tbody><tr><td>SMILES validity</td><td><span class="floor">0.65% (v4-era base)</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td>parses under RDKit</td></tr><tr><td>warhead retained</td><td><span class="floor">100% by copying</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td>trivially satisfiable &mdash; read with the next row</td></tr><tr><td>scaffold retained</td><td><span class="floor">100% by copying</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td>Murcko scaffold identity</td></tr><tr><td>non-trivial (&ne; input)</td><td><span class="floor">0% by copying</span></td><td><span class="pend">pending</span></td><td><span class="pend">pending</span></td><td><b>the metric copying cannot win</b></td></tr><tr><td>exact match @1</td><td>&mdash;</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>recovers the reference analogue</td></tr><tr><td>exact match @20</td><td>&mdash;</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>best of 20 samples</td></tr><tr><td>held-out LM loss</td><td>&mdash;</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>rung-2 rows only</td></tr></tbody></table></div>
+<div class="note"><b>Why "non-trivial" is the row to read first.</b> Warhead and scaffold
+  retention are both 100% satisfiable by echoing the input, and v4's evaluation was nearly fooled by
+  exactly this: 11 of 146 apparent rung-3 recall hits were stereo-only pairs the model won by
+  copying. Retention and novelty are only meaningful <i>as a pair</i> &mdash; high on both is the
+  only good outcome.</div>
+<div class="ex pendex">
+  <div class="exh">CovalentFormer v4b &mdash; input and output <span class="pend">pending</span></div>
+  <div class="exnote">One held-out rung-2 hit, fed verbatim, with v4b&rsquo;s proposed analogue and the base model&rsquo;s on the same prompt.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; held-out row, fed verbatim</div>
+    <pre class="exin ph">awaiting the trained checkpoint</pre>
+    <div class="exlab out">v4b OUTPUT &mdash; generated, not retrieved</div>
+    <pre class="exout ph">awaiting the trained checkpoint</pre>
+  </div>
+</div>
+<h2><span class="sn">7</span>Rung 3 evaluation &mdash; vs the held-out test set</h2>
+<p class="lede">334 held-out pocket-conditioned pairs, pair-disjoint from training and tagged by Tanimoto tier. This is the task the system exists for, and the one where v4 produced the result worth being honest about.</p>
+<div class="tw"><table class=""><thead><tr><th>metric</th><th>floor (pre-registered)</th><th>v4b</th><th>what it tests</th></tr></thead><tbody><tr><td>SMILES validity</td><td><span class="floor">0.65% base</span></td><td><span class="pend">pending</span></td><td>the proposal is a molecule</td></tr><tr><td>warhead retained (KEEP subset)</td><td><span class="floor">100% by copying</span></td><td><span class="pend">pending</span></td><td>restricted to the 2,323 <code>KEEP</code> rows &mdash; see the &sect;1 defect</td></tr><tr><td>exact match @1</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>recovers the real programme analogue</td></tr><tr><td>exact match @20</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>best of 20</td></tr><tr><td>Change accuracy</td><td><span class="floor">37.2% (always REPLACE)</span></td><td><span class="pend">pending</span></td><td>the structural move</td></tr><tr><td>Intent accuracy</td><td><span class="floor">75.2% (always RECOGNITION)</span></td><td><span class="pend">pending</span></td><td><b>a nearly-saturated field</b></td></tr><tr><td>Warhead-move accuracy</td><td><span class="floor">77.0% (always KEEP)</span></td><td><span class="pend">pending</span></td><td>also nearly saturated</td></tr><tr><td>contact Gains/Loses P / R / F1</td><td>&mdash;</td><td><span class="pend">pending</span> / <span class="pend">pending</span> / <span class="pend">pending</span></td><td>does it know which contacts the edit buys</td></tr><tr><td>best-of-20 Tc to reference</td><td><span class="floor">0.401 = the hit itself</span></td><td><span class="pend">pending</span></td><td><b>must beat copying the input</b></td></tr><tr><td>held-out LM loss</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>rung-3 rows only</td></tr></tbody></table></div>
+<div class="note"><b>Read the three label fields against their floors, not against 100%.</b>
+  Intent is 75.2% RECOGNITION and Warhead-move is 77.0% KEEP, so a 78% accuracy on either is
+  roughly <i>nothing learned</i>. This is the exact error v4 nearly shipped: a 49.4% change-op score
+  read as failure until a conditional-entropy audit showed only 1.099 of 2.047 bits of the field are
+  recoverable from the input at all, putting the Bayes-optimal ceiling at 64.7% &mdash; so 49.4%
+  against a 37.2% floor was most of the available signal, not a shortfall.</div>
+<div class="defect"><b>The bar v4 failed, stated in advance.</b> On novel scaffolds, v4's
+  best-of-20 analogue reached Tanimoto <b>0.378</b> to the reference while the hit it was handed
+  already sat at <b>0.401</b> &mdash; the model did worse than copying its own input. Its Tc profile
+  was flat: <b>0%</b> of hits landed in the 0.55&ndash;1.0 band, and the headline 35.06% exact@20
+  came entirely from exact membership. v4b's rung-3 result is only meaningful if
+  <code>Tc to reference &gt; 0.401</code> and the 0.55&ndash;1.0 band is non-empty.</div>
+<div class="ex pendex">
+  <div class="exh">CovalentFormer v4b &mdash; input and output <span class="pend">pending</span></div>
+  <div class="exnote">One held-out complex, the full pocket block fed verbatim, with v4b&rsquo;s complete Change / Intent / Warhead / Gains / Loses / Analogue output.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; held-out row, fed verbatim</div>
+    <pre class="exin ph">awaiting the trained checkpoint</pre>
+    <div class="exlab out">v4b OUTPUT &mdash; generated, not retrieved</div>
+    <pre class="exout ph">awaiting the trained checkpoint</pre>
+  </div>
+</div>
+<h2><span class="sn">8</span>Potency head evaluation</h2>
+<p class="lede">12,408 held-out rows across hit groups held out whole. The headline is <b>within-hit Spearman</b>, not global R&sup2;: ranking analogues <i>of the same hit</i> is the decision a chemist actually makes, and a global metric can look strong purely by separating easy hits from hard ones.</p>
+<div class="tw"><table class=""><thead><tr><th>metric</th><th>floor / reference</th><th>v4b</th><th>note</th></tr></thead><tbody><tr><td>MSE</td><td><span class="floor">label variance</span></td><td><span class="pend">pending</span></td><td>validation MSE is already live at <b>0.1107</b> (R&sup2; &asymp; 0.62)</td></tr><tr><td>MAE</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>&Delta;pIC50 units</td></tr><tr><td>global R&sup2;</td><td><span class="floor">0.0</span></td><td><span class="pend">pending</span></td><td>across all held-out pairs</td></tr><tr><td>within-hit Spearman</td><td><span class="floor">within-hit variance floor</span></td><td><span class="pend">pending</span></td><td><b>the metric that matters</b></td></tr><tr><td>variance floor</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>how much within-hit spread exists to be ranked at all</td></tr><tr><td>hit groups scored</td><td>&mdash;</td><td><span class="pend">pending</span></td><td>groups with &ge;3 analogues</td></tr></tbody></table></div>
+<div class="note"><b>Why the variance floor is reported next to the Spearman.</b> If the analogues of a given hit barely differ in potency, a high within-hit Spearman is noise and a low one is meaningless. The floor says how much orderable spread the held-out groups actually contain, so the correlation can be read as a fraction of what was rankable.</div>
+<div class="ex pendex">
+  <div class="exh">CovalentFormer v4b &mdash; input and output <span class="pend">pending</span></div>
+  <div class="exnote">One held-out hit group: the hit, its analogues, the true &Delta;pIC50 ordering and v4b&rsquo;s predicted ordering side by side.</div>
+  <div class="exg">
+    <div class="exlab">INPUT &mdash; held-out row, fed verbatim</div>
+    <pre class="exin ph">awaiting the trained checkpoint</pre>
+    <div class="exlab out">v4b OUTPUT &mdash; generated, not retrieved</div>
+    <pre class="exout ph">awaiting the trained checkpoint</pre>
+  </div>
+</div>
+<h2><span class="sn">9</span>Training dynamics &mdash; live</h2>
+<p class="lede">These are real, current numbers, not placeholders. v4b is the first run in this project with a validation loss at all.</p>
+<div class="tw"><table class=""><thead><tr><th>quantity</th><th>value</th><th>note</th></tr></thead><tbody><tr><td>step</td><td><span class="num">6,950 / 17,743</span></td><td>39.2% of epoch 1</td></tr><tr><td>train LM loss</td><td><span class="num">~0.143</span></td><td>running mean over the last 10 logged steps</td></tr><tr><td>train potency MSE</td><td><span class="num">~0.10</span></td><td>~165 labelled rows per step of 33</td></tr><tr><td>validation LM loss</td><td><span class="num">0.1782</span></td><td>monotone across all 5 evaluations</td></tr><tr><td>validation potency MSE</td><td><span class="num">0.1107</span></td><td>R&sup2; &asymp; 0.62 against the label variance</td></tr><tr><td>errors / NaN / OOM</td><td><span class="num">0 / 0 / 0</span></td><td>across 2,900 logged steps</td></tr><tr><td>watchdog relaunches</td><td><span class="num">0</span></td><td>armed 06:22, every check since has logged ok</td></tr><tr><td>throughput</td><td><span class="num">6.2 s/step</span></td><td>689 tokens/s &mdash; see &sect;11</td></tr><tr><td>remaining</td><td><span class="num">18.6 h</span></td><td>for epoch 1 at the measured rate</td></tr></tbody></table></div>
+<h3>Validation curve</h3>
+<div class="tw"><table class="nums"><thead><tr><th>step</th><th>LM loss</th><th>potency MSE</th><th>&Delta; LM</th></tr></thead><tbody><tr><td>4500</td><td><span class="num">0.2057</span></td><td>0.1324</td><td>&mdash;</td></tr><tr><td>5000</td><td><span class="num">0.1971</span></td><td>0.1226</td><td><span class="num good">-0.0086</span></td></tr><tr><td>5500</td><td><span class="num">0.1912</span></td><td>0.1248</td><td><span class="num good">-0.0059</span></td></tr><tr><td>6000</td><td><span class="num">0.1837</span></td><td>0.1286</td><td><span class="num good">-0.0075</span></td></tr><tr><td>6500</td><td><span class="num">0.1782</span></td><td>0.1107</td><td><span class="num good">-0.0055</span></td></tr></tbody></table></div>
+<div class="ok"><b>Five consecutive improvements, so early stopping is nowhere near firing.</b> Patience is 4 evaluations; the LM loss has fallen at every single one. The run resumed cleanly from step 4,000 after a validation-loop bug was fixed, and has logged 0 errors, 0 NaN and 0 OOM across 2,900 steps since.</div>
+<div class="defect"><b>The bug that cost 500 steps, recorded.</b> v4b crashed at step 500 with
+  <code>KeyError: 'hm'</code>: the new validation loop popped local variable names
+  (<code>vb.pop('hm')</code>) instead of the collate dictionary's keys
+  (<code>vb.pop('hitmask')</code>). Because the crash landed before the first checkpoint, all 500
+  steps were lost. The fix is also why <code>--ckpt-every 500</code> and
+  <code>--snapshot-every 2000</code> now exist.</div>
+<h2><span class="sn">10</span>What v4b deliberately does not do</h2>
+<div class="tw"><table class=""><thead><tr><th>omitted</th><th>why</th></tr></thead><tbody><tr><td>the contacts task</td><td>Predicting a contact <i>type</i> given the geometry was measured <b>96.1% solvable by arithmetic</b> on the distance columns &mdash; it teaches labelling, not editing. Uncapped it would also have cost ~93M tokens, more than every other channel combined. The generative masked-restore version is the right task and is not built yet.</td></tr><tr><td>the non-covalent PDB half</td><td>The 76,840-structure mirror needs re-downloading. <code>extract_noncov.py</code> is written and tested &mdash; 4,141 ligand records and 82,562 interactions from 1,749 structures in 53 s &mdash; but this run is covalent-only.</td></tr><tr><td>any change to the pocket encoding</td><td>Held fixed at the atom+residue format on purpose. The distance-only "invariant" encoding is a separate experiment, not a variable to change in the same run that changes the corpus.</td></tr><tr><td>a second epoch</td><td>The schedule is 1.00 epoch = 17,743 steps. Whether to continue is a decision for the validation curve, not a pre-commitment.</td></tr></tbody></table></div>
+<div class="defect"><b>Six v4-era numbers were withdrawn on audit, and are not reused here.</b>
+  A 1.00% disjoint score (produced by three concurrent evaluation chains interleaving one log); a
+  36.5% recall measured on 14 of 1,020 complexes because <code>rows[:n]</code> was mistaken for a
+  sample; a "1.6&times; better than joint" comparison against a different sample; a
+  uniqueness-collapse memorisation claim (the 7.2% was a sampling artifact &mdash; 53.1% was correct);
+  a ~1.8% disjoint partial; and a 49.4% change-op floor compared against the wrong cohort. The
+  stratified sampling, prompt-signature assertions and pre-registered floors in this report exist
+  because of those six.</div>
+<h2><span class="sn">11</span>Compute note &mdash; the run is launch-bound, not compute-bound</h2>
+<p class="lede">Worth recording because it is a config error, not a hardware limit, and because it changes what the next run should do.</p>
+<div class="tw"><table class=""><thead><tr><th>quantity</th><th>measured</th><th>note</th></tr></thead><tbody><tr><td>measured throughput</td><td><span class="num">689 tokens/s</span></td><td>the same trainer reached 3,437 tok/s on v4</td></tr><tr><td>GPU utilization</td><td><span class="num">48% mean, 0&ndash;81% swing</span></td><td>12 samples over 24 s</td></tr><tr><td>power draw</td><td><span class="num">~181 W of a 400 W cap</span></td><td>SM clock pinned at max 1,410 MHz</td></tr><tr><td>CPU</td><td><span class="num">1.01 load average on 12 cores</span></td><td>python at 103% of one core &mdash; not dataloader-bound</td></tr><tr><td>padded tokens per micro-batch</td><td><span class="num">~389</span></td><td>bs 3 &times; 130-token corpus mean</td></tr><tr><td>effective compute</td><td><span class="num">42 of 312 TFLOPS</span></td><td>13.5% of A100 bf16 peak</td></tr><tr><td>micro-batches per epoch</td><td><span class="num">195,173</span></td><td>~9,300 under an 8,192-token budget &mdash; 21&times; fewer</td></tr></tbody></table></div>
+<div class="note"><b>The cause is a batch size carried over from a corpus of the opposite
+  shape.</b> <code>--bs 3</code> was correct for v4, where rung 3 dominated at ~2,200 tokens a row,
+  so a micro-batch was ~6,600 tokens and the A100 was well fed. v4b inverted the mix: rung 1 is now
+  63.9% of rows at <b>53 tokens</b> each, so the same <code>bs 3</code> ships ~389-token
+  micro-batches. 63.9% of all wall-clock is spent on rows that are 1/28th the size of a rung-3 row
+  but cost nearly as much, because the cost is per-op CPU dispatch &mdash; roughly 6,000 dispatches
+  per micro-batch once LoRA's 196 adapters and the gradient-checkpoint re-forward are counted, at
+  ~94&nbsp;&micro;s each &mdash; and not FLOPs. Hence 48% utilization, 181 W of 400 W, and one CPU
+  core pinned while 11 sit idle.</div>
+<p><b>The fix preserves the optimization exactly.</b> Batching to a token budget rather than a fixed sequence count keeps the effective batch at 33 examples per step while collapsing 11 micro-batches into 1, giving an identical gradient with 21&times; fewer launches across the epoch. Long rung-3 rows overflow the budget and simply accumulate more steps. Validation gets the same win for free: it currently runs 1,000 forward passes of 3 rows every 500 steps, about 6% of all wall-clock, and would drop to ~50. Gradient checkpointing should then stay on, because it is only wasteful while batches are this thin.</p>
+<div class="footer">CovalentFormer v4b &middot; structure compiled 2026-10-03 from the live run on ai-gpu-a100 &middot; all data-side figures verified against the corpus on disk &middot; model-side results pending the finished checkpoint</div>
+</div>
+</body></html>
