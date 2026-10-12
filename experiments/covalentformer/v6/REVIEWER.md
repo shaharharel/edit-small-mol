@@ -159,14 +159,18 @@ any sentence, never for a sentence in the wrong shape.
    absent from the input side — and 100% of those mentions trace to the analogue's contact table,
    with 0% invented. The labellers were right and the instruction was wrong.
 
-   What you lose is the ability to name the residue a new group newly reaches. Some of that comes
-   back with the pocket envelope, which lists every residue near the input ligand rather than only
-   each atom's nearest neighbour. Where it does not come back, say what the edit does without
-   naming an unknowable partner: "extends toward the face lined by the residues above" is worth more
-   than a confident name the model cannot learn.
+   **The POCKET ENVELOPE counts as input-side evidence for naming.** It lists every residue with an
+   atom within 8 Å of the input ligand, not merely each atom's nearest neighbour, so a residue you
+   could not previously name is nameable if it appears there. Measured on 2,000 labels, the envelope
+   recovers 94.7% of the residue mentions this rule would otherwise forbid. Where a residue appears
+   in neither the atom table nor the envelope, say what the edit does without naming an unknowable
+   partner: "extends toward the face lined by the residues above" is worth more than a confident
+   name the model cannot learn.
 
-1b. **Never cite a measured analogue distance.** Every number in your sentence must be a value you
-   can point at in the input side of the evidence. A difference you computed from two input numbers
+1b. **Never cite a measured analogue distance, and never cite an envelope band.** Every number in
+   your sentence must be a value you can point at in the input side of the evidence. The envelope's
+   bands are not such values -- they say a residue is reachable, not that anything is measured at
+   that range -- so no number may come from there. A difference you computed from two input numbers
    is fine ("0.2 Å tighter"); an analogue measurement is not, even with attribution. This is the
    rule that most of the existing corpus breaks — 92% of the first 2,000 usable labels cite at least
    one — so it is the one to be most deliberate about.
@@ -238,13 +242,46 @@ prose across the corpus, 8.4 MB of it identical from pair to pair. The reasoning
 read once; the packet carries only the tag and the pair's own numbers. **A short tag is not a
 weaker warning.** Every one of these exists because a labeller wrote something false without it.
 
-## What the three tables are
+## What the four tables are
 
 | table | what it is | what it is for |
 |---|---|---|
 | **input atom table** | EVERY atom of the input molecule against its own crystal: nearest protein atom, distance, typing | the whole pocket as the input molecule experiences it. This is your look-around — use it to understand the site, not just the edit |
+| **pocket envelope** | every residue with an atom within 8 Å of the input ligand, in distance BANDS, whether or not it is any atom's nearest neighbour | where a group *could* reach. It is **not** a contact list. Use it to name the residue a new substituent grows toward — and never as a measured interaction |
 | **analogue_contacts** | every analogue atom **whose contact changed**: `NEW`, `MOVED`, `NOTCOMPARABLE`, and also `conserved` atoms whose contact moved to a different protein atom (the row's status says which). Named in the analogue's own namespace with an `a:` prefix | what the edit brought in, and where a kept atom's contact went. Only atoms whose contact is unchanged are omitted — they are in `conserved_interactions` and are listed by name at the end of the table, so an absence here is not a loss |
 | **conserved_interactions** | contacts present in BOTH crystals, with BOTH distances | the only place the analogue-side distance of a retained contact appears. You need it to write "tightens from 3.48 to 3.31 Å". The two crystals number atoms differently, so this table also carries the input↔analogue atom join |
+
+## The pocket envelope — read this before using it
+
+The atom table samples the pocket through nearest-neighbour relationships only: each ligand atom
+reports its single closest protein atom. A residue 4 Å away that happens to be nobody's nearest
+neighbour therefore appears **nowhere** in it. That gap is why 24% of an earlier round of labels
+named a residue the input side could not express, and the envelope closes it.
+
+**What it is:** every residue with any atom within 8 Å of the input ligand, grouped into bands.
+
+**What it is NOT:** a contact list. A residue at 7.5 Å touches nothing. It is somewhere a group
+*could* reach, which is exactly what you need to describe where a new substituent grows — and
+exactly what you must not describe as an interaction.
+
+Two hard constraints follow, and they are both checkable:
+
+  * You **may name** any residue in the envelope (rule 1). That is the point of it.
+  * You **may not cite a band as a distance** (rule 1b). The bands exist so there is no decimal to
+    copy. If you want to state a distance, it must come from the atom table or a conserved row.
+
+**The flags, and why they matter.** An mmCIF holds the asymmetric unit, so a residue 8 Å away can be
+a neighbouring copy in the crystal rather than part of the binding site, and nothing in the geometry
+distinguishes them:
+
+| flag | meaning | what to do |
+|---|---|---|
+| `(X)` | the residue is on chain X, not the ligand's own chain | real multi-chain pockets exist, so this is disclosed rather than filtered. Check whether the rest of the evidence supports a second chain — `MULTI-CHAIN POCKET` is the corroborating flag |
+| `*` | a cofactor or ion, not an amino acid | these are where the cross-crystal numbering failures live. See `HETERO PARTNER RENUMBERED` |
+| `~` | a chain terminus, so **probably a crystal-packing neighbour** rather than a site residue | do not build a claim on it. The corpus's `CHAIN TERMINUS CONTACT` flag says the same thing for the atom table |
+
+A residue carrying `~`, or one in the 6.0–8.0 Å band carrying `(X)`, is the least trustworthy thing
+in the packet. Treat both as "probably not really in this pocket" unless something else corroborates.
 
 ## Row tags
 

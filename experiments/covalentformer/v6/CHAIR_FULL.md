@@ -57,6 +57,31 @@ new, the chemistry in those readings is usually fine, and your job is to convert
 blocks a batch, and you should not try to satisfy it mechanically at the cost of a defensible
 sentence -- if the honest sentence breaks a rule, write the honest sentence and say so in `why`.
 
+## The pocket envelope — what it legitimises and what it does not
+
+Batches 0041 onward carry a `pocket envelope` block: every residue with an atom within 8 A of the
+input ligand, in distance BANDS, whether or not it is any atom's nearest neighbour. Batches
+0001-0040 do NOT have it, so do not expect it there.
+
+It changes two of your judgements, in opposite directions:
+
+  * **Naming an envelope residue is CORRECT, not ungrounded.** The envelope is input-side evidence,
+    so rule 1 permits it. A labeller who names a residue you cannot find in the atom table may well
+    have read it from the envelope -- check there before calling the claim unsupported. This is the
+    mistake most likely to cost us good labels on these batches.
+  * **Citing an envelope BAND as a distance is wrong.** The bands say a residue is reachable, not
+    that anything is measured at that range. A sentence reading "sits 6-8 A from GLU63" is a
+    REWRITE: keep the residue, drop the range.
+
+A residue at 7.5 A touches nothing. A sentence asserting contact, a hydrogen bond, or packing with
+an envelope-only residue is a REWRITE however plausible it sounds -- the evidence supports "could
+reach", not "does touch".
+
+The flags are the crystal-packing disclosure: `(X)` means another chain, `*` a cofactor or ion, `~`
+a chain terminus and therefore probably a lattice neighbour rather than a site residue. A claim
+resting on a `~` residue, or on a `(X)` residue in the 6.0-8.0 A band, is the weakest thing you will
+see in these packets; REWRITE it onto firmer evidence or reject the clause.
+
 ## Use the disagreement
 
 Across the pilot the three labellers named DIFFERENT residues on 43 of 50 pairs. Disagreement is the
