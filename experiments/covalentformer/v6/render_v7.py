@@ -288,8 +288,18 @@ def render(r, lean=True):
           _hetero_renumbered(r, lo),
           'EDIT: %s' % lo.get('edit_size_note', '(not annotated)'),
           'analogue SMILES: %s' % r['ANSWER']['analogue_smiles'],
-          (('*** TWO TRANSFORMATIONS -- %s\n'
-            % re.sub(r'^.*?: ', '', lo['multi_edit_warning']).split('. ')[0])
+          # The packet states the FACT; REVIEWER.md rule 11 owns the policy. It used to print the
+          # policy and drop the fact: `re.sub(r'^.*?: ', ...)` cut at the first ': ', which sits
+          # after "One sentence cannot cover both", so everything measured -- how many groups, how
+          # many bonds apart -- was discarded and all that survived was the stored instruction
+          # "describe the change with the larger pocket consequence and say nothing about the
+          # other, or reject". That directly contradicts rule 11, which requires disclosing a
+          # multi-site edit, and two chairs reported their labellers splitting on it. A packet
+          # should never carry editorial policy: it goes stale in a place nobody looks.
+          (('*** TWO TRANSFORMATIONS -- %s. See rule 11.\n'
+            % (lo['multi_edit_warning'].split('. ')[1].split(': ')[0].strip()
+               if len(lo['multi_edit_warning'].split('. ')) > 1
+               else 'the edited atoms form separate groups far apart in the molecule'))
            if lo.get('multi_edit_warning') else ''),
           (('*** STEREO -- %s\n' % lo['stereo_note'].split('. ')[0])
            if lo.get('stereo_note') else ''),

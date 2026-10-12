@@ -34,6 +34,29 @@ So for every pair, both fields are populated:
   * not a medicinal-chemistry analogue pair (natural cofactor/nucleotide swaps)
   * the evidence contradicts itself and no clause survives
 
+REJECT is about the **pair**, never about the **sentence**. A sentence in the wrong shape is a
+REWRITE: repair it and keep the pair. This matters now more than it used to, because the sentence
+rules changed and most well-written sentences in the old style break the new ones.
+
+## The two-half shape, and what to do when a reading breaks it
+
+REVIEWER.md now requires every sentence to be an input-side MEASURED anchor plus an analogue-side
+QUALITATIVE consequence: named residues come from the input evidence only, and **no number may be a
+measured analogue distance**. Direction and kind are expected; magnitude is not.
+
+A labeller who writes "...to ring carbons at 3.61-3.69 A in the analogue's crystal" has given you a
+true observation in an unusable form. REWRITE it — keep the residue, keep the input distance, turn
+the analogue clause into an expectation ("should spread that contact over more ring carbons and
+relax it slightly"). Do not REJECT it and do not adopt it as written.
+
+You will see this on most pairs at first. That is expected: measured on the first 2,000 labels, 92%
+cite at least one analogue distance and 24% name a residue absent from the input side. The shape is
+new, the chemistry in those readings is usually fine, and your job is to convert rather than discard.
+
+`check_label_rules.py` records compliance as a column after the run. It is not a gate, it never
+blocks a batch, and you should not try to satisfy it mechanically at the cost of a defensible
+sentence -- if the honest sentence breaks a rule, write the honest sentence and say so in `why`.
+
 ## Use the disagreement
 
 Across the pilot the three labellers named DIFFERENT residues on 43 of 50 pairs. Disagreement is the

@@ -95,10 +95,32 @@ describe room, channels or space at all. The one surviving signal is the pair-le
 
 ## Write ONE sentence (max 35 words)
 
-Say what the change does in the pocket. Anchor it in named residues and the measured fields.
+Say what the change does in the pocket, **reasoning from the input molecule and its own crystal**.
+You can see the analogue's structure, and you should use it to know what happened — but the sentence
+you write must be one a chemist could have written *before* that structure existed.
 
-Good: "Replaces the methyl at C14, which contacts nothing within 4.0 Å, with a phenyl that in the
-analogue's crystal packs against HIS39 at 3.6 Å while the ASN166 hydrogen bond at N11 is held."
+### The sentence has two halves, and they carry different weight
+
+| half | side | status | contains |
+|---|---|---|---|
+| **ANCHOR** (required) | input | **MEASURED** | input-pocket residues and the input's own distances |
+| **CONSEQUENCE** (required) | analogue | **QUALITATIVE** | direction, kind, effect — **and no numbers** |
+
+The anchor is a fact you read off the input atom table. The consequence is what the edit is expected
+to do at that place. Direction is predictable from the pocket — a bigger group in a tight place
+pushes a contact closer, a deleted arm gives one up. **Magnitude is not predictable, so never state
+an analogue distance.** At inference the model has no analogue crystal and cannot measure anything;
+a sentence citing a measured analogue distance teaches it to invent precision.
+
+Good: "The methyl packing LEU91.CD2 at 3.39 Å is replaced by a cyclohexyl ring, which should spread
+that contact over more ring carbons and relax it slightly, while the sulfonamide's 1.92 Å zinc
+coordination is untouched and should be retained."
+
+Good: "Deleting the methoxyethyl arm gives up its 3.57 Å packing on TYR71.OH and its 3.65 Å reach to
+ARG148, leaving that face of the pocket unoccupied."
+
+Bad: "...handing LEU91.CD2 from a methyl at 3.39 Å to ring carbons at 3.61-3.69 Å in the analogue's
+crystal."  (an analogue measurement — the numbers 3.61-3.69 are unknowable from the input)
 
 Bad: "Replaces a methyl with a phenyl to increase lipophilicity."  (chemical diff, no pocket)
 
@@ -107,21 +129,47 @@ are gone and vacated space is never citable as room)
 
 Bad: "The ASN166 hydrogen bond degrades to a polar contact."  (a bare typing flip — see rule 10)
 
-The preferred shape, from the chemist panel: **this interaction at the old atom is traded for that
-one at the new atom, with both distances.** Name both sides of a substitution; a substitution is not
-a deletion.
+**Expectation vocabulary** for the consequence half: *should, is expected to, likely* paired with a
+direction — *closer, tighter, looser, relaxed, gains, gives up, retains, reaches toward, no longer
+reaches, spreads over, trades*. Comparative direction without a number is encouraged; it is the part
+that is actually predictable.
 
-## Hard rules — a sentence breaking any of these is rejected mechanically
+The preferred shape, from the chemist panel: **this measured interaction at the old atom is traded
+for an expected one at the new atom.** Name both sides of a substitution; a substitution is not a
+deletion.
 
-1. Name only residues that appear in this pair's own evidence — `faces` and the `polar partner:`
-   continuation line both count, and so does a `conserved_interactions` row.
-   **An `analogue_contacts` row counts too, provided you attribute the claim to the analogue's own
-   crystal** ("in the analogue's structure…", "the analogue's crystal shows…"). Restricting rule 1
-   to the input table censored exactly the thing the edit accomplished: five of the first fifty
-   pairs had their single most informative fact — a residue the analogue newly reaches — made
-   unsayable, so labellers wrote a bare distance with no residue, or dropped the clause. The
-   attribution is what keeps this honest: at inference there is no analogue structure, so an
-   unattributed claim about a gained contact would be a claim the model cannot make.
+## Hard rules
+
+These are what the chair weighs, and what `check_label_rules.py` records as a column after the fact.
+**They never stop you and they never stop the run.** Always write a sentence — on every pair,
+including one you think is hopeless — because an empty sentence destroys information we cannot
+cheaply recreate, while a flawed sentence is still evidence of what the evidence supports. A rule
+break is a REWRITE for the chair, not a REJECT: REJECT is for a pair whose evidence cannot support
+any sentence, never for a sentence in the wrong shape.
+
+1. **Name only residues that appear in the INPUT side of this pair's evidence** — the input atom
+   table's `faces`, its `polar partner:` continuation line, or the input column of a
+   `conserved_interactions` row. A residue that appears *only* in `analogue_contacts` may not be
+   named, however informative it looks.
+
+   This reverses the previous rule, which let you name an analogue-only residue if you attributed
+   it ("the analogue's crystal shows…"). The attribution was supposed to keep it honest and did the
+   opposite: at inference the model has no analogue structure, so every attributed claim was a claim
+   the model can only fabricate. Measured on the first 2,000 labels, 24% named at least one residue
+   absent from the input side — and 100% of those mentions trace to the analogue's contact table,
+   with 0% invented. The labellers were right and the instruction was wrong.
+
+   What you lose is the ability to name the residue a new group newly reaches. Some of that comes
+   back with the pocket envelope, which lists every residue near the input ligand rather than only
+   each atom's nearest neighbour. Where it does not come back, say what the edit does without
+   naming an unknowable partner: "extends toward the face lined by the residues above" is worth more
+   than a confident name the model cannot learn.
+
+1b. **Never cite a measured analogue distance.** Every number in your sentence must be a value you
+   can point at in the input side of the evidence. A difference you computed from two input numbers
+   is fine ("0.2 Å tighter"); an analogue measurement is not, even with attribution. This is the
+   rule that most of the existing corpus breaks — 92% of the first 2,000 usable labels cite at least
+   one — so it is the one to be most deliberate about.
 2. Say "hydrogen bond" only where the typing supports it — in a **site-of-change** atom's
    `interaction` or its `polar partner:` line, **in a `conserved_interactions` row** (those are not
    site atoms by definition, so gating on the site alone would reject every retained-contact
@@ -214,7 +262,7 @@ weaker warning.** Every one of these exists because a labeller wrote something f
 
 | flag | meaning |
 |---|---|
-| `TWO TRANSFORMATIONS` | the edited atoms form separate groups far apart in the molecule. One sentence cannot cover both — describe the change with the larger pocket consequence and say the molecule changed in more than one place |
+| `TWO TRANSFORMATIONS` | the edited atoms form separate groups far apart in the molecule, and the flag now prints how many groups and how many bonds apart they are. Describe the change with the larger pocket consequence **and** say the molecule changed in more than one place — rule 11. The packet used to print a stored instruction saying the opposite ("say nothing about the other, or reject"); that text is gone, and rule 11 is the only policy |
 | `STEREO` | a stereocentre is inverted, destroyed, created, or incomparable. Rows marked conserved across an inverted centre are the same ATOM, not the same geometry |
 | `COVALENCY MISMATCH` | one side is covalently bonded to the protein and the other is not. The LOSS or GAIN of that bond may be the single most important thing to say |
 | `SYMMETRY` | graph-equivalent atoms (sulfonyl or carboxylate oxygens, CF₃ fluorines, phosphate oxygens, equivalent ring positions) are mapped arbitrarily. A row saying one of them moved may be a relabelling, not motion |
