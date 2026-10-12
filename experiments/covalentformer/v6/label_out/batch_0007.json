@@ -190,10 +190,19 @@
  },
  "9YC7 A1CTH->A1CT4": {
   "verdict": "ADOPT",
-  "final": "The quinoline carbon that packed MET392.CE at 3.51 A is replaced; in the analogue's crystal the ring sulfur sits 3.84 A from PHE398.CZ, and the GLY489.N hydrogen bond shortens 3.56->2.85 A.",
-  "why": "Input row, attributed analogue row as a distance (polar/apolar packing), and a conserved H-bond typed good on both sides with no ANGLE-ONLY tag. The zinc cannot be joined (ZN1003 vs ZN701/ZN702, plus a [CLOSE 2.81/3.7] row), so no coordination claim - all three got that right.",
-  "disagreement": "All three agreed, including on quarantining the metal rows.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The pyridine ring becomes a thiazole: the carbons facing MET392.CE (3.51 A) and ALA577.O (3.66 A) go, the analogue's crystal placing the new sulfur 3.84 A from PHE398.CZ; the GLY489.N hydrogen bond tightens 3.56->2.85 A.",
+  "why": "labC is correct as written: C10/C11 are CHANGED input rows (ALA577.O 3.66, MET392.CE 3.51), a:S18 is a NEW row given as proximity and attributed to the analogue's crystal (rule 9b), and O23/a:O13 GLY489.N 3.56->2.85 is a conserved H-bond typed good on both sides with no ANGLE-ONLY tag, so the 0.71 A tightening is a real change and not a typing artifact. Consistent with batch_0007.",
+  "disagreement": "labA added 'zinc coordination holds (2.11->2.00 A)', but in the analogue the hydroxamate's two oxygens go to different ions (a:O01->ZN702, a:O04->ZN701) against a single ZN1003 in the input, so the label match has plainly failed and that claim is unsafe; labB and labC both refused it and are right. labC is preferred over labB because it alone reports what the deleted carbons were touching.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "The quinoline carbon that packed MET392.CE at 3.51 A is replaced; in the analogue's crystal the ring sulfur sits 3.84 A from PHE398.CZ, and the GLY489.N hydrogen bond shortens 3.56->2.85 A.",
+   "why": "Input row, attributed analogue row as a distance (polar/apolar packing), and a conserved H-bond typed good on both sides with no ANGLE-ONLY tag. The zinc cannot be joined (ZN1003 vs ZN701/ZN702, plus a [CLOSE 2.81/3.7] row), so no coordination claim - all three got that right.",
+   "disagreement": "All three agreed, including on quarantining the metal rows."
+  },
+  "verdict_changed": false
  },
  "8AV4 O49->NR6": {
   "verdict": "REWRITE",
@@ -274,10 +283,19 @@
  },
  "8ODP G2P->5GP": {
   "verdict": "REJECT",
-  "final": "In the analogue's crystal the alpha-phosphorus is covalently bonded to HIS428.NE2 at 1.71 A, where the input only ion-pairs that histidine through a phosphate oxygen at 3.03 A.",
-  "why": "Not a medicinal-chemistry analogue pair: a GTP analogue against GMP, i.e. a natural nucleotide substrate and its truncation, with the covalency difference a catalytic phosphohistidine intermediate rather than a design decision. STEREO also drops 6 -> 4 and the analogue table is incomplete. The sentence is kept because the covalency gain is cleanly measured and attributed.",
-  "disagreement": "A and C led with the covalent bond, B with the lost MN601 coordination. A and C are right that the covalency mismatch is the dominant fact; none of them questioned whether the pair belongs in the corpus.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Truncating the triphosphate turns the alpha-phosphate's 3.03 A HIS428.NE2 salt bridge into a covalent P-NE2 bond at 1.71 A in the analogue's crystal; the guanine's GLU230.OE1 hydrogen bond holds (2.94->2.85 A).",
+  "why": "REJECT on ground 3: GMPCPP -> GMP is a nucleotide substrate/product pair, and the analogue's phosphorus-HIS428 bond is a phosphohistidine catalytic intermediate rather than a designed warhead, so there is no medicinal-chemistry analogue relationship to learn. The sentence is sound and kept: the covalent claim rests on an attributed analogue_contacts COVALENT BOND row (rule 3 as widened) and GLU230 on a conserved row, with the INCOMPLETE table (23 of 24) read as no evidence of absence.",
+  "disagreement": "All three found the same salt-bridge-to-covalent-bond conversion, attributed it, and all three left the Mn coordination alone (MN 201/601/602 vs 602). None of them asked whether a GTP-analogue/GMP pair belongs in the corpus at all, which is the pair's actual defect - the architecture of the sentence is fine, the pair is not. labC's wording is tightest ('alpha-phosphate', 'guanine's').",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "In the analogue's crystal the alpha-phosphorus is covalently bonded to HIS428.NE2 at 1.71 A, where the input only ion-pairs that histidine through a phosphate oxygen at 3.03 A.",
+   "why": "Not a medicinal-chemistry analogue pair: a GTP analogue against GMP, i.e. a natural nucleotide substrate and its truncation, with the covalency difference a catalytic phosphohistidine intermediate rather than a design decision. STEREO also drops 6 -> 4 and the analogue table is incomplete. The sentence is kept because the covalency gain is cleanly measured and attributed.",
+   "disagreement": "A and C led with the covalent bond, B with the lost MN601 coordination. A and C are right that the covalency mismatch is the dominant fact; none of them questioned whether the pair belongs in the corpus."
+  },
+  "verdict_changed": false
  },
  "7ZZB KGX->KH9": {
   "verdict": "ADOPT",
@@ -533,10 +551,19 @@
  },
  "9OMW A1L89->A1CC9": {
   "verdict": "REJECT",
-  "final": "Swapping the adenine for a uracil removes the exocyclic amine's 3.08 A hydrogen bond to GLU232.OE1, while the phosphate's ARG184.NH2 hydrogen bond holds at 2.88->2.96 A.",
-  "why": "A natural dinucleotide polyphosphate pair (Ap4U against Up4U), not a medicinal-chemistry analogue, and the evidence is too damaged to train on: 16 of 51 input atoms not modelled, O1G omitted as a clash against LYS197 (making every LYS197 row suspect), only 2 conserved interactions, an INCOMPLETE analogue table (33/49) and 17 NOTCOMPARABLE analogue atoms. The sentence is the one defensible pair of rows.",
-  "disagreement": "All three wrote the same sentence and all three catalogued the same damage; A rated it low confidence, B and C medium. None proposed rejection, but the packet supports it.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Swapping the adenine for a uracil deletes the exocyclic N6 amine that hydrogen-bonds GLU232.OE1 at 3.08 A, while both ARG184.NH2 hydrogen bonds at the phosphates persist (2.82->3.30 and 2.88->2.96 A).",
+  "why": "REJECT as in batch_0007: Ap4U against Up4U is a natural dinucleoside-polyphosphate pair, not a medicinal-chemistry analogue, and the evidence is too damaged to train on -- 16 of 51 input atoms not modelled, O1G omitted as a clash against LYS197 (making every LYS197 row suspect), only 2 conserved rows, an INCOMPLETE analogue table (33/49) and 17 NOTCOMPARABLE atoms. N6A is a CHANGED input H-bond row and both ARG184 rows are conserved with typing unchanged, so the sentence is defensible; MN 304 vs 302/304 is left alone.",
+  "disagreement": "labA and labB wrote the same amine loss plus the two ARG184 rows. labC added that the analogue 'instead packs its replacement ring against TRP249.NE1 at 3.46 A', but that row is NOTCOMPARABLE -- no gain or loss may be read off it, and 'instead' reads it as exactly that -- so labC is wrong there and labB stands. labB also noted the 0.48 A lengthening of the O3A row that the typing hides.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "Swapping the adenine for a uracil removes the exocyclic amine's 3.08 A hydrogen bond to GLU232.OE1, while the phosphate's ARG184.NH2 hydrogen bond holds at 2.88->2.96 A.",
+   "why": "A natural dinucleotide polyphosphate pair (Ap4U against Up4U), not a medicinal-chemistry analogue, and the evidence is too damaged to train on: 16 of 51 input atoms not modelled, O1G omitted as a clash against LYS197 (making every LYS197 row suspect), only 2 conserved interactions, an INCOMPLETE analogue table (33/49) and 17 NOTCOMPARABLE analogue atoms. The sentence is the one defensible pair of rows.",
+   "disagreement": "All three wrote the same sentence and all three catalogued the same damage; A rated it low confidence, B and C medium. None proposed rejection, but the packet supports it."
+  },
+  "verdict_changed": false
  },
  "6HJJ G7T->G7W": {
   "verdict": "ADOPT",
@@ -581,11 +608,20 @@
   "label_generation": "g1_v1_retrospective"
  },
  "6CTX VC9->VA7": {
-  "verdict": "ADOPT",
-  "final": "A two-site edit; the cytosine carbonyl's 2.96 A hydrogen bond to ASN279.ND2 goes, though the analogue's crystal shows a ring nitrogen bonding ASN279.ND2 at 3.18 A; MG402 coordination holds (2.15->2.29 A).",
-  "why": "TWO TRANSFORMATIONS disclosed; the base swap's real consequence is that the same asparagine is H-bonded by a carbonyl in the input and by a ring nitrogen in the analogue, the latter on a MOVED atom and therefore attributed rather than called retained. The clean O1B/MG402 row carries the metal claim.",
-  "disagreement": "A led with the O2G/MG402 coordination-to-near-MG retyping and B with the purine ring's ASP276.CB packing; C alone joined the ASN279 hand-off through the MOVED N1. C right. The [ANGLE-ONLY]/[SHORT] O3G row was excluded by all three.",
-  "label_generation": "g1_v1_retrospective"
+  "verdict": "REJECT",
+  "final": "The molecule changed in two places; the larger effect is the cytosine-to-adenine swap, which shifts the ASN279.ND2 hydrogen bond from the 2-carbonyl (2.96 A) to a nitrogen at 3.18 A in the analogue's crystal.",
+  "why": "REJECT for consistency with the rest of this pol-beta dNTP-analogue family (6CTU, 6CTV, 6CTW, 6CTP and 6CTO were all rejected): cytosine->adenine is a nucleobase swap between triphosphate nucleotide analogues rather than a design decision, and TWO TRANSFORMATIONS (Br2->Cl2) rides along. batch_0007 ADOPTed this pair and is the outlier. The sentence itself is sound: O2 is a CHANGED input H-bond row, and the 3.18 A replacement sits on a MOVED analogue atom, so it is attributed rather than called retained. O3G/SER180 is [SHORT 2.36 uncertain] with [ANGLE-ONLY] and unused.",
+  "disagreement": "labA and labC read the base swap as relocating the ASN279.ND2 hydrogen bond; labB instead described the new imidazole packing on ASP276.CB with the ARG183.NH1 salt bridge held. Both are supported, but the ASN279 relocation is the larger pocket consequence, so labA/labC are right. labC's disclosure of the second site is cleanest: labA names the halogens, which the TWO TRANSFORMATIONS flag asks to be left undescribed.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "A two-site edit; the cytosine carbonyl's 2.96 A hydrogen bond to ASN279.ND2 goes, though the analogue's crystal shows a ring nitrogen bonding ASN279.ND2 at 3.18 A; MG402 coordination holds (2.15->2.29 A).",
+   "why": "TWO TRANSFORMATIONS disclosed; the base swap's real consequence is that the same asparagine is H-bonded by a carbonyl in the input and by a ring nitrogen in the analogue, the latter on a MOVED atom and therefore attributed rather than called retained. The clean O1B/MG402 row carries the metal claim.",
+   "disagreement": "A led with the O2G/MG402 coordination-to-near-MG retyping and B with the purine ring's ASP276.CB packing; C alone joined the ASN279 hand-off through the MOVED N1. C right. The [ANGLE-ONLY]/[SHORT] O3G row was excluded by all three."
+  },
+  "verdict_changed": true
  },
  "7OE5 V9H->VE5": {
   "verdict": "ADOPT",
@@ -659,10 +695,19 @@
  },
  "36WK DMA->FPP": {
   "verdict": "REJECT",
-  "final": "Extending the prenyl chain, the analogue's crystal lines it against PHE54.CD2 (3.58 A), PHE59.CZ (3.55 A) and LEU52.CD2 (3.62 A), while the GLY145.N hydrogen bond holds (2.92->3.03 A).",
-  "why": "Not a medicinal-chemistry analogue pair: dimethylallyl diphosphate against farnesyl diphosphate, two natural isoprenoid substrates of the same enzyme, so the 'edit' is a chain-length difference between cofactor-like substrates rather than a design decision. The sentence itself is sound - four attributed hydrophobic contacts and one conserved H-bond.",
-  "disagreement": "All three wrote the same sentence and all three avoided the metal rows (MG501 in the input, MG502 in the analogue) and the symmetric phosphate oxygens. None questioned the pair's membership.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The prenyl chain extends so that the analogue's crystal shows added carbons packing against LEU52.CD2 (3.62 A), PHE54.CD2 (3.58 A) and PHE59.CZ (3.55 A), while the diphosphate's GLY145.N hydrogen bond holds (2.92->3.03 A).",
+  "why": "REJECT as in batch_0007: dimethylallyl diphosphate against farnesyl diphosphate is two natural isoprenoid substrates of the same enzyme, so the chain-length difference is substrate homology, not a design decision. The sentence is sound -- three NEW hydrophobic rows attributed to the analogue's crystal and one conserved H-bond row -- and no room or channel language is used for the added chain (rule 4). SYMMETRY covers C5/O2B/O3B, whose analogue mapping is visibly swapped, so those oxygens are untouched; MG 501/502 is left alone.",
+  "disagreement": "labB listed four gained residues including ALA114.CB where labA and labC listed three, and labC alone hedged the growth point to 'terminal carbon' because SYMMETRY flags C5. All three are right on substance; labA is preferred because it names the group ('the diphosphate's GLY145.N hydrogen bond') rather than the raw atom name O1B that labB and labC both quote (rule 11).",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "Extending the prenyl chain, the analogue's crystal lines it against PHE54.CD2 (3.58 A), PHE59.CZ (3.55 A) and LEU52.CD2 (3.62 A), while the GLY145.N hydrogen bond holds (2.92->3.03 A).",
+   "why": "Not a medicinal-chemistry analogue pair: dimethylallyl diphosphate against farnesyl diphosphate, two natural isoprenoid substrates of the same enzyme, so the 'edit' is a chain-length difference between cofactor-like substrates rather than a design decision. The sentence itself is sound - four attributed hydrophobic contacts and one conserved H-bond.",
+   "disagreement": "All three wrote the same sentence and all three avoided the metal rows (MG501 in the input, MG502 in the analogue) and the symmetric phosphate oxygens. None questioned the pair's membership."
+  },
+  "verdict_changed": false
  },
  "7I8R A1BZT->A1JB4": {
   "verdict": "ADOPT",

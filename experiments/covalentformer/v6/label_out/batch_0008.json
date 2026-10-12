@@ -71,10 +71,19 @@
  },
  "6CTO VT7->VC6": {
   "verdict": "REJECT",
-  "final": "The CF2 bridge becomes CFCl: the new chlorine makes no contact within 4.0 A, while the retained fluorine, contact-free in the input, packs ARG183.NH2 at 3.09 A in the analogue's crystal.",
-  "why": "REJECT on comparability and on not being an analogue pair: PAIR FLAGGED UNLABELLABLE (a residue number means different residues), the base also changes thymine->cytosine, which is a nucleotide swap rather than a medicinal-chemistry edit, and a STEREO inversion at C4' rides along. I also rewrote the chemistry: the two geminal bridge fluorines are graph-equivalent, so which one 'became' chlorine is arbitrary, and the analogue's surviving fluorine occupies the ARG183.NH2 position (3.09 A) that the input's F3B held at 3.33 A - the contact is relabelled, not lost.",
-  "disagreement": "labA and labB both wrote that the fluorine's ARG183.NH2 packing is given up for a chlorine touching nothing. That is the packet's atom mapping taken literally and it is wrong: a:F4B (input F2B, contact-free in the input) sits 3.09 A from ARG183.NH2 in the analogue, so the CF2->CFCl swap keeps that contact. labC avoided the trap by describing the base change instead, but spent the sentence on a 3.91->3.88 A packing drift. None was right as written.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "At the bridging carbon the gem-difluoro becomes fluoro-chloro: a fluorine packs ARG183.NH2 (3.33 A input, 3.09 A in the analogue's crystal) while the chlorine makes no contact within 4.0 A; the base also changes.",
+  "why": "REJECT: PAIR FLAGGED UNLABELLABLE ('a residue number means different residues'), with a thymine-to-cytosine nucleobase swap as the co-transformation. The sentence needed repairing as well: labB and labC wrote that the fluorine's 3.33 A ARG183.NH2 packing is traded for a chlorine that contacts nothing, which reads as a lost contact - but a:F4B (input F2B, which had no contact) takes ARG183.NH2 at 3.09 A in the analogue, so the halogen contact is held, not lost, and the F/Cl assignment across a gem-difluoro carbon is arbitrary anyway.",
+  "disagreement": "labA described the base, where the carbonyl-to-amine change moves ASP276.CB packing from 3.91 to 3.88 A - no consequence at all - so it picked the wrong half of a TWO TRANSFORMATIONS pair. labB and labC chose the halogen, the right site, and labC anchored on the ARG183.NH1 salt-bridge conserved row, keeping both clauses at one residue; but all three missed that the second fluorine inherits the ARG183.NH2 contact, which is why no one is adopted here. The packet gave this pair no SYMMETRY flag although the input's two fluorines are graph-equivalent.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "The CF2 bridge becomes CFCl: the new chlorine makes no contact within 4.0 A, while the retained fluorine, contact-free in the input, packs ARG183.NH2 at 3.09 A in the analogue's crystal.",
+   "why": "REJECT on comparability and on not being an analogue pair: PAIR FLAGGED UNLABELLABLE (a residue number means different residues), the base also changes thymine->cytosine, which is a nucleotide swap rather than a medicinal-chemistry edit, and a STEREO inversion at C4' rides along. I also rewrote the chemistry: the two geminal bridge fluorines are graph-equivalent, so which one 'became' chlorine is arbitrary, and the analogue's surviving fluorine occupies the ARG183.NH2 position (3.09 A) that the input's F3B held at 3.33 A - the contact is relabelled, not lost.",
+   "disagreement": "labA and labB both wrote that the fluorine's ARG183.NH2 packing is given up for a chlorine touching nothing. That is the packet's atom mapping taken literally and it is wrong: a:F4B (input F2B, contact-free in the input) sits 3.09 A from ARG183.NH2 in the analogue, so the CF2->CFCl swap keeps that contact. labC avoided the trap by describing the base change instead, but spent the sentence on a 3.91->3.88 A packing drift. None was right as written."
+  },
+  "verdict_changed": false
  },
  "9EUE A1H68->A1H7B": {
   "verdict": "ADOPT",
@@ -183,10 +192,19 @@
  },
  "7PAY GGS->FPS": {
   "verdict": "ADOPT",
-  "final": "Deleting the terminal isoprene unit removes its packing on ALA97 (3.58-3.72 A) and LEU93.O (3.23 A), while the diphosphate's ARG85 (2.85->2.66 A) and ARG37 salt bridges hold.",
-  "why": "labC is correct: C16/C17/C20 are CHANGED input rows on ALA97.CA/CB and LEU93.O, the salt bridges are conserved rows typed SALT BRIDGE (rule 2 needs no angle for them), and labC names the deleted group. All three correctly refused PHE154 - C19 is OMITTED AS A CLASH against it, which makes every PHE154 row in the pair suspect, including the site atom C18's own [CLOSE 2.71/3.4 uncertain] row. Note this is a C20->C15 prenyl-donor chain-length pair (thio-analogues of GGPP/FPP); it sits near the natural-substrate exclusion but the edit is a designed chain truncation with measured consequences, so I kept it.",
-  "disagreement": "Content agreement was total; the three differ only in framing. labA and labC quote the ARG85.NH1 salt bridge tightening 2.85->2.66 A, labB says the salt bridges simply hold. labC additionally identifies the deleted group as the terminal isoprene rather than 'the prenyl chain', which is what makes it the adopted version.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Deleting the terminal isoprene removes the carbons packing ALA97.CA/CB at 3.58-3.72 A and LEU93.O at 3.23 A, while the diphosphate keeps its ARG85.NH1 salt bridge (2.85->2.66 A) and ARG37.N hydrogen bond (2.91->2.88 A).",
+  "why": "labC is correct as written: C16/C17/C20 are CHANGED input rows on ALA97.CA/CB and LEU93.O, and the salt bridge and ARG37.N H-bond are conserved rows typed identically on both sides. All three correctly refused PHE154 -- C19 is OMITTED AS A CLASH against it, which makes every PHE154 row in the pair suspect, including the deleted C18's own [CLOSE 2.71/3.4 uncertain] row -- and all three left MG 402/403 alone. Kept as an analogue pair, as in batch_0008: these are synthetic thiolo-diphosphate tool compounds, unlike the natural DMAPP/FPP pair above.",
+  "disagreement": "All three named the same deleted contacts and the same refusal of PHE154. labC alone names the deleted group ('the terminal isoprene') and quotes three conserved rows including ARG37.N where labA and labB quote two, so labC is right; labA's 'carbons sitting 3.72 and 3.58 A from ALA97.CA/CB' is the same fact less clearly attributed to a group.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "Deleting the terminal isoprene unit removes its packing on ALA97 (3.58-3.72 A) and LEU93.O (3.23 A), while the diphosphate's ARG85 (2.85->2.66 A) and ARG37 salt bridges hold.",
+   "why": "labC is correct: C16/C17/C20 are CHANGED input rows on ALA97.CA/CB and LEU93.O, the salt bridges are conserved rows typed SALT BRIDGE (rule 2 needs no angle for them), and labC names the deleted group. All three correctly refused PHE154 - C19 is OMITTED AS A CLASH against it, which makes every PHE154 row in the pair suspect, including the site atom C18's own [CLOSE 2.71/3.4 uncertain] row. Note this is a C20->C15 prenyl-donor chain-length pair (thio-analogues of GGPP/FPP); it sits near the natural-substrate exclusion but the edit is a designed chain truncation with measured consequences, so I kept it.",
+   "disagreement": "Content agreement was total; the three differ only in framing. labA and labC quote the ARG85.NH1 salt bridge tightening 2.85->2.66 A, labB says the salt bridges simply hold. labC additionally identifies the deleted group as the terminal isoprene rather than 'the prenyl chain', which is what makes it the adopted version."
+  },
+  "verdict_changed": false
  },
  "8CHJ UQI->UMR": {
   "verdict": "REWRITE",
@@ -211,10 +229,19 @@
  },
  "7T0D XO7->XO4": {
   "verdict": "ADOPT",
-  "final": "The bromine's 3.45 A packing on TYR109.OH becomes a fluorine 3.92 A away in the analogue's crystal; the imidazole-zinc coordination holds (2.09 vs 2.02 A), and the alkyl chain also changes.",
-  "why": "labB is correct: BR33 is a CHANGED input row on TYR109.OH at 3.45 A, the replacement is the NEW a:F23 row at 3.92 A and is attributed, the METAL COORDINATION claim is licensed by the input N25 row and the attributed a:N15 row (rule 3), and the TWO TRANSFORMATIONS flag is disclosed. labB also quotes the two zinc distances as separate measurements rather than an arrow, which is the right call because the metal is joined only by HETATM label (ZN626 vs ZN3002). The C26/a:C16 near-ZN rows are [CLOSE uncertain] and unused.",
-  "disagreement": "All three picked the halogen swap over the propyl->butyl extension, which is right - the butyl's new carbon only reaches ASP407.CG at 3.69 A. The split is over the zinc: labA and labB write it as held, labC as 'coordinates zinc at 2.09 and 2.02 A respectively', the most literal reading. labB threads both, and is right.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Replacing the bromine packing on chain-A TYR109.OH at 3.45 A with a fluorine 3.92 A from that hydroxyl in the analogue's crystal; the alkyl chain also grows, SER87.OG packing held (3.29->3.47 A).",
+  "why": "labC is correct as written. On this pair the halogen IS the larger consequence - Br at 3.45 A becomes F at 3.92 A on the same TYR109.OH - while the added carbon only exchanges one ~3.7 A ASP407 contact for another. labC names the chain of that contact (A, against a pocket that is mostly B), discloses the chain growth, and quotes the SER87.OG conserved row on both sides.",
+  "disagreement": "All three chose the halogen here, so only detail separates them: labA omitted the chain, labB cited TRP90.CD1 rather than SER87.OG (both conserved, equivalent). labB and labC described the halogen on both members of this 7T0D pairing; here that is right, on XO7->XN4 it was not, where only labA distinguished the 0.07 A swap from the real change.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "The bromine's 3.45 A packing on TYR109.OH becomes a fluorine 3.92 A away in the analogue's crystal; the imidazole-zinc coordination holds (2.09 vs 2.02 A), and the alkyl chain also changes.",
+   "why": "labB is correct: BR33 is a CHANGED input row on TYR109.OH at 3.45 A, the replacement is the NEW a:F23 row at 3.92 A and is attributed, the METAL COORDINATION claim is licensed by the input N25 row and the attributed a:N15 row (rule 3), and the TWO TRANSFORMATIONS flag is disclosed. labB also quotes the two zinc distances as separate measurements rather than an arrow, which is the right call because the metal is joined only by HETATM label (ZN626 vs ZN3002). The C26/a:C16 near-ZN rows are [CLOSE uncertain] and unused.",
+   "disagreement": "All three picked the halogen swap over the propyl->butyl extension, which is right - the butyl's new carbon only reaches ASP407.CG at 3.69 A. The split is over the zinc: labA and labB write it as held, labC as 'coordinates zinc at 2.09 and 2.02 A respectively', the most literal reading. labB threads both, and is right."
+  },
+  "verdict_changed": false
  },
  "8PSY EI0->DC6": {
   "verdict": "ADOPT",
@@ -309,10 +336,19 @@
  },
  "5WE9 GY7->G2K": {
   "verdict": "REJECT",
-  "final": "Both fluorines make no contact within 4.0 A in the input crystal; the analogue's crystal instead shows an ether oxygen hydrogen bonding LYS34.NZ at 2.74 A and a chlorine 3.29 A from GLU26.OE1.",
-  "why": "REJECT on comparability: PAIR FLAGGED UNLABELLABLE because no interaction survives between the two crystals, conserved_interactions is empty, and the metal site itself is differently labelled (MN301/MG302 in the input versus MN201/MN202 in the analogue), so nothing can be attributed to the edit rather than to a different pose or a different metal assignment. labA's sentence is the most defensible remainder: the two CHANGED fluorines are in the input's NOTHING WITHIN 4.0 A list, and the analogue's gains are NEW rows attributed to its own crystal.",
-  "disagreement": "Content is shared; the three differ in care. labA and labB say 'in the input crystal' explicitly, which is what rule 4 permits; labC drops the crystal and writes 'made no contact within 4.0 A' unqualified. labB and labC both flagged the metal-label mismatch, labA flagged the uncertain metal rows. labA's wording is right; no metal claim appears in any of the three, which is correct given [CLOSE 2.84], [SHORT 1.96] and [SHORT 2.01] tags.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The benzoyl fluorines make no contact within 4.0 A in this crystal; the analogue's crystal instead shows an ether oxygen hydrogen-bonded to LYS34.NZ at 2.74 A and chlorine packing on GLU26.OE1 at 3.29 A.",
+  "why": "REJECT: PAIR FLAGGED UNLABELLABLE ('no interaction survives') with conserved_interactions empty, so nothing joins the two crystals even though the atom map succeeded. The two depositions also look offset by 100 in the lysines - the input numbers LYS134/LYS137 where the analogue numbers LYS34 - so the analogue's LYS34.NZ is citable only as its own crystal's measurement, which all three did. labA's sentence survives.",
+  "disagreement": "Near-total agreement: all three paired the fluorines' no-contact rows with a:O4 (2.74 A LYS34.NZ) and a:CL1 (3.29 A GLU26.OE1), and all three flagged that a:O4's angle is exactly 100 deg, i.e. sitting on the H-bond typing cut. labB wrote 'contact nothing within 4.0 A here', which drifts into the exposure language rule 4 bans; labA names the group and keeps measured wording on both sides.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "Both fluorines make no contact within 4.0 A in the input crystal; the analogue's crystal instead shows an ether oxygen hydrogen bonding LYS34.NZ at 2.74 A and a chlorine 3.29 A from GLU26.OE1.",
+   "why": "REJECT on comparability: PAIR FLAGGED UNLABELLABLE because no interaction survives between the two crystals, conserved_interactions is empty, and the metal site itself is differently labelled (MN301/MG302 in the input versus MN201/MN202 in the analogue), so nothing can be attributed to the edit rather than to a different pose or a different metal assignment. labA's sentence is the most defensible remainder: the two CHANGED fluorines are in the input's NOTHING WITHIN 4.0 A list, and the analogue's gains are NEW rows attributed to its own crystal.",
+   "disagreement": "Content is shared; the three differ in care. labA and labB say 'in the input crystal' explicitly, which is what rule 4 permits; labC drops the crystal and writes 'made no contact within 4.0 A' unqualified. labB and labC both flagged the metal-label mismatch, labA flagged the uncertain metal rows. labA's wording is right; no metal claim appears in any of the three, which is correct given [CLOSE 2.84], [SHORT 1.96] and [SHORT 2.01] tags."
+  },
+  "verdict_changed": false
  },
  "5RSR XIY->W0V": {
   "verdict": "REJECT",
@@ -350,11 +386,20 @@
   "label_generation": "g1_v1_retrospective"
  },
  "9BFY A1AOL->A1AOM": {
-  "verdict": "REWRITE",
-  "final": "Deleting the methoxyethyl-pyridine arm removes its packing on TYR71.OH (3.57-3.61 A) and ARG148 (3.65 A), and the analogue models no covalent bond to the CYS12.SG the input binds at 1.70 A.",
-  "why": "All three led with 'the covalent bond is lost', and I am not willing to state that as flatly: the analogue's own crystal models a:C39 1.65 A from CYS12.SG - a bonding distance - typed merely as packing with [CLOSE 1.65/3.5 uncertain], so the COVALENCY MISMATCH flag here looks like a typing failure rather than a real loss of covalency. Rule 9a bars me from quoting that row, so the sentence says only that the analogue models no covalent bond, which is true of the evidence, and spends its weight on contacts that do not depend on the flag: the CHANGED arm atoms C34/C35 on TYR71.OH and C40/C41/O6 on ARG148. PACKET ISSUE worth fixing.",
-  "disagreement": "labA, labB and labC all made the covalency loss the headline, as rule 3 invites, and all three noticed the 1.65 A and 2.74 A carbons near CYS12.SG and set them aside - so each had the information that undercuts its own sentence. labB gave the best supporting numbers (ASN102.O 2.88->2.85, ARG55.NH1 2.98->3.04 A); labC named three retained residues but numbers for only one. None of the three described the 12 atoms actually deleted, which is what I built the sentence on.",
-  "label_generation": "g1_v1_retrospective"
+  "verdict": "ADOPT",
+  "final": "Deleting the methoxypyridine arm removes its packing on TYR71.OH (3.57-3.61 A) and ARG148.NH2/O (3.65-3.70 A); an amide NH-ASN102.O hydrogen bond holds (2.88->2.85 A), and the molecule changed in two places.",
+  "why": "labB is correct as written, and correctly refuses the headline: COVALENCY MISMATCH IS UNRELIABLE HERE, because the analogue models a:C39 1.65 A from CYS12.SG while typing it non-covalent, so the bond must not be called lost. That is an improvement on batch_0008, whose sentence still said the analogue models no bond. The deleted arm's input rows carry the consequence, N3/a:N1 ASN102.O 2.88->2.85 is a conserved H-bond row, TWO TRANSFORMATIONS is disclosed, and the [CLOSE ... uncertain] a:C38/a:C39 rows are unused.",
+  "disagreement": "labA described a NEW a:C20 contact on MET67.CB in a region where five kept atoms are MOVED -- thin and hard to attribute to the edit. labB and labC both led with the deleted arm, which is the larger consequence of a 12-atom deletion, so they are right; labB is preferred because labC called three hydrogen bonds held without quoting any distance.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REWRITE",
+   "final": "Deleting the methoxyethyl-pyridine arm removes its packing on TYR71.OH (3.57-3.61 A) and ARG148 (3.65 A), and the analogue models no covalent bond to the CYS12.SG the input binds at 1.70 A.",
+   "why": "All three led with 'the covalent bond is lost', and I am not willing to state that as flatly: the analogue's own crystal models a:C39 1.65 A from CYS12.SG - a bonding distance - typed merely as packing with [CLOSE 1.65/3.5 uncertain], so the COVALENCY MISMATCH flag here looks like a typing failure rather than a real loss of covalency. Rule 9a bars me from quoting that row, so the sentence says only that the analogue models no covalent bond, which is true of the evidence, and spends its weight on contacts that do not depend on the flag: the CHANGED arm atoms C34/C35 on TYR71.OH and C40/C41/O6 on ARG148. PACKET ISSUE worth fixing.",
+   "disagreement": "labA, labB and labC all made the covalency loss the headline, as rule 3 invites, and all three noticed the 1.65 A and 2.74 A carbons near CYS12.SG and set them aside - so each had the information that undercuts its own sentence. labB gave the best supporting numbers (ASN102.O 2.88->2.85, ARG55.NH1 2.98->3.04 A); labC named three retained residues but numbers for only one. None of the three described the 12 atoms actually deleted, which is what I built the sentence on."
+  },
+  "verdict_changed": true
  },
  "7TSN K7U->K90": {
   "verdict": "ADOPT",
@@ -421,10 +466,19 @@
  },
  "9RN5 A1JR3->A1B6K": {
   "verdict": "REJECT",
-  "final": "The bromine-to-chlorine swap on the thiophene leaves the carboxylate's salt bridges to LYS12.NZ (2.51->2.60 A) and ARG28.NH2 (3.03->2.90 A) held in both crystals.",
-  "why": "REJECT because the edit's own evidence is unusable on both sides and the pair's headline is contradicted. BR1's only row is [CLOSE 2.83/3.4 uncertain] and the analogue chlorine's is [CLOSE 2.42/3.3 uncertain], so nothing about the halogen swap is citable (rule 9a). Worse, the COVALENCY MISMATCH flag says the analogue is not covalent while its own crystal models a:C6 1.24 A from LYS12.NZ - shorter than any C-N bond - and a:C5 at 2.23 A as a probable covalent bond: this is a mis-typed covalent complex, not a lost bond. What survives is the two conserved SALT BRIDGE rows, which is what the sentence says. PACKET ISSUE worth fixing, and it recurs in 9BFY in this batch.",
-  "disagreement": "All three made the covalency loss the headline. labA was the only one to call the evidence 'internally tense' and still wrote the claim; labB and labC wrote it with high confidence. Each listed the 1.24 A row in its concern, so all three had the fact that invalidates the sentence. On the salt bridges the three agree exactly.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The halogen swap leaves the analogue's crystal with kept ring carbons packing against GLN15.OE1 at 2.97 and 3.41 A, while the carboxylate's LYS12.NZ and ARG28.NH2 salt bridges hold (2.51->2.60, 3.03->2.90 A).",
+  "why": "REJECT as in batch_0008: the edit's own evidence is unusable on both sides -- the input bromine's only row is [CLOSE 2.83/3.4 uncertain], the analogue chlorine's is [CLOSE 2.42/3.3 uncertain], and the C12 boundary row is [CLOSE 2.74/3.2 uncertain] -- so nothing about the halogen swap is citable (rule 9a). COVALENCY MISMATCH IS UNRELIABLE HERE as well (a:C6 modelled 1.24 A from LYS12.NZ while typed non-covalent), so no bond claim either way. labA's sentence is the best remainder.",
+  "disagreement": "labB and labC both ended with meta-commentary about the evidence ('both halogen contacts are refinement-flagged', 'too close to cite in either crystal') -- honest in a concern field, but the sentence is what gets trained on and that is not a pocket statement. labA instead found the unflagged analogue rows putting the kept thiophene carbons 2.97 and 3.41 A from GLN15.OE1, which is real content. labA is right.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "The bromine-to-chlorine swap on the thiophene leaves the carboxylate's salt bridges to LYS12.NZ (2.51->2.60 A) and ARG28.NH2 (3.03->2.90 A) held in both crystals.",
+   "why": "REJECT because the edit's own evidence is unusable on both sides and the pair's headline is contradicted. BR1's only row is [CLOSE 2.83/3.4 uncertain] and the analogue chlorine's is [CLOSE 2.42/3.3 uncertain], so nothing about the halogen swap is citable (rule 9a). Worse, the COVALENCY MISMATCH flag says the analogue is not covalent while its own crystal models a:C6 1.24 A from LYS12.NZ - shorter than any C-N bond - and a:C5 at 2.23 A as a probable covalent bond: this is a mis-typed covalent complex, not a lost bond. What survives is the two conserved SALT BRIDGE rows, which is what the sentence says. PACKET ISSUE worth fixing, and it recurs in 9BFY in this batch.",
+   "disagreement": "All three made the covalency loss the headline. labA was the only one to call the evidence 'internally tense' and still wrote the claim; labB and labC wrote it with high confidence. Each listed the 1.24 A row in its concern, so all three had the fact that invalidates the sentence. On the salt bridges the three agree exactly."
+  },
+  "verdict_changed": false
  },
  "8AU2 O3O->ODC": {
   "verdict": "REWRITE",
@@ -519,10 +573,19 @@
  },
  "7SGJ 9BI->9DL": {
   "verdict": "ADOPT",
-  "final": "Shifting a methylene between the arms relocates the tertiary amine, whose 3.84 A salt bridge to GLU274.OE1 has no counterpart within 4.0 A in the analogue's crystal; the HIS137.NE2 hydrogen bond holds (2.63->2.68 A).",
-  "why": "labB is correct and handles the MOVED role properly: all four site atoms are MOVED, so the sentence describes relocation and claims no before/after for the same group, and the analogue-side fact is a:N02's measured 4.13 A nearest protein atom in a complete 20/20 table. The retained clause is the pair's single conserved row. All three correctly refused the zinc (labelled ZN704 against ZN702) and the [SHORT 2.30 uncertain] a:O10 row.",
-  "disagreement": "The three are near-identical; labB phrases the loss as having 'no counterpart within 4.0 A', which is the most accurate way to describe a MOVED atom, where neither 'lost' nor 'retained' is right. None of the three noticed that in the analogue the anilide NH takes over GLU274, hydrogen-bonding OE2 at 3.19 A, so the glutamate is not vacated - worth recording even though it is a NEW-partner row on a conserved atom.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The methylene walk moves the cationic amine out of its 3.84 A salt bridge to GLU274.OE1 - no contact within 4.0 A in the analogue's crystal - while the hydroxamate's HIS137.NE2 hydrogen bond holds, 2.63->2.68 A.",
+  "why": "labB is correct as written: N02 is a MOVED atom, so the sentence describes relocation rather than growth and quotes each crystal's own measurement (input SALT BRIDGE 3.84 A; a:N02 no contact at 4.13 A). The HIS137.NE2 conserved row carries both distances, which is what rule 5 permits 'holds' for. The zinc end is correctly left alone (ZN 704 vs 702; a:O10 is SHORT 2.30 uncertain).",
+  "disagreement": "All three reached the same finding. labA shortened the partner to 'GLU274' without the atom and dropped the charge; labC's 'Relocating a methylene leaves the tertiary amine ... with no contact' reads as though the amine were what was left behind. labB names the walk, the residue atom, the charge and both ends, and is right.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "Shifting a methylene between the arms relocates the tertiary amine, whose 3.84 A salt bridge to GLU274.OE1 has no counterpart within 4.0 A in the analogue's crystal; the HIS137.NE2 hydrogen bond holds (2.63->2.68 A).",
+   "why": "labB is correct and handles the MOVED role properly: all four site atoms are MOVED, so the sentence describes relocation and claims no before/after for the same group, and the analogue-side fact is a:N02's measured 4.13 A nearest protein atom in a complete 20/20 table. The retained clause is the pair's single conserved row. All three correctly refused the zinc (labelled ZN704 against ZN702) and the [SHORT 2.30 uncertain] a:O10 row.",
+   "disagreement": "The three are near-identical; labB phrases the loss as having 'no counterpart within 4.0 A', which is the most accurate way to describe a MOVED atom, where neither 'lost' nor 'retained' is right. None of the three noticed that in the analogue the anilide NH takes over GLU274, hydrogen-bonding OE2 at 3.19 A, so the glutamate is not vacated - worth recording even though it is a NEW-partner row on a conserved atom."
+  },
+  "verdict_changed": false
  },
  "8V4J J7D->XLR": {
   "verdict": "ADOPT",

@@ -14,8 +14,22 @@ batch number is a durable identity.
 
 | generation | batches | pairs | usable | sentence rule |
 |---|---|---|---|---|
-| `g1_v1_retrospective` | 0001-0020 | 2000 | 1715 | reports the analogue crystal; names analogue-side residues; cites measured analogue distances |
-| `g1_readjudicated` | 9001-9002 | 50 | 27 | re-adjudication of 50 g1 pairs after the identity-disclosure flags were added |
+| `g1_v1_retrospective` | 0001-0020 | 2000 | 1714 | reports the analogue crystal; names analogue-side residues; cites measured analogue distances |
+
+## One record per pair
+
+Every label file holds exactly one record per pair, so a plain load of
+`label_out/batch_*.json` is correct and cannot double-count.
+
+Fifty g1 pairs were re-adjudicated after two identity-disclosure flags were added
+to the packet (`COVALENCY MISMATCH IS UNRELIABLE HERE`, `HETERO PARTNER
+RENUMBERED`). Those fixes were MERGED BACK into batches 0001-0010 rather than kept
+as separate files. Each carries `readjudicated_from`, `readjudicated_reason`,
+`verdict_changed`, and the superseded reading under `previous_adjudication`, so
+nothing was discarded and the record explains its own history. 6 of the 50
+verdicts changed and 0 of the 50 sentences came back identical -- including two
+that had asserted a covalent-bond loss the geometry contradicts. The original
+files are at `label_out/archive_readjudicated/`, outside the glob.
 
 ## What changed between g1 and g2, and why
 

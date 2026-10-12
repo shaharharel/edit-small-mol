@@ -35,8 +35,12 @@ a durable identity. (That seed is load-bearing for this reason and is documented
       envelope recovers 94% of the residue mentions g2's rule 1 forbids (6 A recovers 75%, 10 A
       96%), which is what makes rule 1 satisfiable rather than merely strict.
 
-Batches 9001-9002 are not a generation: they are a 50-pair re-adjudication of pairs already in g1,
-run after two disclosure flags were added, and they are stamped `g1_readjudicated`.
+The 50-pair re-adjudication that ran after two disclosure flags were added has been MERGED BACK
+into batches 0001-0010, so there is exactly one record per pair and no loader can double-count. Each
+of those 50 records carries `readjudicated_from`, `readjudicated_reason`, `verdict_changed`, and the
+superseded reading under `previous_adjudication` -- nothing was discarded, and the record explains
+its own history instead of depending on a second file continuing to exist. The original files are
+kept at `label_out/archive_readjudicated/`, outside the glob.
 
 WHAT THIS DOES NOT DO: it does not convert between generations. Rewriting g1 into v2 shape is a
 chair pass over 1,715 usable sentences (strip the analogue numbers, re-anchor the ~24% naming an
@@ -60,8 +64,9 @@ GENERATIONS = [
     (41, 9000, 'g3_v2_input_anchored_envelope',
      'input-anchored; no measured analogue distance; 8 A pocket envelope in the packet'),
 ]
-READJ = (9001, 9002, 'g1_readjudicated',
-         're-adjudication of 50 g1 pairs after the identity-disclosure flags were added')
+# Kept so the archived files still resolve to a generation if anyone points this at them.
+READJ = (9001, 9002, 'g1_readjudicated_archived',
+         'superseded files, merged back into 0001-0010; here only so the archive resolves')
 
 
 def generation_of(batch_no):
@@ -90,15 +95,28 @@ def main():
         gid, _rule = generation_of(int(m.group(1)))
         d = json.load(open(f))
         counts[gid] += len(d)
-        for v in d.values():
+        for pid, v in d.items():
             verdicts[gid][v.get('verdict', '?')] += 1
             if a.write:
                 v['label_generation'] = gid
+                # No supersession to track any more: the 50 re-adjudicated pairs were merged back
+                # into their own batches, so there is exactly one record per pair. Each carries its
+                # own history in `previous_adjudication` rather than relying on a second file.
+                v.pop('superseded_by', None)
+                v.pop('authoritative', None)
         if a.write:
             json.dump(d, open(f, 'w'), indent=1)
             stamped += len(d)
 
-    print('label files %d' % len(files))
+    # Records and unique pairs must agree. They disagreed once -- 2,050 records over 2,000 pairs,
+    # because a 50-pair re-adjudication lived in its own files -- and a loader pinned to a batch
+    # range then silently used the superseded reading. The fixes are merged in now, so this is an
+    # invariant rather than a statistic, and it is printed where anyone will see it drift.
+    n_rec = sum(len(json.load(open(f))) for f in files)
+    n_pair = len({p for f in files for p in json.load(open(f))})
+    print('label files %d   records %s   unique pairs %s%s'
+          % (len(files), format(n_rec, ','), format(n_pair, ','),
+             '' if n_rec == n_pair else '   *** %d DUPLICATED ***' % (n_rec - n_pair)))
     for gid in list(dict.fromkeys([g[2] for g in GENERATIONS] + [READJ[2], 'unassigned'])):
         if counts[gid]:
             v = verdicts[gid]
@@ -130,7 +148,19 @@ def main():
             v = verdicts[gid]
             fh.write('| `%s` | %04d-%04d | %d | %d | %s |\n'
                      % (gid, lo, hi, counts[gid], v['ADOPT'] + v['REWRITE'], rule))
-        fh.write('\n## What changed between g1 and g2, and why\n\n'
+        fh.write('\n## One record per pair\n\n'
+                 'Every label file holds exactly one record per pair, so a plain load of\n'
+                 '`label_out/batch_*.json` is correct and cannot double-count.\n\n'
+                 'Fifty g1 pairs were re-adjudicated after two identity-disclosure flags were added\n'
+                 'to the packet (`COVALENCY MISMATCH IS UNRELIABLE HERE`, `HETERO PARTNER\n'
+                 'RENUMBERED`). Those fixes were MERGED BACK into batches 0001-0010 rather than kept\n'
+                 'as separate files. Each carries `readjudicated_from`, `readjudicated_reason`,\n'
+                 '`verdict_changed`, and the superseded reading under `previous_adjudication`, so\n'
+                 'nothing was discarded and the record explains its own history. 6 of the 50\n'
+                 'verdicts changed and 0 of the 50 sentences came back identical -- including two\n'
+                 'that had asserted a covalent-bond loss the geometry contradicts. The original\n'
+                 'files are at `label_out/archive_readjudicated/`, outside the glob.\n\n'
+                 '## What changed between g1 and g2, and why\n\n'
                  'g1 sentences report the analogue crystal and cite its measured distances. At\n'
                  'inference the model has no analogue structure and cannot measure anything, so\n'
                  'those targets teach it to invent precision. g2 splits the sentence into an\n'

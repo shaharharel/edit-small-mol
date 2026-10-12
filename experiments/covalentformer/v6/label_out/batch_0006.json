@@ -64,10 +64,19 @@
  },
  "9CBH A1AVM->A1AVP": {
   "verdict": "ADOPT",
-  "final": "Lengthening the aminomethyl to aminopropyl gives up the 3.14 A hydrogen bond to GLU24.O; the analogue's crystal instead salt-bridges the amine to GLU24.OE2 at 2.73 A, its thiolate still coordinating zinc at 2.36 A.",
-  "why": "A keeps all three facts: the lost backbone hydrogen bond at the CHANGED N01, the gained SALT BRIDGE (typed, so no angle criterion) attributed to the analogue's crystal, and the retained thiolate zinc coordination, which is the warhead of this molecule. Metal claim is licensed by METAL COORDINATION rows on both sides.",
-  "disagreement": "B dropped the zinc entirely because the HETATM labels differ (ZN706 vs ZN708); A and C kept it. A and C were right -- numbering_consistent is True, there is no NO-SHARED-NUMBERING flag, and the analogue row carries input_atom S09, so the same sulfur coordinates zinc in both crystals.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Lengthening the aminoalkyl trades the amine's 3.14 A GLU24.O hydrogen bond for a 2.73 A GLU24.OE2 salt bridge plus TRP205.CG packing at 3.44 A in the analogue's crystal; PHE146.CE2 packing persists (3.38->3.56 A).",
+  "why": "labC is correct as written and the most complete: the input's typed H-bond at N01, the analogue's NEW nitrogen salt-bridging GLU24.OE2 at 2.73 A, the TRP205.CG packing the two added methylenes pick up (a:C09, NEW, 3.44 A), and the PHE146.CE2 conserved row with both distances. Every analogue claim is attributed and the packing rows are not upgraded.",
+  "disagreement": "All three wrote the same H-bond-for-salt-bridge trade at GLU24. labA and labB stopped there; labC alone added a:C09's TRP205.CG row, which is what the added carbons actually do in the pocket. labC also noticed that N01 is CHANGED while a:N11 is NEW, so the basic centre is substituted rather than moved - hence 'trades', which labA's 'the amine's' blurs.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "Lengthening the aminomethyl to aminopropyl gives up the 3.14 A hydrogen bond to GLU24.O; the analogue's crystal instead salt-bridges the amine to GLU24.OE2 at 2.73 A, its thiolate still coordinating zinc at 2.36 A.",
+   "why": "A keeps all three facts: the lost backbone hydrogen bond at the CHANGED N01, the gained SALT BRIDGE (typed, so no angle criterion) attributed to the analogue's crystal, and the retained thiolate zinc coordination, which is the warhead of this molecule. Metal claim is licensed by METAL COORDINATION rows on both sides.",
+   "disagreement": "B dropped the zinc entirely because the HETATM labels differ (ZN706 vs ZN708); A and C kept it. A and C were right -- numbering_consistent is True, there is no NO-SHARED-NUMBERING flag, and the analogue row carries input_atom S09, so the same sulfur coordinates zinc in both crystals."
+  },
+  "verdict_changed": false
  },
  "6PIY OMS->OLY": {
   "verdict": "REJECT",
@@ -260,10 +269,19 @@
  },
  "7U2I 2MA->8AN": {
   "verdict": "REJECT",
-  "final": "Both edited atoms, the 2-methyl and the 3'-oxygen, make no contact within 4.0 A in this crystal, where the phosphate coordinates MG3759 at 2.60 A and MG3875 at 2.78 A.",
-  "why": "PAIR FLAGGED UNLABELLABLE with atom mapping failed outright, NO ATOM-LEVEL JOIN, NO SHARED RESIDUE NUMBERING (overlap 0.00) and TWO TRANSFORMATIONS; it is also a nucleotide swap (2-methyladenosine to 3'-amino-adenosine monophosphate), not a medicinal-chemistry analogue pair. Only the input-side metal coordination survives, from input rows typed METAL COORDINATION.",
-  "disagreement": "All three refused the analogue side and all three cited the same magnesium rows. A phrased it as 'nothing on the analogue side is comparable', B and C as a positive input-side reading; C's is the cleanest and names both edited positions as groups.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "No atom maps between the two crystals, so nothing is attributable to this edit; the input's phosphate coordinates two magnesium ions (2.60, 2.78 A) while its purine base makes no contact within 4.0 A.",
+  "why": "REJECT as in batch_0006: PAIR FLAGGED UNLABELLABLE with atom mapping failed outright, NO ATOM-LEVEL JOIN, NO SHARED RESIDUE NUMBERING (overlap 0.00), numbering_consistent False, TWO TRANSFORMATIONS -- and the pair is a nucleotide swap (2-methyladenosine to 3'-amino-adenosine monophosphate) in a ribosomal complex. Only input-side rows typed METAL COORDINATION survive; the analogue's closest rows (a:N3' 1.35 A, a:C3' 2.45 A to CYS3.C) are [CLOSE ... uncertain] and unusable, and MG is 3142/3614/3740/3759/3875 against 4059.",
+  "disagreement": "All three wrote the same join-failure sentence with the same two Mg distances and differed only in the second clause: labA and labB added that the base makes no contact within 4.0 A, which the complete NOTHING list licenses under rule 4, while labC wrote 'the input's only coordination', a weaker statement. labB is right.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "Both edited atoms, the 2-methyl and the 3'-oxygen, make no contact within 4.0 A in this crystal, where the phosphate coordinates MG3759 at 2.60 A and MG3875 at 2.78 A.",
+   "why": "PAIR FLAGGED UNLABELLABLE with atom mapping failed outright, NO ATOM-LEVEL JOIN, NO SHARED RESIDUE NUMBERING (overlap 0.00) and TWO TRANSFORMATIONS; it is also a nucleotide swap (2-methyladenosine to 3'-amino-adenosine monophosphate), not a medicinal-chemistry analogue pair. Only the input-side metal coordination survives, from input rows typed METAL COORDINATION.",
+   "disagreement": "All three refused the analogue side and all three cited the same magnesium rows. A phrased it as 'nothing on the analogue side is comparable', B and C as a positive input-side reading; C's is the cleanest and names both edited positions as groups."
+  },
+  "verdict_changed": false
  },
  "8BDJ QE0->QFF": {
   "verdict": "ADOPT",
@@ -316,10 +334,19 @@
  },
  "5WE9 GY7->KU2": {
   "verdict": "ADOPT",
-  "final": "The molecule changes at two sites; the two fluorines made no contact within 4.0 A here, while in the analogue's crystal the replacing chlorine and sulfur pack on ILE38.CD1 at 3.33 and 3.53 A.",
-  "why": "Both CHANGED atoms (F1, F2) are in the NOTHING WITHIN 4.0 list, so the input side is a measurement, and the analogue's new chlorine and sulfur both carry measured ILE38.CD1 rows, attributed and kept as packing. The two-site change is disclosed.",
-  "disagreement": "A led with a 'benzoyl swap' as the larger effect and used the single conserved row (HIS41.CB 3.93->3.54 A); with only one conserved interaction in the whole pair, that 0.39 A move is the weaker fact. B omitted the two-site disclosure. All three correctly refused the metals, whose labels differ (MN301/MG302 vs MN201/MN202).",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The edited fluorines make no contact within 4.0 A in this crystal; the analogue's crystal sets thioether sulfur and chlorine against ILE38.CD1 at 3.53/3.33 A, HIS41.CB packing tightening 3.93->3.54 A; two sites change.",
+  "why": "labC is correct as written and is the only one to put the pair's single cross-crystal anchor into the sentence: the C22/a:C14 HIS41.CB conserved row with both distances. The gained S and Cl rows are packing and hydrophobic, so they are stated as sitting 'against' ILE38.CD1 and nothing is claimed as chemistry (rule 9b), and TWO TRANSFORMATIONS is disclosed.",
+  "disagreement": "All three chose the acyl site and the same two analogue rows (a:S1 3.53 A, a:CL1 3.33 A at ILE38.CD1). labA and labB left the one conserved row out, so neither sentence contains anything measured in both crystals; labC includes it. labC also noted that C1 is SYMMETRY-flagged and is an attachment point, so no C1-anchored claim is made - the sharpest reading of that flag of the three.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "The molecule changes at two sites; the two fluorines made no contact within 4.0 A here, while in the analogue's crystal the replacing chlorine and sulfur pack on ILE38.CD1 at 3.33 and 3.53 A.",
+   "why": "Both CHANGED atoms (F1, F2) are in the NOTHING WITHIN 4.0 list, so the input side is a measurement, and the analogue's new chlorine and sulfur both carry measured ILE38.CD1 rows, attributed and kept as packing. The two-site change is disclosed.",
+   "disagreement": "A led with a 'benzoyl swap' as the larger effect and used the single conserved row (HIS41.CB 3.93->3.54 A); with only one conserved interaction in the whole pair, that 0.39 A move is the weaker fact. B omitted the two-site disclosure. All three correctly refused the metals, whose labels differ (MN301/MG302 vs MN201/MN202)."
+  },
+  "verdict_changed": false
  },
  "7OI4 VEQ->VEW": {
   "verdict": "ADOPT",
@@ -330,10 +357,19 @@
  },
  "6CR9 VA5->VC8": {
   "verdict": "REJECT",
-  "final": "The fluorine 3.20 A from ARG183.NH2 is replaced by a chlorine at 3.15 A in the analogue's crystal, while the ARG183.NH1 salt bridge holds (2.70->2.67 A); the nucleobase changes too.",
-  "why": "PAIR FLAGGED UNLABELLABLE because a residue number means different residues across the two crystals, so even the matched ARG183 rows may not be the same residue -- every cross-crystal claim here is unsafe. Add TWO TRANSFORMATIONS (adenine to cytosine as well as the halogen) and inverted C3'/C4'. The halogen swap is the most defensible thing left.",
-  "disagreement": "All three flagged the same blockers and all three still wrote the halogen swap, which is right: the verdict column, not an empty sentence, excludes the pair. C alone also disclosed the nucleobase change inside the sentence, which TWO TRANSFORMATIONS requires.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "The nucleobase swap trades the purine N3's 3.01 A hydrogen bond to ASN279.ND2 for the new pyrimidinone carbonyl at 2.95 A in the analogue's crystal; the bridging halogen also changed.",
+  "why": "REJECT on two grounds: PAIR FLAGGED UNLABELLABLE ('a residue number means different residues'), and an adenine-to-cytosine nucleobase swap in a dNTP analogue is a substrate-identity change, not a medicinal-chemistry edit. TWO TRANSFORMATIONS and inverted C3'/C4' centres make the ribose conserved rows the same atoms but not the same geometry. labB's sentence survives.",
+  "disagreement": "All three centred the ASN279.ND2 hydrogen bond. labB alone tracked the same atom through: a:N1 is input N3, conserved, and its contact has fallen to 4.08 A while the NEW carbonyl a:O2 takes the residue at 2.95 A - a before and after measured at one residue. labA asserted the N3 bond 'is replaced' without that row; labC dropped the input 3.01 A distance and described the imidazole's ASP276.CB packing instead, which is the weaker clause.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "REJECT",
+   "final": "The fluorine 3.20 A from ARG183.NH2 is replaced by a chlorine at 3.15 A in the analogue's crystal, while the ARG183.NH1 salt bridge holds (2.70->2.67 A); the nucleobase changes too.",
+   "why": "PAIR FLAGGED UNLABELLABLE because a residue number means different residues across the two crystals, so even the matched ARG183 rows may not be the same residue -- every cross-crystal claim here is unsafe. Add TWO TRANSFORMATIONS (adenine to cytosine as well as the halogen) and inverted C3'/C4'. The halogen swap is the most defensible thing left.",
+   "disagreement": "All three flagged the same blockers and all three still wrote the halogen swap, which is right: the verdict column, not an empty sentence, excludes the pair. C alone also disclosed the nucleobase change inside the sentence, which TWO TRANSFORMATIONS requires."
+  },
+  "verdict_changed": false
  },
  "9GQF A1IOC->A1IN9": {
   "verdict": "REWRITE",
@@ -666,10 +702,19 @@
  },
  "9CZF A1A6I->A1A6H": {
   "verdict": "ADOPT",
-  "final": "Removing the spiro-cyclopropane takes away the carbon packing SER182.OG at 3.74 A, while the amine's ASP218.OD1 hydrogen bond tightens 3.01->2.81 A and the ALA126.CB packing is unchanged.",
-  "why": "The only CHANGED atom with a contact is C36 (SER182.OG, 3.74 A), and the largest conserved move is the ASP218.OD1 hydrogen bond tightening 0.20 A with typing unchanged. The analogue adds no NEW atom, so there is nothing to attribute on that side.",
-  "disagreement": "C added that the carboxylate still coordinates magnesium, but the two carboxylate oxygens swap roles between coordination and the ASN218.N hydrogen bond and the metal label differs (MG2001 vs MG2102) -- C flagged this itself. A and B left the metal alone and were right. All three excluded the TYPING CHANGED O10 row.",
-  "label_generation": "g1_v1_retrospective"
+  "final": "Removing the spiro cyclopropane deletes the carbon that faced SER182.OG at 3.74 A, while the ASP218.OD1 hydrogen bond holds (3.01->2.81 A) and the ALA217.CB packing tightens from 3.87 to 3.67 A.",
+  "why": "labC is correct as written: C36 is the only CHANGED atom with a measured contact (SER182.OG 3.74 A, packing, so proximity language only), and both other clauses are conserved rows with typing unchanged (N22/a:N36 ASP218.OD1 3.01->2.81; C33/a:C13 ALA217.CB 3.87->3.67). The analogue adds no NEW atom, so there is nothing to attribute on that side, and no Mg claim is made under HETERO PARTNER RENUMBERED. Consistent with batch_0006.",
+  "disagreement": "labA closed on O10/THR221.OG1, whose typing flips H-bond to packing -- rule 10 territory even though the distance moves with the flip -- and both labB and labC deliberately refused that row; they are right. Between them labC is preferred: labB's 'PRO179.O packing then tightens' implies the deletion caused it, which the evidence does not establish.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9002",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "Removing the spiro-cyclopropane takes away the carbon packing SER182.OG at 3.74 A, while the amine's ASP218.OD1 hydrogen bond tightens 3.01->2.81 A and the ALA126.CB packing is unchanged.",
+   "why": "The only CHANGED atom with a contact is C36 (SER182.OG, 3.74 A), and the largest conserved move is the ASP218.OD1 hydrogen bond tightening 0.20 A with typing unchanged. The analogue adds no NEW atom, so there is nothing to attribute on that side.",
+   "disagreement": "C added that the carboxylate still coordinates magnesium, but the two carboxylate oxygens swap roles between coordination and the ASN218.N hydrogen bond and the metal label differs (MG2001 vs MG2102) -- C flagged this itself. A and B left the metal alone and were right. All three excluded the TYPING CHANGED O10 row."
+  },
+  "verdict_changed": false
  },
  "9H4D A1ISH->A1ISG": {
   "verdict": "ADOPT",

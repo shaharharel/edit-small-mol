@@ -504,11 +504,20 @@
   "label_generation": "g1_v1_retrospective"
  },
  "8RZG A1H39->A1H37": {
-  "verdict": "ADOPT",
-  "final": "Replacing the hydroxyl that hydrogen-bonds GLU517.OE2 at 2.97 A with fluorine gives up that bond; the analogue's crystal puts the fluorine 3.22 A from ASP486.OD2, which the input binds covalently at 1.38 A.",
-  "why": "O02 is the CHANGED atom with H-bond, good geometry to GLU517.OE2 at 2.97 A, and a hydroxyl donor replaced by fluorine cannot donate, so giving up that bond is sound; a:F02 is NEW against ASP486.OD2 at 3.22 A, attributed; C01's input row is COVALENT BOND at 1.38 A (rule 3). Packet problem worth fixing: COVALENCY MISMATCH says the analogue has no covalent bond, yet the conserved C01-ASP486.OD2 row models the analogue side at 1.15 A -- shorter than the input's bond -- typed as packing and tagged [CLOSE 1.15/3.2 uncertain] with [ANGLE-ONLY]. The flag and the geometry contradict each other, so nothing is claimed about the analogue's covalency.",
-  "disagreement": "A and B both asserted that the analogue has lost the covalent bond, taking the flag at face value; a 1.15 A carbon-to-carboxylate distance is a bond, so that assertion is very likely wrong. C spotted the contradiction and wrote the one version that survives it, so C was taken.",
-  "label_generation": "g1_v1_retrospective"
+  "verdict": "REWRITE",
+  "final": "Replaces the hydroxyl that hydrogen-bonds GLU517.OE2 at 2.97 A with fluorine, while the second hydroxyl's hydrogen bond to ASP202.OD2 in chain B holds (2.80->2.73 A).",
+  "why": "REWRITE: all three closed on a:F02's 3.22 A packing on ASP486.OD2, but every one of the seven analogue rows faces ASP486.OD2 and three are inside the van der Waals sum (a:C01 1.15, a:O01 2.01, a:C02 2.35 A) - the same breakage that fired COVALENCY MISMATCH IS UNRELIABLE HERE. That residue's position in the analogue is a failed join, not a measurement, so I dropped the clause and kept the input GLU517 row plus the clean chain-B ASP202 conserved H-bond. No one claimed the bond was lost, correctly.",
+  "disagreement": "All three refused the lost-bond claim the flag forbids and all three used the same GLU517.OE2 input row and ASP202.OD2 conserved row, so the readings barely differ. labB alone saw that the analogue's entire ASP486 neighbourhood is implausibly close and that a:F02 therefore sits where the join may be offset - then cited a:F02 anyway. labB saw it; I acted on it.",
+  "label_generation": "g1_v1_retrospective",
+  "readjudicated_from": "batch_9001",
+  "readjudicated_reason": "re-run after COVALENCY MISMATCH IS UNRELIABLE HERE and HETERO PARTNER RENUMBERED were added to the packet",
+  "previous_adjudication": {
+   "verdict": "ADOPT",
+   "final": "Replacing the hydroxyl that hydrogen-bonds GLU517.OE2 at 2.97 A with fluorine gives up that bond; the analogue's crystal puts the fluorine 3.22 A from ASP486.OD2, which the input binds covalently at 1.38 A.",
+   "why": "O02 is the CHANGED atom with H-bond, good geometry to GLU517.OE2 at 2.97 A, and a hydroxyl donor replaced by fluorine cannot donate, so giving up that bond is sound; a:F02 is NEW against ASP486.OD2 at 3.22 A, attributed; C01's input row is COVALENT BOND at 1.38 A (rule 3). Packet problem worth fixing: COVALENCY MISMATCH says the analogue has no covalent bond, yet the conserved C01-ASP486.OD2 row models the analogue side at 1.15 A -- shorter than the input's bond -- typed as packing and tagged [CLOSE 1.15/3.2 uncertain] with [ANGLE-ONLY]. The flag and the geometry contradict each other, so nothing is claimed about the analogue's covalency.",
+   "disagreement": "A and B both asserted that the analogue has lost the covalent bond, taking the flag at face value; a 1.15 A carbon-to-carboxylate distance is a bond, so that assertion is very likely wrong. C spotted the contradiction and wrote the one version that survives it, so C was taken."
+  },
+  "verdict_changed": true
  },
  "9GQ2 A1IN0->A1IOC": {
   "verdict": "ADOPT",
