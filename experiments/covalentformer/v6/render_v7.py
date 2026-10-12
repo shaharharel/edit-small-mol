@@ -128,6 +128,62 @@ def _direction_tag(c):
     return ''
 
 
+_AA = frozenset('ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR '
+                'VAL MSE SEC PYL HID HIE HIP'.split())
+_RESNUM = re.compile(r'([A-Z0-9]+?)(\d+)\.')
+# A C-S bond is 1.81 A and a C-N 1.47; nothing non-bonded sits inside 1.90 A. So a sub-1.90 contact
+# typed as packing is a typing failure, not a close approach, and 42 pairs (0.6%) have one while
+# COVALENCY MISMATCH tells the labeller the bond was lost. 9GC6 is the mechanism in plain sight:
+# input CYS797.SG 1.79 A COVALENT BOND, analogue CYS800.SG 1.66 A "packing" -- a +3 numbering
+# offset between the depositions, so the same cysteine failed its own identity test. Two of the
+# four such pairs kept in the first 1,000 assert a bond loss that is probably this bug.
+_BOND_LEN_MAX = 1.90
+
+
+def _covalency_unreliable(r, lo):
+    if not lo.get('covalency_mismatch'):
+        return ''
+    hits = [c for c in (lo.get('analogue_contacts') or [])
+            if (c.get('distance_A') or 9) < _BOND_LEN_MAX
+            and 'COVALENT' not in (c.get('interaction') or '').upper()]
+    if not hits:
+        return ''
+    h = min(hits, key=lambda c: c['distance_A'])
+    return ('*** COVALENCY MISMATCH IS UNRELIABLE HERE -- the analogue models a:%s at %.2f A from '
+            '%s, typed as a non-covalent contact. Nothing sits that close without a bond, so the '
+            'mismatch above is probably a failed bond perception or a residue-numbering offset '
+            'between the two depositions, NOT a lost bond. Do not write that the bond was lost.\n'
+            % (h['atom'], h['distance_A'], h['faces']))
+
+
+def _hetero_renumbered(r, lo):
+    def het(rows, key):
+        out = collections.defaultdict(set)
+        for c in rows:
+            m = _RESNUM.match(c.get(key) or '')
+            if m and m.group(1) not in _AA:
+                out[m.group(1)].add(m.group(2))
+        return out
+
+    inp = het(r['MODEL_INPUT']['atoms'], 'faces')
+    ana = het(lo.get('analogue_contacts') or [], 'faces')
+    joined = {m.group(1) for c in (lo.get('conserved_interactions') or [])
+              for m in [_RESNUM.match(c.get('input_faces') or '')] if m}
+    bad = sorted(k for k in set(inp) & set(ana)
+                 if inp[k] != ana[k] and k not in joined)
+    if not bad:
+        return ''
+    return ('*** HETERO PARTNER RENUMBERED -- %s. The two crystals number the same cofactor or ion '
+            'differently, so it is matched by LABEL and the match failed: no conserved row was '
+            'produced for it even though both sides contact it. Its absence from '
+            'conserved_interactions is a join failure, NOT a lost interaction -- do not write that '
+            'the coordination or the cofactor contact was lost, and do not write that it held '
+            'unless you can cite both distances from the two tables yourself.\n'
+            % '; '.join('%s is %s in the input and %s in the analogue'
+                        % (k, '/'.join(sorted(inp[k])), '/'.join(sorted(ana[k])))
+                        for k in bad))
+
+
 def render(r, lean=True):
     mi, lo = r['MODEL_INPUT'], r['LABEL_ONLY']
     L = ['=' * 100,
@@ -220,6 +276,16 @@ def render(r, lean=True):
             'edit.\n')
            if (lc_pre and not ci_pre
                and all((c.get('status') or '').startswith('NEW') for c in lc_pre)) else ''),
+          # Derived, not stored. Both of these disclose the SAME underlying defect: identity across
+          # the two crystals is established by LABEL (residue number, HETATM number), never by
+          # position. When the two depositions number the same thing differently, the join silently
+          # fails and the packet then asserts something false.
+          #
+          # They disclose; they do not repair. Re-joining by position needs a superposition, and a
+          # wrong join is worse than a disclosed gap -- it would move a measured distance onto the
+          # wrong residue, which is the one error a labeller cannot detect.
+          _covalency_unreliable(r, lo),
+          _hetero_renumbered(r, lo),
           'EDIT: %s' % lo.get('edit_size_note', '(not annotated)'),
           'analogue SMILES: %s' % r['ANSWER']['analogue_smiles'],
           (('*** TWO TRANSFORMATIONS -- %s\n'
@@ -288,12 +354,33 @@ def render(r, lean=True):
                 if c.get(_k):
                     L.append('        !! %s' % (_ROW_CAVEAT[_k](c) if lean else c[_k]))
     lc = lo.get('analogue_contacts') or []
+    # Which rows this table will actually PRINT, decided before the header announces a count. The
+    # header used to count `status != conserved`, which stopped being the printed set the moment
+    # conserved rows whose contact MOVED were restored below: it said "2 of 22" over twelve rows.
+    # Two labellers read the mismatch as a truncated table. One predicate, evaluated once.
+    _consk = {(x.get('input_atom'), x.get('faces')) for x in ci}
+
+    def _is_dup(c):
+        # Drop a row ONLY when it is genuinely duplicated in conserved_interactions -- same input
+        # atom AND same protein atom. Dropping every `status: conserved` row removed 60% more than
+        # that: an atom can be MAPPED to an input atom while its CONTACT changed, so it never
+        # enters the conserved table. Those rows were deleted with a pointer to a table that did
+        # not contain them, across 97% of pairs, and a labeller could see the contact existed but
+        # could not cite it. That is the one failure mode this whole trimming exercise had to avoid.
+        return (lean and c.get('status') == 'conserved'
+                and (c.get('input_atom'), c.get('faces')) in _consk)
+
+    # Partitioned by row, not by atom name, so the split cannot depend on names being unique.
+    _dup = [c['atom'] for c in lc if _is_dup(c)]
+    _show = [c for c in lc if not _is_dup(c)]
     if lean:
-        _nch = sum(1 for c in lc if c.get('status') != 'conserved')
-        L += ['', 'analogue_contacts -- ONLY THE CHANGES (%d of %d analogue atoms): NEW, MOVED or '
-                  'NOTCOMPARABLE.' % (_nch, len(lc)),
-              '  Unchanged contacts are in conserved_interactions with both distances, so an '
-              'ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief\'s legend.',
+        L += ['', 'analogue_contacts -- %d of %d analogue atoms: every atom whose contact CHANGED '
+                  '(NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a '
+                  'different protein atom (status conserved, and the row says which).'
+                  % (len(_show), len(lc)),
+              '  Only atoms whose contact is unchanged AND already in conserved_interactions are '
+              'omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. '
+              'Nearest protein atom only. See the brief\'s legend.',
               '  Names are prefixed a: because they are the ANALOGUE\'s namespace. a:C19 and the '
               'input table\'s C19 are DIFFERENT ATOMS unless input_atom says so.']
     else:
@@ -307,25 +394,21 @@ def render(r, lean=True):
               % (lo.get('analogue_atoms_listed') or 'fewer atoms listed than the molecule has')
               ] if lean else ['  ' + (lo.get('analogue_contact_warning') or 'INCOMPLETE table.')]
     elif lo.get('analogue_contacts_complete') is True:
-        L += ['  %s -- complete, so an absence IS evidence here.'
+        # This used to read "complete, so an absence IS evidence here", which overstates what the
+        # table can support and is the one line in the packet that invited a false loss claim.
+        # Complete means every ATOM is listed. Each atom contributes its NEAREST protein atom only,
+        # so a residue can be absent from the whole column while still contacting the ligand -- it
+        # just is not the nearest neighbour of anything. Absence of an ATOM is evidence; absence of
+        # a RESIDUE is not. A labeller caught this on 6PP0; the other two did not.
+        L += ['  %s -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is '
+              'NOT: each atom contributes only its nearest protein atom, so a real contact that '
+              'is nobody\'s nearest neighbour appears nowhere in this column.'
               % lo.get('analogue_atoms_listed', 'all analogue heavy atoms listed')]
     L += ['',
           '   %-6s %-2s %-10s %-14s %-15s %-5s %5s %5s %s'
           % ('atom', 'el', 'input_atom', 'status', 'faces', 'chain', 'dist', 'ang',
              'interaction')]
-    _consk = {(x.get('input_atom'), x.get('faces')) for x in ci}
-    _dup = []
-    for c in lc:
-        # Drop a row ONLY when it is genuinely duplicated in conserved_interactions -- same input
-        # atom AND same protein atom. Dropping every `status: conserved` row removed 60% more than
-        # that: an atom can be MAPPED to an input atom while its CONTACT changed, so it never
-        # enters the conserved table. Those rows were deleted with a pointer to a table that did
-        # not contain them, across 97% of pairs, and a labeller could see the contact existed but
-        # could not cite it. That is the one failure mode this whole trimming exercise had to avoid.
-        if lean and c.get('status') == 'conserved' \
-                and (c.get('input_atom'), c.get('faces')) in _consk:
-            _dup.append(c['atom'])
-            continue
+    for c in _show:
         # `a:` marks the ANALOGUE's namespace. A NEW analogue atom can reuse an input atom's name --
         # 10,155 rows, and in 2,630 pairs (37.2%) BOTH sides carry a real contact, so reading them
         # as one atom produces a confident false sentence ("C20's contact moves from Leu983 to

@@ -12,7 +12,7 @@ the labeller reads unqualified evidence. So the rule is mechanical -- if a field
 the corpus, it must appear in the render of a pair that has it, and this script fails loudly when it
 does not.
 """
-import collections, json, os, random, sys
+import collections, json, os, random, re, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from render_v7 import render, _unlab
@@ -146,6 +146,79 @@ for _raw, _n in _reasons.most_common():
                                      'OK' if not missed else '*** %d NOT VISIBLE ***' % missed))
     if missed:
         fail.append('unlabellable_reason "%s" (%d pairs)' % (short[:40], missed))
+
+# DERIVED flags: computed inside render_v7 from fields that are already in the packet, so they have
+# no corpus field of their own and the field-driven probe above cannot see them. They are the same
+# bug class all the same -- a flag that stops firing is a flag nobody notices -- so each one is
+# checked against an INDEPENDENT reimplementation of its condition here. If the two disagree, one
+# of them is wrong and the run stops either way.
+print('\ndderived flags (no corpus field; condition reimplemented independently)'.replace('dd','d'))
+_AAx = frozenset('ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR '
+                 'VAL MSE SEC PYL HID HIE HIP'.split())
+_RNx = re.compile(r'([A-Z0-9]+?)(\d+)\.')
+
+
+def _cond_cov(r):
+    lo = r['LABEL_ONLY']
+    return bool(lo.get('covalency_mismatch')) and any(
+        (c.get('distance_A') or 9) < 1.90 and 'COVALENT' not in (c.get('interaction') or '').upper()
+        for c in (lo.get('analogue_contacts') or []))
+
+
+def _cond_het(r):
+    lo = r['LABEL_ONLY']
+
+    def het(rows, key):
+        o = collections.defaultdict(set)
+        for c in rows:
+            m = _RNx.match(c.get(key) or '')
+            if m and m.group(1) not in _AAx:
+                o[m.group(1)].add(m.group(2))
+        return o
+
+    i, a = het(r['MODEL_INPUT']['atoms'], 'faces'), het(lo.get('analogue_contacts') or [], 'faces')
+    j = {m.group(1) for c in (lo.get('conserved_interactions') or [])
+         for m in [_RNx.match(c.get('input_faces') or '')] if m}
+    return any(i[k] != a[k] and k not in j for k in set(i) & set(a))
+
+
+for _name, _cond, _marker in (
+        ('covalency_mismatch unreliable', _cond_cov, 'COVALENCY MISMATCH IS UNRELIABLE HERE'),
+        ('hetero partner renumbered', _cond_het, 'HETERO PARTNER RENUMBERED')):
+    _have = [r for r in rows if _cond(r)]
+    _missed = [r['pair'] for r in _have if _marker not in render(r)]
+    # the converse too: it must not fire where the condition is false
+    _spurious = [r['pair'] for r in rows if not _cond(r) and _marker in render(r)]
+    print('  %-32s %5d pairs   rendered %d/%d   spurious %d  %s'
+          % (_name, len(_have), len(_have) - len(_missed), len(_have), len(_spurious),
+             'OK' if not _missed and not _spurious else '*** MISMATCH ***'))
+    if _missed or _spurious:
+        fail.append('%s (%d not visible, %d spurious)' % (_name, len(_missed), len(_spurious)))
+
+# The analogue_contacts header announces a row count. It counted a DIFFERENT set than the table
+# prints the moment conserved-but-moved rows were restored ("2 of 22" over twelve rows, which two
+# labellers read as a truncated table). A header that can drift from its own table is checked
+# against the table, on every pair.
+print('\nanalogue_contacts header count vs rows actually printed')
+_hdr = re.compile(r'^analogue_contacts -- (\d+) of (\d+) analogue atoms', re.M)
+_bad = []
+for r in rows:
+    txt = render(r)
+    m = _hdr.search(txt)
+    if not m:
+        continue
+    printed = sum(1 for ln in txt.split('\n') if ln.startswith('   a:'))
+    listed = len(r['LABEL_ONLY'].get('analogue_contacts') or [])
+    if int(m.group(1)) != printed or int(m.group(2)) != listed:
+        _bad.append('%s header %s of %s, printed %d of %d'
+                    % (r['pair'], m.group(1), m.group(2), printed, listed))
+print('  %s pairs with a header  %s'
+      % (format(sum(1 for r in rows if _hdr.search(render(r))), ','),
+         'OK -- every count matches its table' if not _bad else '*** %d MISMATCH ***' % len(_bad)))
+for b in _bad[:3]:
+    print('        %s' % b)
+if _bad:
+    fail.append('analogue_contacts header count disagrees with the table on %d pairs' % len(_bad))
 
 print()
 if fail:
