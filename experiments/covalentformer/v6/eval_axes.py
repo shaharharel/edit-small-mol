@@ -150,6 +150,7 @@ def score_rows(recs, what='generated'):
     rr_chance = []            # the same recall if residues were drawn uniformly from the pocket
     rr_known = []             # recall restricted to reference residues that ARE in the table
     rr_chance_all = []        # chance for the all-reference numerator, scaled by the knowable frac
+    sel_ach = []              # hits / min(|named|, |knowable|): lift normalised by its own ceiling
     g_hit = g_tot = 0
     canon_seen = collections.Counter()
     beats = ties = 0
@@ -229,6 +230,20 @@ def score_rows(recs, what='generated'):
         kn = refn & tbl
         if kn and nm:
             rr_known.append(len(nm & kn) / len(kn))
+            # SELECTIVITY ACHIEVED: hits / min(|named|, |knowable|).
+            #
+            # Lift over chance is scale-free but its CEILING depends on how many residues you name:
+            # name every residue in the table and recall and chance both go to 1, so lift collapses
+            # to 1.0 however right you were. A model that names 1.5 residues has a higher achievable
+            # lift than one naming 2.7, so comparing their lifts penalises the more talkative model
+            # for something other than being wrong.
+            #
+            # Dividing hits by the most it could have got given how many it named cancels that
+            # exactly -- the algebra reduces the achievable-lift ratio to this one term -- and puts
+            # every row on 0..1 where the chemist's own sentence scores 1.0 by construction. This is
+            # the number to quote when comparing a trained arm against an untrained one, because
+            # training changes how much a model says as well as how well it chooses.
+            sel_ach.append(len(nm & kn) / min(len(nm), len(kn)))
         if refn and nm:
             S['ref_res_pairs'] += 1
             ov = len(nm & refn)
@@ -298,6 +313,7 @@ def score_rows(recs, what='generated'):
             round(mean(rr) / mean(rr_chance_all), 2) if mean(rr) and mean(rr_chance_all) else None),
         'lift_over_chance_knowable': (
             round(mean(rr_known) / mean(rr_chance), 2) if mean(rr_known) and mean(rr_chance) else None),
+        'selectivity_achieved': mean(sel_ach),
         'ref_residue_precision': mean(rp),
         'ref_residue_f1': mean(rf),
         'names_a_reference_residue_frac': frac(S['names_a_reference_residue'], S['ref_res_pairs']),
