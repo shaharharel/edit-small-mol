@@ -33,6 +33,20 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from render_v7 import render  # noqa: E402
 
 SP = os.path.dirname(os.path.abspath(__file__))
+
+# Batches DELIBERATELY pinned to an earlier renderer, with the reason. A labelling run already
+# reading a batch must not have the packet change underneath it: batches 0021-0040 are the g2
+# generation, labelled without the pocket envelope, and the envelope landed while that run was in
+# flight. They are restored to the pre-envelope render on purpose and will not match the live
+# renderer until the run finishes and they are rebuilt.
+#
+# This list exists so the guard reports PINNED instead of STALE. A guard that goes red for a known
+# reason is a guard people learn to ignore, and this one is the only thing standing between us and
+# the eighth occurrence of labelling against a packet nobody checked.
+PINNED = {
+    'batch_%04d.txt' % b: 'g2 generation: labelled without the pocket envelope (run wf_e9c1c64f-d58)'
+    for b in range(21, 41)
+}
 EV = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_evidence.jsonl'
 
 ev = {}
@@ -51,8 +65,11 @@ print('batch files    %d' % len(batches))
 # `PAIR ` up to the two-space gap before `target`.
 HDR = re.compile(r'^PAIR (.+?)   target ', re.M)
 
-stale, missing, checked = [], [], 0
+stale, missing, checked, pinned_seen = [], [], 0, []
 for path in batches:
+    if os.path.basename(path) in PINNED:
+        pinned_seen.append(os.path.basename(path))
+        continue
     txt = open(path).read()
     hits = list(HDR.finditer(txt))
     if not hits:
@@ -81,6 +98,12 @@ for path in batches:
                           '%+d lines' % (len(b) - len(a))))
 
 print('pairs checked  %d' % checked)
+if pinned_seen:
+    print('\nPINNED to an earlier renderer, not checked (%d files): %s'
+          % (len(pinned_seen), ', '.join(sorted(pinned_seen)[:3])
+             + (' ...' if len(pinned_seen) > 3 else '')))
+    print('  reason: %s' % PINNED[pinned_seen[0]])
+    print('  rebuild them once that run has finished, then delete them from PINNED.')
 
 if missing:
     print('\nIN A BATCH BUT NOT IN THE CORPUS (%d): %s' % (len(missing), missing[:4]))

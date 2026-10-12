@@ -184,6 +184,77 @@ def _hetero_renumbered(r, lo):
                         for k in bad))
 
 
+_ENVELOPE = None
+_ENV_PATH = D + '/v7_envelope.json'
+
+
+def _envelope_block(pair):
+    """The 8 A pocket envelope, as REACHABLE SPACE and never as contacts.
+
+    Why it exists: the atom table lists each ligand atom's NEAREST protein atom, so it samples the
+    pocket through nearest-neighbour relationships only. A residue 4 A from the ligand that happens
+    to be nobody's nearest neighbour appears nowhere. Measured on the first 2,000 labels, 24% of
+    sentences named a residue absent from the input side, and 100% of those mentions traced to the
+    analogue's own contact table with 0% invented -- real evidence the input side could not express.
+    Rule 1 forbids naming those residues, so without this block the rule is strict in a way the
+    evidence cannot satisfy. An 8 A cut recovers 94% of them (6 A: 75%, 10 A: 96%).
+
+    DISTANCES ARE BANDED ON PURPOSE. A residue at 7.5 A touches nothing, and the failure mode worse
+    than the one this fixes is a labeller citing an envelope distance as an interaction distance.
+    Bands make that structurally hard rather than merely discouraged: there is no decimal here to
+    copy into a sentence, and rule 1b already requires every number to come from the input side's
+    measured values, which these are not.
+
+    The flags are the packing-neighbour disclosure. An mmCIF holds the asymmetric unit, so a residue
+    8 A away can be a lattice neighbour rather than part of the site, and a labeller cannot tell.
+    Real multi-chain pockets exist, so this is disclosed per residue, not filtered.
+    """
+    global _ENVELOPE
+    if _ENVELOPE is None:
+        try:
+            _ENVELOPE = json.load(open(_ENV_PATH))
+        except Exception:
+            _ENVELOPE = {}
+    env = _ENVELOPE.get(pair)
+    if not env or env.get('error') or not env.get('residues'):
+        return []
+    bands = [('<= 4.5 A (these also appear in the atom table above)', 0.0, 4.5),
+             ('4.5 - 6.0 A', 4.5, 6.0),
+             ('6.0 - 8.0 A', 6.0, 8.01)]
+    out = ['', 'pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within '
+                '%.1f A of the input' % env.get('cut_A', 8.0),
+           '  ligand, whether or not it is any atom\'s nearest neighbour. A residue here is somewhere '
+           'a group COULD',
+           '  reach; it is NOT something the ligand touches. Distances are banded because an envelope '
+           'distance is',
+           '  not an interaction distance -- never cite one as a measured contact (rule 1b).']
+    for title, lo_d, hi_d in bands:
+        got = [x for x in env['residues'] if lo_d <= x['min_dist'] < hi_d]
+        if not got:
+            continue
+        names = []
+        for x in got:
+            tag = ''
+            if x.get('other_chain'):
+                tag += '(%s)' % x['ch']
+            if x.get('hetero'):
+                tag += '*'
+            if x.get('terminus'):
+                tag += '~'
+            names.append('%s%s%s' % (x['res'], x['rn'], tag))
+        out.append('    %-52s %s' % (title, ', '.join(names)))
+    notes = []
+    if any(x.get('other_chain') for x in env['residues']):
+        notes.append('(X) = on chain X, not the ligand\'s own chain %s' % env.get('ligand_chain'))
+    if any(x.get('hetero') for x in env['residues']):
+        notes.append('* = cofactor or ion, not an amino acid')
+    if any(x.get('terminus') for x in env['residues']):
+        notes.append('~ = chain terminus, so probably a crystal-packing neighbour rather than site')
+    if notes:
+        out.append('    ' + '   '.join(notes))
+    return out
+
+
 def render(r, lean=True):
     mi, lo = r['MODEL_INPUT'], r['LABEL_ONLY']
     L = ['=' * 100,
@@ -262,6 +333,7 @@ def render(r, lean=True):
                             ('%.2f' % a['polar_distance_A']) if a['polar_distance_A'] else '-',
                             ('%.0f' % a['polar_angle_deg']) if a['polar_angle_deg'] else '-',
                             a['polar_interaction'] or '-'))
+    L += _envelope_block(r['pair'])
     ci_pre = lo.get('conserved_interactions') or []
     lc_pre = lo.get('analogue_contacts') or []
     L += ['', '--- LABEL_ONLY: for writing the label; the model never sees any of this ---',

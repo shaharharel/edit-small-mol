@@ -96,13 +96,23 @@ def envelope_for(pdb, lig3):
 
 
 def table_residues(rec):
-    """Residues the pair's own contact table already names -- the necessary-condition set."""
-    out = set()
+    """Residues the pair's contact table names, each with the SHORTEST distance the table gives it.
+
+    The distance matters, and assuming it did not cost me a false alarm on 36 pairs. The table is
+    not a 4 A contact list: it reports each ligand atom's NEAREST protein atom whatever the
+    distance, so a row can read `CM2 faces MG3260.MG at 8.08` when nothing is closer. An 8.00 A
+    envelope then excludes that residue correctly, and a condition that demanded its presence was
+    testing something false. 7M4V is the clean example -- an RNA structure with 159 magnesium ions,
+    where the ligand's nearest Mg sits past the cut -- and 6PC5 is the other shape of it, a pair
+    whose ligand is tens of angstroms from any protein at all.
+    """
+    out = {}
     for a in rec['MODEL_INPUT']['atoms']:
-        for k in ('faces', 'polar_partner'):
+        for k, dk in (('faces', 'distance_A'), ('polar_partner', 'polar_distance_A')):
             m = _RES.match(str(a.get(k) or ''))
-            if m:
-                out.add((m.group(1), m.group(2)))
+            if m and a.get(dk) is not None:
+                key = (m.group(1), m.group(2))
+                out[key] = min(out.get(key, 1e9), float(a[dk]))
     return out
 
 
@@ -166,16 +176,23 @@ def main():
         S['rows_other_chain'] += sum(1 for x in env['residues'] if x['other_chain'])
         S['rows_terminus'] += sum(1 for x in env['residues'] if x['terminus'])
         S['rows_hetero'] += sum(1 for x in env['residues'] if x['hetero'])
-        # NECESSARY CONDITION: a contact is within 4 A, so an 8 A envelope must contain it
+        # NECESSARY CONDITION, correctly scoped: a table residue recorded INSIDE the cut must be
+        # in the envelope. One recorded beyond the cut must not be, and demanding it was the bug.
         have = {(x['res'], x['rn']) for x in env['residues']}
-        miss = table_residues(rec) - have
+        tbl = table_residues(rec)
+        inside = {k for k, d in tbl.items() if d <= CUT + 0.01}
+        S['table_residues_beyond_cut'] += len(tbl) - len(inside)
+        miss = inside - have
         if miss:
-            S['pairs MISSING a table residue'] += 1
+            S['pairs MISSING a table residue inside the cut'] += 1
             if len(missing_examples) < 5:
-                missing_examples.append((pair, sorted(miss)[:4]))
+                missing_examples.append((pair, sorted((k, round(tbl[k], 2)) for k in miss)[:4]))
+        if not env['n_residues']:
+            S['pairs with an EMPTY envelope'] += 1
 
     print()
-    for k in ('ok', 'no structure readable', 'error', 'pairs MISSING a table residue'):
+    for k in ('ok', 'no structure readable', 'error', 'pairs with an EMPTY envelope',
+              'table_residues_beyond_cut', 'pairs MISSING a table residue inside the cut'):
         print('  %-32s %s' % (k, format(S[k], ',')))
     if sizes:
         sizes.sort()
@@ -190,12 +207,15 @@ def main():
     for pair, miss in missing_examples:
         print('  !! %s misses %s' % (pair, miss))
 
-    if S['pairs MISSING a table residue']:
-        print('\nFAILED the necessary condition on %d pairs -- an 8 A envelope cannot miss a '
-              'residue the 4 A contact table names. Do not merge this.'
-              % S['pairs MISSING a table residue'])
+    if S['pairs MISSING a table residue inside the cut']:
+        print('\nFAILED on %d pairs: a contact-table residue recorded INSIDE %.1f A is absent from '
+              'the envelope. That is a bookkeeping bug here -- wrong ligand copy, wrong chain, a '
+              'parsing slip -- not a property of the data. Do not merge this.'
+              % (S['pairs MISSING a table residue inside the cut'], CUT))
         return 2
-    print('\nnecessary condition holds: every contact-table residue is in its pair\'s envelope.')
+    print('\nnecessary condition holds: every contact-table residue recorded within %.1f A is in '
+          'its pair\'s envelope (%s table residues lie beyond the cut and are correctly absent).'
+          % (CUT, format(S['table_residues_beyond_cut'], ',')))
 
     if a.probe:
         print('\n(probe only -- nothing written)')

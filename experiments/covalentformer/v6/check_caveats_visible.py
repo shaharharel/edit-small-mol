@@ -220,6 +220,51 @@ for b in _bad[:3]:
 if _bad:
     fail.append('analogue_contacts header count disagrees with the table on %d pairs' % len(_bad))
 
+# The pocket envelope is rendered from a SIDECAR file (v7_envelope.json), not from a corpus field,
+# so neither the field-driven probe nor the derived-flag probe above can see it. Three things are
+# checked, and the third is the one that matters most.
+print('\npocket envelope (rendered from the sidecar, not from a corpus field)')
+try:
+    _env = json.load(open('/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/'
+                          'v7_envelope.json'))
+except Exception as _e:                                            # noqa: BLE001
+    _env = None
+    print('  sidecar missing or unreadable (%s) -- envelope not in play' % repr(_e)[:60])
+if _env is not None:
+    _has = _miss = _spurious = _decimal = 0
+    _ex = []
+    for r in rows:
+        txt = render(r)
+        shown = 'pocket envelope -- REACHABLE SPACE' in txt
+        e = _env.get(r['pair']) or {}
+        want = bool(e.get('residues')) and not e.get('error')
+        _has += want
+        if want and not shown:
+            _miss += 1
+            if len(_ex) < 3:
+                _ex.append('%s has %d envelope residues but no block'
+                           % (r['pair'], len(e['residues'])))
+        if shown and not want:
+            _spurious += 1
+        # A banded envelope must never print a two-decimal distance. Bands are the structural
+        # defence against a labeller citing an envelope distance as an interaction distance, which
+        # would be a worse failure than the gap the envelope closes -- so this asserts the defence
+        # rather than trusting the format string to stay banded.
+        if shown:
+            block = txt.split('pocket envelope -- REACHABLE SPACE', 1)[1].split('\n\n', 1)[0]
+            if re.search(r'\d\.\d\d', block.split('within', 1)[-1].split('A of the input', 1)[-1]):
+                _decimal += 1
+                if len(_ex) < 4:
+                    _ex.append('%s envelope block contains a 2-decimal distance' % r['pair'])
+    print('  %-44s %5d pairs   rendered %d/%d   spurious %d   banded-violations %d  %s'
+          % ('envelope block', _has, _has - _miss, _has, _spurious, _decimal,
+             'OK' if not (_miss or _spurious or _decimal) else '*** FAIL ***'))
+    for _x in _ex:
+        print('        %s' % _x)
+    if _miss or _spurious or _decimal:
+        fail.append('pocket envelope (%d not visible, %d spurious, %d leaking a decimal)'
+                    % (_miss, _spurious, _decimal))
+
 print()
 if fail:
     print('FAILED: these caveats are computed but not visible to a labeller: %s' % ', '.join(fail))
