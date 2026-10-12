@@ -73,6 +73,9 @@ _DIST = re.compile(r'\d\.\d{1,2}')
 BANNED = (('burial_or_solvent', re.compile(r'\bburi(ed|al)|solvent[- ]facing|solvent[- ]exposed', re.I)),
           ('room_or_channel', re.compile(r'\bchannel\b|\bsub-?pocket\b|\broom\b|\bcavity\b', re.I)),
           ('potency', re.compile(r'potenc|\bIC50\b|\bKi\b|affinit|more active|improv(e|es|ed)\b', re.I)))
+# A real one-sentence rationale runs ~31 words; 5 is a floor that admits any genuine attempt and
+# excludes a bare molecule. Matches the threshold summarize_matrix.py uses, so the two agree.
+MIN_SENTENCE_WORDS = 5
 STOP = frozenset('a an the of to in at by for with and or but from its it is are was were be been '
                  'as that this which while on into onto over under than then both no not'.split())
 
@@ -158,7 +161,14 @@ def score_rows(recs, what='generated'):
         inp = r.get('input_smiles')
 
         # --- axis 1: SMILES generation
+        # Two different questions, and conflating them scored the catastrophic-forgetting case as
+        # perfectly formatted. Zero-shot SmileyLlama emits ONE bare SMILES token and no prose: a
+        # SMILES is recoverable (1.000) while the task -- a reasoning sentence AND a molecule -- was
+        # not attempted at all (0.000). The strict one is the headline, because a model that answers
+        # a reasoning task with a bare molecule has failed it, however parseable the molecule is.
         if smi:
+            S['smiles_recoverable'] += 1
+        if smi and len((sent or '').split()) >= MIN_SENTENCE_WORDS:
             S['format_ok'] += 1
         hg = heavy(smi) if smi else None
         if hg is not None:
@@ -258,6 +268,7 @@ def score_rows(recs, what='generated'):
         'n': n,
         # axis 1
         'format_compliance': frac(S['format_ok'], n),
+        'smiles_recoverable': frac(S['smiles_recoverable'], n),
         'validity_overall': frac(S['valid'], n),
         'validity_of_emitted': frac(S['valid'], S['format_ok']),
         'distinct_smiles': len(canon_seen),
