@@ -145,6 +145,8 @@ def score_rows(recs, what='generated'):
     tan_gen, tan_echo, dh_err, f1s, words, gmac = [], [], [], [], [], []
     rr, rp, rf = [], [], []   # recall/precision/F1 of residues against the reference's own set
     rr_chance = []            # the same recall if residues were drawn uniformly from the pocket
+    rr_known = []             # recall restricted to reference residues that ARE in the table
+    rr_chance_all = []        # chance for the all-reference numerator, scaled by the knowable frac
     g_hit = g_tot = 0
     canon_seen = collections.Counter()
     beats = ties = 0
@@ -204,6 +206,19 @@ def score_rows(recs, what='generated'):
         # This is the sharp reasoning metric -- it asks whether the model picked the contacts the
         # chemist picked, which is the actual claim the sentence is making.
         refn = set(r.get('reference_residues') or [])
+        # Two denominators, because they answer different questions and reporting one alone is
+        # misleading in opposite directions.
+        #   ALL reference residues      -- the task's intrinsic ceiling. About 10% of them are
+        #                                  analogue-side and unknowable from MODEL_INPUT, so the
+        #                                  reference itself cannot score 1.0 here.
+        #   KNOWABLE subset (ref & tbl) -- the fair measure of the MODEL: the residues it could have
+        #                                  named. The reference scores exactly 1.0 on this, which is
+        #                                  what makes it readable as a fraction of achievable.
+        # Removing impossible targets raises the model's score, so the knowable version must always
+        # be labelled as such and never quoted as plain "recall".
+        kn = refn & tbl
+        if kn and nm:
+            rr_known.append(len(nm & kn) / len(kn))
         if refn and nm:
             S['ref_res_pairs'] += 1
             ov = len(nm & refn)
@@ -217,7 +232,17 @@ def score_rows(recs, what='generated'):
             # |named| / |table| -- analytic, no sampling, no seed. Without this line a recall of
             # 0.39 is uninterpretable: a small pocket makes guessing look like skill.
             if tbl:
+                # Chance recall under a uniform draw of |named| residues from this pocket's table.
+                # For the KNOWABLE numerator (ref & table) the hypergeometric mean gives
+                # E[hits] = |named|*|kn|/|tbl|, so chance recall is exactly |named|/|tbl| -- the
+                # knowable set is a subset of the table, and its size cancels.
                 rr_chance.append(min(1.0, len(nm) / len(tbl)))
+                # For the ALL-reference numerator the same draw can never hit the ~10% of reference
+                # residues that are not in the table, so chance recall is scaled by the knowable
+                # fraction. Pairing the all-residues numerator with the unscaled chance was wrong
+                # and understated the lift (it printed 1.58x where both corrected pairings give
+                # ~1.77x -- which is itself the check that the correction is right).
+                rr_chance_all.append(min(1.0, len(nm) / len(tbl)) * (len(kn) / len(refn)))
         if _DIST.search(sent):
             S['cites_distance'] += 1
         w = len(sent.split())
@@ -256,9 +281,12 @@ def score_rows(recs, what='generated'):
         'mean_words': mean(words, 1),
         'over_35_words_frac': frac(S['over_35_words'], n),
         'ref_residue_recall': mean(rr),
+        'ref_residue_recall_knowable': mean(rr_known),
         'ref_residue_recall_chance': mean(rr_chance),
-        'ref_residue_recall_lift_over_chance': (
-            round(mean(rr) / mean(rr_chance), 2) if mean(rr) and mean(rr_chance) else None),
+        'lift_over_chance_all': (
+            round(mean(rr) / mean(rr_chance_all), 2) if mean(rr) and mean(rr_chance_all) else None),
+        'lift_over_chance_knowable': (
+            round(mean(rr_known) / mean(rr_chance), 2) if mean(rr_known) and mean(rr_chance) else None),
         'ref_residue_precision': mean(rp),
         'ref_residue_f1': mean(rf),
         'names_a_reference_residue_frac': frac(S['names_a_reference_residue'], S['ref_res_pairs']),
