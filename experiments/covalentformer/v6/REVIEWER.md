@@ -267,6 +267,10 @@ exactly what you must not describe as an interaction.
 Two hard constraints follow, and they are both checkable:
 
   * You **may name** any residue in the envelope (rule 1). That is the point of it.
+  * **The `<= 4.5 A` band does NOT mean "already in the atom table."** The atom table gives each
+    ligand atom its single NEAREST protein atom, so a residue 4.2 A away that is nobody's nearest
+    neighbour sits in that band and appears nowhere in the table — which is precisely why this
+    block exists. A band is never a measured contact, in any band.
   * You **may not cite a band as a distance** (rule 1b). The bands exist so there is no decimal to
     copy. If you want to state a distance, it must come from the atom table or a conserved row.
 

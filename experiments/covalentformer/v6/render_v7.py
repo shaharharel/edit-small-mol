@@ -218,7 +218,13 @@ def _envelope_block(pair):
     env = _ENVELOPE.get(pair)
     if not env or env.get('error') or not env.get('residues'):
         return []
-    bands = [('<= 4.5 A (these also appear in the atom table above)', 0.0, 4.5),
+    # The <=4.5 band does NOT mean "already in the atom table", and claiming it did was a bug two
+    # of three test labellers caught independently (6VH0, 6XOY, 6LYA, 8KE6 are counterexamples).
+    # The atom table lists each ligand atom's NEAREST protein atom, so a residue 4.2 A away that is
+    # nobody's nearest neighbour sits in this band and appears nowhere in the table -- which is the
+    # entire reason this block exists. The false header also invited the one error the banding is
+    # meant to prevent: reading an envelope residue as a measured contact.
+    bands = [('<= 4.5 A -- close enough to touch; SOME are in the atom table, some are not', 0.0, 4.5),
              ('4.5 - 6.0 A', 4.5, 6.0),
              ('6.0 - 8.0 A', 6.0, 8.01)]
     out = ['', 'pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within '

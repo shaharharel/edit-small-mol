@@ -1,0 +1,62 @@
+{
+  "6XOY VB4->VCP": {
+    "sentence": "The indole carbon packing GLU109.O at 3.52 Å gains a carbonyl as the ring becomes an oxindole, directing new polarity toward HIS115, while the indole NH's 2.85 Å GLU109.OE2 hydrogen bond is retained.",
+    "basis": "Anchor from the INPUT ATOM TABLE: C18 faces GLU109.O 3.52 A, polar/apolar packing; C18 is the sole site_of_change row (ATTACHMENT POINT). Retention from CONSERVED_INTERACTIONS: N19 (indole NH) - GLU109.OE2, H-bond good geometry, 2.85 A input side (analogue distance not cited). HIS115 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table - no HIS115 row exists; named as a growth direction only, with no contact or distance asserted. Did not use the 2.31 A O28/ALA112.N row (SHORT, uncertain) and made no room claim (room_contradicts_edit true).",
+    "confidence": "medium",
+    "concern": "Which nitrogen is N19 is inferred from the chemistry (indole NH, adjacent to the C18 attachment point and conserved as a:N15 on the same GLU109.OE2), not stated in the packet. The inverted C15 stereocentre did not fit in 35 words and is undisclosed."
+  },
+  "6LYA EXL->ALN": {
+    "sentence": "The N-methyl packing PHE347.O at 3.70 Å and the indole N packing ALA420.O at 3.66 Å are replaced by fused ring carbons extending toward LEU305, trading polar packing for expected hydrophobic contact.",
+    "basis": "Anchor from the INPUT ATOM TABLE: C01 faces PHE347.O 3.70 A polar/apolar packing and N02 faces ALA420.O 3.66 A polar/apolar packing; both are site_of_change CHANGED rows, so both are given up. LEU305 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table - it has no atom-table row; used only as the direction the new naphthalene carbons occupy, with no distance and no asserted contact. Deliberately did not use the O/MET344.SD row (CLOSE 2.43/3.3 uncertain, and INCOMPAT).",
+    "confidence": "medium",
+    "concern": "The indole-to-naphthalene swap replaces a polar ring nitrogen with CH, so 'trading polar packing for hydrophobic contact' is a chemical expectation, not a measurement. Both lost contacts are packing rows, so I described them as packing only."
+  },
+  "7XXP OI9->I60": {
+    "sentence": "Truncating the diaminohexanoyl side chain to a shorter aminoacyl gives up the 3.24 Å hydrogen bond its branch nitrogen makes to ASN299.O, pulling the chain back toward the CYS302 face; GLU312 and ARG306 contacts held.",
+    "basis": "Anchor from the INPUT ATOM TABLE: N14 faces ASN299.O 3.24 A, 103 deg, H-bond good geometry, and N14 is a site_of_change CHANGED row (rule 2 allows 'hydrogen bond' from a site atom's interaction). Retention from CONSERVED_INTERACTIONS: GLU312.OE2 rows (C23/C25/C28/N12) and ARG306 rows (C24/C27/O04) present on both sides. CYS302 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table; used as the face the shortened chain retreats toward, no distance, no asserted contact.",
+    "confidence": "low",
+    "concern": "Three atoms are removed but four atoms are flagged CHANGED (C34, C35, N14, N16) and the ring is renumbered/tautomerised between the two SMILES, so I cannot be certain N14 is the deleted branch amine rather than a relabelled ring nitrogen - hence 'its branch nitrogen' rather than an atom name. I avoided the N12/GLU312 polar-to-SALT-BRIDGE flip entirely: it carries [ANGLE-ONLY] and the contact lengthens (rule 10). MULTI-CHAIN POCKET also makes the chain-C GLU434 contacts unsafe to lean on."
+  },
+  "6VH0 QZD->QZ4": {
+    "sentence": "Two changes: the isobutyl carbons packing GLN192.OE1 at 3.81 Å expand to a cyclohexyl growing toward HIS41 and LEU49, and the dioxane cap becomes difluorocyclohexyl, while the 1.82 Å CYS148 covalent bond is held.",
+    "basis": "Anchor from the INPUT ATOM TABLE: C05 faces GLN192.OE1 3.81 A polar/apolar packing (C05 and C06 are the two ATTACHMENT POINT rows); C19 faces CYS148.SG at 1.82 A, COVALENT BOND (rule 3 satisfied by the input row and by the CONSERVED_INTERACTIONS row 1.82 -> 1.80, so 'held' is measured on both sides). Multi-site edit disclosed per rule 11 ('two changes'), second group from site_of_change C24/C25/C28/O27/O29 plus the analogue SMILES. HIS41 and LEU49 both came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table - neither has an atom-table row; named only as growth direction, no distance cited.",
+    "confidence": "high",
+    "concern": "The envelope cannot tell me which of the two transformations grows toward HIS41/LEU49; I attributed it to the cyclohexyl because C05/C06 are the attachment points, but the difluorocyclohexyl cap is an alternative. If that attribution is wrong the direction is wrong even though the residue names are legal."
+  },
+  "6VH1 QZ7->QZ4": {
+    "sentence": "The isobutyl methyl's 3.70 Å hydrophobic contact on LEU49.CD2 is replaced by cyclohexyl carbons that should spread it and extend packing toward HIS41, while the 1.81 Å CYS148 covalent bond is held.",
+    "basis": "Anchor from the INPUT ATOM TABLE: C14 faces LEU49.CD2 3.70 A, hydrophobic contact, and C14 is a site_of_change CHANGED row (C11 is the ATTACHMENT POINT). LEU49 is in the atom table itself, so it is not an envelope-only name. Covalent claim from the input row C25 - CYS148.SG 1.81 A COVALENT BOND plus its CONSERVED_INTERACTIONS row (1.81 -> 1.80), so 'held' is measured on both sides. HIS41 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table; direction only, no distance.",
+    "confidence": "high",
+    "concern": "None material. I did not mention the O07/GLN192.OE1 typing change (polar contact -> packing) because rule 10 forbids a typing flip as the content, and I kept 'spread' qualitative since the ring-carbon distances are analogue measurements."
+  },
+  "8KE3 FXC->6CV": {
+    "sentence": "Swapping the CF3 for a single bromine gives up the fluorines' 3.24-3.66 Å contacts on TRP417.CZ3 and the 3.78 Å packing against GLN348.NE2, leaving one larger polarisable halogen on that tryptophan face.",
+    "basis": "All from the INPUT ATOM TABLE: F12 - TRP417.CZ3 3.24 A hydrophobic, F10 - TRP417.CZ3 3.66 A hydrophobic, F11 - GLN348.NE2 3.78 A polar/apolar packing, C09 - TRP417.CZ3 3.87 A hydrophobic; C09/F10/F11/F12 are all site_of_change CHANGED rows, so these are losses. NO ENVELOPE RESIDUE USED - every residue named has its own atom-table row. I wrote 'packing against' for the GLN348 row rather than 'reaches' (rule 9b).",
+    "confidence": "high",
+    "concern": "The bromine's own environment is unknowable from the input, so the consequence half is only 'one halogen instead of three fluorines'. The inverted CA stereocentre is undisclosed for want of words. I could have named GLY419 from the envelope as a growth direction, but a CF3-to-Br swap at the same ring position does not predict a new partner, so I left it out."
+  },
+  "8KE5 FXL->FXF": {
+    "sentence": "The aryl chlorine's 3.74 Å hydrophobic packing on ALA302.CB is replaced by a larger, more polarisable bromine, which should tighten packing against that alanine face and the neighbouring GLN348 wall.",
+    "basis": "All from the INPUT ATOM TABLE: CL1 faces ALA302.CB 3.74 A hydrophobic contact (CL1 is the site_of_change CHANGED row); CE1 (SUBSTITUTION BOUNDARY) faces GLN348.NE2 3.83 A polar/apolar packing, which is why GLN348 is nameable as the adjacent wall. NO ENVELOPE RESIDUE USED. I did not write that the carboxylate O - GLY421.N 3.52 A hydrogen bond is retained, because a:O appears in analogue_contacts against a different partner (ANP501.O5'), so it is not a conserved row.",
+    "confidence": "high",
+    "concern": "Cl to Br is a ~0.2 A radius change, so 'tighten' is directionally reasonable but small. I deliberately did not name LEU305 or GLY401 from the envelope: the analogue's ring does shift, but nothing on the input side predicts a new partner for a same-position halogen swap, and naming one would be envelope-laundered guessing."
+  },
+  "8KE6 FCL->FXC": {
+    "sentence": "The chlorine packing GLY419.O at 3.18 Å is given up and a trifluoromethyl is hung off the ring carbon packing ALA420.N at 3.68 Å, growing toward TRP417 with new fluorine contacts expected there.",
+    "basis": "Anchor from the INPUT ATOM TABLE: CL1 faces GLY419.O 3.18 A polar/apolar packing (site_of_change CHANGED) and CE1 faces ALA420.N 3.68 A polar/apolar packing (site_of_change ATTACHMENT POINT). TRP417 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table - this input has no TRP417 row at all; used as the direction the new CF3 grows, with no distance and no asserted contact.",
+    "confidence": "medium",
+    "concern": "This is the pair where the envelope mattered most: without it the CF3's destination had no nameable residue on the input side. The 'new fluorine contacts expected there' is a prediction about NEW atoms, which rule 5 wants anchored - it is anchored to the input attachment point and phrased as an expectation, but it is the softest clause in my ten sentences. Inverted CA stereocentre undisclosed."
+  },
+  "8GF0 UM9->ZHE": {
+    "sentence": "The gem-dimethyl ketone arm, whose carbons pack GLN389.O at 3.41-3.73 Å while its ketone oxygen makes no contact in this crystal, becomes a cyclohexyl that should pack that face and grow toward ARG392.",
+    "basis": "Anchor from the INPUT ATOM TABLE: C11 - GLN389.O 3.41 A and C10 - GLN389.O 3.73 A, both polar/apolar packing, both site_of_change CHANGED rows; O7 is in the 'NOTHING WITHIN 4.0 A' list, which rule 4 permits me to state as 'makes no contact in this crystal'. ARG392 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table; direction only, no distance, no asserted contact.",
+    "confidence": "high",
+    "concern": "'Should pack that face' is the predictable part; the ARG392 direction is envelope-licensed rather than measured. The arm is a tert-alkyl ketone becoming a ring of the same heavy-atom count, so I avoided any size language."
+  },
+  "6YKK OVK->OVH": {
+    "sentence": "Two changes: ring expansion plus a longer linker move the azole nitrogen that packs HIS49.CB at 3.73 Å toward GLN580, while the leucine amine's 2.80 Å hydrogen bond to PHE41.O is held.",
+    "basis": "Anchor from the INPUT ATOM TABLE: N10 faces HIS49.CB 3.73 A polar/apolar packing and is a site_of_change CHANGED row. Retention from CONSERVED_INTERACTIONS: N - PHE41.O, H-bond good geometry, 2.80 A on the input side (measured on both sides, rule 5). Multi-site edit disclosed per rule 11: site_of_change spans C1/C7/C11/N9/O4 attachment points plus N8 MOVED, and the two SMILES show the furanose expanded to a six-membered ring, the linker lengthened by one carbon, and the tetrazole replaced by a triazole. GLN580 came from the POCKET ENVELOPE (<=4.5 A band), NOT from the atom table - it has no atom-table row; direction only, no distance.",
+    "confidence": "low",
+    "concern": "This edit is really three changes (ring expansion, linker length, tetrazole-to-triazole) and 35 words only let me name two; the azole heterocycle itself changes, so 'the azole nitrogen' is a group-level approximation across two different rings. I avoided the O5/HIS52.NE2 typing flip (rule 10) and the O4/ASN55.OD1 row, which is INCOMPAT and not a hydrogen bond."
+  }
+}
