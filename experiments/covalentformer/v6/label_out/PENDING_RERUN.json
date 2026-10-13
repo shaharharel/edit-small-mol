@@ -1,11 +1,12 @@
 {
- "pending_rerun": [
+ "affected_batches": [
   "0024",
   "0025"
  ],
- "reason": "labC on these two batches read a packet containing the pocket envelope block, while labA and labB on the same batches read the pre-envelope packet. Cause: the batch files were rebuilt with the envelope while this labelling run was mid-flight, and restored to pre-envelope ~2 minutes later. Two of 15 running agents fell in that window.",
- "impact": "within these two batches the three labellers did not read the same evidence, so the chair adjudicates readings from two packet versions, and labC may cite residues the chair's own packet does not contain.",
- "fix": "after wf_e9c1c64f-d58 completes, re-run batches 0024 and 0025 (3 labellers + chair each, 8 agents, ~40 min) against the restored pre-envelope packet so the whole g2 generation is one evidence version.",
- "detected_by": "grep -l 'pocket envelope -- REACHABLE SPACE' on the workflow's agent transcripts",
- "do_not_mix": "these two batches are g2; batches 0041+ are g3 and keep the envelope"
+ "NOTHING_IS_DISCARDED": "The labels for these batches are KEPT and used. They are valid labels written against valid evidence. This file flags a provenance quirk, it does not mark anything for deletion.",
+ "what_happened": "labC on batches 0024 and 0025 read a packet containing the pocket envelope block while labA and labB on the same batches read the pre-envelope packet. Cause: the batch files were rebuilt with the envelope while run wf_e9c1c64f-d58 was mid-flight, and restored to pre-envelope ~2 min later. 2 of 15 running agents fell inside that window.",
+ "impact": "on these two batches the three labellers did not read identical evidence, so the chair adjudicated readings from two packet versions. labC may cite a residue the chair's own packet does not contain, which the chair would read as ungrounded.",
+ "handling": "KEEP the labels. Stamp these 200 pairs `mixed_evidence: true` so any later analysis can condition on it. If a clean re-run is wanted, write it to batch_9024/9025 and MERGE as was done for the earlier 50-pair re-adjudication -- keeping the superseded reading under `previous_adjudication`. Never overwrite and never drop.",
+ "note_on_pinning": "check_packet_fresh.py's PINNED list concerns PACKET FILES only -- batches 0021-0040 are deliberately held at the pre-envelope render because a labelling run is reading them. No label is stale and no label is excluded.",
+ "detected_by": "grep -l 'pocket envelope -- REACHABLE SPACE' on the workflow's agent transcripts"
 }

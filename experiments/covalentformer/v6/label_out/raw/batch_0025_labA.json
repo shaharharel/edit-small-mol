@@ -1,0 +1,592 @@
+{
+ "8U6L VRQ->VRF": {
+  "sentence": "Removing the chloride that packs LYS103.CG at 3.41 A gives up that contact, while the naphthalene's TYR188 and VAL108 packing and the TRP229 contact should be retained.",
+  "basis": "input atom table CL1 -> LYS103.CG 3.41 A hydrophobic; site_of_change CL1 CHANGED (only row touched); conserved_interactions C16/C17 -> TYR188.CD2 3.13/3.17, C20 -> VAL108.CG2 3.30, N2 -> TRP229.CB 3.48.",
+  "confidence": "high"
+ },
+ "5SES IGZ->IK6": {
+  "sentence": "Replacing the saturated ring with a flat fused system relocates the carbons packing PHE729.CZ at 3.67 A, while the 2.68 A TYR693.OH hydrogen bond should be retained.",
+  "basis": "input rows C19 -> PHE729.CZ 3.67 A hydrophobic, N9 -> TYR693.OH 2.68 A H-bond good geometry; site_of_change C19/C20/C21/N23 MOVED, C4 CHANGED, C1/C5 SUBSTITUTION BOUNDARY; conserved_interactions N9 -> a:N5 TYR693.OH 2.68 -> 2.55.",
+  "confidence": "medium",
+  "concern": "STEREO flag: the edit destroys the single stereocentre (1 -> 0), so the four MOVED atoms are the same atoms but not the same geometry, and no before/after can be read off them."
+ },
+ "8QNI W7R->W89": {
+  "sentence": "Deleting the methyl that sits against LEU287.CD1 at 3.54 A gives up that contact; the molecule also changes at a second distant site, while the PHE263 and TYR260.OH hydrogen bonds are held.",
+  "basis": "input row C -> LEU287.CD1 3.54 A hydrophobic; site_of_change C CHANGED and N3 CHANGED; conserved_interactions O1 -> PHE263.N 2.90 -> 2.91 H-bond, N4 -> PHE263.O 2.89 -> 3.17 H-bond, O2 -> TYR260.OH 3.02 -> 2.77 H-bond; TWO TRANSFORMATIONS flag (2 groups, 14 bonds apart).",
+  "confidence": "high",
+  "concern": "TWO TRANSFORMATIONS and STEREO (2 -> 1 stereocentres); the second edited group (N3, the fused-ring NH) has no contact within 4.0 A in the input, so only the methyl's loss is anchorable."
+ },
+ "7XIG SPM->AG3": {
+  "sentence": "Converting the terminal amine that hydrogen-bonds PHE234.O at 2.61 A into a guanidine should trade that single donor for a multi-point cationic group, while the 2.96 A ASP167.OD2 salt bridge is expected to persist.",
+  "basis": "input rows N1 -> PHE234.O 2.61 A H-bond good geometry, N5 -> ASP167.OD2 2.96 A SALT BRIDGE, N14 -> GLU91.OE1 2.77 A SALT BRIDGE; site_of_change N1/C2/C3 CHANGED, C4 SUBSTITUTION BOUNDARY.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE plus NO ATOM-LEVEL JOIN: conserved_interactions is empty and every analogue atom is NEW, so nothing is attributable to the edit rather than to a different pose; the sentence is a forward prediction from the input crystal alone."
+ },
+ "7ZI8 J5U->J98": {
+  "sentence": "A sulfonamide and a trifluoromethyl replace the aminoethyl arm at two separate sites; the ring carbon near TYR204.CE1 at 3.89 A should carry bulkier substitution while the 2.96 A GLN97.NE2 hydrogen bond is retained.",
+  "basis": "input rows C25 -> TYR204.CE1 3.89 A hydrophobic, N6 -> GLN97.NE2 2.96 A H-bond good geometry; site_of_change C17/C25/N8 ATTACHMENT POINT, C18/C22/N9 CHANGED; conserved_interactions N6 -> a:N6 2.96 -> 2.98; TWO TRANSFORMATIONS flag (2 groups, 5 bonds apart).",
+  "confidence": "high"
+ },
+ "8CJL UXC->UVU": {
+  "sentence": "Swapping the oxetane for a biaryl at the carbon packing PRO268.CG at 3.24 A should spread that contact over more ring carbons, while the 2.06 A iron coordination and HIS272.NE2 hydrogen bond are held.",
+  "basis": "input rows C20 -> PRO268.CG 3.24 A hydrophobic, N16 -> FE501.FE 2.06 A METAL COORDINATION, S14 -> HIS272.NE2 3.34 A H-bond good geometry; site_of_change C20/C22 ATTACHMENT POINT, O21 CHANGED; conserved_interactions N16 -> a:NAQ 2.06 -> 2.13, S14 -> a:SAU 3.34 -> 3.11, C20 -> a:CAF 3.24 -> 3.71.",
+  "confidence": "high",
+  "concern": "SYMMETRY flag: C20 and C22 are graph-equivalent, so which of the two is the attachment point is arbitrary in the mapping."
+ },
+ "7ENS 5BX->JE0": {
+  "sentence": "Adding chlorine to the indole carbon sitting near GLN138.NE2 at 3.41 A should pull that face closer to the Gln side chain, while the 2.40 A GLN156.NE2 and HIS50.ND1 hydrogen bonds are held.",
+  "basis": "input rows C18 -> GLN138.NE2 3.41 A polar/apolar packing, O06 -> GLN156.NE2 2.40 A H-bond, N02 -> HIS50.ND1 2.94 A H-bond; site_of_change C18 ATTACHMENT POINT (single row); conserved_interactions C18 -> a:C12 3.41 -> 3.30, O06 -> a:O1 2.40 -> 2.43, N02 -> a:N 2.94 -> 2.89.",
+  "confidence": "high",
+  "concern": "room_contradicts_edit is true, so no claim is made about space at the growth point; the 2.40 A GLN156.NE2 row is short for an H-bond though not flagged uncertain."
+ },
+ "8KE4 FXF->FXC": {
+  "sentence": "Replacing the bromine that sits 3.19 A from GLY401.N with a trifluoromethyl should trade one heavy-halogen contact for three fluorines spread over that face, keeping the benzyl's GLY421.CA packing.",
+  "basis": "input rows BR1 -> GLY401.N 3.19 A polar/apolar packing, CE1 -> ALA420.N 3.52 A packing; site_of_change BR1 CHANGED, CE1 ATTACHMENT POINT; conserved_interactions CB -> a:CB GLY421.CA 3.57 -> 3.26.",
+  "confidence": "medium",
+  "concern": "Only one conserved_interactions row exists for the whole pair, so very little of the pose is verified across the two crystals."
+ },
+ "6XET TU2->TU3": {
+  "sentence": "Losing the ring fluorine that packs ALA248.CA at 3.46 A gives up that contact and converts a ring carbon near ASN101.OD1 to nitrogen, while the 2.82 A VAL181.N hydrogen bond is held.",
+  "basis": "input rows F29 -> ALA248.CA 3.46 A hydrophobic (chain B), C27 -> ASN101.OD1 3.75 A packing (chain A), O21 -> VAL181.N 2.82 A H-bond (chain A); site_of_change F29/C27 CHANGED, C26/C28 SUBSTITUTION BOUNDARY; conserved_interactions O21 -> a:O21 2.82 -> 3.24.",
+  "confidence": "medium",
+  "concern": "MULTI-CHAIN POCKET (the named VAL181/ASN101 are chain A while most contacts are chain B) and SYMMETRY (C04, C07, C13, C14 graph-equivalent, so their mapping is arbitrary)."
+ },
+ "8ARR NK6->MRF": {
+  "sentence": "Swapping the anilino nitrogen near LEU218.CD2 at 3.98 A for an ether oxygen trades a donor for an acceptor at that face, while the 1.75 A Cys38 covalent bond is held.",
+  "basis": "input rows N1 -> LEU218.CD2 3.98 A polar/apolar packing, C17 -> CYS38.SG 1.75 A COVALENT BOND; site_of_change N1/N2/C1 CHANGED, C2/C4/C5/C21 SUBSTITUTION BOUNDARY; conserved_interactions C17 -> a:C2 CYS38.SG 1.75 -> 1.82 COVALENT, CL1 -> a:CL2 LYS122.CD 3.28 -> 3.42.",
+  "confidence": "medium",
+  "concern": "MULTI-CHAIN POCKET, CHAIN TERMINUS CONTACT (VAL595 via its terminal OXT), SYMMETRY on C2/C21, and CL2 is not modelled in the input crystal, so it appears in no row."
+ },
+ "7Z1W I9L->I5F": {
+  "sentence": "Replacing the chlorine that sits against TYR591.CD2 at 3.74 A with a hydroxyl trades an apolar contact for a potential donor, while the 2.84 A SER599.OG and 2.82 A GLY560.N hydrogen bonds are held.",
+  "basis": "input rows CL1 -> TYR591.CD2 3.74 A hydrophobic, N1 -> SER599.OG 2.84 A H-bond, N2 -> GLY560.N 2.82 A H-bond; site_of_change CL1 CHANGED, C1 SUBSTITUTION BOUNDARY; conserved_interactions N1 -> a:N1 2.84 -> 3.15, N2 -> a:N2 2.82 -> 2.84.",
+  "confidence": "high"
+ },
+ "9CVW A1A0G->A1A0E": {
+  "sentence": "Removing the chlorine contacting the heme propionate at 2.93 A and converting that ring carbon to nitrogen gives up a halogen contact; the 3.37 A GLU597.OE1 salt bridge is expected to hold.",
+  "basis": "input rows CL1 -> HEM801.O2D 2.93 A contact with cofactor HEM, C13 -> HEM801.O2A 3.13 A, N18 -> GLU597.OE1 3.37 A SALT BRIDGE; site_of_change CL1/C13 CHANGED, C12/C14 SUBSTITUTION BOUNDARY; conserved_interactions N02 -> a:N02 GLU597.OE2 2.68 -> 2.57 H-bond.",
+  "confidence": "high",
+  "concern": "N18's salt bridge is not in conserved_interactions (it appears as a conserved row in analogue_contacts facing the heme instead), so its persistence is stated as an expectation, not as a measured retention."
+ },
+ "9ESJ HHT->3Z7": {
+  "sentence": "Deleting the acetic acid arm whose carboxyl oxygen sits near TRP217 at 3.90 A gives up that reach, leaving the ring contact on TRP217.CD1 at 3.40 A as the remaining anchor.",
+  "basis": "input rows O3 -> TRP217.CD1 3.90 A packing with polar partner TRP217.NE1 3.96 A, C6 -> TRP217.CD1 3.40 A hydrophobic, C5 -> GLN254.OE1 3.26 A packing; site_of_change C8/C9/O2/O3 CHANGED, C7 SUBSTITUTION BOUNDARY.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO SHARED RESIDUE NUMBERING (overlap 0.00) with conserved_interactions empty, so no analogue-side residue number can be trusted and nothing is verified across the two crystals."
+ },
+ "6CTW VC8->VC9": {
+  "sentence": "Swapping dichloromethylene for dibromomethylene puts larger halogens where a chlorine sits 3.15 A from ARG183.NH2, which should tighten that packing, while the 2.67 A ARG183.NH1 salt bridge and 2.43 A SER180.OG hydrogen bond are held.",
+  "basis": "input rows CL2 -> ARG183.NH2 3.15 A packing, O2B -> ARG183.NH1 2.67 A SALT BRIDGE, O3G -> SER180.OG 2.43 A H-bond; site_of_change CL1/CL2 CHANGED, C3B SUBSTITUTION BOUNDARY; conserved_interactions O2B -> a:O2B 2.67 -> 2.72, O3G -> a:O3G 2.43 -> 2.53.",
+  "confidence": "medium",
+  "concern": "PAIR FLAGGED UNLABELLABLE (a residue number means different residues) and HETERO PARTNER RENUMBERED (MG 403/402, NA 402/401), so no claim is made about the metal rows; STEREO also inverts C4'."
+ },
+ "5SCG I99->I7N": {
+  "sentence": "Hanging an acidic arm off the carbons packing HIS90 at 3.58-3.62 A should spread contact over that imidazole while the 2.81 A ASN87.ND2 hydrogen bond is held; the molecule changes at two separated sites.",
+  "basis": "input rows C14 -> HIS90.NE2 3.58 A packing, C19 -> HIS90.CD2 3.62 A hydrophobic, O6 -> ASN87.ND2 2.81 A H-bond, O3 -> HIS90.NE2 2.88 A SALT BRIDGE; site_of_change C14/C16/C19 ATTACHMENT POINT, C13 MOVED; conserved_interactions C19 -> a:C2 3.62 -> 3.59, O6 -> a:O1 2.81 -> 3.05; TWO TRANSFORMATIONS (2 groups, 6 bonds apart).",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS and STEREO (1 -> 2 stereocentres); C13 is a MOVED atom, so no before/after of the same group can be read from it."
+ },
+ "7NXO UU8->UU2": {
+  "sentence": "Replacing the sulfone with a difluoromethylene gives up its 3.15 A hydrogen bond to ARG163.NH2 and its packing near TYR161.OH, trading two acceptors for fluorines; the 2.95 A VAL175.N hydrogen bond is held.",
+  "basis": "input rows O10 -> ARG163.NH2 3.15 A H-bond good geometry, O11 -> ALA334.CB 3.51 A packing with polar partner TYR161.OH 3.79 A, O5 -> VAL175.N 2.95 A H-bond; site_of_change S8/O10/O11 CHANGED, C7/C30 SUBSTITUTION BOUNDARY; conserved_interactions O5 -> a:O23 2.95 -> 2.58.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET (VAL175 is chain B) and SYMMETRY on C30; the conserved O14/THR260.OG1 row is retyped in the analogue, but that flip forms no part of the claim."
+ },
+ "6G97 EQZ->EVQ": {
+  "sentence": "Extending from the methoxyethyl oxygen that hydrogen-bonds LYS54.NZ at 3.48 A into a larger amide-aryl arm should reorganise contacts at that lysine, while the MET108 hydrogen bonds at 2.87 and 3.01 A are held.",
+  "basis": "input row O2 -> LYS54.CD 3.05 A packing with polar partner LYS54.NZ 3.48 A H-bond good geometry; N18 -> MET108.O 2.87 A H-bond, N25 -> MET108.N 3.01 A H-bond; site_of_change C3/O2 ATTACHMENT POINT, C1 CHANGED; conserved_interactions N18 -> a:N28 2.87 -> 2.78, N25 -> a:N35 3.01 -> 2.93.",
+  "confidence": "high",
+  "concern": "STEREO: the edit creates a stereocentre (0 -> 1). The conserved O14/LYS54.NZ row is retyped in the analogue; that retyping is not the basis of the claim."
+ },
+ "6YKV OVQ->OVZ": {
+  "sentence": "Turning the pyridine nitrogen sitting near MET635.SD at 3.72 A into a benzylamine NH should swap a weak acceptor for a donor beside HIS49.CB, while the 2.66 A HIS547.NE2 hydrogen bond is held.",
+  "basis": "input row N17 -> MET635.CB 3.31 A packing with polar partner MET635.SD 3.72 A; C18 -> HIS49.CB 3.45 A hydrophobic; O -> HIS547.NE2 2.66 A H-bond; site_of_change N17 CHANGED, C13/C15/C16/C18 ATTACHMENT POINT; conserved_interactions O -> a:O 2.66 -> 2.71, N -> a:N PHE41.O 2.88 -> 2.73.",
+  "confidence": "high"
+ },
+ "9I9Q A1I1M->A1I1U": {
+  "sentence": "Growing an eight-carbon acid chain from the triazole methyl that sits 3.37 A from ASP80.OD1 should extend past that aspartate, while the 2.55 A SER128.OG and 2.97 A THR54.O hydrogen bonds are held.",
+  "basis": "input rows C15 -> ASP80.OD1 3.37 A packing, O -> SER128.OG 2.55 A H-bond, N6 -> THR54.O 2.97 A H-bond; site_of_change C15 ATTACHMENT POINT (single row); conserved_interactions O -> a:O 2.55 -> 2.55, N6 -> a:N6 2.97 -> 3.00.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET (SER128/ALA129/MET130 are chain B) and SYMMETRY on C8/C12, whose mapping between the molecules is arbitrary."
+ },
+ "6YY9 Q0E->Q0H": {
+  "sentence": "Exchanging the pyridine nitrogen that sits 3.80 A from GLY14.N for a fluorinated carbon trades an acceptor for apolar fluorines near ARG17.CB, while the ARG91.O, LEU93.N and HIS69.NE2 hydrogen bonds are held.",
+  "basis": "input rows N18 -> GLY14.N 3.80 A packing, C19 -> ARG17.CB 3.85 A hydrophobic, N01 -> ARG91.O 2.87 A H-bond, N03 -> LEU93.N 2.90 A H-bond, N09 -> HIS69.NE2 3.17 A H-bond; site_of_change N18 CHANGED, C17/C19 ATTACHMENT POINT; conserved_interactions N01/N03 and N13/C14 rows all retained.",
+  "confidence": "high"
+ },
+ "9EU7 A1H7A->A1H68": {
+  "sentence": "Exchanging the thiazole for a pyrazole at the ring carbon packing PHE77.CE1 at 3.88 A trades sulfur for an extra nitrogen there, while the 2.80 A TYR113.OH and 3.39 A ILE87.N hydrogen bonds are held.",
+  "basis": "input rows CBC -> PHE77.CE1 3.88 A hydrophobic, NBB -> PHE77.CE1 3.40 A packing, OAJ -> TYR113.OH 2.80 A H-bond, O -> ILE87.N 3.39 A H-bond; site_of_change SBD/CBC/CBE CHANGED, CAZ/NBB SUBSTITUTION BOUNDARY; conserved_interactions OAJ -> a:O2 2.80 -> 2.72, O -> a:O3 3.39 -> 3.00.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET and SYMMETRY (CAA, CAE, CAL, CAP, CBI, CBK are graph-equivalent, so their mapping is arbitrary)."
+ },
+ "6OXS NJ4->F53": {
+  "sentence": "Branching the isobutyl into a pentyl near the carbon packing GLY27.O at 3.88 A and trimming the benzylic methyl off VAL32.CG2 changes two separated sites; the ASP25.OD1 and ASP30.N hydrogen bonds are held.",
+  "basis": "input rows C14 -> GLY27.O 3.88 A packing, C38 -> VAL32.CG2 3.54 A hydrophobic, O17 -> ASP25.OD1 2.42 A H-bond, O25 -> ASP30.N 2.85 A H-bond; site_of_change C13/C14 ATTACHMENT POINT, C38 CHANGED; conserved_interactions O17 -> a:O18 2.42 -> 2.44, O25 -> a:O26 2.85 -> 2.98; TWO TRANSFORMATIONS (2 groups, 10 bonds apart).",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS, STEREO (6 -> 5 stereocentres), SYMMETRY on C13/C14/C33/C37, and MULTI-CHAIN POCKET, in which the same residue numbers occur in both chains."
+ },
+ "7U2I 2MG->M2G": {
+  "sentence": "The 2-amino group gains a second methyl at a position with no contact within 4.0 A in this crystal; the input's single close contact, O6 lying 3.28 A from a magnesium, is untouched.",
+  "basis": "input atom table has one row only, O6 -> MG1616.MG 3.28 A near MG; N2 is in the NOTHING WITHIN 4.0 A list; site_of_change N2 ATTACHMENT POINT.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO SHARED RESIDUE NUMBERING (overlap 0.00), conserved_interactions empty, and the analogue table is INCOMPLETE (25 of 26), so absence there is not evidence."
+ },
+ "8V6Z YHS->YJQ": {
+  "sentence": "Replacing the two aryl methyls with an amide-linked cyclopropane at the carbon near ILE142.CD1 at 3.93 A should trade loose apolar contact for a polar handle, while the 3.01 A LYS75.NZ hydrogen bond is held.",
+  "basis": "input rows C9 -> ILE142.CD1 3.93 A hydrophobic, C13 -> GLN67.NE2 3.56 A packing, N3 -> LYS75.NZ 3.01 A H-bond good geometry; site_of_change C9 ATTACHMENT POINT, C12/C13 CHANGED; conserved_interactions C9 -> a:C9 3.93 -> 3.99, N3 -> a:N3 3.01 -> 2.90.",
+  "confidence": "high"
+ },
+ "7OED VB5->UDQ": {
+  "sentence": "Deleting the phenol hydroxyl that hydrogen-bonds ASP395.O at 2.52 A gives that donor up, and stripping two gem-dimethyls off the piperidine near TRP431.CE3 removes apolar bulk at a second, distant site.",
+  "basis": "input rows O13 -> ASP395.O 2.52 A H-bond good geometry, C03 -> TRP431.CE3 3.72 A hydrophobic, C01 -> GLU481.OE2 3.63 A packing; site_of_change O13/C01/C03 CHANGED; TWO TRANSFORMATIONS (2 groups, 9 bonds apart); conserved_interactions O32 -> a:O29 ASN549.OD1 2.51 -> 2.78 H-bond.",
+  "confidence": "high",
+  "concern": "TWO TRANSFORMATIONS; the conserved N29/ASP377.OD1 and N27/ILE378.N rows are both retyped in the analogue, and neither retyping forms part of the claim."
+ },
+ "8AQC NIB->NJ3": {
+  "sentence": "Reorganising the oxane ring and adding two methyls at carbons packing VAL595.CG1 at 3.78 A and ASN42.OD1 at 3.81 A should thicken those apolar contacts, while the 1.85 A Cys38 covalent bond is held.",
+  "basis": "input rows C20 -> VAL595.CG1 3.78 A hydrophobic, C22 -> ASN42.OD1 3.81 A packing, C2 -> CYS38.SG 1.85 A COVALENT BOND; site_of_change C9/C10/C19/C20/C22 ATTACHMENT POINT, N2 CHANGED; conserved_interactions C2 -> a:C18 1.85 -> 1.70 COVALENT, CL2 -> a:CL2 LYS122.CD 3.29 -> 3.39.",
+  "confidence": "medium",
+  "concern": "STEREO (0 -> 2), SYMMETRY on C19/C20/C22, MULTI-CHAIN POCKET, CHAIN TERMINUS CONTACT (VAL595 via OXT), CL1 absent from the input coordinates, and the analogue table INCOMPLETE (32 of 33)."
+ },
+ "6RS5 KGK->L7T": {
+  "sentence": "The ring methyl, which makes no contact within 4.0 A in this crystal, becomes a fifth fluorine; the 1.94 A zinc coordination and the LEU198.CD2 packing at 3.07-3.33 A should be retained.",
+  "basis": "input NOTHING WITHIN 4.0 A list contains C (the methyl) and C1; input rows N -> ZN301.ZN 1.94 A METAL COORDINATION, F2 -> LEU198.CD2 3.07 A hydrophobic, C5 -> LEU198.CD2 3.33 A; site_of_change C CHANGED, C1 SUBSTITUTION BOUNDARY; conserved_interactions N -> a:N 1.94 -> 1.92, F2 -> a:F4 3.07 -> 3.24, C5 -> a:C5 3.33 -> 3.42.",
+  "confidence": "high",
+  "concern": "The S -> ZN301 row carries [CLOSE 3.02/3.8 uncertain] on both sides, so nothing is built on it."
+ },
+ "7QYT GJI->GI0": {
+  "sentence": "Adding a methylpyrazole on the piperazine nitrogen, which makes no contact within 4.0 A in this crystal, extends the molecule beyond its measured contacts while the 2.97 A PRO1817.O hydrogen bond is held.",
+  "basis": "input NOTHING WITHIN 4.0 A list contains N13, the single site_of_change row (ATTACHMENT POINT); input row N03 -> PRO1817.O 2.97 A H-bond; conserved_interactions N03 -> a:N20 2.97 -> 2.85.",
+  "confidence": "high",
+  "concern": "The conserved O21/ASN1873.ND2 row carries [ANGLE-ONLY: typing strengthens but the contact lengthens 2.92 -> 3.05], so no strengthening is read from it."
+ },
+ "6TKP NJB->NG5": {
+  "sentence": "Shrinking the ortho chlorine that packs SER1033.CB at 3.47 A to fluorine should loosen that contact slightly, while the 3.04 A TYR1060.N and 2.76 A ASP1045.N hydrogen bonds are held.",
+  "basis": "input rows CL1 -> SER1033.CB 3.47 A hydrophobic, NAK -> TYR1060.N 3.04 A H-bond, OAT -> ASP1045.N 2.76 A H-bond; site_of_change CL1 CHANGED, CBK SUBSTITUTION BOUNDARY; conserved_interactions NAK -> a:NAK 3.04 -> 2.96, OAT -> a:OAT 2.76 -> 2.83.",
+  "confidence": "high",
+  "concern": "SYMMETRY flag on CAO/CAQ, whose mapping between the two molecules is arbitrary."
+ },
+ "7K89 W4J->W9A": {
+  "sentence": "Opening the cyclohexyl ring that sits near ASN194.ND2 at 3.54 A into a branched alkyl chain should trade ordered ring packing for a floppier contact, while the 3.00 A GLU148.OE2 salt bridge is held.",
+  "basis": "input rows C11 -> ASN194.ND2 3.54 A packing, C12 -> ASN194.ND2 3.94 A, C8 -> GLU148.O 3.64 A, N -> GLU148.OE2 3.00 A SALT BRIDGE, O -> THR147.OG1 3.11 A H-bond; site_of_change C6 ATTACHMENT POINT with C7-C12 CHANGED; conserved_interactions N -> a:N 3.00 -> 2.69, O -> a:O 3.11 -> 2.91.",
+  "confidence": "high"
+ },
+ "9UZ5 D0Q->DTR": {
+  "sentence": "Removing the indole methyl that sits 3.46 A from SER624.N gives up that packing; the carboxylate's 2.66 and 2.82 A salt bridges to ARG592.NH1 are expected to anchor the ligand regardless.",
+  "basis": "input rows C1 -> SER624.N 3.46 A packing (the only site_of_change row, CHANGED), O -> ARG592.NH1 2.82 A SALT BRIDGE, OXT -> ARG592.NH1 2.66 A SALT BRIDGE, N -> THR739.OG1 2.64 A H-bond.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE with NO SHARED RESIDUE NUMBERING (overlap 0.25) and conserved_interactions empty; STEREO also inverts CA, so the salt-bridge persistence is an expectation, not a measurement."
+ },
+ "8D88 R1O->LLP": {
+  "sentence": "Converting the saturated aminomethyl linkage at the carbon bonded to LYS80.NZ at 1.43 A into an imine should flatten that junction; the 3.00 A HIS218.NE2 hydrogen bond is expected to be retained.",
+  "basis": "input rows C3 -> LYS80.NZ 1.43 A COVALENT BOND, N1 -> HIS218.NE2 3.00 A H-bond good geometry [INDEP, LYS80 excl]; site_of_change C3 and N1 both MOVED; conserved_interactions C4/C5 -> HIS218 rows unchanged.",
+  "confidence": "medium",
+  "concern": "COVALENCY MISMATCH plus COVALENCY MISMATCH IS UNRELIABLE HERE: the analogue models a:N 1.32 A from SER79.C while typing it non-covalent, so no loss of bond is claimed. Both site atoms are MOVED and STEREO drops 1 -> 0."
+ },
+ "8Q0U IKG->IJJ": {
+  "sentence": "Deleting the amide whose carbonyl hydrogen-bonds HIS1664.NE2 at 2.94 A gives up that interaction and the nitrile at a second, distant site, while the TYR1663 and ILE1643 packing is held.",
+  "basis": "input rows O5 -> HIS1664.NE2 2.94 A H-bond, N5 -> ASN1640.OD1 3.11 A INCOMPAT, C24 -> ASN1640.OD1 3.06 A packing; site_of_change C20-C24/N4/N5/O5 CHANGED, C17/C18 SUBSTITUTION BOUNDARY; conserved_interactions C13 -> a:C8 TYR1663.CE1 3.51 -> 3.55, C6 -> a:C18 ILE1643.CG2 3.58 -> 3.73; TWO TRANSFORMATIONS (7 bonds apart).",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS, STEREO (1 -> 0) and SYMMETRY on C18; the conserved N3/TYR1674.OH row carries [ANGLE-ONLY], so no weakening is read from it."
+ },
+ "6E2O S0L->KK8": {
+  "sentence": "Swapping the cyclopropyl-imidazole for a pyridine gives up the imidazole nitrogen's 2.76 A hydrogen bond to TYR814.OH and the cyclopropyl packing near GLY759.N, while the 2.83 A VAL757.N hydrogen bond is held.",
+  "basis": "input rows N26 -> TYR814.OH 2.76 A H-bond good geometry (chain B), C29/C31 -> GLY759.N 3.47/3.55 A packing, O14 -> VAL757.N 2.83 A H-bond; site_of_change C29/C30/C31/N26 CHANGED, C19/N24 MOVED; conserved_interactions O14 -> a:O20 2.83 -> 2.93, N09 -> a:N09 LYS709.NZ 3.03 -> 3.00.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET: TYR814 is chain B while the rest of the pocket is chain A; C19 and N24 are MOVED atoms, so no before/after is read from them."
+ },
+ "7SF5 95I->A1I": {
+  "sentence": "Replacing the thiourea whose sulfur sits 3.44 A from PHE47.CZ with an amide, and the benzyl with a cyclopentene, should give up that sulfur contact, while the 3.03 A SER284.OG hydrogen bond is held.",
+  "basis": "input rows S01 -> PHE47.CZ 3.44 A packing with polar partner GLY161.O 3.82 A, C04 -> THR163.OG1 3.11 A packing, O14 -> SER284.OG 3.03 A H-bond; site_of_change S01/N03/C04/C08 CHANGED, C02 SUBSTITUTION BOUNDARY; conserved_interactions O14 -> a:O06 3.03 -> 2.91.",
+  "confidence": "medium",
+  "concern": "The conserved O15/TYR56.OH row is [SHORT 2.34 uncertain] on both sides and the analogue models a:C15 as a probable covalent bond to ASN166.OD1 (NOT citable); the conserved N11/ASN166.OD1 row is also retyped. None of these is used."
+ },
+ "8A5W E1U->LLP": {
+  "sentence": "Deleting the serine phosphate gives up its salt bridges to ARG45.NE at 2.44 A, HIS44.NE2 at 3.04 A and HIS335.NE2 at 3.08 A, while the 2.72 A THR156.OG1 hydrogen bond is held.",
+  "basis": "input rows O7P -> ARG45.NE 2.44 A SALT BRIDGE, O5P -> HIS44.NE2 3.04 A SALT BRIDGE, O6P -> HIS335.NE2 3.08 A SALT BRIDGE, O3 -> THR156.OG1 2.72 A H-bond; site_of_change O5P/O6P/O7P/OG/P2 CHANGED, N MOVED; conserved_interactions O3 -> a:O3 2.72 -> 2.55, P -> a:P GLY79.N 3.39 -> 3.30.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET (ARG45/HIS44/THR242 are chain C), STEREO (1 -> 0), and the analogue table is INCOMPLETE (24 of 25), so absence there is not evidence."
+ },
+ "7IJ1 A1CJW->A1CJE": {
+  "sentence": "Replacing the phenol oxygen that sits 3.67 A from ASP157.OD1 with bromine trades a polar contact for a bulkier halogen there, and a methyl is added at a second, distant site.",
+  "basis": "input rows O3 -> ASP157.OD1 3.67 A packing, C14 -> ASP157.CB 3.79 A hydrophobic, C9 -> GLY48.C 3.86 A hydrophobic; site_of_change O3 CHANGED, C9/C14 ATTACHMENT POINT; TWO TRANSFORMATIONS (2 groups, 9 bonds apart); conserved_interactions N3 -> a:N2 ILE23.N 2.81 -> 2.68, N4 -> a:N1 ASP22.OD1 2.55 -> 2.56.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS and STEREO (C3 inverted S -> R); the input O1/LEU160.CD2 row is [CLOSE 2.45/3.2 uncertain] and the analogue's bromine contact is also flagged uncertain, so neither is used."
+ },
+ "7E61 HXF->HX9": {
+  "sentence": "Removing the benzyl and glycine arm gives up its packing on LYS156.O at 3.30 A and HIS168.CB at 3.73 A, while the 2.07 A zinc coordination by the hydroxamate oxygen is held.",
+  "basis": "input rows C61 -> LYS156.O 3.30 A packing, C41 -> HIS168.CB 3.73 A hydrophobic, C21 -> SER166.OG 3.45 A packing, O9 -> ZN300.ZN 2.07 A METAL COORDINATION; site_of_change C21/C23/C31/C41/C51/C61 CHANGED, N5 MOVED; conserved_interactions O9 -> a:O9 2.07 -> 2.49 METAL COORDINATION on both sides.",
+  "confidence": "medium",
+  "concern": "STEREO (2 -> 3 stereocentres); the conserved N4 and O8 zinc rows are both retyped between the sides, so only the O9 coordination is cited, and N5 is a MOVED atom."
+ },
+ "7EM2 CZF->CZC": {
+  "sentence": "Deleting the gamma-phosphate gives up both its 3.51 A hydrogen bonds to GLU195.OE1 and OE2 and its packing near ARG188.NH1, leaving the shortened chain's LYS96 salt bridges to anchor it.",
+  "basis": "input rows O13 -> GLU195.OE1 3.51 A H-bond, O14 -> GLU195.OE2 3.51 A H-bond, P3 -> ARG188.NH1 3.88 A packing, O9/O11 -> LYS96.NZ 2.89/2.87 A SALT BRIDGE; site_of_change O13/O14/O15/P3 CHANGED.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO SHARED RESIDUE NUMBERING (overlap 0.00) with conserved_interactions empty; the input O7/ARG188.NH1 row is also [SHORT 2.26 uncertain] and is not used."
+ },
+ "7OEH 6IK->UEE": {
+  "sentence": "Removing the cyclopropyl from the spiro pyrrolidine gives up the ring carbons packing ASP395.OD1 at 3.31 A and VAL432.O at 3.30 A, while the 2.90 A ASP395.OD1 salt bridge is held.",
+  "basis": "input rows C13 -> ASP395.OD1 3.31 A packing, C14 -> VAL432.O 3.30 A packing, C15 -> VAL432.O 3.40 A, N11 -> ASP395.OD1 2.90 A SALT BRIDGE; site_of_change C13/C14/C15 CHANGED (all three rows); conserved_interactions N11 -> a:N11 2.90 -> 3.10, O01 -> a:O01 ASN549.OD1 2.63 -> 2.69.",
+  "confidence": "high",
+  "concern": "STEREO inverts C02 and SYMMETRY marks C17/C19 as graph-equivalent, so their mapping is arbitrary."
+ },
+ "9GVX A1IQZ->A1IQY": {
+  "sentence": "Replacing the terminal alkyne whose carbons sit 2.77-2.94 A from TYR39.OH with a nitro group should set two acceptors where apolar carbons were, while the 1.44 A Lys111 covalent bond is expected to hold.",
+  "basis": "input rows CAO -> TYR39.OH 2.77 A packing, CAN -> TYR39.OH 2.94 A packing, CAB -> TYR39.OH 3.76 A packing, CAI -> LYS111.NZ 1.44 A COVALENT BOND, OAK -> TRP109.NE1 3.23 A H-bond; site_of_change CAN/CAO CHANGED, CAB ATTACHMENT POINT.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO ATOM-LEVEL JOIN: conserved_interactions is empty and every analogue atom is NEW, so the covalent bond's persistence is an expectation from the input only, not a measurement."
+ },
+ "9QOW A1I8X->A1I8U": {
+  "sentence": "Replacing the amide whose nitrogen sits 3.58 A from ALA36.CB with a hydroxypropyl chain trades an amide for an alcohol at that face, while the ILE98 hydrogen bonds at 2.81 and 2.95 A are held.",
+  "basis": "input rows N1 -> ALA36.CB 3.58 A packing with polar partner CYS34.O 3.82 A, C2 -> ALA36.CB 3.74 A hydrophobic, N14 -> ILE98.O 2.81 A H-bond, N16 -> ILE98.N 2.95 A H-bond; site_of_change C2 ATTACHMENT POINT, N1/O3 CHANGED; conserved_interactions N14 -> a:N19 2.81 -> 2.73, N16 -> a:N14 2.95 -> 2.97.",
+  "confidence": "high",
+  "concern": "STEREO: the edit creates a stereocentre (0 -> 1)."
+ },
+ "7I9G A1B6H->A1JS0": {
+  "sentence": "Losing the methoxy oxygen that hydrogen-bonds TYR106.OH at 2.53 A gives up that donor-acceptor pair and relocates the aryl ring, while the 2.96 A ARG28.NH2 salt bridge is held.",
+  "basis": "input rows O3 -> TYR106.OH 2.53 A H-bond good geometry, C12 -> GLN15.NE2 3.42 A packing, O1 -> ARG28.NH2 2.96 A SALT BRIDGE; site_of_change O3/C12 CHANGED, C8/C9 MOVED, C10 SUBSTITUTION BOUNDARY; conserved_interactions O1 -> a:O20 2.96 -> 2.90.",
+  "confidence": "medium",
+  "concern": "SUSPECT RES LYS12, with C6 omitted as a clash against it, so every LYS12 row -- including the conserved LYS12.NZ salt bridge and the analogue's covalent bond to LYS12.NZ -- is treated as uncertain and the COVALENCY MISMATCH is therefore not described."
+ },
+ "8ATS O5I->NJI": {
+  "sentence": "Ring-closing at the amide nitrogen 3.70 A from ILE168.CD1 into an azetidine, plus an oxane replacing the cyclopentane near PRO261.O, changes two separated sites; the 1.90 A Cys38 covalent bond is held.",
+  "basis": "input rows N1 -> ILE168.CD1 3.70 A packing [INDEP, CYS38 excl], C17 -> PRO261.O 3.28 A packing (chain P), C16 -> ASN262.O 3.38 A packing, C2 -> CYS38.SG 1.90 A COVALENT BOND; site_of_change N1/C4/C16/C17 ATTACHMENT POINT; conserved_interactions C2 -> a:C2 1.90 -> 1.71 COVALENT.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS (7 bonds apart), SYMMETRY on C16/C17, MULTI-CHAIN POCKET (chain P), CL1 absent from the input coordinates, analogue table INCOMPLETE (28 of 29), and the conserved CL2/LYS122.CD row is [CLOSE 2.85/3.5 uncertain] so it is not used."
+ },
+ "9T3M A1JTB->A1B6L": {
+  "sentence": "Exchanging the methoxyphenyl for a bromothiophene at carbons packing TYR106.OH at 3.24-3.48 A should trade an anisole face for a smaller sulfur-containing ring there, and gives up the methoxy oxygen's TYR106.OH contact.",
+  "basis": "input rows C16 -> TYR106.OH 3.24 A packing, C15 -> TYR106.OH 3.48 A packing, C13 -> TYR106.OH 3.80 A, O14 -> TYR106.OH 3.94 A packing, C17 -> GLU108.O 3.49 A; site_of_change C13/C15/C16/O14 CHANGED, C12/C17/C19 SUBSTITUTION BOUNDARY.",
+  "confidence": "medium",
+  "concern": "SUSPECT RES LYS12, with C9 omitted as a clash against it; all five conserved LYS12 rows are treated as uncertain (several carry [CLOSE ... uncertain] and one is typed a probable covalent bond on the analogue side), and STEREO inverts C11."
+ },
+ "6HIC G7H->G1E": {
+  "sentence": "Deleting the lactam whose carbonyl hydrogen-bonds ASP1014.N at 2.80 A gives up that bond and the ring's packing near PRO1012.O, while the ASN1064 hydrogen bonds and the 2.62 A ASP1071.OD1 salt bridge are held.",
+  "basis": "input rows OAC -> ASP1014.N 2.80 A H-bond, CAI -> PRO1012.O 3.23 A packing, CAL -> PRO1012.O 3.52 A, NAR -> ASN1064.OD1 2.68 A H-bond, NAP -> ASP1071.OD1 2.62 A SALT BRIDGE; site_of_change OAC/CAG/CAI/CAL/CAM/CAU/NBC CHANGED; conserved_interactions NAR -> a:NAO 2.68 -> 2.68, NAO -> a:NAL 3.25 -> 3.18, NAP -> a:NAM 2.62 -> 2.68.",
+  "confidence": "high",
+  "concern": "SYMMETRY flag on CAE/CAH, whose mapping between the two molecules is arbitrary."
+ },
+ "6CRC VA7->VA6": {
+  "sentence": "Shrinking the dichloromethylene bridge, whose chlorine sits 3.55 A from ARG183.NH2, to difluoromethylene should relax that halogen contact, while the 2.98 A GLY274.N hydrogen bond is held.",
+  "basis": "input rows CL1 -> ARG183.NH2 3.55 A packing, O3' -> GLY274.N 2.98 A H-bond, O2B -> ARG183.NH1 2.69 A SALT BRIDGE; site_of_change CL1/CL2 CHANGED, C3B SUBSTITUTION BOUNDARY; conserved_interactions O3' -> a:O3' 2.98 -> 2.53.",
+  "confidence": "high",
+  "concern": "STEREO inverts C1'; the conserved O3G/SER180.OG row is [SHORT uncertain] on both sides and the conserved O1G/MG402 row is retyped, so neither is used."
+ },
+ "6POZ OSD->OS7": {
+  "sentence": "Replacing one isopropyl methyl that packs VAL104.CG1 at 3.61 A with a pyridine ring should trade a small apolar contact for an aromatic face, while the 3.08 A heme contact is held.",
+  "basis": "input rows C31 -> VAL104.CG1 3.61 A hydrophobic, C03 -> HEM501.NB 3.08 A contact with cofactor HEM; site_of_change C30 ATTACHMENT POINT, C31/C32 CHANGED; conserved_interactions C03 -> a:C03 3.08 -> 3.18.",
+  "confidence": "high",
+  "concern": "The conserved N02/GLU361.OE2 row is marked TYPING CHANGED with [ANGLE-ONLY: typing weakens but the contact shortens 2.62 -> 2.61], so it is described neither as weakened nor as retained."
+ },
+ "8BCE B09->A09": {
+  "sentence": "Removing the O-methyl that sits 3.65 A from LEU631.O gives up that packing and leaves a free hydroxylamine OH, while the 2.99 A TRP593.NE1 hydrogen bond is expected to persist.",
+  "basis": "input rows C7 -> LEU631.O 3.65 A packing (the single site_of_change row, CHANGED), O2 -> TRP593.NE1 2.99 A H-bond good geometry, O1 -> THR606.CB 3.25 A packing with polar partner TRP593.NE1 3.86 A.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO SHARED RESIDUE NUMBERING (overlap 0.00) with conserved_interactions empty; the analogue's residue numbers cannot be matched to the input's, so persistence is an expectation only."
+ },
+ "9QP5 A1I8Z->A1I8V": {
+  "sentence": "Shifting the hydroxyl one carbon along the chain moves the terminal carbon that sits 3.59 A from ASP217.OD2, while the ILE98 hydrogen bonds at 2.77 and 2.88 A and the PHE95.CD1 chloride packing are held.",
+  "basis": "input rows C20 -> ASP217.OD2 3.59 A packing, C03 -> ALA36.CB 3.51 A hydrophobic, N14 -> ILE98.N 2.77 A H-bond, N19 -> ILE98.O 2.88 A H-bond, CL12 -> PHE95.CD1 3.69 A hydrophobic; site_of_change C20 CHANGED, C03 SUBSTITUTION BOUNDARY; conserved_interactions N14/N19/CL12 all present on both sides.",
+  "confidence": "medium",
+  "concern": "STEREO: a stereocentre (C04) could not be compared across the edit. The conserved O01/GLY31.N row is retyped from packing to H-bond, and that flip is not the claim."
+ },
+ "9EUD A1H7G->A1H7B": {
+  "sentence": "Trading the isopropylpyrazole for a methylthiazole gives up the isopropyl carbons packing PHE77.CZ at 3.55 A and GLN85.O at 3.32 A, while the 2.74 A TYR113.OH hydrogen bond is held.",
+  "basis": "input rows CBG -> PHE77.CZ 3.55 A hydrophobic, CBD -> GLN85.O 3.32 A packing, CBE -> PHE77.CZ 3.87 A, OAP -> TYR113.OH 2.74 A H-bond, O -> ILE87.N 2.92 A H-bond; site_of_change CBD/CBE/CBF/CBG/NBC CHANGED, NBB/CAZ/CBA SUBSTITUTION BOUNDARY; conserved_interactions OAP -> a:OBB 2.74 -> 3.01.",
+  "confidence": "high",
+  "concern": "SYMMETRY flag on CAA/CAE, whose mapping between the two molecules is arbitrary."
+ },
+ "7IJC A1CJ8->A1CJW": {
+  "sentence": "Swapping the pyridine nitrogen 2.99 A from ALA129.O for a carbon bearing a hydroxyl should put a donor where a bare acceptor sat, while the 2.75 A PHE156.N hydrogen bond is held.",
+  "basis": "input rows N5 -> ALA129.O 2.99 A polar contact [INCOMPAT: both acceptors], C14 -> ALA129.O 2.77 A packing, C15 -> VAL49.CG2 3.48 A hydrophobic, O3 -> PHE156.N 2.75 A H-bond; site_of_change N5 CHANGED, C14/C15 ATTACHMENT POINT; conserved_interactions O3 -> a:O4 2.75 -> 2.63.",
+  "confidence": "high",
+  "concern": "The N5 row is typed INCOMPAT (both atoms acceptors) and so is not called a hydrogen bond; the conserved O2/VAL49.CG2 row is [CLOSE 2.67/3.2 uncertain] and is not used."
+ },
+ "8TU5 V7I->V72": {
+  "sentence": "Opening the fused bicycle removes a ring carbon that makes no contact within 4.0 A in this crystal, while the 1.87 A Cys481 covalent bond and 3.02 A MET477.N hydrogen bond are held.",
+  "basis": "site_of_change C16 CHANGED, and C16 is in the input NOTHING WITHIN 4.0 A list; input rows C14 -> CYS481.SG 1.87 A COVALENT BOND, N6 -> MET477.N 3.02 A H-bond; conserved_interactions C14 -> a:C18 1.87 -> 1.77 COVALENT, N6 -> a:N2 3.02 -> 2.95.",
+  "confidence": "high",
+  "concern": "STEREO: the edit destroys all three stereocentres (3 -> 0), so rows conserved across the opened ring are the same atoms but not the same geometry."
+ },
+ "7QZ4 GIZ->GQF": {
+  "sentence": "Deleting the ethylpiperidinylmethyl arm gives up the carbon packing GLU1820.OE2 at 3.65 A, and a cyclopentyl replaces the ethyl near VAL1879.CG2 at a second, distant site; the PRO1817.O and ASN1873.ND2 hydrogen bonds are held.",
+  "basis": "input rows C07 -> GLU1820.OE2 3.65 A packing, C29 -> VAL1879.CG2 3.74 A hydrophobic, N20 -> PRO1817.O 3.06 A H-bond, O25 -> ASN1873.ND2 2.92 A H-bond; site_of_change C01/C02/C07/C28/C29/N03 CHANGED; TWO TRANSFORMATIONS (2 groups, 10 bonds apart); conserved_interactions N20 -> a:N07 3.06 -> 2.82, O25 -> a:O03 2.92 -> 2.85.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS, and most of the deleted arm's atoms (C01, C02, C28, N03) are in the input's NOTHING WITHIN 4.0 A list, so only one measured contact is demonstrably given up."
+ },
+ "7IJ7 A1AKG->A1CKI": {
+  "sentence": "Exchanging the pyridine nitrogen, which makes no contact within 4.0 A here, for a hydroxyl-bearing carbon beside PHE156.CD1 at 3.42 A should add a donor there; the 2.76 A PHE156.N hydrogen bond is held.",
+  "basis": "site_of_change N4 CHANGED and N4 is in the NOTHING WITHIN 4.0 A list; input rows C13 -> PHE156.CD1 3.42 A hydrophobic, O1 -> PHE156.N 2.76 A H-bond; site_of_change C12/C13 ATTACHMENT POINT; conserved_interactions O1 -> a:O1 2.76 -> 2.70.",
+  "confidence": "medium",
+  "concern": "SYMMETRY on C12/C13 makes the attachment point arbitrary between them, and two of the four conserved rows (C3, O2 to VAL49.CG2) become [CLOSE ... uncertain] on the analogue side, so they are not used."
+ },
+ "9GQD A1IOA->A1IN8": {
+  "sentence": "Replacing the allylic ether linker, whose changed atoms make no contact within 4.0 A here, with a diol leaves the measured contacts untouched; the 3.01 A TYR113.OH and 3.13 A ILE87.N hydrogen bonds hold.",
+  "basis": "site_of_change C8/C11/C12/C13/O2/O4 CHANGED and O3 MOVED, all of which appear in the input NOTHING WITHIN 4.0 A list; input rows O7 -> TYR113.OH 3.01 A H-bond, O6 -> ILE87.N 3.13 A H-bond; conserved_interactions O7 -> a:O8 3.01 -> 2.59, O6 -> a:O7 3.13 -> 2.94.",
+  "confidence": "medium",
+  "concern": "STEREO (2 -> 4 stereocentres) and SYMMETRY on C26/C30; the conserved O5/TYR113.OH row carries [ANGLE-ONLY: typing weakens but the contact shortens], so that row is not used."
+ },
+ "8CHQ UMR->UT6": {
+  "sentence": "Deleting the N-methyl imine gives up its 3.28 A hydrogen bond to TYR103.OH and the methyl packing PHE57.CE1 at 3.15 A, while the 2.77 A ILE77.N hydrogen bond is held.",
+  "basis": "input rows NAB -> TYR103.OH 3.28 A H-bond good geometry, CAA -> PHE57.CE1 3.15 A hydrophobic, O -> ILE77.N 2.77 A H-bond; site_of_change CAA and NAB both CHANGED (the only two rows); conserved_interactions O -> a:O 2.77 -> 2.73, SAC -> a:SAI TYR103.OH 3.83 -> 3.64.",
+  "confidence": "high",
+  "concern": "STEREO: SAC's configuration is not comparable across the edit. SYMMETRY on CAZ/CBF/CLBB/CLBE, and the input CLBB/SER108.OG row is [CLOSE 2.30/3.3 uncertain] so it is not used."
+ },
+ "5SFM ILN->IE7": {
+  "sentence": "Shrinking the morpholine to an azetidine gives up the ring oxygen sitting 3.59 A from HIS525.CE1 and a carbon beside it; a ring nitrogen also moves, and the 2.56 A TYR693.OH hydrogen bond is held.",
+  "basis": "input rows O29 -> HIS525.CE1 3.59 A packing with polar partner HIS525.NE2 3.74 A, C28 -> HIS525.CE1 3.50 A hydrophobic, N1 -> PHE729.CD1 2.97 A packing, N9 -> TYR693.OH 2.56 A H-bond; site_of_change O29/C28/N1 CHANGED, C2/C4 SUBSTITUTION BOUNDARY; conserved_interactions N9 -> a:N24 2.56 -> 2.47, O19 -> a:O10 GLN726.NE2 2.96 -> 2.79.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS (2 groups, 9 bonds apart): the second change is in the fused heteroaryl where N1 is CHANGED, so the sentence covers both sites only in outline."
+ },
+ "7A0P QTW->OVZ": {
+  "sentence": "Removing the amide carbonyl that sits 3.21 A from MET635.CB turns the benzamide into a benzylamine, giving up that acceptor, while the 2.73 A HIS547.NE2 and 2.97 A PHE41.O hydrogen bonds are held.",
+  "basis": "input row O17 -> MET635.CB 3.21 A packing with polar partner MET635.SD 3.37 A (the single site_of_change row, CHANGED); O -> HIS547.NE2 2.73 A H-bond, N -> PHE41.O 2.97 A H-bond; conserved_interactions O -> a:O 2.73 -> 2.71, N -> a:N 2.97 -> 2.73.",
+  "confidence": "high"
+ },
+ "9Q4X A1CN2->A1CN4": {
+  "sentence": "Adding a methyl to one N-methyl at the carbon contacting the heme propionate at 3.51 A should bulk up that amine face, while the 2.99 A fluorine-heme contact and the GLU361.OE1 pairing are held.",
+  "basis": "input rows C20 -> HEM501.O1A 3.51 A contact with cofactor HEM (the single site_of_change row, ATTACHMENT POINT), F12 -> HEM501.CBD 2.99 A cofactor contact, N01 -> GLU361.OE1 2.67 A polar contact [INCOMPAT]; conserved_interactions F12 -> a:F12 2.99 -> 2.90, N01 -> a:N01 2.67 -> 2.70.",
+  "confidence": "high",
+  "concern": "SYMMETRY flag on C20: it is graph-equivalent to another atom, so which N-methyl is the growth point is arbitrary in the mapping."
+ },
+ "7OEL VA8->V9W": {
+  "sentence": "Cyclising the amide whose NH hydrogen-bonds PHE534.O at 3.23 A and whose carbonyl reaches ARG536.NE at 3.46 A into a benzimidazole gives up both; the 2.71 A ASP395.OD1 salt bridge is held.",
+  "basis": "input rows N15 -> PHE534.O 3.23 A H-bond good geometry, O41 -> ARG536.CD 3.42 A packing with polar partner ARG536.NE 3.46 A H-bond good geometry, N06 -> ASP395.OD1 2.71 A SALT BRIDGE; site_of_change N15/O41/C14 CHANGED, C31/C35/N32/N34 MOVED; conserved_interactions N06 -> a:N06 2.71 -> 2.82.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS (11 bonds apart), SYMMETRY on C04/C43, four MOVED atoms, and the conserved O40/ASN549.OD1 row is [SHORT 2.30 uncertain] with an [ANGLE-ONLY] retyping, so it is not used."
+ },
+ "9M1D A1L8B->A1L78": {
+  "sentence": "Redistributing the silicon's alkyl substituents removes the methyl packing VAL296.CG2 at 3.22 A, which should loosen that contact, while the 2.80 A HIS301.NE2 hydrogen bond and ARG270 salt bridges are held.",
+  "basis": "input rows C36 -> VAL296.CG2 3.22 A hydrophobic (the CHANGED row), O24 -> HIS301.NE2 2.80 A H-bond, O33 -> ARG270.NE 2.66 A SALT BRIDGE, O32 -> ARG270.NH1 3.17 A SALT BRIDGE; site_of_change C36 CHANGED, C10 SUBSTITUTION BOUNDARY; conserved_interactions O24 -> a:O24 2.80 -> 2.73.",
+  "confidence": "high",
+  "concern": "STEREO: the edit changes the number of stereocentres (2 -> 1), the silicon centre among them."
+ },
+ "9PZ1 A1CM6->A1CNY": {
+  "sentence": "Trimming one ethyl branch of the pentyl, whose carbon packs ILE50.CG1 at 3.55 A, gives up that apolar contact, while the 2.43 A ASP25.OD2 and 3.58 A GLY27.O hydrogen bonds are held.",
+  "basis": "input rows C30 -> ILE50.CG1 3.55 A hydrophobic (the single site_of_change row, CHANGED), O03 -> ASP25.OD2 2.43 A H-bond, N02 -> GLY27.O 3.58 A H-bond; conserved_interactions O03 -> a:O35 2.43 -> 2.51, N02 -> a:N32 3.58 -> 3.50.",
+  "confidence": "medium",
+  "concern": "Four conserved rows (O03, O06, O07, O08) are retyped between the sides, three of them with [ANGLE-ONLY], so none is described as strengthened or weakened; MULTI-CHAIN POCKET and SYMMETRY (C09/C11) also apply."
+ },
+ "6ZUH N6H->QQ5": {
+  "sentence": "Replacing the morpholine oxygen that sits 3.67 A from ILE174.CD1 with a carbon bearing a hydroxyl, and moving a methyl off TRP215.CD2, should recast that ring's contacts; the 2.74 A SER195.OG hydrogen bond is held.",
+  "basis": "input rows O26 -> ILE174.CD1 3.67 A packing, C30 -> TRP215.CD2 3.68 A hydrophobic, N12 -> SER195.OG 2.74 A H-bond, O21 -> HIS57.NE2 3.14 A H-bond; site_of_change O26/C30 CHANGED, C25/C27 SUBSTITUTION BOUNDARY; conserved_interactions N12 -> a:N19 2.74 -> 2.77.",
+  "confidence": "high",
+  "concern": "STEREO: the edit creates two stereocentres (0 -> 2). The conserved N11/GLY216.N row is retyped and that flip forms no part of the claim."
+ },
+ "6LZ6 EY6->EY3": {
+  "sentence": "The ether fluorine, which makes no contact within 4.0 A in this crystal, becomes a methyl; the isopropyl should present more carbon near GLY104.O, where a chain carbon already sits at 3.55 A.",
+  "basis": "site_of_change F13 CHANGED and F13 is in the input NOTHING WITHIN 4.0 A list; C11 SUBSTITUTION BOUNDARY; input rows C09 -> GLY104.O 3.55 A packing, C01 -> GLY104.O 2.93 A packing, C06 -> THR137.OG1 2.97 A packing; conserved_interactions C09 -> a:C05 3.55 -> 3.53.",
+  "confidence": "medium",
+  "concern": "MULTI-CHAIN POCKET (ASN142 is chain B, the rest chain D); only five conserved rows exist and the conserved O10/GLY104.O row is retyped in the analogue."
+ },
+ "9BG2 A1AOJ->A1AOI": {
+  "sentence": "Growing a urea-azetidine arm from the carbons packing ASN102.O at 3.46 A and GLN111.OE1 at 3.54 A should spread new contact across that face, while the 2.86 A GLN63.OE1 hydrogen bond is held.",
+  "basis": "input rows C8 -> ASN102.O 3.46 A packing, C9 -> GLN111.OE1 3.54 A packing, C7 -> ASN102.O 3.66 A, C11 -> PRO34.CG 3.93 A hydrophobic, N1 -> GLN63.OE1 2.86 A H-bond; site_of_change C7/C8/C9/C11 ATTACHMENT POINT, C10 CHANGED; conserved_interactions N1 -> a:N1 2.86 -> 2.89, O1 -> a:O1 ASN102.N 2.90 -> 2.86.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET, but CHAINS RELABELLED CONSISTENTLY (B->A, C->D), so every conserved row crosses chains in the same direction and these contacts may be described as retained; STEREO also drops 5 -> 4."
+ },
+ "7OQP 0BH->V9T": {
+  "sentence": "Deleting the benzothiophene whose sulfur sits 3.88 A from TYR406.O and carbons pack THR408.O at 3.05 A gives up that face; a second distant site also changes and the 2.74 A ASP395.OD1 salt bridge holds.",
+  "basis": "input rows S36 -> TYR406.O 3.88 A packing, C34 -> THR408.O 3.05 A packing, C35 -> THR408.O 3.59 A, N05 -> ASP395.OD1 2.74 A SALT BRIDGE; site_of_change S36/C34/C35/C30/C31/C32/C01/C02/C03 CHANGED, C27/C28 MOVED; TWO TRANSFORMATIONS (18 bonds apart); conserved_interactions N05 -> a:N20 2.74 -> 2.75.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS (18 bonds apart), STEREO not comparable at C04, two MOVED atoms, and five conserved rows are retyped (three with [ANGLE-ONLY]), so none of those flips is used."
+ },
+ "7MM2 OMS->ZKA": {
+  "sentence": "Reorganising the carbamate from cyclobutyl to cyclopropylmethyl moves the carbon sitting 3.70 A from ASP1168.OD2, while the 2.80 A ARG1155.O and 2.86 A ALA1157.O hydrogen bonds are held.",
+  "basis": "input rows C53 -> ASP1168.OD2 3.70 A packing (the CHANGED row), N08 -> ARG1155.O 2.80 A H-bond, N13 -> ALA1157.O 2.86 A H-bond; site_of_change C53 CHANGED, C17 SUBSTITUTION BOUNDARY, O15 MOVED; conserved_interactions N08 -> a:N08 2.80 -> 2.84, N13 -> a:N13 2.86 -> 2.79.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C41/C42, and O15 is a MOVED atom whose conserved row carries the MOVED marker, so no before/after is read from it."
+ },
+ "9IAW A1I1R->VU6": {
+  "sentence": "Fusing a new ring onto the carbons packing TYR96.CE1 at 3.33 A and MET72.SD at 3.94 A should spread apolar contact over that face, while the 2.77 A ASP69.OD1 hydrogen bond is held.",
+  "basis": "input rows C5 -> TYR96.CE1 3.33 A hydrophobic, C23 -> MET72.SD 3.94 A packing, C2 -> TYR96.CD1 3.92 A, N21 -> ASP69.OD1 2.77 A H-bond, N4 -> HIS95.NE2 3.14 A H-bond; site_of_change C2/C5/C23 ATTACHMENT POINT, N6 CHANGED; conserved_interactions N21 -> a:N6 2.77 -> 2.80, N4 -> a:N7 3.14 -> 2.82.",
+  "confidence": "high"
+ },
+ "8Q2T IUA->JIB": {
+  "sentence": "Adding a carboxylic acid at the phenyl carbon that makes no contact within 4.0 A in this crystal should project an anionic group beyond the measured contacts; the 2.83 A ASN367.ND2 hydrogen bond is held.",
+  "basis": "site_of_change C14 ATTACHMENT POINT (only row) and C14 is in the input NOTHING WITHIN 4.0 A list; input rows N03 -> ASN367.ND2 2.83 A H-bond, C17 -> ASP476.OD2 2.94 A packing; conserved_interactions N03 -> a:N03 2.83 -> 2.86, C17 -> a:C20 2.94 -> 3.05.",
+  "confidence": "high",
+  "concern": "The input CL01/ASN364.ND2 row is [CLOSE 2.58/3.3 uncertain] and is not used; the conserved N05/SER378.O row is retyped, which forms no part of the claim."
+ },
+ "8Q2T IUA->IVR": {
+  "sentence": "Adding an amine to the phenyl carbon packing LEU380.CD1 at 3.75 A puts a donor where only apolar contact was measured, while the 2.83 A ASN367.ND2 hydrogen bond is held.",
+  "basis": "input rows C12 -> LEU380.CD1 3.75 A hydrophobic (the single site_of_change row, ATTACHMENT POINT), C13 -> LEU380.CD1 3.95 A, N03 -> ASN367.ND2 2.83 A H-bond; conserved_interactions N03 -> a:N03 2.83 -> 2.86, C13 -> a:C15 3.95 -> 3.70.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C12: it is graph-equivalent to another ring atom, so which position carries the amine is arbitrary in the mapping; the input CL01 row is [CLOSE 2.58/3.3 uncertain] and is not used."
+ },
+ "6G9N ESN->ERK": {
+  "sentence": "Losing the hydroxymethyl oxygen that makes a 2.66 A polar contact with ASP167.OD1 and the aryl methyl near TYR36.N changes three separated sites; the MET108 hydrogen bonds at 2.95 and 3.00 A are held.",
+  "basis": "input rows O32 -> ASP167.OD1 2.66 A polar contact, geometry poor, C38 -> TYR36.N 3.59 A packing, C1 -> ASP167.OD2 3.35 A packing, N16 -> MET108.O 2.95 A H-bond, N23 -> MET108.N 3.00 A H-bond; site_of_change O32/C38/C1 CHANGED; TWO TRANSFORMATIONS (3 groups, 8 bonds apart); conserved_interactions N16 -> a:N20 2.95 -> 2.77, N23 -> a:N27 3.00 -> 2.96.",
+  "confidence": "high",
+  "concern": "TWO TRANSFORMATIONS (three separate groups) and STEREO (2 -> 1); the O32 row is typed polar contact, geometry poor, so it is not called a hydrogen bond."
+ },
+ "7NXT UVE->UT8": {
+  "sentence": "Adding a methoxy at the ring carbon packing ILE219.CG1 at 3.39 A should put an oxygen-bearing substituent against that isoleucine, while the 1.42 A Lys122 covalent bond and 3.43 A ASN42.ND2 hydrogen bond are held.",
+  "basis": "input rows C07 -> ILE219.CG1 3.39 A hydrophobic (the single site_of_change row, ATTACHMENT POINT), C17 -> LYS122.NZ 1.42 A COVALENT BOND, O21 -> ASN42.ND2 3.43 A H-bond; conserved_interactions C17 -> a:C16 1.42 -> 1.42 COVALENT, O21 -> a:O09 3.43 -> 3.39, C07 -> a:C03 3.39 -> 3.63.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C15/C19, MULTI-CHAIN POCKET (chain P), O1 absent from the input coordinates, and the analogue table is INCOMPLETE (22 of 23), so absence there is not evidence."
+ },
+ "8DBF HSX->PRP": {
+  "sentence": "Phosphorylating the anomeric hydroxyl that coordinates magnesium at 2.32 A should hand that metal contact to a diphosphate, while the 2.08 A magnesium coordination and 2.56 A ASP220.OD2 hydrogen bond are held.",
+  "basis": "input rows O1 -> MG405.MG 2.32 A METAL COORDINATION with polar partner ADP403.O2A 2.53 A (the single site_of_change row, ATTACHMENT POINT), O2 -> MG405.MG 2.08 A METAL COORDINATION, O3 -> ASP220.OD2 2.56 A H-bond; conserved_interactions O2 -> a:O2 2.08 -> 1.78, O3 -> a:O3 2.56 -> 2.70.",
+  "confidence": "high",
+  "concern": "STEREO (4 -> 5). CHAINS RELABELLED CONSISTENTLY (A->B), so conserved rows may be read as retained; the analogue side of the O2/MG405 row is [SHORT 1.78/1.95 uncertain], so only the input distance is cited."
+ },
+ "6CTU VC6->VA7": {
+  "sentence": "Replacing the bridge fluorine that sits 3.09 A from ARG183.NH2 with a second chlorine, and rebuilding the pyrimidine into a purine, changes two separated sites; the 2.68 A ARG183.NH1 salt bridge is held.",
+  "basis": "input rows F4B -> ARG183.NH2 3.09 A packing, O2 -> ASN279.ND2 3.07 A H-bond, C5 -> ASP276.CB 3.67 A hydrophobic, O2B -> ARG183.NH1 2.68 A SALT BRIDGE; site_of_change F4B/O2 CHANGED, C1'/C3B/C5/C6 ATTACHMENT POINT, N1 MOVED; TWO TRANSFORMATIONS (8 bonds apart); conserved_interactions O2B -> a:O2B 2.68 -> 2.69.",
+  "confidence": "medium",
+  "concern": "TWO TRANSFORMATIONS, STEREO inverted at C4', and HETERO PARTNER RENUMBERED (NA 401 vs 405) so no claim is made about the sodium; the conserved O3G/SER180.OG row is [SHORT uncertain] on both sides and the O2G/MG402 row is retyped."
+ },
+ "9Y8M A1CTE->A1CTR": {
+  "sentence": "Deleting the aryl fluorine that sits 3.26 A from SER464.OG gives up that contact, while the 2.81 A HIS486.NE2 hydrogen bond and the PHE481 and TYR528 packing are held.",
+  "basis": "input row F1 -> SER464.OG 3.26 A packing (the single site_of_change row, CHANGED), N4 -> HIS486.NE2 2.81 A H-bond; conserved_interactions N4 -> a:N4 2.81 -> 2.86 plus the PHE481.CD2/CE2 and TYR528.CG/CD2/CE2 rows on both sides.",
+  "confidence": "high"
+ },
+ "9SG7 A1JNN->A1JNO": {
+  "sentence": "Trading the dichlorophenyl for an indole gives up the chlorines sitting 3.13 A from THR654.O and 3.58 A from ASN518.ND2, while the 1.31 A Ser460 covalent bond and 2.97 A THR654.N hydrogen bond are held.",
+  "basis": "input rows CL1 -> THR654.O 3.13 A packing, CL2 -> ASN518.ND2 3.58 A packing, C4 -> SER460.OG 1.31 A COVALENT BOND, O4 -> THR654.N 2.97 A H-bond [INDEP, SER460 excl]; site_of_change CL1/CL2 CHANGED, C6/C7/C12 ATTACHMENT POINT; conserved_interactions C4 -> a:C4 1.31 -> 1.29, O4 -> a:O4 2.97 -> 2.76.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C12, whose mapping is arbitrary; only three conserved rows exist for the whole pair."
+ },
+ "6TOI NQN->NR8": {
+  "sentence": "Walking the hydroxyl one carbon along the butyl chain relocates the carbon sitting 3.36 A from CYS53.O, which should shift that contact rather than add one; the 2.97 A GLU115.N hydrogen bond is held.",
+  "basis": "input rows C13 -> CYS53.O 3.36 A packing, N2 -> CYS53.O 3.80 A packing, O -> GLU115.N 2.97 A H-bond, N1 -> MET51.O 2.93 A H-bond; site_of_change C13 and N2 both MOVED (the only two rows); conserved_interactions O -> a:O 2.97 -> 2.95, N1 -> a:N2 2.93 -> 2.92.",
+  "confidence": "medium",
+  "concern": "Both site atoms are MOVED, so their conserved rows carry the MOVED marker and are not a before/after of the same chemical group; the relocation, not a gain or loss, is what is described."
+ },
+ "7IJ9 A1CJ5->A1CJB": {
+  "sentence": "Moving the halogen from meta to para and from fluorine to bromine repositions bulk on the phenyl, while the 2.85 A PHE156.N and 3.17 A ASP157.N hydrogen bonds are held.",
+  "basis": "site_of_change F1 CHANGED, C14 SUBSTITUTION BOUNDARY; input rows O3 -> PHE156.N 2.85 A H-bond, O1 -> ASP157.N 3.17 A H-bond, C4 -> VAL49.CG2 3.05 A hydrophobic; conserved_interactions O3 -> a:O2 2.85 -> 2.75, O1 -> a:O3 3.17 -> 2.74.",
+  "confidence": "medium",
+  "concern": "The edited fluorine's only row, F1 -> LEU126.O 2.22 A, is [CLOSE 2.22/3.0 uncertain] and LEU126 is flagged SUSPECT, while C12 and C13 were omitted as clashes against ALA129 -- so no contact of the halogen itself can be cited. STEREO also inverts C3."
+ },
+ "6Z4G 9JT->Q7T": {
+  "sentence": "Inserting a methylene between the amide nitrogen and the phenyl, at atoms that make no contact within 4.0 A in this crystal, should let that ring swing while the 3.05 A CYS111.SG packing is held.",
+  "basis": "site_of_change C11 and N10 ATTACHMENT POINT, both in the input NOTHING WITHIN 4.0 A list; input rows C02 -> CYS111.SG 3.05 A packing, C04 -> ILE113.O 3.55 A, C12 -> GLY108.CA 3.80 A; conserved_interactions C02 -> a:C4 3.05 -> 3.32 (the only conserved row).",
+  "confidence": "medium",
+  "concern": "SE1 is omitted as a clash with CYS111, so every CYS111 row is to be treated with caution; only one conserved row exists and MULTI-CHAIN POCKET applies."
+ },
+ "5OUU AWN->AUW": {
+  "sentence": "Adding an ethyl and a second chlorine at the carbons packing ILE164.CD1 at 3.70 A and MET221.CE at 3.41 A should thicken apolar contact there, while the 2.94 A PRO159.O hydrogen bond is held.",
+  "basis": "input rows C14 -> ILE164.CD1 3.70 A hydrophobic, C21 -> MET221.CE 3.41 A hydrophobic, N -> PRO159.O 2.94 A H-bond; site_of_change C14 and C21 ATTACHMENT POINT (the only two rows); conserved_interactions N -> a:N 2.94 -> 2.83, C12 -> a:C21 MET163.CE 3.71 -> 4.00.",
+  "confidence": "medium",
+  "concern": "SYMMETRY on C21 (graph-equivalent, so the mapping among those atoms is arbitrary) and only four conserved rows exist for a 26-atom ligand."
+ },
+ "7UE5 Y88->NDK": {
+  "sentence": "Replacing the trifluoromethyl whose fluorines contact the ANP gamma-phosphate at 3.03 and 3.28 A with a methyl gives up those cofactor contacts, while the 2.81 A ARG207.NH2 hydrogen bond is held.",
+  "basis": "input rows F21 -> ANP402.O1G 3.03 A contact with cofactor ANP, F22 -> ANP402.O2G 3.28 A, C26 -> ARG207.NH2 3.40 A packing, O24 -> ARG207.NH2 2.81 A H-bond; site_of_change F21/F22/F23/C26 CHANGED, C04/C05/C25 SUBSTITUTION BOUNDARY; conserved_interactions O24 -> a:O24 2.81 -> 2.71.",
+  "confidence": "high",
+  "concern": "STEREO (1 -> 0), SYMMETRY on C05/C25, and the conserved C01 row's cofactor is numbered ANP402 in the input and ANP406 in the analogue, so that partner is matched by label only."
+ },
+ "7MM7 ZJV->ZJY": {
+  "sentence": "Rebuilding the carbamate's trifluoromethyl-bearing carbon into a cyclopropane moves the carbon sitting 3.74 A from ASP1168.OD2, while the 2.93 A ARG1155.O and 2.84 A ALA1157.O hydrogen bonds are held.",
+  "basis": "input rows C49 -> ASP1168.OD2 3.74 A packing (CHANGED), C48 and C50 ATTACHMENT POINT and both in the NOTHING WITHIN 4.0 A list; N08 -> ARG1155.O 2.93 A H-bond, N40 -> ALA1157.O 2.84 A H-bond; conserved_interactions N08 -> a:N08 2.93 -> 2.80, N40 -> a:N13 2.84 -> 2.83.",
+  "confidence": "high",
+  "concern": "STEREO (6 -> 5 stereocentres) and SYMMETRY on C31/C32."
+ },
+ "6GQJ F82->F8B": {
+  "sentence": "Reversing the amide and exchanging the pyrazole for a triazole gives up the methylene packing THR670.OG1 at 3.29 A and the ring carbons near GLU640.OE2; the 2.99 A ASP810.N hydrogen bond is held.",
+  "basis": "input rows C14 -> THR670.OG1 3.29 A packing, C4/C5 -> GLU640.OE2 3.56/3.53 A packing, C3 -> LEU644.CD2 3.65 A hydrophobic, O -> ASP810.N 2.99 A H-bond, N3 -> CYS673.N 2.77 A H-bond; site_of_change C3/C4/C5/C14/N/N1/O1 CHANGED, C8 MOVED, C1/C7 SUBSTITUTION BOUNDARY; conserved_interactions O -> a:O 2.99 -> 2.80, N3 -> a:N4 2.77 -> 2.85.",
+  "confidence": "medium",
+  "concern": "The edit touches seven atom-table rows at once with C8 MOVED, so the sentence summarises the change rather than resolving each edited position."
+ },
+ "6S74 KY8->KYB": {
+  "sentence": "Replacing the aminopyrimidine whose carbons pack ILE197.CG2 at 3.66 A and ARG168.CD at 3.46 A with a flexible guanidine should trade a rigid aromatic face for a cationic chain.",
+  "basis": "input rows C28 -> ILE197.CG2 3.66 A hydrophobic, C31 -> ARG168.CD 3.46 A hydrophobic, C30 -> GLU257.CG 3.54 A hydrophobic, C32 -> THR169.OG1 3.33 A packing, N23 -> GLU257.OE2 3.10 A SALT BRIDGE; site_of_change C28/C30/C31/C32/N29/N33 CHANGED, C26/N27 SUBSTITUTION BOUNDARY.",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO ATOM-LEVEL JOIN: conserved_interactions is empty and every analogue atom is NEW, so nothing is attributable to the edit rather than to a different pose."
+ },
+ "7IJE A1CKB->A1CJV": {
+  "sentence": "Adding a hydroxyl to the phenyl and converting the fused-ring nitrogen that packs PHE156.CD1 at 3.24 A changes two separated sites; the 2.84 A PHE156.N hydrogen bond anchors the amide either way.",
+  "basis": "input rows N4 -> PHE156.CD1 3.24 A packing with polar partner ASP22.OD1 3.86 A, C13 -> ALA129.O 2.88 A packing, C9 -> ASP22.OD1 3.09 A packing, O1 -> PHE156.N 2.84 A H-bond, O3 -> ASP157.N 3.12 A H-bond; site_of_change N4 CHANGED, C8/C9/C13 ATTACHMENT POINT; TWO TRANSFORMATIONS (8 bonds apart).",
+  "confidence": "medium",
+  "concern": "SUSPECT RES VAL49 and all three conserved rows involve VAL49 -- two flagged [CLOSE ... uncertain] and one [SUSPECT] -- so nothing measured on both sides is usable, and the retention is phrased as an expectation. STEREO also inverts C3."
+ },
+ "8FGR XVZ->XVA": {
+  "sentence": "Dimethylating the amine that contacts the heme propionate at 2.74 A and adding a difluoromethyl at the ring carbon near the heme should bulk both ends; the 2.52 A GLU361.OE2 hydrogen bond is held.",
+  "basis": "input rows N19 -> HEM501.O2A 2.74 A contact with cofactor HEM, C07 -> HEM501.C1C 3.42 A cofactor contact, N02 -> GLU361.OE2 2.52 A H-bond; site_of_change N19 and C07 ATTACHMENT POINT; TWO TRANSFORMATIONS (11 bonds apart); conserved_interactions N02 -> a:N02 2.52 -> 2.51, C07 -> a:C07 3.42 -> 3.37.",
+  "confidence": "high",
+  "concern": "TWO TRANSFORMATIONS and room_contradicts_edit is true, so no claim is made about space at either growth point; the input F15/HEM501.O2D row is [CLOSE 2.44/3.0 uncertain] and is not used."
+ },
+ "7FW8 5M8->WHR": {
+  "sentence": "Inserting a methylene into the biaryl link and adding an ortho chlorine near the carbon packing THR53.CG2 at 3.88 A should let the pendant ring rotate; the 3.51 A TYR128.OH hydrogen bond is held.",
+  "basis": "input rows C18 -> THR53.CG2 3.88 A hydrophobic, O13 -> TYR128.OH 3.51 A H-bond, C19 -> SER55.OG 3.44 A packing; site_of_change C18/C2/C9 ATTACHMENT POINT, with C2 and C9 in the NOTHING WITHIN 4.0 A list; conserved_interactions O13 -> a:O15 3.51 -> 2.72, C19 -> a:C19 3.44 -> 3.42.",
+  "confidence": "medium",
+  "concern": "PAIR FLAGGED UNLABELLABLE (a residue number means different residues) and SYMMETRY on C18; only four conserved rows exist for the pair."
+ },
+ "8SVQ WSX->WSO": {
+  "sentence": "Trimming the alkyl ether by one carbon packing TRP299.CE3 at 3.49 A and replacing the aryl methoxy whose oxygen sits 3.33 A from LEU428.CD2 with a methyl changes two separated sites.",
+  "basis": "input rows C09 -> TRP299.CE3 3.49 A hydrophobic, O34 -> LEU428.CD2 3.33 A packing with polar partner PHE281.N 3.69 A, C35 -> ALA280.O 3.35 A packing; site_of_change C09/C35/O34 CHANGED, C33 SUBSTITUTION BOUNDARY; TWO TRANSFORMATIONS (14 bonds apart).",
+  "confidence": "high",
+  "concern": "TWO TRANSFORMATIONS (14 bonds apart). The word budget left no room to add that the conserved 2.77 A GLN285.NE2 hydrogen bond (N26 -> a:N07) is held, which it is."
+ },
+ "8Q35 IWM->IW0": {
+  "sentence": "Replacing the difluoromethyl whose fluorine sits 2.91 A from ASP476.OD2 with a methanesulfonamide should set a donor and two sulfonyl oxygens at that aspartate, while the 2.89 A ASN367.ND2 hydrogen bond is held.",
+  "basis": "input rows F15 -> ASP476.OD2 2.91 A packing, C20 -> ASP476.OD2 3.18 A packing, N03 -> ASN367.ND2 2.89 A H-bond; site_of_change F15/C13 CHANGED, C12 ATTACHMENT POINT (C12 in the NOTHING WITHIN 4.0 A list); conserved_interactions N03 -> a:N03 2.89 -> 2.93, C20 -> a:C22 3.18 -> 3.18.",
+  "confidence": "medium",
+  "concern": "F14 is omitted as a clash against ARG404, so the C13 -> ARG404.NH2 row is treated with caution and not used. CHAINS RELABELLED CONSISTENTLY (B->A) lets the conserved rows be read as retained."
+ },
+ "8Y5B A1D5Z->PMZ": {
+  "sentence": "Oxidising the secondary alcohol whose oxygen hydrogen-bonds LEU88.N at 2.69 A to a ketone keeps an acceptor there but removes the donor, while the adjacent carbon's 3.65 A LEU88.N packing is held.",
+  "basis": "input rows O02 -> LEU88.N 2.69 A H-bond good geometry (CHANGED), C23 -> LEU88.N 3.65 A packing (SUBSTITUTION BOUNDARY); conserved_interactions C23 -> a:CA2 3.65 -> 3.70.",
+  "confidence": "high",
+  "concern": "STEREO: the edit destroys the single stereocentre (1 -> 0) at the oxidised carbon."
+ },
+ "8B91 Q4O->Q5O": {
+  "sentence": "Replacing the methoxy whose oxygen makes a 3.38 A polar contact with ARG280.O and losing the ring fluorine near ALA292.CB changes two separated sites; the ARG288.CG packing at 3.27-3.82 A is held.",
+  "basis": "input rows O33 -> ARG280.O 3.38 A polar contact [INCOMPAT], F18 -> ALA292.CB 3.18 A hydrophobic, C34 -> PHE264.CE1 3.75 A, C12 -> ARG288.CG 3.27 A, C16 -> ARG288.CG 3.82 A; site_of_change O33/F18/C34 CHANGED, C17/C30 SUBSTITUTION BOUNDARY; conserved_interactions C12/C16/C17 all to ARG288.CG; TWO TRANSFORMATIONS (14 bonds apart).",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE with NO SHARED RESIDUE NUMBERING (0.27), and COVALENCY MISMATCH -- the analogue is covalent where the input is not. That gain would be the biggest change in the pair, but with no shared numbering and only three conserved packing rows it cannot be described safely."
+ },
+ "8SY7 X0O->JSP": {
+  "sentence": "Cutting the triphosphate back to a monophosphate gives up the salt bridges to ARG1106.NH2 at 2.45 A and ARG678.NH1 at 3.15 A and the 3.08 A ASP462.OD2 hydrogen bond; the ribose also loses a hydroxyl.",
+  "basis": "input rows O12 -> ARG1106.NH2 2.45 A SALT BRIDGE, O11 -> ARG678.NH1 3.15 A SALT BRIDGE, O10 -> ASP462.OD2 3.08 A H-bond, O07 -> ASP460.OD2 2.78 A polar contact [INCOMPAT], O29 -> ARG425.NH2 3.53 A H-bond; site_of_change O06/O07/O08/O10/O11/O12/O29/P05/P09 CHANGED; TWO TRANSFORMATIONS (8 bonds apart).",
+  "confidence": "low",
+  "concern": "PAIR FLAGGED UNLABELLABLE and NO SHARED RESIDUE NUMBERING (0.00) with conserved_interactions empty, plus MULTI-CHAIN POCKET, TWO TRANSFORMATIONS and STEREO (4 -> 3); the analogue table is also INCOMPLETE (20 of 21)."
+ },
+ "7MMH ZJY->ZK7": {
+  "sentence": "Expanding the cyclopropane to a cyclobutane and dropping its methylene moves the trifluoromethyl whose fluorine sits 2.77 A from ARG1123.NH2, while the 2.90 A ARG1155.O and 2.82 A ALA1157.O hydrogen bonds are held.",
+  "basis": "input rows F56 -> ARG1123.NH2 2.77 A packing, C53 -> ARG1123.NH2 3.53 A packing, C54 -> ALA1168.CB 3.78 A hydrophobic, N08 -> ARG1155.O 2.90 A H-bond, N13 -> ALA1157.O 2.82 A H-bond; site_of_change C17 CHANGED (and in the NOTHING WITHIN 4.0 A list), C51/C52/C54/O15 SUBSTITUTION BOUNDARY; conserved_interactions F56 -> a:F57 2.77 -> 3.35, N08 -> a:N08 2.90 -> 3.09, N13 -> a:N13 2.82 -> 3.04.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C52, O38 and O39: the two sulfonamide oxygens are graph-equivalent, so their swap between the sides is a relabelling rather than motion."
+ },
+ "7MM6 ZJY->ZK4": {
+  "sentence": "Expanding the cyclopropane to a cyclopentane at the carbon packing ARG1123.NH2 at 3.44 A should spread that contact over more ring carbons, while the 2.80 A ARG1155.O and 2.79 A ALA1157.N hydrogen bonds are held.",
+  "basis": "input rows C52 -> ARG1123.NH2 3.44 A packing, C54 -> ASP1168.CB 3.61 A hydrophobic, N08 -> ARG1155.O 2.80 A H-bond, O12 -> ALA1157.N 2.79 A H-bond; site_of_change C51/C52 ATTACHMENT POINT (C51 in the NOTHING WITHIN 4.0 A list), C54 MOVED; conserved_interactions C52 -> a:C52 3.44 -> 3.47, N08 -> a:N08 2.80 -> 2.85, O12 -> a:O12 2.79 -> 2.85.",
+  "confidence": "high",
+  "concern": "STEREO (5 -> 6 stereocentres), SYMMETRY on C52/O38/O39, C54 is a MOVED atom, and the analogue table is INCOMPLETE (58 of 59)."
+ },
+ "6THW NBK->NB5": {
+  "sentence": "Contracting the N-methylpiperidine into a spirocycle relocates the carbons sitting 3.55 A from PRO266.O and 3.68 A from ARG273.NH1, while the 2.67 A MET265.O hydrogen bond is held.",
+  "basis": "input rows C18 -> PRO266.O 3.55 A packing, C20 -> ARG273.NH1 3.68 A packing, N34 -> MET265.O 2.67 A H-bond, N30 -> MET265.N 3.25 A H-bond; site_of_change C18/C20 MOVED, C19/N33 ATTACHMENT POINT (both in the NOTHING WITHIN 4.0 A list); conserved_interactions N34 -> a:N35 2.67 -> 2.73, N30 -> a:N31 3.25 -> 2.96.",
+  "confidence": "medium",
+  "concern": "SYMMETRY on C18/C19/C20: they are graph-equivalent, so which of them moves and which is the attachment point is arbitrary; C18 and C20 are both MOVED atoms."
+ },
+ "9F8S A1IAM->A1IAE": {
+  "sentence": "Adding a para hydroxyl to the pendant phenyl, whose carbon packs PRO164.CG at 3.66 A, should place a donor at that face, while the 2.62 A ASP57.OD2 and 2.89 A GLN147.NE2 hydrogen bonds are held.",
+  "basis": "input rows C12 -> PRO164.CG 3.66 A hydrophobic (chain B; the single site_of_change row, ATTACHMENT POINT), O2 -> ASP57.OD2 2.62 A H-bond, O1 -> GLN147.NE2 2.89 A H-bond; conserved_interactions O2 -> a:O1 2.62 -> 2.66, O1 -> a:O3 2.89 -> 3.01.",
+  "confidence": "high",
+  "concern": "MULTI-CHAIN POCKET: PRO164, LEU163 and ARG160 are chain B while the rest of the pocket is chain A."
+ },
+ "7IJ1 A1CJW->A1CJY": {
+  "sentence": "Losing the phenol oxygen that sits 3.67 A from ASP157.OD1 gives up that polar contact and a methyl appears on the acid chain, while the 2.55 A ASP22.OD1 hydrogen bond is held.",
+  "basis": "input rows O3 -> ASP157.OD1 3.67 A packing (CHANGED), C2 -> ALA129.CB 3.61 A hydrophobic (SUBSTITUTION BOUNDARY), N4 -> ASP22.OD1 2.55 A H-bond, N3 -> ILE23.N 2.81 A H-bond; conserved_interactions N4 -> a:N4 2.55 -> 2.88, N3 -> a:N3 2.81 -> 2.80.",
+  "confidence": "medium",
+  "concern": "STEREO inverts C3 (S -> R), so rows conserved across that centre are the same atoms but not the same geometry; the input O1/LEU160.CD2 row is [CLOSE 2.45/3.2 uncertain] and is not used."
+ },
+ "7QB2 A7X->IJB": {
+  "sentence": "Removing the N-methyl that packs VAL126.CG2 at 3.61 A gives up that contact and leaves a lactam NH, while the 2.69 A ASP128.OD2 hydrogen bond is held.",
+  "basis": "input row C1 -> VAL126.CG2 3.61 A hydrophobic (the single site_of_change row, CHANGED); N1 -> ASP128.OD2 2.69 A H-bond, N -> VAL126.CG2 3.83 A packing, O -> ARG122.CD 3.18 A packing; conserved_interactions N1 -> a:N1 2.69 -> 2.82, N -> a:N 3.83 -> 3.66, O -> a:O 3.18 -> 3.23.",
+  "confidence": "high",
+  "concern": "SYMMETRY on C12/C15, whose mapping is arbitrary; the input O1 and O2 rows exchange partners (ASP186.N and LYS67.NZ) between the two sides, which is not described."
+ },
+ "9GQK A1IOE->A1IN6": {
+  "sentence": "Simplifying the macrocycle's ether-diol linker gives up the oxygen that hydrogen-bonds GLN85.O at 2.92 A and the carbon packing TYR113.OH at 3.40 A, while the 2.60 A TYR113.OH hydrogen bond is held.",
+  "basis": "input rows O5 -> GLN85.O 2.92 A H-bond good geometry, C17 -> TYR113.OH 3.40 A packing, O8 -> TYR113.OH 2.60 A H-bond, O7 -> ILE87.N 2.97 A H-bond; site_of_change C8/C12/C13/C17/O2/O4/O5 CHANGED, O3 MOVED, C6 SUBSTITUTION BOUNDARY; conserved_interactions O8 -> a:OAK 2.60 -> 2.77, O7 -> a:O 2.97 -> 3.05.",
+  "confidence": "medium",
+  "concern": "STEREO (5 -> 2 stereocentres), SYMMETRY on C27/C31, and O3 is a MOVED atom; the input O2/O3 rows to LYS121.NZ are typed polar contact, geometry poor and so are not called hydrogen bonds."
+ }
+}

@@ -138,6 +138,50 @@ def frac(num, den, nd=4):
     return round(num / den, nd) if den else None
 
 
+ELEM_WORDS = {
+    'F': ('fluorine', 'fluoro', 'fluoride'), 'CL': ('chlorine', 'chloro'),
+    'BR': ('bromine', 'bromo'), 'I': ('iodine', 'iodo'),
+    'N': ('amine', 'amino', 'nitrogen', 'nitrile', 'amide', 'azet', 'pyrr', 'pyrid', 'pyrim',
+          'imidaz', 'triaz', 'morpholin', 'piperid', 'piperaz', 'nitro'),
+    'O': ('hydroxyl', 'hydroxy', 'oxygen', 'methoxy', 'ether', 'carbonyl', 'ester', 'carboxyl',
+          'ketone', 'alcohol', 'oxo'),
+    'S': ('sulfur', 'sulphur', 'thio', 'sulfon', 'sulfonamide', 'thiophene', 'mercapto'),
+}
+GAIN = re.compile(r'\b(add|adds|added|adding|gain|gains|gained|introduc\w+|new|extend\w*|'
+                  r'grow\w*|append\w*|install\w*|replac\w+ by a larger)\b', re.I)
+LOSE = re.compile(r'\b(delet\w+|remov\w+|lose|loses|lost|losing|gives? up|giving up|'
+                  r'truncat\w+|strip\w+|shorten\w+|excis\w+)\b', re.I)
+
+
+def edit_fidelity(sent, delta, gained_el, lost_el):
+    """Does the prose describe the edit that actually happened?
+
+    Groundedness asks whether a named residue exists; selectivity asks whether it is the right
+    residue. Neither asks whether the sentence describes the right CHANGE -- a fluent, perfectly
+    grounded sentence can describe an edit the pair does not contain, and nothing above would catch
+    it. These two checks are the cheapest honest proxy, computed from the saved generations with no
+    re-run:
+
+      direction  the pair's heavy-atom count went up or down; does the sentence's verb agree?
+                 Scored only where |delta| >= 1 and the sentence commits to a direction, because a
+                 pure substitution has no direction to get right and silence is not an error.
+      element    where the edit brings in or removes a distinctive heteroatom or halogen, does the
+                 sentence name it? Element identity is unambiguous in a way group naming is not --
+                 "azetidine" vs "pyrrolidine" is a real labeller error we have seen, but both are
+                 nitrogen, so this asks the question that has a defensible answer.
+    """
+    out = {}
+    g, l = bool(GAIN.search(sent or '')), bool(LOSE.search(sent or ''))
+    if delta is not None and abs(delta) >= 1 and (g or l):
+        out['direction'] = (g and delta > 0) or (l and delta < 0)
+    probe = (sent or '').lower()
+    for el in gained_el | lost_el:
+        words = ELEM_WORDS.get(el)
+        if words:
+            out.setdefault('elements', []).append(any(w in probe for w in words))
+    return out
+
+
 def score_rows(recs, what='generated'):
     """All four axes over one run's rows. `what` picks the generated or the reference column, so the
     reference ceiling is computed by this exact code and cannot drift from the thing it bounds."""
@@ -150,6 +194,7 @@ def score_rows(recs, what='generated'):
     rr_chance = []            # the same recall if residues were drawn uniformly from the pocket
     rr_known = []             # recall restricted to reference residues that ARE in the table
     rr_chance_all = []        # chance for the all-reference numerator, scaled by the knowable frac
+    dir_ok, el_ok, novel = [], [], []   # does the prose describe the edit that happened; novelty
     sel_ach = []              # hits / min(|named|, |knowable|): lift normalised by its own ceiling
     g_hit = g_tot = 0
     canon_seen = collections.Counter()
@@ -278,6 +323,17 @@ def score_rows(recs, what='generated'):
             if pat.search(sent):
                 S['banned_' + name] += 1
         f1s.append(content_f1(sent, r.get('reference_sentence')))
+        fid = edit_fidelity(sent, r.get('heavy_delta'), set(r.get('gained_el') or []),
+                            set(r.get('lost_el') or []))
+        if 'direction' in fid:
+            dir_ok.append(1.0 if fid['direction'] else 0.0)
+        for ok in fid.get('elements', []):
+            el_ok.append(1.0 if ok else 0.0)
+        # GuacaMol-sense novelty: a valid generated molecule not present anywhere in TRAINING.
+        # Distinct-count measures variety within the eval; this measures whether the model is
+        # reciting its training set, which variety alone cannot detect.
+        if hg is not None and r.get('train_smiles_set') is not None:
+            novel.append(0.0 if smi in r['train_smiles_set'] else 1.0)
 
     out = {
         'n': n,
@@ -317,6 +373,11 @@ def score_rows(recs, what='generated'):
         'ref_residue_precision': mean(rp),
         'ref_residue_f1': mean(rf),
         'names_a_reference_residue_frac': frac(S['names_a_reference_residue'], S['ref_res_pairs']),
+        'edit_direction_fidelity': mean(dir_ok),
+        'edit_direction_scored_n': len(dir_ok),
+        'edit_element_fidelity': mean(el_ok),
+        'edit_element_scored_n': len(el_ok),
+        'novelty_vs_training': mean(novel),
         'content_f1_vs_reference': mean(f1s),
         'banned_burial_or_solvent': frac(S['banned_burial_or_solvent'], n),
         'banned_room_or_channel': frac(S['banned_room_or_channel'], n),
