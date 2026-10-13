@@ -70,7 +70,37 @@ _BANNED = re.compile(r'\bburi(ed|al)\b|solvent[- ]facing|solvent[- ]exposed|\bch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EV = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_evidence.jsonl'
-RULES = ('r1', 'r2', 'r2b', 'r3', 'r5', 'r6')
+RULES = ('r1', 'r1c', 'r2', 'r2b', 'r3', 'r5', 'r6')
+# ALL is the SIX hard rules, unchanged, so the headline number stays comparable with the g1
+# and g2 figures already written into PIPELINE.md. r1c is a diagnostic column only: folding it
+# into ALL would silently redefine the metric the briefs are calibrated against.
+HARD_RULES = ('r1', 'r2', 'r2b', 'r3', 'r5', 'r6')
+
+# The pocket envelope is a SIDECAR, keyed by pair id -- it is not part of the evidence record. r1
+# predates it and so counted every envelope-named residue as ungrounded, which is precisely the
+# class of residue the envelope was added to make sayable: the atom table lists only each ligand
+# atom's NEAREST protein atom, so a residue 4 A away that is nobody's nearest neighbour appears
+# nowhere in it. Measured consequence: g3 (the first generation labelled WITH the envelope) scored
+# r1 89.0% against g2's 99.1%, which was a measurement artifact and not a regression.
+#
+# r1  = named residues come from the input side, envelope INCLUDED  (what the brief permits)
+# r1c = named residues come from the input CONTACT TABLE alone      (the old, stricter column)
+ENVELOPE = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_envelope.json'
+
+
+def load_envelope():
+    try:
+        raw = json.load(open(ENVELOPE))
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for pid, env in raw.items():
+        out[pid] = {'%s%s' % (r['res'], r['rn']) for r in (env.get('residues') or [])
+                    if r.get('res') in AA}
+    return out
+
+
+ENV_RES = load_envelope()
 
 
 def _res(s):
@@ -117,22 +147,25 @@ def sides(rec):
                 r = _res(a.get(k))
                 if r:
                     soc_res.add(r)
-    return inp_res, inp_num, ana_num, soc_res
+    env_res = ENV_RES.get(rec['pair'], set())
+    return inp_res, inp_num, ana_num, soc_res, env_res
 
 
 def check(sentence, rec):
-    inp_res, inp_num, ana_num, soc_res = sides(rec)
+    inp_res, inp_num, ana_num, soc_res, env_res = sides(rec)
     named = _res_all(sentence)
     nums = {round(float(x), 2) for x in _NUM.findall(sentence)}
     bad_nums = sorted(x for x in nums if x in ana_num and x not in inp_num)
     return {
-        'r1': bool(named) and named <= inp_res,
+        'r1': bool(named) and named <= (inp_res | env_res),
+        'r1c': bool(named) and named <= inp_res,
         'r2': not bad_nums,
         'r2b': bool(named & soc_res),
         'r3': not _PROV.search(sentence),
         'r5': not _BANNED.search(sentence),
         'r6': len(sentence.split()) <= 35,
-        'ungrounded_residues': sorted(named - inp_res),
+        'ungrounded_residues': sorted(named - (inp_res | env_res)),
+        'residues_only_in_envelope': sorted((named & env_res) - inp_res),
         'analogue_numbers_cited': bad_nums,
     }
 
@@ -187,7 +220,7 @@ def main():
             n += 1
             for k in RULES:
                 tally[k] += res[k]
-            tally['ALL'] += all(res[k] for k in RULES)
+            tally['ALL'] += all(res[k] for k in HARD_RULES)
             if a.violations and not res[a.violations] and shown < 12:
                 shown += 1
                 extra = (res['analogue_numbers_cited'] if a.violations == 'r2'

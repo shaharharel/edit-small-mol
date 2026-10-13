@@ -16,6 +16,7 @@ batch number is a durable identity.
 |---|---|---|---|---|
 | `g1_v1_retrospective` | 0001-0020 | 2000 | 1714 | reports the analogue crystal; names analogue-side residues; cites measured analogue distances |
 | `g2_v2_input_anchored` | 0021-0040 | 2000 | 1747 | input-anchored; no measured analogue distance; no pocket envelope |
+| `g3_v2_input_anchored_envelope` | 0041-9000 | 3069 | 2644 | input-anchored; no measured analogue distance; 8 A pocket envelope in the packet |
 
 ## One record per pair
 
