@@ -106,6 +106,27 @@ def content_f1(gen, ref):
     return round(2 * p * rc / (p + rc), 4) if ov else 0.0
 
 
+def canon(smi):
+    """Canonical SMILES, or None. Novelty and echo must compare canonical forms: a re-spelled
+    training molecule is still a training molecule, and a re-spelled input is still an echo."""
+    from rdkit import Chem, RDLogger
+    RDLogger.DisableLog('rdApp.*')
+    m = Chem.MolFromSmiles(smi) if smi else None
+    return Chem.MolToSmiles(m) if m is not None else None
+
+
+def _elem_counts(smi):
+    from rdkit import Chem, RDLogger
+    RDLogger.DisableLog('rdApp.*')
+    m = Chem.MolFromSmiles(smi) if smi else None
+    if m is None:
+        return None
+    c = collections.Counter()
+    for a in m.GetAtoms():
+        c[a.GetSymbol().upper()] += 1
+    return c
+
+
 def _fp(smi):
     from rdkit import Chem, RDLogger
     from rdkit.Chem import rdFingerprintGenerator
@@ -333,7 +354,7 @@ def score_rows(recs, what='generated'):
         # Distinct-count measures variety within the eval; this measures whether the model is
         # reciting its training set, which variety alone cannot detect.
         if hg is not None and r.get('train_smiles_set') is not None:
-            novel.append(0.0 if smi in r['train_smiles_set'] else 1.0)
+            novel.append(0.0 if canon(smi) in r['train_smiles_set'] else 1.0)
 
     out = {
         'n': n,
@@ -400,9 +421,17 @@ def load(path, data_path):
     the thing being measured.
     """
     truth = {}
+    train_smiles = set()
     for line in open(data_path):
         d = json.loads(line)
         truth[d['pair']] = d
+        # GuacaMol-sense novelty needs the TRAINING molecules, so it is built from the split column
+        # rather than from the eval rows. A model reciting its training set scores perfectly on
+        # validity and on distinctness; only this catches it.
+        if d.get('split') == 'train':
+            c = canon(d.get('analogue_smiles'))
+            if c:
+                train_smiles.add(c)
     recs = [json.loads(l) for l in open(path)]
     missing = 0
     for r in recs:
@@ -414,6 +443,16 @@ def load(path, data_path):
         r['input_smiles'] = d['input_smiles']
         r['reference_smiles'] = d['analogue_smiles']
         r.setdefault('reference_sentence', d['reference_sentence'])
+        r['train_smiles_set'] = train_smiles
+        # What the edit actually DID, so the prose can be checked against it rather than only
+        # against the pocket. Element counts are compared rather than fragments because element
+        # identity has a defensible answer: "azetidine" vs "pyrrolidine" is a real labeller error
+        # we have seen, and both are nitrogen, so a fragment-name check would score noise.
+        hi, ha = _elem_counts(d['input_smiles']), _elem_counts(d['analogue_smiles'])
+        if hi is not None and ha is not None:
+            r['heavy_delta'] = sum(ha.values()) - sum(hi.values())
+            r['gained_el'] = [e for e in ha if ha[e] > hi.get(e, 0)]
+            r['lost_el'] = [e for e in hi if hi[e] > ha.get(e, 0)]
     if missing:
         print('WARNING: %d of %d generation rows have no ground-truth row in %s'
               % (missing, len(recs), data_path), file=sys.stderr)
