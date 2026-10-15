@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import check_label_rules as K  # noqa: E402
 
-G4_DIR = os.path.expanduser('~/Downloads/covalentformer_labelling_task/label_out')
+G4_DIR = os.path.join(HERE, 'label_out_g4')
 NUM = re.compile(r'\d+\.\d+')
 RES = re.compile(r'\b([A-Z]{3})(\d+)')
 AA = K.AA

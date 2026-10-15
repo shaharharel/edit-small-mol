@@ -24,32 +24,37 @@ Not copied, because it is bulky and regenerable from `data/pdb_mirror/v7_evidenc
 `label_work/jobs` (365 MB), `label_work/evidence` (56 MB), `derived_rule_evidence.jsonl` (33 MB),
 and `batches/` (55 MB).
 
-## State at the time of copy
+## State: COMPLETE
 
-- **70 of 71 chair files.** `batch_0018` is absent and has **no labeller files either**, so those
-  100 pairs need a full three-labeller plus chair pass, not a cheap chair re-run. The labelling
-  team is sending that batch separately.
-- 6,969 of 7,069 pairs labelled; 6,092 usable (ADOPT+REWRITE), 87.4%.
-- Records carry no `label_generation` stamp yet. Stamping is deliberately left until the corpus is
-  complete, so the manifest cannot record a generation that is still missing a batch.
+- **71 of 71 chair files, 213 labeller files, 7,069 of 7,069 pairs.** `tools/verify_output.py`
+  passes: every manifest pair has exactly one non-empty label with a valid verdict, every batch has
+  its three labeller readings, and no key is a bare PDB code.
+- 6,178 usable (ADOPT+REWRITE), 87.4%. ADOPT 5,102 / REWRITE 1,076 / REJECT 891.
+- `batch_0018` arrived in a second delivery. Before adding it, the 6,969 records copied earlier
+  were compared against the new source field by field: **0 changed, 0 lost, exactly +100 new**. So
+  the second delivery was additive and did not quietly revise anything.
+- Stamped `label_generation = g4_v2_input_anchored_envelope_pass2` by `stamp_g4.py`, which exists
+  because dataset_manifest.py resolves a generation from the batch NUMBER -- and g4 re-labels
+  batches 0001-0071, the same numbers as g1/g2/g3, in a separate directory. Stamping was held
+  until verify_output.py passed so the field could not assert a completeness that did not exist.
 
 ## Measured against g3 (identical scoring code, `compare_g3_g4.py` and `g34_attrib.py`)
 
-| | g3 | g4 |
+| | g3 (2,644 usable) | g4 (6,178 usable) |
 |---|---|---|
 | usable | 86.2% | 87.4% |
-| all six hard rules | 91.5% | 91.0% |
+| all six hard rules | 91.5% | 91.1% |
 | r2, no analogue distance cited | 98.7% | 100.0% |
 | every cited distance exists in the input table | 92.4% | **100.0%** |
-| (residue, distance) co-occur in one table row | 55.2% | **78.7%** |
+| (residue, distance) co-occur in one table row | 55.2% | **78.6%** |
 | r1c, residues from the contact table alone | 89.0% | 80.9% |
 | words per sentence | 32.9 | 26.0 |
 | distances per sentence | 2.65 | 1.44 |
 | duplicate sentences | 0 | 0 |
-| lexical type/token ratio, size-matched | 0.0234 | 0.0317 |
+| lexical type/token ratio, size-matched | 0.0234 | 0.0315 |
 
 g4 is terser and cites about half as many distances, but the ones it cites are attributed
-correctly far more often — +23.5 points on the exact failure class three medicinal chemists found
+correctly far more often — +23.4 points on the exact failure class three medicinal chemists found
 dominant in model output. Its lower r1c means it leans more on the pocket envelope, which the
 brief permits.
 

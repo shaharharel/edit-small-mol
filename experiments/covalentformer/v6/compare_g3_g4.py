@@ -34,7 +34,7 @@ sys.path.insert(0, HERE)
 
 import check_label_rules as K  # noqa: E402  -- the rule definitions, reused not reimplemented
 
-G4_DIR = os.path.expanduser('~/Downloads/covalentformer_labelling_task/label_out')
+G4_DIR = os.path.join(HERE, 'label_out_g4')   # the repo copy is now authoritative and complete
 G3_GENERATION = 'g3_v2_input_anchored_envelope'
 NUM = re.compile(r'\d+\.\d+')
 

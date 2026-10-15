@@ -12,7 +12,7 @@ question is whether the sentence describes that edit and attributes its numbers 
 import argparse, glob, json, os, random
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-G4 = os.path.expanduser('~/Downloads/covalentformer_labelling_task/label_out')
+G4 = os.path.join(HERE, 'label_out_g4')
 EV = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_evidence.jsonl'
 
 
@@ -21,7 +21,7 @@ def usable(d):
             if v.get('verdict') in ('ADOPT', 'REWRITE') and (v.get('final') or '').strip()}
 
 
-def fmt_atoms(atoms, limit=36):
+def fmt_atoms(atoms, limit=22):
     out = []
     for a in atoms[:limit]:
         bits = ['%-5s %-2s' % (a.get('atom', '?'), a.get('element', '?'))]
