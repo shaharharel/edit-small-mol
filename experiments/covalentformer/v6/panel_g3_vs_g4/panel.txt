@@ -1,0 +1,1352 @@
+
+================================================================================
+CASE 1 of 18   pair 6PIC 6XA->XS6   target A0A0J7JFD7
+================================================================================
+INPUT LIGAND   NCCCCCC(=O)NO
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C2    C   faces ASP117.OD2    3.51 A  polar/apolar packing
+    C3    C   faces TYR168.OH     3.74 A  polar/apolar packing
+    C4    C   faces ASP117.OD2    3.38 A  polar/apolar packing
+    C5    C   faces HIS159.NE2    3.52 A  polar/apolar packing
+    C6    C   faces TYR323.OH     3.56 A  polar/apolar packing
+    C7    C   faces ZN401.ZN      2.81 A  near ZN metal -- unusually close (2.81 A vs 3.7 A vdW sum); treat the crystal model as uncertain unless a neighbouring atom coordinates the metal
+    N1    N   faces ASP117.OD2    2.91 A  SALT BRIDGE to ASP117.OD2 (cationic ligand atom against anionic residue; charge pairing, so no angle criterion applies)
+    N8    N   faces HIS159.NE2    2.72 A  H-bond, good geometry
+    O10   O   faces ZN401.ZN      2.28 A  METAL COORDINATION to ZN
+    O9    O   faces ZN401.ZN      1.99 A  METAL COORDINATION to ZN
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   NCCCNCCCCCC(=O)NO
+  heavy atoms added: 4     site of change: N1
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C2    faces ASP19.OD2    3.30 A
+    C3    faces ASP19.OD2    3.11 A
+    C4    faces TYR168.OH    3.37 A
+    C6    faces ASP117.OD2   3.51 A
+    C7    faces PHE225.CD2   3.68 A
+    C8    faces ASP117.OD2   3.72 A
+    C9    faces GLY167.O     3.62 A
+    C10   faces TYR323.OH    3.46 A
+    C11   faces ZN401.ZN     2.72 A
+    N1    faces GLU17.OE2    2.61 A
+    N5    faces ASP117.OD2   2.97 A
+    N13   faces ZN401.ZN     2.64 A
+    O12   faces ZN401.ZN     2.29 A
+    O14   faces ZN401.ZN     2.03 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] N-aminopropyl extension should retain the original amine's 2.91 Å ASP117 salt bridge while directing the added basic terminus toward GLU17 and preserving hydroxamate zinc coordination.
+
+  [B] Alkylating the ammonium that salt-bridges ASP117.OD2 at 2.91 A with an aminopropyl arm should extend a second cation toward GLU17, while the hydroxamate's 1.99 and 2.28 A zinc coordination is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 2 of 18   pair 6PJF OP7->OQY   target Q8ULI9
+================================================================================
+INPUT LIGAND   COC(=O)N[C@H](C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C[C@H](Cc1ccccc1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21)C1CCCC1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces GLY27.O       3.66 A  polar/apolar packing
+    C02   C   faces ASP25.OD2     2.80 A  polar/apolar packing
+    C03   C   faces ILE84.CD1     3.65 A  hydrophobic contact
+    C04   C   faces ASP25.OD2     3.16 A  polar/apolar packing
+    C05   C   faces ASP25.OD2     3.71 A  polar/apolar packing
+    C06   C   faces GLY27.O       4.01 A  no contact within 4.0 A (nearest protein atom is 4.01 A away)
+    C07   C   faces GLY48.O       3.94 A  polar/apolar packing
+    C08   C   faces ASP25.OD2     2.96 A  polar/apolar packing
+    C09   C   faces GLY27.O       3.97 A  polar/apolar packing
+    C10   C   faces GLY27.O       3.26 A  polar/apolar packing
+    C11   C   faces VAL82.CG2     4.06 A  no contact within 4.0 A (nearest protein atom is 4.06 A away)
+    C12   C   faces PRO81.CG      3.65 A  hydrophobic contact
+    C13   C   faces PRO81.CG      3.40 A  hydrophobic contact
+    C14   C   faces ILE50.N       3.87 A  polar/apolar packing
+    C15   C   faces GLY27.O       3.86 A  polar/apolar packing
+    C16   C   faces GLY48.O       3.71 A  polar/apolar packing
+    C17   C   faces GLY27.O       4.27 A  no contact within 4.0 A (nearest protein atom is 4.27 A away)
+    C18   C   faces GLY27.O       3.92 A  polar/apolar packing
+    C19   C   faces VAL82.CG2     4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    C20   C   faces PRO81.CG      3.90 A  hydrophobic contact
+    C21   C   faces GLY49.O       3.28 A  polar/apolar packing
+    C22   C   faces ILE50.N       3.47 A  polar/apolar packing
+    ... 23 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   COC(=O)N[C@H](C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C[C@H](Cc1ccccc1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21)C(C)(C)C
+  heavy atoms added: -1     site of change: C07, C41, C42, C43, C44, C45
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C13   faces None         4.09 A
+    C15   faces PRO81.CG     3.32 A
+    C17   faces None         4.14 A
+    C22   faces GLY48.O      3.77 A
+    C24   faces ILE50.N      3.38 A
+    C26   faces PRO81.CG     3.89 A
+    C28   faces GLY27.O      3.98 A
+    C02   faces GLY27.O      3.72 A
+    C03   faces ASP25.OD2    2.86 A
+    C04   faces ILE84.CD1    3.74 A
+    C05   faces ASP25.OD2    3.28 A
+    C06   faces ASP25.OD2    3.80 A
+    C08   faces None         4.14 A
+    C09   faces GLY48.O      3.90 A
+    C11   faces ASP25.OD2    3.02 A
+    C14   faces ILE50.N      3.70 A
+    C16   faces PRO81.CG     3.61 A
+    C18   faces GLY27.O      3.42 A
+    C19   faces None         4.01 A
+    C23   faces None         4.34 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Contracting the cyclopentyl to tert-butyl trades its 3.40-3.42 A packing on chain-B VAL32.CG2 and 3.74 A on ILE84.CD1 for a more compact branch; the 2.57 A ASP25.OD1 hydrogen bond holds.
+
+  [B] Replacing cyclopentyl, lying 3.40 Å from chain-B VAL32, with tert-butyl should redirect the side chain toward chain-A ILE50 while retaining the central hydroxyl’s ASP25 hydrogen bond.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 3 of 18   pair 6WOD IHP->5A3   target O95989
+================================================================================
+INPUT LIGAND   O=P(O)(O)OC1C(OP(=O)(O)O)C(OP(=O)(O)O)C(OP(=O)(O)O)C(OP(=O)(O)O)C1OP(=O)(O)O
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces LYS18.NZ      4.76 A  no contact within 4.0 A (nearest protein atom is 4.76 A away)
+    C2    C   faces LYS133.NZ     5.26 A  no contact within 4.0 A (nearest protein atom is 5.26 A away)
+    C3    C   faces SER40.OG      4.72 A  no contact within 4.0 A (nearest protein atom is 4.72 A away)
+    C4    C   faces SER40.OG      4.47 A  no contact within 4.0 A (nearest protein atom is 4.47 A away)
+    C5    C   faces LYS18.NZ      4.32 A  no contact within 4.0 A (nearest protein atom is 4.32 A away)
+    C6    C   faces LYS18.NZ      4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    O11   O   faces ARG89.NH2     4.57 A  no contact within 4.0 A (nearest protein atom is 4.57 A away)
+    O12   O   faces ARG41.NE      4.75 A  no contact within 4.0 A (nearest protein atom is 4.75 A away)
+    O13   O   faces SER40.OG      3.69 A  polar/apolar packing
+    O14   O   faces MG501.MG      3.61 A  near MG metal
+    O15   O   faces MG501.MG      3.83 A  near MG metal
+    O16   O   faces LYS18.NZ      2.90 A  H-bond, good geometry
+    O21   O   faces HIS91.CD2     3.66 A  polar/apolar packing
+    O22   O   faces ARG41.NE      2.74 A  SALT BRIDGE to ARG41.NE (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O23   O   faces SER39.OG      2.62 A  H-bond, good geometry
+    O24   O   faces MG501.MG      2.05 A  METAL COORDINATION to MG
+    O25   O   faces MG501.MG      2.00 A  METAL COORDINATION to MG
+    O26   O   faces LYS18.NZ      2.55 A  SALT BRIDGE to LYS18.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O31   O   faces ARG89.NE      3.20 A  SALT BRIDGE to ARG89.NE (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O32   O   faces ARG41.NE      4.35 A  no contact within 4.0 A (nearest protein atom is 4.35 A away)
+    O33   O   faces SER40.N       3.07 A  H-bond, good geometry
+    O34   O   faces ARG115.NH1    3.00 A  SALT BRIDGE to ARG115.NH1 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    ... 14 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   O=P(O)(O)CP(=O)(O)OC1[C@@H](OP(=O)(O)O)[C@H](OP(=O)(O)O)C(OP(=O)(O)O)[C@H](OP(=O)(O)O)[C@H]1OP(=O)(O)O
+  heavy atoms added: 4     site of change: O31, P1
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    O31   faces None         4.73 A
+    C2    faces None         4.79 A
+    C1    faces ARG89.NH1    3.58 A
+    C4    faces None         4.27 A
+    C5    faces ARG89.NH1    3.60 A
+    C6    faces ARG89.NH1    3.46 A
+    C3    faces None         4.39 A
+    O11   faces None         4.23 A
+    O75   faces SER40.OG     2.76 A
+    PB5   faces SER40.OG     3.37 A
+    O55   faces None         4.17 A
+    O65   faces ARG115.NH1   2.77 A
+    CB5   faces ILE47.CD1    3.67 A
+    PA5   faces ARG89.NH2    3.72 A
+    O25   faces LYS133.NZ    2.84 A
+    O35   faces ARG89.NH2    2.96 A
+    O15   faces None         4.19 A
+    O16   faces ARG89.NH1    2.68 A
+    PA6   faces ARG89.NH1    3.88 A
+    O46   faces None         4.43 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Extending one phosphate to a methylenebisphosphonate at the phosphorus 3.77 Å from ARG89.NE replaces an oxygen that salt-bridges ARG89.NE at 3.20 Å and should reach a second phosphate toward ARG115 and SER40.
+
+  [B] Converting a phosphate into a methylene-linked bisphosphonate should redistribute ionic recognition from the input 3.20 Å ARG89 salt bridge toward SER40 and ARG115, with broader phosphate-network rearrangement expected.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 4 of 18   pair 7BJ6 TVK->U3Z   target Q00987
+================================================================================
+INPUT LIGAND   CC(C)(O)c1cc(F)c2c(c1)C(=O)N(Cc1ccc(Cl)cn1)[C@@]2(OCC1(CO)CC1)c1ccc(Cl)cc1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces PHE55.O       3.73 A  polar/apolar packing
+    C10   C   faces VAL93.O       3.98 A  polar/apolar packing
+    C11   C   faces HIS96.CD2     3.63 A  hydrophobic contact
+    C12   C   faces LEU54.CD1     3.83 A  hydrophobic contact
+    C14   C   faces LEU54.CD1     3.53 A  hydrophobic contact
+    C16   C   faces VAL93.CB      4.41 A  no contact within 4.0 A (nearest protein atom is 4.41 A away)
+    C18   C   faces VAL93.CG1     4.02 A  no contact within 4.0 A (nearest protein atom is 4.02 A away)
+    C19   C   faces VAL93.CG1     3.71 A  hydrophobic contact
+    C20   C   faces VAL93.CG1     3.94 A  hydrophobic contact
+    C21   C   faces MET62.SD      3.81 A  polar/apolar packing
+    C22   C   faces ILE61.CG2     4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    C24   C   faces VAL93.CG1     4.51 A  no contact within 4.0 A (nearest protein atom is 4.51 A away)
+    C25   C   faces GLN72.O       3.40 A  polar/apolar packing
+    C26   C   faces GLN72.O       3.61 A  polar/apolar packing
+    C27   C   faces GLN72.O       3.54 A  polar/apolar packing
+    C29   C   faces GLY58.CA      3.90 A  hydrophobic contact
+    C3    C   faces GLY58.CA      3.96 A  hydrophobic contact
+    C30   C   faces VAL93.CG1     3.83 A  hydrophobic contact
+    C31   C   faces ILE61.CD1     3.58 A  hydrophobic contact
+    C32   C   faces ILE61.CD1     3.70 A  hydrophobic contact
+    C34   C   faces LEU54.O       3.23 A  polar/apolar packing
+    C35   C   faces LEU54.O       3.24 A  polar/apolar packing
+    ... 15 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   C#Cc1ccc(CN2C(=O)c3cc(C(C)(C)O)ccc3[C@]2(OCC2(CO)CC2)c2ccc(Cl)cc2)cc1
+  heavy atoms added: 0     site of change: C12, C14, C9, CL1, F23, N15
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C11   faces None         4.49 A
+    C13   faces VAL93.CG1    3.97 A
+    C14   faces VAL93.CG1    3.71 A
+    C15   faces MET62.CE     3.98 A
+    C16   faces GLN72.O      3.46 A
+    C21   faces ILE61.CG2    3.86 A
+    C22   faces None         4.48 A
+    C23   faces None         4.05 A
+    C25   faces None         4.18 A
+    C26   faces GLY58.CA     3.91 A
+    C27   faces GLY58.C      3.31 A
+    C28   faces GLN59.OE1    3.81 A
+    O30   faces PHE55.CD1    3.87 A
+    C31   faces GLY58.CA     3.84 A
+    C36   faces ILE61.CD1    3.58 A
+    C37   faces VAL93.CG1    3.78 A
+    C01   faces None         4.14 A
+    C02   faces LEU54.CD1    3.46 A
+    C03   faces LEU54.CD1    3.77 A
+    C04   faces HIS96.CD2    3.65 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing chloropyridyl with ethynylphenyl should redistribute the branch beside HIS96 at 3.57 Å, while separate defluorination relinquishes proximity to ILE61 at 3.32 Å.
+
+  [B] Trading the chloropyridine for an ethynylbenzene gives up the chlorine's 3.57 A contact on HIS96.CG and the ring fluorine's 3.32 A contact on ILE61.CG2, while the 2.58 A GLN72.O hydrogen bond is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 5 of 18   pair 7BPZ PEM->F5A   target Q07869
+================================================================================
+INPUT LIGAND   CC(C)(Oc1ccc(CCNC(=O)c2ccc(Cl)cc2)cc1)C(=O)O
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces THR279.OG1    3.84 A  polar/apolar packing
+    C10   C   faces SER280.OG     3.80 A  polar/apolar packing
+    C11   C   faces CYS276.CB     3.81 A  hydrophobic contact
+    C12   C   faces MET355.SD     3.83 A  polar/apolar packing
+    C13   C   faces SER280.OG     4.07 A  no contact within 4.0 A (nearest protein atom is 4.07 A away)
+    C14   C   faces SER280.OG     3.08 A  polar/apolar packing
+    C15   C   faces SER280.OG     2.90 A  polar/apolar packing
+    C16   C   faces SER280.OG     3.89 A  polar/apolar packing
+    C17   C   faces PHE273.CE1    3.63 A  hydrophobic contact
+    C18   C   faces SER280.OG     3.27 A  polar/apolar packing
+    C19   C   faces TYR314.OH     3.24 A  polar/apolar packing
+    C2    C   faces THR279.OG1    3.29 A  polar/apolar packing
+    C3    C   faces VAL332.CG1    3.47 A  hydrophobic contact
+    C4    C   faces VAL332.CG1    3.66 A  hydrophobic contact
+    C5    C   faces CYS276.SG     3.48 A  polar/apolar packing
+    C6    C   faces CYS276.SG     3.54 A  polar/apolar packing
+    C7    C   faces THR279.CG2    3.32 A  hydrophobic contact
+    C8    C   faces THR279.CG2    3.26 A  hydrophobic contact
+    C9    C   faces LEU321.CD2    3.54 A  hydrophobic contact
+    CL    Cl  faces ILE272.CG2    3.83 A  hydrophobic contact
+    N1    N   faces THR279.CG2    3.38 A  polar/apolar packing
+    O1    O   faces THR279.CG2    3.13 A  polar/apolar packing
+    ... 3 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CC(C)(Oc1ccc(C(=O)c2ccc(Cl)cc2)cc1)C(=O)O
+  heavy atoms added: -3     site of change: C8, C9, N1
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C06   faces HIS440.NE2   3.65 A
+    C07   faces HIS440.NE2   3.77 A
+    C08   faces CYS276.CB    3.66 A
+    C09   faces HIS440.NE2   3.75 A
+    C10   faces TYR314.OH    3.13 A
+    C11   faces GLN277.NE2   3.83 A
+    C12   faces GLN277.CG    3.94 A
+    C13   faces PHE273.CD1   3.52 A
+    C14   faces GLN277.CD    3.71 A
+    C15   faces ILE354.CD1   3.64 A
+    C16   faces GLN277.NE2   3.57 A
+    C17   faces ILE447.CG2   3.62 A
+    C18   faces ALA455.O     3.59 A
+    C19   faces ILE447.CG2   3.40 A
+    C20   faces ALA455.C     3.26 A
+    C21   faces ILE447.CG2   3.64 A
+    C22   faces LEU456.CB    3.67 A
+    O02   faces HIS440.NE2   2.94 A
+    O03   faces TYR464.OH    2.63 A
+    O04   faces TYR314.OH    2.48 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Shortening the ethylamide linker, whose methylenes lie near THR279.CG2 at 3.26 Å and LEU321.CD2 at 3.54 Å, to a diaryl ketone should withdraw that packing and reposition both aromatic groups.
+
+  [B] Collapsing the ethyl-amide linker, whose carbons pack THR279.CG2 at 3.26 A and LEU321.CD2 at 3.54 A, to a direct ketone should pull the chlorophenyl back toward TYR314, whose 3.24 A packing is held.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 6 of 18   pair 7DAK F5U->SRO   target Q5KQI6
+================================================================================
+INPUT LIGAND   COc1ccc2[nH]cc(CCN)c2c1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces ASN220.OD1    3.20 A  polar/apolar packing
+    C10   C   faces ASP226.OD2    3.70 A  polar/apolar packing
+    C11   C   faces TRP133.NE1    4.41 A  no contact within 4.0 A (nearest protein atom is 4.41 A away)
+    C2    C   faces ASN220.OD1    3.94 A  polar/apolar packing
+    C3    C   faces PHE254.CE1    4.88 A  no contact within 4.0 A (nearest protein atom is 4.88 A away)
+    C4    C   faces PHE254.CE1    4.85 A  no contact within 4.0 A (nearest protein atom is 4.85 A away)
+    C5    C   faces ILE245.CD1    4.35 A  no contact within 4.0 A (nearest protein atom is 4.35 A away)
+    C6    C   faces PHE224.CB     4.10 A  no contact within 4.0 A (nearest protein atom is 4.10 A away)
+    C7    C   faces TRP188.CZ3    3.56 A  hydrophobic contact
+    C8    C   faces ASP226.OD2    2.93 A  polar/apolar packing
+    C9    C   faces ASP226.OD2    3.86 A  polar/apolar packing
+    N1    N   faces ILE245.CD1    3.55 A  polar/apolar packing
+    N2    N   faces ASP226.OD2    4.09 A  no contact within 4.0 A (nearest protein atom is 4.09 A away)
+    O1    O   faces ASN184.ND2    3.73 A  polar/apolar packing
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   NCCc1c[nH]c2ccc(O)cc12
+  heavy atoms added: -1     site of change: C1
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    OH    faces None         4.86 A
+    CZ3   faces None         5.20 A
+    CH2   faces None         4.70 A
+    CZ2   faces None         4.75 A
+    CE2   faces None         4.49 A
+    NE1   faces ASP189.OD1   3.79 A
+    CD1   faces None         4.43 A
+    CG    faces None         4.54 A
+    CD2   faces None         4.94 A
+    CE3   faces None         4.69 A
+    CB    faces ASP226.OD2   3.57 A
+    CA    faces ILE245.CD1   3.71 A
+    NZ    faces None         4.18 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Demethylating the methoxy group near chain-B ASN220.OD1 at 3.20 Å to a phenol should withdraw that methyl proximity and loosen the oxygen’s positioning near chain-B ASN184.
+
+  [B] Demethylating the aryl methyl ether gives up the methyl's 3.20 A packing on chain-B ASN220.OD1 and should leave the oxygen as a free donor near ASN184, while the 3.70 A ASP226.OD2 contact is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 7 of 18   pair 7OAL V62->V5W   target O14936
+================================================================================
+INPUT LIGAND   Cc1cc(Br)c(CNc2ncc(C(=O)NCCCN3CCOC3=O)c(NC3CCCCC3)n2)cc1Br
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    BR    Br  faces CYS146.O      3.42 A  polar/apolar packing
+    BR1   Br  faces VAL26.CG2     4.06 A  no contact within 4.0 A (nearest protein atom is 4.06 A away)
+    C     C   faces ILE18.CD1     3.83 A  hydrophobic contact
+    C1    C   faces MET94.O       3.16 A  polar/apolar packing
+    C10   C   faces PHE91.CB      3.67 A  hydrophobic contact
+    C11   C   faces VAL75.CG1     4.14 A  no contact within 4.0 A (nearest protein atom is 4.14 A away)
+    C12   C   faces VAL75.CG2     3.74 A  hydrophobic contact
+    C13   C   faces GLY161.CA     3.83 A  hydrophobic contact
+    C14   C   faces GLY162.N      3.56 A  polar/apolar packing
+    C15   C   faces GLY162.N      3.18 A  polar/apolar packing
+    C16   C   faces GLY162.N      3.83 A  polar/apolar packing
+    C17   C   faces GLY162.N      4.85 A  no contact within 4.0 A (nearest protein atom is 4.85 A away)
+    C18   C   faces ILE18.CD1     3.71 A  hydrophobic contact
+    C19   C   faces ILE18.O       4.16 A  no contact within 4.0 A (nearest protein atom is 4.16 A away)
+    C2    C   faces GLY96.O       4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+    C20   C   faces GLY19.CA      3.45 A  hydrophobic contact
+    C21   C   faces VAL26.CG2     4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    C22   C   faces HIS145.O      4.91 A  no contact within 4.0 A (nearest protein atom is 4.91 A away)
+    C23   C   faces HIS145.O      4.13 A  no contact within 4.0 A (nearest protein atom is 4.13 A away)
+    C24   C   faces LEU148.CD2    4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    C3    C   faces GLY96.N       4.94 A  no contact within 4.0 A (nearest protein atom is 4.94 A away)
+    C4    C   faces ASP95.OD1     3.62 A  polar/apolar packing
+    ... 14 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   O=C(NCCCN1CCOC1=O)c1cnc(NCc2cc(Cl)ccc2Cl)nc1NC1CCCC1
+  heavy atoms added: -2     site of change: BR, BR1, C13, C15, C17, C20
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C     faces GLY162.N     3.71 A
+    O     faces LYS105.NZ    3.50 A
+    CL1   faces PHE91.CD2    3.97 A
+    C20   faces None         4.72 A
+    C21   faces GLY162.N     3.78 A
+    C22   faces GLY162.N     3.16 A
+    CL    faces CYS146.O     3.05 A
+    C2    faces None         4.36 A
+    C1    faces LEU148.CD1   3.80 A
+    C3    faces PHE91.CB     3.83 A
+    N     faces GLU92.O      3.03 A
+    C4    faces ALA39.CB     3.40 A
+    N5    faces MET94.N      2.91 A
+    C19   faces MET94.O      3.08 A
+    C11   faces ILE18.CD1    3.45 A
+    C5    faces ILE18.CD1    3.59 A
+    N2    faces ILE18.CD1    3.70 A
+    C6    faces None         4.06 A
+    C10   faces GLY19.CA     3.80 A
+    C9    faces None         4.56 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing bromines with chlorines should redistribute proximity near CYS146.O at 3.42 Å, while methyl deletion and cyclohexyl-to-cyclopentyl contraction reduce the footprint near GLY162.
+
+  [B] Two changes: both bromines become chlorines, so the one packing CYS146.O at 3.42 A should sit looser, and the cyclohexyl loses the carbon contacting GLY19.CA at 3.45 A; the 3.04 A MET94.O bond holds.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 8 of 18   pair 8OUT W3C->W38   target Q12852
+================================================================================
+INPUT LIGAND   Nc1ncc(-c2cn(C34CC(F)(C3)C4)c([C@@H](O)C(F)(F)F)n2)cc1OC(F)(F)F
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C     C   faces MET190.CE     3.51 A  hydrophobic contact
+    C1    C   faces LEU243.CD1    3.50 A  hydrophobic contact
+    C10   C   faces VAL131.O      3.45 A  polar/apolar packing
+    C11   C   faces ALA194.O      3.95 A  polar/apolar packing
+    C12   C   faces ALA194.O      3.39 A  polar/apolar packing
+    C13   C   faces ALA194.O      3.70 A  polar/apolar packing
+    C14   C   faces CYS193.O      3.48 A  polar/apolar packing
+    C15   C   faces VAL139.CG2    3.87 A  hydrophobic contact
+    C2    C   faces ALA150.CB     3.52 A  hydrophobic contact
+    C3    C   faces CYS193.O      3.29 A  polar/apolar packing
+    C4    C   faces VAL139.CG1    3.87 A  hydrophobic contact
+    C5    C   faces GLY196.CA     3.81 A  hydrophobic contact
+    C6    C   faces GLY196.CA     3.67 A  hydrophobic contact
+    C7    C   faces GLY196.CA     4.39 A  no contact within 4.0 A (nearest protein atom is 4.39 A away)
+    C8    C   faces GLY132.C      3.59 A  hydrophobic contact
+    C9    C   faces GLY196.CA     4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    F     F   faces MET190.CE     3.04 A  hydrophobic contact
+    F1    F   faces VAL139.CG2    3.46 A  hydrophobic contact
+    F2    F   faces MET190.CE     3.05 A  hydrophobic contact
+    F3    F   faces SER133.O      3.08 A  polar/apolar packing
+    F4    F   faces GLY132.CA     3.08 A  hydrophobic contact
+    F5    F   faces GLY134.N      3.30 A  polar/apolar packing
+    ... 7 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CC(C)c1nc(-c2cnc(N)c(OC(F)(F)F)c2)cn1C12CC(N3CCOCC3)(C1)C2
+  heavy atoms added: 2     site of change: C11, C7, F3, F4, F5, F6, O1
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C4    faces GLY196.CA    3.89 A
+    C6    faces VAL139.CG1   3.87 A
+    C11   faces None         4.37 A
+    C7    faces GLY196.CA    3.57 A
+    C9    faces GLY196.CA    3.97 A
+    C10   faces VAL131.O     3.44 A
+    C12   faces ALA194.O     3.74 A
+    C13   faces GLY196.CA    3.68 A
+    C3    faces GLN197.OE1   3.51 A
+    C1    faces SER133.N     3.33 A
+    C2    faces None         4.61 A
+    N5    faces VAL139.CG2   3.62 A
+    N8    faces GLY196.CA    3.57 A
+    N14   faces None         4.57 A
+    C15   faces None         4.04 A
+    C16   faces None         4.81 A
+    O17   faces None         6.13 A
+    C18   faces None         5.78 A
+    C19   faces None         4.49 A
+    C20   faces VAL139.CG1   3.83 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing hydroxytrifluoroethyl near GLN197 at 3.36 Å with isopropyl should reduce polar functionality there, while a separate bicyclic fluorine-to-morpholine substitution removes no measured anchoring interaction and the stereocentre disappears.
+
+  [B] Two-site edit: the trifluoromethyl-carbinol whose fluorines pack GLY132.CA and SER133.O at 3.08 A becomes an isopropyl, and the cage fluorine gives way to a morpholine; the 3.02 A CYS193.N hydrogen bond is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 9 of 18   pair 8P73 X58->X1W   target P50613
+================================================================================
+INPUT LIGAND   CC(C)c1cnn2c(NCc3ccccc3)cc(NC[C@@]3(O)CCNC[C@@H]3O)nc12
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces PHE91.CD1     3.44 A  hydrophobic contact
+    C02   C   faces LEU144.CD1    4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+    C03   C   faces PHE91.CG      3.56 A  hydrophobic contact
+    C04   C   faces LEU144.CD1    3.71 A  hydrophobic contact
+    C05   C   faces ASP92.O       3.61 A  polar/apolar packing
+    C08   C   faces MET94.O       3.89 A  polar/apolar packing
+    C10   C   faces MET94.O       3.30 A  polar/apolar packing
+    C11   C   faces GLU95.O       3.52 A  polar/apolar packing
+    C12   C   faces GLU95.O       3.28 A  polar/apolar packing
+    C13   C   faces GLU95.O       3.53 A  polar/apolar packing
+    C14   C   faces THR96.CA      3.56 A  hydrophobic contact
+    C15   C   faces THR96.CA      3.63 A  hydrophobic contact
+    C16   C   faces MET94.O       3.78 A  polar/apolar packing
+    C17   C   faces LEU18.CB      4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C18   C   faces VAL26.CG1     4.18 A  no contact within 4.0 A (nearest protein atom is 4.18 A away)
+    C20   C   faces VAL26.CG2     3.80 A  hydrophobic contact
+    C21   C   faces ASP155.OD2    5.01 A  no contact within 4.0 A (nearest protein atom is 5.01 A away)
+    C23   C   faces ASN141.O      5.40 A  no contact within 4.0 A (nearest protein atom is 5.40 A away)
+    C24   C   faces ASN141.OD1    4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C26   C   faces ASN142.OD1    3.28 A  polar/apolar packing
+    C27   C   faces ASN141.O      4.49 A  no contact within 4.0 A (nearest protein atom is 4.49 A away)
+    C30   C   faces LEU144.CD1    3.87 A  hydrophobic contact
+    ... 8 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CC(C)c1cnn2c(NCc3ccccc3)cc(N[C@H]3CNC[C@H]3OCc3ccccc3)nc12
+  heavy atoms added: 4     site of change: C20, C24, C26, N19, N25, O22, O28
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C10   faces MET94.O      3.26 A
+    C13   faces GLU95.O      3.93 A
+    C15   faces THR96.CA     3.40 A
+    C17   faces None         4.01 A
+    C20   faces LEU18.O      3.56 A
+    C21   faces None         4.35 A
+    C24   faces LEU18.O      3.88 A
+    C26   faces None         4.74 A
+    C28   faces None         4.87 A
+    C01   faces PHE91.CG     3.52 A
+    C02   faces None         4.20 A
+    C03   faces PHE91.CD2    3.51 A
+    C04   faces LEU144.CD1   3.88 A
+    C05   faces ASP92.O      3.53 A
+    C08   faces LEU18.CD1    3.81 A
+    C11   faces MET94.O      3.66 A
+    C12   faces GLU95.O      3.71 A
+    C14   faces THR96.CA     3.62 A
+    C16   faces MET94.O      3.58 A
+    C18   faces VAL26.CG1    3.97 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Contracting the dihydroxypiperidine arm, shortening its linker and adding benzyloxy should relinquish the amine's 3.30 Å ASN142 hydrogen bond and redirect the aromatic extension toward LEU18.
+
+  [B] Replacing the hydroxylated piperidine with a benzyl-ether pyrrolidine gives up the ring NH's 3.30 Å hydrogen bond to ASN142.OD1 and the hydroxyl's 3.82 Å ASP155.OD2 packing, extending instead toward LEU18.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 10 of 18   pair 8P73 X58->X4L   target P50613
+================================================================================
+INPUT LIGAND   CC(C)c1cnn2c(NCc3ccccc3)cc(NC[C@@]3(O)CCNC[C@@H]3O)nc12
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces PHE91.CD1     3.44 A  hydrophobic contact
+    C02   C   faces LEU144.CD1    4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+    C03   C   faces PHE91.CG      3.56 A  hydrophobic contact
+    C04   C   faces LEU144.CD1    3.71 A  hydrophobic contact
+    C05   C   faces ASP92.O       3.61 A  polar/apolar packing
+    C08   C   faces MET94.O       3.89 A  polar/apolar packing
+    C10   C   faces MET94.O       3.30 A  polar/apolar packing
+    C11   C   faces GLU95.O       3.52 A  polar/apolar packing
+    C12   C   faces GLU95.O       3.28 A  polar/apolar packing
+    C13   C   faces GLU95.O       3.53 A  polar/apolar packing
+    C14   C   faces THR96.CA      3.56 A  hydrophobic contact
+    C15   C   faces THR96.CA      3.63 A  hydrophobic contact
+    C16   C   faces MET94.O       3.78 A  polar/apolar packing
+    C17   C   faces LEU18.CB      4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C18   C   faces VAL26.CG1     4.18 A  no contact within 4.0 A (nearest protein atom is 4.18 A away)
+    C20   C   faces VAL26.CG2     3.80 A  hydrophobic contact
+    C21   C   faces ASP155.OD2    5.01 A  no contact within 4.0 A (nearest protein atom is 5.01 A away)
+    C23   C   faces ASN141.O      5.40 A  no contact within 4.0 A (nearest protein atom is 5.40 A away)
+    C24   C   faces ASN141.OD1    4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C26   C   faces ASN142.OD1    3.28 A  polar/apolar packing
+    C27   C   faces ASN141.O      4.49 A  no contact within 4.0 A (nearest protein atom is 4.49 A away)
+    C30   C   faces LEU144.CD1    3.87 A  hydrophobic contact
+    ... 8 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CC(C)c1cnn2c(NCc3ccccc3)cc(N[C@@H]3CCNC3)nc12
+  heavy atoms added: -4     site of change: C20, C26, O22, O28
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C10   faces GLY19.CA     3.77 A
+    N12   faces None         4.25 A
+    C13   faces None         4.69 A
+    C15   faces LEU18.CD1    3.98 A
+    C17   faces MET94.O      3.40 A
+    C20   faces THR96.C      3.34 A
+    C21   faces ASP97.OD1    3.33 A
+    C22   faces GLU95.O      3.90 A
+    C26   faces ASP92.O      3.60 A
+    C01   faces PHE91.CG     3.69 A
+    C02   faces None         4.13 A
+    C03   faces PHE91.CD1    3.51 A
+    C04   faces LEU144.CD1   3.71 A
+    C05   faces VAL26.CG1    3.94 A
+    C07   faces VAL26.CG1    3.69 A
+    C09   faces None         4.37 A
+    C11   faces GLU20.O      3.87 A
+    C14   faces None         4.06 A
+    C18   faces GLU95.O      3.29 A
+    C19   faces GLU95.O      3.56 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing the dihydroxypiperidinylmethyl arm with directly attached pyrrolidine should relinquish the ASN142.OD1 amine hydrogen bond at 3.30 Å while retaining the MET94.O hydrogen bond at 2.80 Å.
+
+  [B] Contracting the hydroxylated piperidine to a pyrrolidine gives up the carbon packing ASN142.OD1 at 3.28 A and the hydroxyl's 3.82 A approach to ASP155.OD2, while the 2.80 A MET94.O hydrogen bond is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 11 of 18   pair 8Q2X IV6->IZJ   target Q96MU7
+================================================================================
+INPUT LIGAND   CNc1nc(Cl)nc2c1ncn2-c1cccc(C(=O)O)c1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C02   C   faces ASN367.ND2    3.25 A  polar/apolar packing
+    C04   C   faces TRP377.CZ2    3.61 A  hydrophobic contact
+    C06   C   faces SER378.O      3.25 A  polar/apolar packing
+    C07   C   faces TRP377.CZ2    3.97 A  hydrophobic contact
+    C08   C   faces LYS361.O      3.68 A  polar/apolar packing
+    C10   C   faces LYS361.O      3.63 A  polar/apolar packing
+    C11   C   faces MET434.CE     3.78 A  hydrophobic contact
+    C12   C   faces ASN363.CB     4.21 A  no contact within 4.0 A (nearest protein atom is 4.21 A away)
+    C13   C   faces ASN363.OD1    4.23 A  no contact within 4.0 A (nearest protein atom is 4.23 A away)
+    C16   C   faces ARG404.CD     3.53 A  hydrophobic contact
+    C17   C   faces ARG404.CD     3.75 A  hydrophobic contact
+    C18   C   faces LYS361.O      3.15 A  polar/apolar packing
+    C19   C   faces ASP476.OD2    3.15 A  polar/apolar packing
+    CL01  Cl  faces ASN367.ND2    2.84 A  polar/apolar packing -- unusually close (2.84 A vs 3.3 A vdW sum); treat the crystal model as uncertain
+    N03   N   faces ASN367.ND2    2.85 A  H-bond, good geometry
+    N05   N   faces SER378.O      2.59 A  H-bond, good geometry
+    N09   N   faces LYS361.O      3.35 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs LYS acceptor): not a hydrogen bond
+    N20   N   faces SER378.O      3.83 A  polar/apolar packing
+    N21   N   faces ASN363.N      3.13 A  polar contact, geometry poor
+    O14   O   faces PRO431.CG     3.76 A  polar/apolar packing
+    O15   O   faces ASN363.OD1    3.84 A  polar/apolar packing
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CNc1nc(Cl)nc2c1ncn2Cc1cccc(C(=O)OC)c1
+  heavy atoms added: 2     site of change: C10, C17, N09, O15
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C10   faces LYS361.O     3.08 A
+    C21   faces ASP476.OD1   3.10 A
+    C02   faces ASN367.ND2   3.49 A
+    C04   faces TRP377.CZ2   3.59 A
+    C06   faces SER378.O     3.37 A
+    C07   faces TRP377.CZ2   3.84 A
+    C08   faces LYS361.O     3.62 A
+    N03   faces ASN367.ND2   2.96 A
+    N05   faces SER378.O     2.73 A
+    N09   faces LYS361.O     3.13 A
+    N22   faces SER378.O     3.69 A
+    N23   faces ASN363.N     3.13 A
+    CL01  faces ASN364.ND2   3.08 A
+    C1    faces ASN363.OD1   3.84 A
+    C2    faces MET434.CE    3.50 A
+    C3    faces MET434.CE    3.56 A
+    C4    faces None         4.13 A
+    C5    faces LEU380.CD2   3.76 A
+    C6    faces LEU380.CD2   3.71 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Benzyl-linker insertion and acid methylation should redirect the aryl group from its 3.63 Å proximity to LYS361.O toward MET434, while retaining the purine hydrogen bonds.
+
+  [B] Inserting a methylene between purine and aryl, and esterifying the carboxylate whose oxygen packs ASN363.OD1 at 3.84 A, should reorient that ring while the ASN367 and SER378 hydrogen bonds hold.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 12 of 18   pair 8Q4M J9B->IU2   target Q96MU7
+================================================================================
+INPUT LIGAND   CNc1nc(Cl)nc2c1ncn2Cc1cccc(Cl)c1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C02   C   faces ASN367.ND2    3.38 A  polar/apolar packing
+    C04   C   faces TRP377.CZ2    3.67 A  hydrophobic contact
+    C06   C   faces SER378.O      3.32 A  polar/apolar packing
+    C07   C   faces TRP377.CZ2    4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    C08   C   faces LYS361.O      3.52 A  polar/apolar packing
+    C10   C   faces LYS361.O      3.02 A  polar/apolar packing
+    C11   C   faces ASN363.OD1    3.87 A  polar/apolar packing
+    C12   C   faces ASN363.OD1    3.45 A  polar/apolar packing
+    C13   C   faces ASN363.ND2    3.99 A  polar/apolar packing
+    C15   C   faces LEU380.CD2    4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C16   C   faces LEU380.CD2    3.37 A  hydrophobic contact
+    C17   C   faces LEU380.CD2    3.75 A  hydrophobic contact
+    C18   C   faces ASP476.OD2    3.05 A  polar/apolar packing
+    CL01  Cl  faces ASN364.ND2    2.91 A  polar/apolar packing
+    CL14  Cl  faces PRO431.CB     3.43 A  hydrophobic contact
+    N03   N   faces ASN367.ND2    2.84 A  H-bond, good geometry
+    N05   N   faces SER378.O      2.75 A  H-bond, good geometry
+    N09   N   faces LYS361.O      3.05 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs LYS acceptor): not a hydrogen bond
+    N19   N   faces ASP476.OD2    3.79 A  polar/apolar packing
+    N20   N   faces ASN363.N      3.03 A  polar contact, geometry poor
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CNc1nc(Cl)nc2c1ncn2-c1ccccc1
+  heavy atoms added: -2     site of change: C10, CL14
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C10   faces LYS361.O     3.52 A
+    C13   faces ASN363.OD1   3.10 A
+    C15   faces LYS361.O     2.97 A
+    C02   faces ASN367.ND2   3.14 A
+    C04   faces TRP377.CZ2   3.57 A
+    C06   faces SER378.O     3.29 A
+    C07   faces TRP377.CZ2   3.98 A
+    C08   faces LYS361.O     3.63 A
+    C11   faces ASN363.OD1   3.77 A
+    C12   faces ASN363.OD1   3.19 A
+    C14   faces ASN363.OD1   3.61 A
+    C16   faces ASP476.OD2   2.92 A
+    N03   faces ASN367.ND2   2.86 A
+    N05   faces SER378.O     2.72 A
+    N09   faces LYS361.O     3.29 A
+    N17   faces ASP476.OD2   3.69 A
+    N18   faces ASN363.N     3.19 A
+    CL01  faces ASN367.ND2   2.59 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Dropping the benzylic carbon that packs LYS361.O at 3.02 A and the ring chlorine near PRO431.CB at 3.43 A should pull the phenyl closer to the purine, while the ASN367 and SER378 hydrogen bonds hold.
+
+  [B] Removing the benzyl methylene near LYS361 at 3.02 Å and chlorine near PRO431 at 3.43 Å should pull the directly attached phenyl toward ASN363, redistributing its peripheral proximity.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 13 of 18   pair 9C1V A1ATW->A1AVL   target I6X8D2
+================================================================================
+INPUT LIGAND   CS(=O)(=O)Nc1ncn(-c2cc(F)c(COc3ccc(OS(O)(O)F)cc3)c(F)c2)n1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces PHE898.CD2    3.40 A  hydrophobic contact
+    C06   C   faces ARG900.NH1    3.71 A  polar/apolar packing
+    C09   C   faces LEU847.CD2    3.41 A  hydrophobic contact
+    C11   C   faces LEU847.CD2    3.47 A  hydrophobic contact
+    C12   C   faces LEU847.CD2    3.49 A  hydrophobic contact
+    C13   C   faces GLN996.NE2    2.98 A  polar/apolar packing
+    C14   C   faces GLN996.NE2    3.30 A  polar/apolar packing
+    C15   C   faces PHE902.CZ     4.00 A  hydrophobic contact
+    C16   C   faces ARG900.NH1    3.44 A  polar/apolar packing
+    C18   C   faces PHE719.CD1    3.62 A  hydrophobic contact
+    C20   C   faces PHE719.CD1    3.46 A  hydrophobic contact
+    C21   C   faces GLN800.OE1    3.25 A  polar/apolar packing
+    C22   C   faces VAL869.CG2    3.46 A  hydrophobic contact
+    C23   C   faces PHE719.CD2    3.82 A  hydrophobic contact [nearest INDEPENDENT contact; SER801 is excluded as the residue its covalent link already describes]
+    C24   C   faces PHE719.CD2    3.48 A  hydrophobic contact
+    C25   C   faces PHE719.CD1    3.37 A  hydrophobic contact
+    F17   F   faces PHE719.CD1    3.32 A  hydrophobic contact
+    F36   F   faces GLN996.NE2    2.97 A  polar/apolar packing
+    N05   N   faces ARG900.NH1    3.93 A  polar/apolar packing
+    N07   N   faces ARG900.NH1    2.80 A  H-bond, good geometry
+    N08   N   faces LEU847.CD2    3.17 A  polar/apolar packing
+    N10   N   faces LEU847.CD2    3.81 A  polar/apolar packing
+    ... 8 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CS(=O)(=O)Nc1ncn(-c2cc(F)c(COc3ccc(OS(=O)(=O)O)cc3)c(F)c2)n1
+  heavy atoms added: 0     site of change: O29, S27
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C13   faces GLN996.NE2   3.43 A
+    C15   faces GLN996.NE2   3.33 A
+    C20   faces PHE719.CD2   3.68 A
+    C21   faces VAL869.CG2   3.56 A
+    C28   faces GLN800.OE1   3.41 A
+    C01   faces None         5.87 A
+    C06   faces ARG900.NH1   3.57 A
+    C08   faces LEU847.CD2   3.60 A
+    C11   faces LEU847.CD2   3.65 A
+    C12   faces GLN875.OE1   3.51 A
+    C16   faces GLN996.NE2   3.22 A
+    C18   faces PHE719.CD1   3.39 A
+    C19   faces PHE719.CE1   3.30 A
+    C27   faces VAL869.CG2   3.49 A
+    C29   faces PHE902.CZ    3.86 A
+    C31   faces ARG900.NH1   3.59 A
+    F14   faces ALA871.CB    3.20 A
+    F30   faces PHE719.CD1   3.74 A
+    N05   faces ARG900.NH1   3.59 A
+    N07   faces None         4.01 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing the fluorosulfate with a sulfate should lose the 1.69 A covalent bond to SER801.OG and the 3.20 A SER908.OG hydrogen bond, leaving a non-covalent anion; the 2.80 A ARG900.NH1 hydrogen bond is retained.
+
+  [B] Replacing the fluorinated sulfur group with sulfate should remove the 1.69 Å covalent tether to SER801.OG and redirect the terminal polar group toward HIS909.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 14 of 18   pair 9CW2 KMI->A1A0H   target P29474
+================================================================================
+INPUT LIGAND   CNCc1cccc(-c2cc(C)cc(N)n2)c1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C02   C   faces GLU361.OE2    3.29 A  polar/apolar packing
+    C03   C   faces HEM501.NB     3.12 A  contact with cofactor HEM
+    C04   C   faces HEM501.NB     3.67 A  contact with cofactor HEM
+    C05   C   faces VAL336.CG2    3.81 A  hydrophobic contact
+    C06   C   faces GLU361.OE1    3.61 A  polar/apolar packing
+    C07   C   faces HEM501.C1C    3.30 A  contact with cofactor HEM
+    C11   C   faces GLU361.OE1    3.59 A  polar/apolar packing
+    C12   C   faces VAL336.CG2    3.30 A  hydrophobic contact
+    C13   C   faces HEM501.O2D    3.42 A  contact with cofactor HEM
+    C14   C   faces HEM501.O2A    3.03 A  contact with cofactor HEM
+    C15   C   faces HEM501.O2A    3.12 A  contact with cofactor HEM
+    C16   C   faces GLU361.OE1    2.94 A  polar/apolar packing
+    C17   C   faces HEM501.O2A    3.23 A  contact with cofactor HEM
+    C19   C   faces ASN366.OD1    3.28 A  polar/apolar packing
+    N01   N   faces GLU361.OE1    2.76 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs GLU acceptor): not a hydrogen bond
+    N02   N   faces GLU361.OE2    2.42 A  H-bond, good geometry
+    N18   N   faces HEM501.O2A    3.12 A  contact with cofactor HEM
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CNCc1cc(F)cc(-c2cc(C)cc(N)n2)c1
+  heavy atoms added: 1     site of change: C13
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C15   faces VAL336.CG2   3.37 A
+    C11   faces VAL336.CG2   3.74 A
+    C14   faces HEM501.O2A   3.48 A
+    C16   faces VAL336.CG2   3.19 A
+    N18   faces HEM501.O2D   3.24 A
+    C02   faces GLU361.OE2   3.38 A
+    C03   faces HEM501.NB    3.11 A
+    C04   faces HEM501.NB    3.66 A
+    C05   faces VAL336.CG2   3.96 A
+    C06   faces GLU361.OE1   3.77 A
+    C07   faces HEM501.C1C   3.24 A
+    C12   faces GLU361.OE1   3.06 A
+    C13   faces HEM501.O2A   3.45 A
+    C17   faces HEM501.O2D   3.19 A
+    C19   faces ASN338.OD1   3.31 A
+    F13   faces HEM501.O2A   3.44 A
+    N01   faces GLU361.OE1   2.95 A
+    N02   faces GLU361.OE2   2.60 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Fluorinating the ring at the carbon 3.42 A from the heme propionate should put fluorine directly against that cofactor edge, while the amine's 2.42 A GLU361.OE2 hydrogen bond and the heme contacts are retained.
+
+  [B] Fluorination at the phenyl carbon beside HEM501.O2D at 3.42 Å should extend this substituent toward the heme carboxylate region while retaining the aminopyridine's GLU361 hydrogen bond.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 15 of 18   pair 9GQK A1IOE->A1IN1   target Q13451
+================================================================================
+INPUT LIGAND   COc1cc2cc(c1OC)OC[C@H](C)OC/C=C/[C@H](O)[C@@H](C)OC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces TYR113.OH     3.64 A  polar/apolar packing
+    C10   C   faces ARG73.CZ      4.73 A  no contact within 4.0 A (nearest protein atom is 4.73 A away)
+    C11   C   faces ARG73.CZ      3.76 A  hydrophobic contact
+    C12   C   faces PHE77.CE1     4.33 A  no contact within 4.0 A (nearest protein atom is 4.33 A away)
+    C13   C   faces PHE77.CE1     4.23 A  no contact within 4.0 A (nearest protein atom is 4.23 A away)
+    C14   C   faces PHE77.CE1     4.29 A  no contact within 4.0 A (nearest protein atom is 4.29 A away)
+    C15   C   faces GLN85.O       3.67 A  polar/apolar packing
+    C16   C   faces TYR113.OH     3.63 A  polar/apolar packing
+    C17   C   faces TYR113.OH     3.40 A  polar/apolar packing
+    C18   C   faces TYR113.OH     3.21 A  polar/apolar packing
+    C19   C   faces TYR113.OH     3.56 A  polar/apolar packing
+    C2    C   faces LYS121.CD     3.96 A  hydrophobic contact
+    C20   C   faces TRP90.CE2     3.46 A  hydrophobic contact
+    C21   C   faces TRP90.CH2     3.68 A  hydrophobic contact
+    C22   C   faces TYR57.CZ      3.41 A  hydrophobic contact
+    C23   C   faces TYR57.OH      3.76 A  polar/apolar packing
+    C24   C   faces TYR113.OH     3.37 A  polar/apolar packing
+    C25   C   faces ASP68.OD2     3.47 A  polar/apolar packing
+    C26   C   faces ASP68.OD2     4.02 A  no contact within 4.0 A (nearest protein atom is 4.02 A away)
+    C27   C   faces PHE130.CZ     3.78 A  hydrophobic contact
+    C28   C   faces LYS60.N       3.84 A  polar/apolar packing
+    C29   C   faces LYS60.CA      3.78 A  hydrophobic contact
+    ... 18 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   COc1cc2cc(OC)c1OCCCOC/C=C/COC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+  heavy atoms added: -3     site of change: C11, C14, C17, C6, C7, C8, C9, O2, O3, O5
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    CAK   faces ASP68.CB     3.74 A
+    CAL   faces ILE122.CD1   3.65 A
+    CAM   faces LYS60.CA     3.85 A
+    CAN   faces LYS60.N      3.92 A
+    CAO   faces PHE130.CZ    3.66 A
+    CAJ   faces None         4.24 A
+    CAI   faces ASP68.OD2    3.74 A
+    CAB   faces TYR113.OH    3.47 A
+    OAA   faces TYR113.OH    2.74 A
+    N     faces TYR113.OH    3.91 A
+    CAH   faces TYR57.OH     3.69 A
+    CAG   faces TYR57.CZ     3.44 A
+    CAF   faces PHE77.CE2    3.53 A
+    CB    faces TRP90.CE2    3.43 A
+    CA    faces TYR113.OH    3.66 A
+    C     faces TYR113.OH    3.10 A
+    O     faces ILE87.N      2.96 A
+    OBE   faces TYR113.OH    2.89 A
+    CBD   faces TYR113.OH    3.03 A
+    CBC   faces SER115.CB    3.68 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Simplifying both macrocycle linkers should remove the hydroxyl's 2.92 Å GLN85.O hydrogen bond and reduce peripheral polar anchoring while retaining the core's 2.97 Å ILE87.N hydrogen bond.
+
+  [B] Two places change: the hydroxyl's 2.92 A hydrogen bond to GLN85.O is given up, as is a methyl packing ARG73.CZ at 3.76 A, while the 2.60 A TYR113.OH and 2.97 A ILE87.N hydrogen bonds hold.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 16 of 18   pair 9Q1C A1CNK->A1CNO   target P12497
+================================================================================
+INPUT LIGAND   CC(C)CN(C[C@@H](O)[C@H](Cc1cc(F)cc(F)c1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21)S(=O)(=O)c1ccc([C@@H](C)O)cc1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces ILE84.CD1     3.60 A  hydrophobic contact
+    C02   C   faces ASP25.OD2     3.12 A  polar/apolar packing
+    C03   C   faces ILE50.CD1     4.36 A  no contact within 4.0 A (nearest protein atom is 4.36 A away)
+    C04   C   faces ASP30.O       3.82 A  polar/apolar packing
+    C05   C   faces GLY48.O       3.35 A  polar/apolar packing
+    C06   C   faces GLY48.O       3.38 A  polar/apolar packing
+    C07   C   faces VAL32.CG2     4.55 A  no contact within 4.0 A (nearest protein atom is 4.55 A away)
+    C08   C   faces GLY48.O       3.46 A  polar/apolar packing
+    C09   C   faces GLY48.O       3.19 A  polar/apolar packing
+    C10   C   faces ILE50.CD1     3.89 A  hydrophobic contact
+    C11   C   faces ALA28.CB      3.48 A  hydrophobic contact
+    C12   C   faces ALA28.CB      3.67 A  hydrophobic contact
+    C13   C   faces GLY27.O       3.46 A  polar/apolar packing
+    C14   C   faces GLY27.O       3.85 A  polar/apolar packing
+    C15   C   faces GLY27.O       3.61 A  polar/apolar packing
+    C16   C   faces ASP25.OD2     3.07 A  polar/apolar packing
+    C17   C   faces ASP25.OD2     3.75 A  polar/apolar packing
+    C18   C   faces GLY48.O       4.07 A  no contact within 4.0 A (nearest protein atom is 4.07 A away)
+    C19   C   faces ASP29.N       3.81 A  polar/apolar packing
+    C20   C   faces ASP29.OD2     3.65 A  polar/apolar packing
+    C21   C   faces ASP25.OD2     3.14 A  polar/apolar packing
+    C22   C   faces GLY27.O       4.10 A  no contact within 4.0 A (nearest protein atom is 4.10 A away)
+    ... 20 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   CCC(CC)CN(C[C@@H](O)[C@H](Cc1cc(F)cc(F)c1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21)S(=O)(=O)c1ccc2c(c1)CC[C@@H]2O
+  heavy atoms added: 3     site of change: C01, C12, C15, C28
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C10   faces ALA28.CB     3.38 A
+    C13   faces GLY27.O      3.52 A
+    C15   faces ILE50.CD1    3.63 A
+    C17   faces GLY48.O      3.34 A
+    C20   faces PRO81.CG     3.81 A
+    C21   faces PRO81.CD     3.75 A
+    C22   faces None         4.21 A
+    C24   faces GLY27.O      3.73 A
+    C26   faces PRO81.CG     3.52 A
+    C28   faces GLY48.O      3.82 A
+    C01   faces ASP25.OD2    2.95 A
+    C02   faces ASP25.OD2    3.80 A
+    C03   faces ILE50.CD1    3.73 A
+    C04   faces GLY48.O      3.18 A
+    C05   faces ASP29.N      3.91 A
+    C06   faces GLY27.O      3.68 A
+    C07   faces ASP25.OD2    3.25 A
+    C08   faces GLY27.O      3.54 A
+    C09   faces ASP30.O      3.39 A
+    C11   faces None         4.14 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Cyclizing the hydroxyethylphenyl arm should reposition its 2.74 Å hydrogen bond to ASP30(B), while enlarging the branched alkyl arm redistributes proximity around the two-chain pocket.
+
+  [B] Two-site edit: the isobutyl grows at carbons packing ALA28.CB at 3.67 A and the benzylic alcohol cyclises beside LEU76.CD1 (3.42 A), which should extend apolar contact on both faces while ASP25.OD2 packing is retained.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 17 of 18   pair 9QWE A1JA3->A1JA5   target P09958
+================================================================================
+INPUT LIGAND   CC(=O)NCC1CCN(Cc2cc(CN3CCN(c4ccncc4)CC3)cc(-c3cc(Cl)cc(Cl)c3)c2)CC1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    C10   C   faces GLY255.O      3.66 A  polar/apolar packing
+    C11   C   faces VAL231.CG2    4.16 A  no contact within 4.0 A (nearest protein atom is 4.16 A away)
+    C13   C   faces VAL231.CG2    4.60 A  no contact within 4.0 A (nearest protein atom is 4.60 A away)
+    C14   C   faces LEU227.O      4.07 A  no contact within 4.0 A (nearest protein atom is 4.07 A away)
+    C16   C   faces LEU227.CD1    4.28 A  no contact within 4.0 A (nearest protein atom is 4.28 A away)
+    C17   C   faces TRP254.CE3    3.56 A  hydrophobic contact
+    C18   C   faces TRP254.CH2    3.60 A  hydrophobic contact
+    C2    C   faces MET226.CE     3.44 A  hydrophobic contact
+    C20   C   faces ASP191.O      5.44 A  no contact within 4.0 A (nearest protein atom is 5.44 A away)
+    C21   C   faces LEU227.CB     4.63 A  no contact within 4.0 A (nearest protein atom is 4.63 A away)
+    C22   C   faces TRP254.CB     4.32 A  no contact within 4.0 A (nearest protein atom is 4.32 A away)
+    C23   C   faces GLY255.O      3.45 A  polar/apolar packing
+    C24   C   faces GLY255.O      3.72 A  polar/apolar packing
+    C25   C   faces GLU236.OE2    3.35 A  polar/apolar packing
+    C26   C   faces TYR308.OH     3.33 A  polar/apolar packing
+    C28   C   faces GLU236.OE2    3.07 A  polar/apolar packing
+    C29   C   faces GLU236.OE2    3.29 A  polar/apolar packing
+    C3    C   faces MET226.CE     3.16 A  hydrophobic contact
+    C30   C   faces GLU236.OE2    4.26 A  no contact within 4.0 A (nearest protein atom is 4.26 A away)
+    C31   C   faces ASP233.N      4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    C33   C   faces ALA267.CB     3.56 A  hydrophobic contact
+    C34   C   faces ALA267.CB     3.88 A  hydrophobic contact
+    ... 17 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   O=C(NCC1CCN(Cc2cc(CN3CCC(C4CCNCC4)CC3)cc(-c3cc(Cl)cc(Cl)c3)c2)CC1)C(F)(F)F
+  heavy atoms added: 3     site of change: C14, C16, C22, C34, N15
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    C4    faces TRP254.O     3.62 A
+    C6    faces TRP254.O     3.42 A
+    C7    faces None         4.05 A
+    C8    faces GLU236.OE2   3.83 A
+    C10   faces GLY255.O     3.73 A
+    N12   faces GLY255.O     3.99 A
+    C13   faces None         5.32 A
+    C15   faces None         4.83 A
+    C22   faces GLU257.N     3.72 A
+    C24   faces GLY255.O     3.76 A
+    C26   faces TYR308.OH    3.41 A
+    C28   faces GLU236.OE2   3.08 A
+    C11   faces VAL231.CG2   3.97 A
+    C14   faces None         5.81 A
+    C2    faces MET226.CE    3.56 A
+    C23   faces GLY255.O     3.75 A
+    C25   faces GLU236.OE2   3.39 A
+    C29   faces GLU236.OE2   3.31 A
+    C3    faces MET226.CE    3.64 A
+    C30   faces None         4.33 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] A two-site edit: the acetyl methyl packing ALA267.CB at 3.88 A becomes a trifluoromethyl, and the pyridylpiperazine is rebuilt at atoms making no contact within 4.0 A here; the 2.70 A GLU236 salt bridge holds.
+
+  [B] Replacing acetyl methyl, 3.88 Å from ALA267.CB, with trifluoromethyl should redistribute proximity around ALA267, while the separate pyridylpiperazine-to-bipiperidine change should retain the 2.70 Å GLU236 salt-bridge anchor.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.
+
+
+================================================================================
+CASE 18 of 18   pair 9TXU A1JXX->OY6   target Q9H2K2
+================================================================================
+INPUT LIGAND   COc1ccccc1NC(=O)c1ccc(NC(=O)C2CC(Nc3nc4ccccc4c(=O)[nH]3)C2)cc1
+
+INPUT CONTACT TABLE -- each heavy atom's NEAREST protein atom, measured in the input crystal
+    CAA   C   faces HIS1048.CE1   3.49 A  hydrophobic contact
+    CAB   C   faces ALA1038.CB    3.62 A  hydrophobic contact
+    CAC   C   faces GLY1043.O     3.40 A  polar/apolar packing
+    CAD   C   faces GLY1043.O     3.31 A  polar/apolar packing
+    CAE   C   faces HIS1048.ND1   3.68 A  polar/apolar packing
+    CAF   C   faces HIS1048.ND1   3.25 A  polar/apolar packing
+    CAG   C   faces ILE1059.CG2   3.80 A  hydrophobic contact
+    CAH   C   faces ASP1045.O     4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    CAI   C   faces HIS1048.O     3.10 A  polar/apolar packing
+    CAJ   C   faces HIS1048.O     3.00 A  polar/apolar packing
+    CAK   C   faces HIS1048.O     3.89 A  polar/apolar packing
+    CAL   C   faces ILE1059.CG2   3.62 A  hydrophobic contact
+    CAM   C   faces PHE1035.CD1   3.60 A  hydrophobic contact
+    CAN   C   faces ASP1045.O     3.68 A  polar/apolar packing
+    CAO   C   faces GLY1058.O     4.14 A  no contact within 4.0 A (nearest protein atom is 4.14 A away)
+    CAP   C   faces TYR1050.CB    3.79 A  hydrophobic contact
+    CAQ   C   faces TYR1050.CD2   3.49 A  hydrophobic contact
+    CAR   C   faces TYR1071.CD1   3.44 A  hydrophobic contact
+    CAS   C   faces ILE1075.CD1   3.88 A  hydrophobic contact
+    CAT   C   faces TYR1060.O     3.31 A  polar/apolar packing
+    CAU   C   faces TYR1071.CG    3.23 A  hydrophobic contact
+    CAV   C   faces TYR1071.CD2   3.08 A  hydrophobic contact
+    ... 14 more rows ...
+
+THE ANALOGUE THAT WAS ACTUALLY MADE   COc1ccccc1NC(=O)c1ccc(NC(=O)N(CCc2nc3ccccc3c(=O)[nH]2)Cc2cccs2)cc1
+  heavy atoms added: 4     site of change: CAO, CAP, CAQ, CAR, CAU, NBD
+
+ANALOGUE'S OWN MEASURED CONTACTS
+    N12   faces TYR1060.CB   3.47 A
+    C17   faces HIS1048.ND1  3.79 A
+    C20   faces PHE1035.CD2  3.48 A
+    C21   faces PHE1035.CD2  3.44 A
+    C22   faces ALA1049.CB   3.93 A
+    C24   faces TYR1060.CD1  3.55 A
+    C26   faces TYR1071.CG   3.41 A
+    C28   faces MET1054.CE   3.57 A
+    C01   faces PHE1035.CD1  3.18 A
+    N02   faces HIS1048.CB   3.78 A
+    O03   faces HIS1048.CG   3.23 A
+    S04   faces ILE1075.CD1  3.82 A
+    C05   faces HIS1048.ND1  3.24 A
+    N06   faces None         4.10 A
+    O07   faces ASP1045.N    2.91 A
+    C08   faces HIS1048.ND1  3.27 A
+    N09   faces None         4.18 A
+    O10   faces HIS1031.CE1  3.28 A
+    C11   faces ALA1038.CB   3.50 A
+    O13   faces SER1068.OG   2.87 A
+
+--------------------------------------------------------------------------------
+TWO HUMAN-WRITTEN LABELS for this same pair. Both are candidate TRAINING TARGETS.
+
+  [A] Replacing the cyclobutane linkage with a branched urea gives up the 3.07 A GLY1032.O hydrogen bond and should redirect that arm over the TYR1071 and ILE1075 faces; the 2.86 A SER1068.OG hydrogen bond is retained.
+
+  [B] Replacing the aminocyclobutane linker with a branched urea bearing thienylmethyl should remove its GLY1032 hydrogen bond at 3.07 Å and redistribute linker surfaces toward ILE1075.
+--------------------------------------------------------------------------------
+Judge EACH of A and B:
+  describes_real_edit    does it describe the edit that was actually made above?
+  atom_attribution_ok    is every distance it cites a real row of the INPUT table AND attached to
+                         the atom that owns it? Check number by number. This is the failure that
+                         matters most: a real distance on the wrong atom reads perfectly and is
+                         false.
+  invented_chemistry     any contact, bond or interaction the evidence does not support?
+  input_anchored         are the MEASURED facts taken from the input side, with the consequence on
+                         the analogue side stated qualitatively and WITHOUT numbers? (A measured
+                         analogue distance is a violation: at inference no analogue exists.)
+  would_train_on_it      would you accept this as a training target for a model that must learn to
+                         explain pocket consequences truthfully?
+  one_line_why
+Then: which_is_better (A | B | neither) and a one-line reason.

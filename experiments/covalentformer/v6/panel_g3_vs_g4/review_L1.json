@@ -1,0 +1,362 @@
+{
+  "6PIC 6XA->XS6": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "N1-aminopropyl alkylation is the real edit and the single number (2.91 A to ASP117.OD2) is N1's own salt-bridge row; GLU17 reach and Zn retention left qualitative."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same edit; all three numbers trace correctly - 2.91 A on the ammonium N1, 1.99 A (O9) and 2.28 A (O10) hydroxamate-Zn coordination - and the analogue-side claim carries no numbers."
+    },
+    "which_is_better": "B",
+    "why": "B anchors the same edit on three correctly-owned input rows, including the zinc coordination it says is retained, without leaking any analogue number."
+  },
+  "6PJF OP7->OQY": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": false,
+      "would_train_on_it": false,
+      "one_line_why": "Cyclopentyl->tBu is right, but '3.74 A on ILE84.CD1' is the ANALOGUE's C04 row (input ILE84.CD1 is 3.65 A on C03) and the '3.40-3.42' range invents a second input value; the 2.57 A ASP25.OD1 bond is unverifiable."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Correct edit, one number (3.40 A cyclopentyl-VAL32, in the truncated block) tied to the group actually removed, and the ILE50 consequence stated without numbers."
+    },
+    "which_is_better": "B",
+    "why": "A smuggles in a measured analogue distance (3.74 A ILE84.CD1) against an input row that reads 3.65 A; B keeps to one input fact and a qualitative consequence."
+  },
+  "6WOD IHP->5A3": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Identifies that the replaced oxygen is exactly O31, whose 3.20 A ARG89.NE salt bridge is a real input row; only the 3.77 A P-ARG89.NE value sits in the truncated rows and cannot be checked."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Correct edit and the one cited number (3.20 A ARG89 salt bridge) is right, but 'broader phosphate-network rearrangement' is filler with no mechanistic content."
+    },
+    "which_is_better": "A",
+    "why": "A names the specific oxygen (O31) that owns the 3.20 A salt bridge and is therefore lost to the methylene, which is the whole point of the edit; B only gestures at it."
+  },
+  "7BJ6 TVK->U3Z": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both edits (chloropyridyl->ethynylphenyl, defluorination) are real and the 3.57 A / 3.32 A values are consistent with the truncated CL1 and F23 rows, but ownership is left vague ('the branch beside HIS96')."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same two edits with atom-level ownership (Cl on HIS96.CG at 3.57 A, ring F on ILE61.CG2 at 3.32 A); the 2.58 A GLN72.O H-bond is plausible but lies in the truncated block."
+    },
+    "which_is_better": "B",
+    "why": "B assigns each number to the specific atom being deleted instead of to a region, which is exactly the attribution discipline the label set is supposed to teach."
+  },
+  "7BPZ PEM->F5A": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both cited numbers are perfect: 3.26 A THR279.CG2 is C8 and 3.54 A LEU321.CD2 is C9, the two methylenes actually deleted; consequence kept qualitative."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Same two correct methylene numbers, but it then hangs the 3.24 A TYR314.OH row (C19, a carboxylate-head carbon) on the chlorophenyl and predicts that ring moves toward TYR314 - the acid-anchoring tyrosine at the opposite end of the ligand."
+    },
+    "which_is_better": "A",
+    "why": "A stops at the two numbers it owns; B reuses a head-group distance to describe the distal chlorophenyl and so asserts a geometry the table contradicts."
+  },
+  "7DAK F5U->SRO": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Demethylation is right and 3.20 A ASN220.OD1 is the methyl C1's own row; oxygen/ASN184 consequence left qualitative."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same edit with two correctly owned numbers (methyl C1 at 3.20 A ASN220.OD1, C10 at 3.70 A ASP226.OD2) on a fully visible table, and the donor claim stays qualitative."
+    },
+    "which_is_better": "B",
+    "why": "On an untruncated table B states strictly more verified fact - including the retained ASP226 contact - with no attribution slip."
+  },
+  "7OAL V62->V5W": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Only label that names all three changes (both Br->Cl, methyl deletion, cyclohexyl->cyclopentyl); 3.42 A CYS146.O is BR's own row, though lumping the cyclohexyl into the GLY162 footprint is loose."
+    },
+    "B": {
+      "describes_real_edit": false,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Says 'Two changes' and omits the ring methyl deletion entirely; its numbers are fine (3.42 A on BR, 3.45 A GLY19.CA on the cyclohexyl carbon C20, 3.04 A MET94.O in the truncated block) but the edit it describes is not the edit made."
+    },
+    "which_is_better": "A",
+    "why": "B miscounts the transformation and drops a whole substituent change, which would train the model to ignore real edits; A's numbers are as good and its edit description is complete."
+  },
+  "8OUT W3C->W38": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Two-site edit correctly named, but its only number (3.36 A GLN197) is not traceable in the shown rows and 'removes no measured anchoring interaction' is an unverifiable blanket negative about the cage fluorine."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same two sites, with the two 3.08 A values correctly owned by the carbinol's fluorines against GLY132.CA and SER133.O; the 3.02 A CYS193.N retention sits in the truncated block."
+    },
+    "which_is_better": "B",
+    "why": "B grounds the edit in the two input rows that actually belong to the removed CF3, whereas A cites one untraceable distance and a negative claim nobody can check."
+  },
+  "8P73 X58->X1W": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Edit is described, but '3.30 A ASN142 hydrogen bond on the amine' misstates the evidence: 3.30 A is C10's MET94.O row and the only ASN142.OD1 row is C26 at 3.28 A, explicitly polar/apolar packing, not an H-bond."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Repeats the same fabrication ('ring NH's 3.30 A hydrogen bond to ASN142.OD1') against the C26/3.28 A packing row; the 3.82 A ASP155.OD2 hydroxyl value is in the truncated block."
+    },
+    "which_is_better": "neither",
+    "why": "Both passes upgrade a 3.28 A carbon packing contact into an amine hydrogen bond at 3.30 A, the exact wrong-atom failure these labels must not teach."
+  },
+  "8P73 X58->X4L": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Same input as case 9 and the same error: 'ASN142.OD1 amine hydrogen bond at 3.30 A' - 3.30 A belongs to C10/MET94.O and ASN142.OD1 is carbon packing at 3.28 A; the 2.80 A MET94.O bond is untraceable."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Gets it exactly right where the twin case failed: 3.28 A ASN142.OD1 credited to a carbon and called packing, plus the hydroxyl's 3.82 A ASP155.OD2 and the retained 2.80 A MET94.O bond."
+    },
+    "which_is_better": "B",
+    "why": "Identical input to case 9 shows the difference cleanly: B reads the ASN142 row as written while A rounds it and promotes packing to a hydrogen bond."
+  },
+  "8Q2X IV6->IZJ": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Methylene insertion plus ester is the real edit and 3.63 A LYS361.O is C10, the aryl carbon that gains the linker; MET434 redirection left qualitative."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same edit, and 3.84 A ASN363.OD1 is O15 - precisely the carboxylate oxygen that gets methylated - with ASN367/SER378 retention stated without numbers."
+    },
+    "which_is_better": "B",
+    "why": "B pins its number to the atom the chemistry actually consumes (the esterified oxygen O15), making the cause-effect link learnable."
+  },
+  "8Q4M J9B->IU2": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both deletions described; 3.02 A LYS361.O is the benzylic C10 and 3.43 A PRO431.CB is CL14, both genuine sites of change, and the retained H-bonds carry no numbers."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same two correctly owned numbers on a fully visible table; 'toward ASN363' is a qualitative consequence."
+    },
+    "which_is_better": "A",
+    "why": "Equally clean attribution, but A additionally names the hinge hydrogen bonds that survive, so it teaches both loss and retention."
+  },
+  "9C1V A1ATW->A1AVL": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Fluorosulfate->sulfate correctly framed as loss of the 1.69 A SER801.OG covalent tether (the table's own note confirms the covalent link) and 2.80 A ARG900.NH1 is N07's verified row; only the 3.20 A SER908.OG value is untraceable."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Covalent loss at 1.69 A is right, but 'redirect the terminal polar group toward HIS909' names a residue that appears nowhere in the input or analogue evidence."
+    },
+    "which_is_better": "A",
+    "why": "A's retained anchor is a verified input row, while B's only consequence points at an invented residue."
+  },
+  "9CW2 KMI->A1A0H": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Fluorination site is right: 3.42 A is C13's own HEM501.O2D row (correctly called a heme propionate) and 2.42 A GLU361.OE2 is N02's flagged H-bond."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same correct 3.42 A C13-HEM501.O2D attribution with the heme atom named; the GLU361 retention is qualitative."
+    },
+    "which_is_better": "A",
+    "why": "Both are accurate; A adds a second verified number (the 2.42 A aminopyridine H-bond) without any attribution slip."
+  },
+  "9GQK A1IOE->A1IN1": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Linker simplification is broadly right but entirely unverifiable: both cited numbers (2.92 A GLN85.O, 2.97 A ILE87.N) fall in the 18 truncated rows and no atom is named."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Names a verifiable loss - 3.76 A ARG73.CZ is C11, a listed site of change - alongside the hydroxyl and the retained TYR113/ILE87 bonds; incomplete in that the second methyl deletion goes unmentioned."
+    },
+    "which_is_better": "B",
+    "why": "B supplies at least one number that can be traced to a changed atom; A's numbers are all in the hidden block and attached to no atom."
+  },
+  "9Q1C A1CNK->A1CNO": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both edits named (benzylic alcohol cyclisation, alkyl enlargement) but its single number, 2.74 A to ASP30(B), lies in the 20 truncated rows and is unverifiable."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Two-site framing is correct and 3.67 A ALA28.CB is C12, a listed site of change on the isobutyl; the 3.42 A LEU76.CD1 value is in the truncated block."
+    },
+    "which_is_better": "B",
+    "why": "B ties a verified input row to the atom that actually grows; A's only measurement cannot be checked at all."
+  },
+  "9QWE A1JA3->A1JA5": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Best-grounded label in the panel: 3.88 A ALA267.CB is C34, exactly the acetyl methyl that becomes CF3, and the claim that the piperazine is rebuilt at atoms with no contact inside 4.0 A checks out (C14 4.07, C16 4.28, C22 4.32 A)."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same correct 3.88 A C34 attribution and it names the bipiperidine product; the 2.70 A GLU236 salt bridge is in the truncated rows."
+    },
+    "which_is_better": "A",
+    "why": "A is the only one that states the measured basis for the second site - those atoms have no contact within 4.0 A - and that check passes on the visible table."
+  },
+  "9TXU A1JXX->OY6": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Edit is right and the TYR1071/ILE1075 faces it points to are real input rows; the 3.07 A GLY1032.O and 2.86 A SER1068.OG numbers are in the 14 truncated rows (2.86 A is consistent with the analogue's retained 2.87 A)."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Describes the edit more completely (branched urea bearing thienylmethyl), uses only the 3.07 A GLY1032 loss, and keeps the ILE1075 consequence qualitative."
+    },
+    "which_is_better": "B",
+    "why": "Same unverifiable 3.07 A basis for both, but B names the group actually installed and adds no second untraceable number."
+  }
+}

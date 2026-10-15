@@ -1,0 +1,322 @@
+{
+  "5SC9 I7K->I99": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Covers both sites (phenol O deleted, carboxylate moved on the piperidine) and all three numbers are exact rows on the right atoms: O2 3.18 LYS379.CD, C17 3.43 SER374.OG, O7 2.78 GLY375.N H-bond -- and O2/C16/C17 are precisely the listed change sites."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "The 2.97 A SER374.OG H-bond row belongs to O6, an unchanged oxygen, not to the carboxyl it moves; the carboxyl's own rows (O4 3.68 PRO65.CG, O5 3.08 THR340.CG2) are not H-bonds, and the 'toward HIS90' redirection has no support."
+    },
+    "which_is_better": "A",
+    "why": "A's citations sit on the declared change-site atoms; B hangs a real SER374.OG H-bond on the wrong functional group and then predicts a HIS90 move nothing supports."
+  },
+  "5SDY IB4->IQ3": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both sites named (methoxyethylpyrazole->pyridine, dimethylamide->pyrrolidine); C31 3.00 MET713.CE and O19 3.06 GLN726.NE2 H-bond both verify, and C31 is a listed change site."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same correct edit description plus a second verified change-site contact (C30 3.23 LEU635.CD2) alongside C31 3.00 MET713.CE and the retained O19 3.06 GLN726.NE2 H-bond."
+    },
+    "which_is_better": "B",
+    "why": "Identical accuracy, but B anchors two changed atoms instead of one, so it teaches more of the real consequence."
+  },
+  "6OY2 NJJ->NJ7": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Edit (one ethyl->methyl, new stereocentre) is right and N19 2.88 GLY27.O verifies, but 'on chain A' is a chain assignment the table never provides, and the lost contact itself is left vague."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Pins the single change site exactly: C39, the only listed changed atom, is the 3.71 A VAL82.CG2 hydrophobic contact given up; N19 2.88 GLY27.O and O30 2.82 ASP29.N also verify."
+    },
+    "which_is_better": "B",
+    "why": "B names the contact actually lost at the one changed atom; A is vaguer and adds an unsupported chain label."
+  },
+  "6UNG QEP->QDY": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Only label to cover all four changes (stereo inversion, thioether rearrangement, anilino->benzyl, pyridyl linker +CH2); S11 3.64 PHE213.CD1 verifies and the consequence is stated without numbers."
+    },
+    "B": {
+      "describes_real_edit": false,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "Numbers are right (N14 3.33 ILE301.CD1, C24 3.50 ALA305.CB, C29 3.50 THR309.CG2) but it omits the stereochemical inversion and the pyridyl linker extension, and calls the ALA305.CB contact 'retained' although C24 is a listed change site."
+    },
+    "which_is_better": "A",
+    "why": "A is the only one that describes the whole multi-site change; B is accurate but silent on two of the four edits."
+  },
+  "7EX4 IA5->11I": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "meta-Br -> ortho-Me is the real edit (change sites BR1, C24); CL1 3.52 LEU30.O verifies, the GLU31 ring packing is genuinely in the table, and it wisely avoids quoting the flagged 2.91 A BR1 row."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same correct edit and the one cited number (CL1 3.52 LEU30.O) verifies; consequence stated qualitatively."
+    },
+    "which_is_better": "A",
+    "why": "Both are clean; A adds a second correctly supported retention (GLU31 ring packing) without over-claiming the uncertain Br row."
+  },
+  "7I8B A1B0G->A1BZV": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "All three changes enumerated and N 3.73 ASP175.CA plus O1 3.43 MET163.CE verify on listed change sites, but 'pointing toward LYS68' names a residue that appears nowhere in the input table."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "C27 3.34 LEU128.CD1 and N2 2.88 VAL116.N verify, but the acid and linker changes are only gestured at, and 'toward ILE140' is a residue absent from the input table and present only in the analogue's contacts -- analogue-side leakage."
+    },
+    "which_is_better": "A",
+    "why": "A describes all three edits precisely; both fabricate one residue, but B also leaks ILE140 from the analogue side and is vague about two of the three changes."
+  },
+  "7JG3 V9A->V9V": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both sites named and N19 2.80 MET896.O H-bond verifies, but it never cites the contacts actually lost at the changed atoms and speculates about the remote carboxylate network."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Best-in-panel handling: C30 3.10 ASN913.OD1 and O12 3.24 MET896.O both verify on change sites, N3 2.82 ALA947.O verifies, and it correctly declines to call the 3.24 A contact a hydrogen bond, matching the table's INCOMPATIBLE flag."
+    },
+    "which_is_better": "B",
+    "why": "B ties every number to a declared change site and respects the table's explicit 'not a hydrogen bond' annotation; A's consequences drift to unchanged, remote groups."
+  },
+  "7NQ1 ULK->ULQ": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both sites (benzylic OH->OMe, methylcyclopropyl->oxabicycle) with O12 3.79 TRP370.CZ3, C23 3.54 HIS433.CD2 (both change sites) and the retained N21 2.74 ASN429.OD1 H-bond all verifying."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both sites described and C25 3.67 TYR428.CE2 verifies on a change site; correct but carries only one number and no retained anchor."
+    },
+    "which_is_better": "A",
+    "why": "Same truthfulness, but A documents both change sites numerically and names the hydrogen bond that survives."
+  },
+  "7OEK VAQ->VB2": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Names both surfaces given up with exact change-site rows (C18 3.68 TRP457.CZ3, C38 3.59 ARG379.NH2) and reports N11 2.76 ASP395.OD1 with the table's own SALT BRIDGE type."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Edit coverage is real (the quaternary centre is genuinely inverted, cyclic amine remodelled, benzyl->methyl) and N35 2.81 ASP377.OD1 (a donor NH) plus N11 2.76 ASP395 verify, but 'relax' an H-bond on a retained NH is a weak, unevidenced consequence."
+    },
+    "which_is_better": "A",
+    "why": "A states which packing surfaces the -8-atom truncation actually surrenders; B hedges about a hydrogen bond whose donor atom does not change."
+  },
+  "7Z77 IFF->IEI": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Linker relocation from the benzylic stereocentre to an aryl ether is the real edit; C1 3.77 TYR98.CE2 verifies on a change site and the HIS110 amide H-bond (N9 3.00 HIS110.O) is real."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same edit, and it identifies C1 (3.77 TYR98.CE2, a listed change site) as the carbon that becomes the attachment point; O12 2.78 TYR98.OH H-bond verifies as the retained anchor."
+    },
+    "which_is_better": "B",
+    "why": "B says mechanistically which atom becomes the new attachment and backs the retention with an exact H-bond row."
+  },
+  "8ARQ NKL->NF9": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Spiro->piperidine-ethyl ring opening is correct; C8 3.65 ASN42.OD1 (change site) and the C2 1.74 A CYS38.SG covalent bond verify, with PRO167 at least present in the table."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Two change-site contacts verified (C7 3.67 ASN42.CB, C8 3.65 ASN42.OD1) plus the 1.74 A CYS38.SG covalent anchor, with the consequence left qualitative."
+    },
+    "which_is_better": "B",
+    "why": "B documents both changed carbons' packing instead of adding a speculative redirection toward PRO167."
+  },
+  "8EX3 X10->X4O": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both sites acknowledged and C25 3.10 GLU319.O verifies on a change site, but the aniline fluorination is noted without any pocket consequence."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Every number checks out: the 3.10-3.78 A GLU319.O range is exactly spanned by C21/C23/C25/C27/C29, F26 3.20 GLU572.CG and F24 3.43 GLU572.CA bracket the fluorines, and O15 2.04 A is correctly typed as zinc coordination."
+    },
+    "which_is_better": "B",
+    "why": "B quantifies the whole fluorinated face it gives up and correctly fixes the zinc anchor as remote; A cites one of eight relevant rows."
+  },
+  "8KE2 FX9->6CV": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Exact: the 3.19-3.45 A span maps to F12 3.19 ALA420.O, F11 3.39 GLN348.OE1, F10 3.45 LEU305.CD1, and both retained H-bonds (O 2.70 LEU301.N, OXT 2.92 ALA302.N) verify; CF3->Br is the entire edit."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": true,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "F10 3.45 LEU305.CD1 verifies and the retained carboxyl H-bonds are real, but 'toward GLY419' names a residue absent from the input table and visible only in the analogue's own contacts (BR 3.54 GLY419.O) -- leaked analogue knowledge."
+    },
+    "which_is_better": "A",
+    "why": "A accounts for all three fluorine contacts traded away from the input evidence alone; B cites one and then imports GLY419 from the analogue side."
+  },
+  "9F8L A1IAL->A1IAG": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "O08 2.65 HIS73.NE2 H-bond is the exact change-site row and the benzoyl-ring phenol->Br edit is complete; 'ILE62 backbone' is loose, since the table shows only ILE62.CD1/CG2 side-chain contacts."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": false,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": false,
+      "one_line_why": "The 2.65 A HIS73.NE2 citation is perfect, but 'the remaining phenol bonds to HIS73, ASP57 and GLN147' misassigns the 3.11 A GLN147.NE2 H-bond, which belongs to the ketone oxygen O01 and not to any phenol."
+    },
+    "which_is_better": "A",
+    "why": "A's one cited row is exact and its only slip is a descriptor; B promotes the ketone's GLN147 hydrogen bond into the phenol set."
+  },
+  "9Q54 A1CN7->A1CN2": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Fluoroazetidine->dimethylamine with C24 3.13 HEM501.O1A and F27 3.04 ARG365.CZ both verified on listed change sites."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Same edit with F27 3.04 ARG365.CZ and N23 3.20 HEM501.O1A verified, and it correctly identifies O1A as a heme propionate oxygen contacted by the ring nitrogen."
+    },
+    "which_is_better": "B",
+    "why": "B attributes the heme-propionate contact to the specific ring nitrogen that is actually removed, which is the sharper pocket consequence."
+  },
+  "9SG7 A1JNN->A1JNW": {
+    "A": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "Both chlorines accounted for (CL1 3.13 THR654.O, CL2 3.58 ASN518.ND2, both change sites) and the C4 1.31 A SER460.OG covalent bond is correctly typed and retained."
+    },
+    "B": {
+      "describes_real_edit": true,
+      "atom_attribution_ok": true,
+      "invented_chemistry": false,
+      "input_anchored": true,
+      "would_train_on_it": true,
+      "one_line_why": "CL1 3.13 THR654.O and the 1.31 A SER460.OG covalent bond verify, but only one of the two chlorines' contacts is accounted for and the SER553 redirection is speculative (C10 3.65 SER553.CB exists but nothing supports the move)."
+    },
+    "which_is_better": "A",
+    "why": "A books both halogen contacts that are actually surrendered; B covers one and substitutes a guess for the second."
+  }
+}
