@@ -192,7 +192,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | ❌ | ❌ |
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.275 | – | – | – | – | ❌ | ❌ |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | ❌ | ❌ |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
 | ether0-24B **base** | – | ⏳ | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | ether0-24B schema A | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | ether0-24B schema B | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
@@ -229,6 +229,32 @@ scaffold retention are **band** metrics, not higher-is-better.
   disagree in sign: against the reference ChemDFM g2 looked *worse* than SmileyLlama on direction
   (0.582 vs 0.598), while against its own output it is far better (0.935 vs 0.782).
 - **sensible / reasoning** — chemist columns, from the blind self-consistency panel.
+- **† the ChemDFM g3 chemist cells come from a SECOND panel and are not comparable to the g2 row
+  above them.** Three blind reviewers, 16 pairs, both arms shown side by side with the side
+  randomised and full contact tables (`panel_chemdfm_g2_vs_g3/`, unblinded 2026-10-16). Within
+  that panel, across 48 judgements per arm:
+
+  | | ChemDFM g2 | ChemDFM g3 |
+  |---|---|---|
+  | preferred by the reviewer | 13 | **31** (neither 4) |
+  | per reviewer | 4 / 4 / 5 | **11 / 10 / 10** |
+  | edit identified correctly | 21 | 21 |
+  | atom attribution ok | 14 | **28** |
+  | invented chemistry (lower better) | 16 | **13** |
+  | chemically sensible edit | 39 (81.2%) | **48 (100%)** |
+  | would show a chemist | 6 (12.5%) | **15 (31.2%)** |
+
+  **g3 wins, and all three reviewers agree independently** — no reviewer split the other way.
+  The g2 "sensible" rate here, 81.2%, reproduces the 81.1% already in the table, which is why
+  those two cells can be read together. The "would show a chemist" rate does **not** reproduce
+  (12.5% here against the 25.6% in the g2 row), so the reasoning column is a different
+  measurement between panels and **only the within-panel g2-vs-g3 contrast is meaningful**.
+
+  All three reviewers independently flagged the same dominant failure, present on BOTH arms:
+  **~28–30% of cited distances are attached to the wrong atom**, nearly always contact theft from
+  a group the edit retained. Their proposed mechanical fix, which needs no new labels: reject any
+  rationale citing a distance whose owning atom is not in the edited substructure, and reject any
+  "hydrogen bond" whose partner atom name begins with C.
 
 ### Known caveats on this table
 
