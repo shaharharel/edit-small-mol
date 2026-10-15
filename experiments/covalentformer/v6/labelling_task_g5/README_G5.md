@@ -33,11 +33,19 @@ two failures and nothing else.
 
 ## What this corpus is
 
-1,249 pairs drawn the same way as before — two crystal structures from the **same publication**,
-both carrying the target's UniProt accession, distinct depositions — but filtered to **Tanimoto
-≥ 0.70** between the two ligands with no per-target cap. The result is a *tighter* series than the
-earlier corpus: mean TC 0.815 against 0.653, mean heavy-atom change 2.2. Expect smaller, more
-local edits and fewer scaffold rebuilds. 269 targets, 204 papers.
+1,249 pairs, each two **distinct crystal structures of the same protein** — both depositions carry
+the target's UniProt accession, which is checked and never bypassed — filtered to **Tanimoto ≥
+0.70** between the two ligands with no per-target cap. Mean TC 0.815 against the earlier corpus's
+0.653, mean heavy-atom change 2.2, so expect smaller and more local edits and fewer scaffold
+rebuilds.
+
+**Unlike the earlier corpus, most of these are not from one publication.** 226 of the 1,249 come
+from a shared paper; the other 1,023 are same-protein pairs whose depositions carry no citation in
+the PDB, so we cannot show they are one series. Same protein is guaranteed; same paper, same lab
+and same assay are not. Practical consequence for you: treat a difference between the two crystals
+as possibly a difference between two experiments. The packet's caveats already carry this —
+`NO SHARED RESIDUE NUMBERING`, `HETERO PARTNER RENUMBERED`, the conserved-row markers — and on this
+corpus they deserve more weight than they did last time, not less.
 
 6.9% of pairs are flagged `PAIR FLAGGED UNLABELLABLE` with a reason. As before: write the most
 defensible sentence the evidence still supports, and use the verdict column to exclude — never an

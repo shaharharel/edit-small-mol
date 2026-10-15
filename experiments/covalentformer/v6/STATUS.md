@@ -56,6 +56,40 @@ Tanimoto mean 0.815 (min 0.700) and mean heavy-atom change 2.2 — a tighter ser
 whose mean Tanimoto is 0.653. Zero duplicate pair ids, zero SMILES-pair duplicates, zero
 collisions with g1–g4 or the built corpus, and both cif files present for all 1,602.
 
+### CORRECTION: g5 is NOT same-paper (2026-10-16)
+
+I described g5 as same-paper like g1–g4. **That is wrong for 1,135 of the 1,602 pairs (71%),
+1,023 of the 1,249 labellable ones.** `build_g5a_pairs.py` reads the paper as
+`v.get('doi') or v.get('pm')`, without the NULLS guard that `build_pairs_v7.cite_of()` applies, so
+the literal `?` that mmCIF writes for an absent value is truthy and all **8,356 uncited mirror
+entries collapse into one pseudo-paper** — the same bug class v6 had, where 4,045 ligands shared a
+single "paper". What still holds, and is the part that mattered in v6: both structures must carry
+the target's UniProt accession, so **no pair is two different proteins**. What is lost is the
+one-series, one-lab, one-assay guarantee.
+
+Attribution of all 1,602 g5 pairs against the original build's filter chain:
+
+| why the original build did not have it | n |
+|---|---|
+| not same-paper at all — the uncited `?` bucket | 1,135 |
+| rotatable bonds > 15 (`build_g5_g6.py` never applied the lipid/detergent cut) | 200 |
+| identical ignoring stereochemistry (the original rejects these; g5 kept them) | 176 |
+| **genuinely missed: the `PER_TARGET_CAP = 500` overflow** | **91** |
+
+The 91 are the only honestly-missed pairs, and they are two targets: P0DTD1 (SARS-CoV-2 Mpro, 57)
+and P03372 (estrogen receptor, 34). Both sit **exactly at 500** in `v7_pairs.jsonl`, and they are
+the only two targets that reach the cap.
+
+**So lowering the same-paper Tanimoto floor from 0.70 to 0.50 recovers nothing**: the original
+build already ran same-paper at TC ≥ 0.50, so that space is exhausted except for the 91 capped
+pairs. The 0.70 floor only ever applied to the non-same-paper space, where tightness was standing
+in for the provenance guarantee. Real headroom is target-grouped and cross-paper: 3,276 new pairs
+at TC ≥ 0.70, 6,526 at 0.60, 12,153 at 0.50.
+
+The g5 README now states the provenance truthfully to the labellers. Whether to split the queue
+into a 226-pair same-paper tier and a 1,023-pair same-protein tier is open; nothing is blocked on
+it, and `paper` is on every row in `g5_pairs.jsonl` so the split is recoverable after labelling.
+
 ### g5 is packaged and ready to label (2026-10-16)
 
 `~/Downloads/covalentformer_labelling_task/g5/` — 13 batches of 100 (the last holds 49),
