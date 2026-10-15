@@ -1,29 +1,37 @@
 {
-  "generation": "g5_crosspaper_tc70",
-  "n_pairs": 4422,
-  "n_targets": 858,
+  "generation": "g5",
+  "status": "pairs selected and audited; EVIDENCE NOT YET BUILT",
+  "n_pairs_to_label": 1602,
+  "n_targets": 269,
+  "n_papers": 204,
+  "pairs_file": "data/pdb_mirror/g5_pairs.jsonl",
   "selection": {
-    "series_key": "TARGET (UniProt accession) -- NOT the paper, unlike g1-g4",
+    "series_key": "same paper -- as in g1-g4",
     "tanimoto_floor": 0.7,
+    "note": "the TC floor is 0.70, higher than the 0.50 used for g1-g4",
     "heavy_atom_range": [
       10,
       70
     ],
+    "max_edit_heavy_atoms": 15,
     "cofactor_lipid_excluded": true,
     "per_target_cap": null,
-    "covalent_required": false
+    "both_structures_must_carry_the_target_accession": true,
+    "structures_must_be_distinct": true
   },
-  "dedup": "canonical SMILES pair, against the whole built v7 corpus (g1-g4)",
+  "uniqueness": {
+    "duplicate_pair_ids": 0,
+    "duplicate_smiles_pairs": 0,
+    "self_pairs": 0,
+    "collisions_with_g1_g4": 0,
+    "collisions_with_v7_pairs": 0
+  },
+  "chemistry": {
+    "tanimoto_mean": 0.815,
+    "tanimoto_min": 0.7,
+    "heavy_delta_mean": 2.2,
+    "heavy_delta_max": 15
+  },
   "sentence_rules": "unchanged from g3/g4: v2 input-anchored + pocket envelope",
-  "note": "These are same-series-like analogue pairs, NOT matched molecular pairs: no fragmentation, no single-transformation constraint.",
-  "tiers": {
-    "g5a_same_paper": 2727,
-    "g5b_cross_paper": 1695
-  },
-  "tier_meaning": {
-    "g5a_same_paper": "both ligands appear together in at least one paper -- same series in the g1-g4 sense, so the two crystals are likely the same construct and numbering. LOWEST RISK: label these first.",
-    "g5b_cross_paper": "the two ligands never co-occur in a paper. Same UniProt target, but different studies -- different construct, crystal form and possibly residue numbering are all live risks. Flag rather than guess when numbering does not line up."
-  },
-  "same_paper_pairs": 2727,
-  "cross_paper_pairs": 1695
+  "note": "Same-series analogue pairs, NOT matched molecular pairs: no fragmentation and no single-transformation constraint, so a pair may differ at more than one site."
 }

@@ -26,14 +26,35 @@ edit" well defined; it is not what we have.
 | **g2** | 2,000 | 1,747 (87.3%) | same paper, TC ≥ 0.50 | v2 **input-anchored**: measured facts input-side only, consequence qualitative | `label_out/`, `g2_v2_input_anchored` |
 | **g3** | 3,069 | 2,644 (86.2%) | same paper, TC ≥ 0.50 | v2 input-anchored **+ pocket envelope** in the packet | `label_out/`, `g3_v2_input_anchored_envelope` |
 | **g4** | 7,069 | 6,178 (87.4%) | same paper, TC ≥ 0.50 — **the full corpus** | identical briefs to g3, **different labellers and chairs** | `label_out_g4/`, `g4_v2_input_anchored_envelope_pass2` |
-| **g5** | ~3,276 | TBD | **cross-paper**, same protein, **TC ≥ 0.70** — NEW criteria | v2 input-anchored + envelope (same as g3/g4) | `label_queue_g5/` — to be labelled |
-| **g6** | TBD | TBD | **covalent-enriched**: input ligand covalently bound or carrying a warhead | v2 input-anchored + envelope | `label_queue_g6/` — to be labelled |
+| **g5** | **1,602** | TBD | **same paper** (as g1–g4) but **TC ≥ 0.70**, uncapped per target, both structures must carry the target accession and be distinct | v2 input-anchored + envelope (same as g3/g4) | `label_queue_g5/`, pairs in `data/pdb_mirror/g5_pairs.jsonl` — **evidence not yet built** |
+| ~~g6~~ | — | — | **DISCARDED.** Covalent-enriched set; the covalent pairs worth having are already inside g4/g5, and CovPDB adds only ~324 new pairs at TC ≥ 0.70 | — | removed |
 
 g1 is a different *sentence* generation and cannot be mixed with g2/g3/g4 at all (3.1% six-rule
 compliance against 90%+). g2/g3/g4 share sentence rules and differ only in packet contents and
-labeller identity. **g5 and g6 differ in PAIR SELECTION, which is a new axis** — they must stay in
-their own directories with their own stamps so a future training run cannot silently pool a
-cross-paper pair with a same-paper one.
+labeller identity. **g5 differs in PAIR SELECTION, which is a new axis** — same paper like g1–g4,
+but a higher Tanimoto floor (0.70 vs 0.50) and no per-target cap — so it keeps its own directory
+and its own stamp.
+
+**Parked, deliberately not a generation:** `deferred_crosspaper/` holds 1,695 pairs whose two
+ligands share a target but never co-occur in a paper. Construct, crystal form and residue
+numbering may all differ, which is why the v7 builder required same-paper in the first place.
+Label g5 first, compare its REJECT rate, then decide. It has no generation id so it cannot be
+pooled by accident.
+
+### g5 selection funnel, from 2,727 same-paper candidates
+
+| | |
+|---|---|
+| only one crystal in that paper holds both ligands | 340 |
+| no structure in the shared paper carries the target accession (46 of these are entries with no UniProt at all, deliberately not rescued — that check is what stops unrelated proteins being paired) | 299 |
+| edit larger than 15 heavy atoms, which `gen_ev5.py` rejects | 56 |
+| duplicate canonical SMILES pairs, deduped to one representative | 314 |
+| self-pairs (input ≡ analogue) | 5 |
+| **surviving, unique, audited** | **1,602** over 269 targets and 204 papers |
+
+Tanimoto mean 0.815 (min 0.700) and mean heavy-atom change 2.2 — a tighter series than g1–g4,
+whose mean Tanimoto is 0.653. Zero duplicate pair ids, zero SMILES-pair duplicates, zero
+collisions with g1–g4 or the built corpus, and both cif files present for all 1,602.
 
 ### g3 vs g4, measured with identical scoring code
 
