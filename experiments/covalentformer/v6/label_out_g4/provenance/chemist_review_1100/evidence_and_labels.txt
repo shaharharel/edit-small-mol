@@ -1,0 +1,1167 @@
+REVIEW ITEM S01
+Sentence to assess: Replacing the phenethyl-substituted piperidine with a chiral methylbenzyl chain should remove the deleted phenethyl ring's footprint near PHE409.CB at 3.50 Å while retaining the quinazolinone–GLN297 hydrogen bond.
+
+====================================================================================================
+PAIR 9FIS A1ICW->R4D   target Q93009   tanimoto 0.547   analogue crystal 9FIO
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: O=C([C@@H]1CCN(CCc2ccccc2)C[C@H]1c1ccccc1)N1CCC(O)(Cn2cnc3ccccc3c2=O)CC1
+ATOM TABLE COVERAGE: 41 of 41 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C1    C  TYR465.OH       A      3.49     - | polar/apolar packing
+C10   C  GLN417.OE1      A      3.34     - | polar/apolar packing
+C11   C  ASN460.OD1      A      3.26     - | polar/apolar packing
+C12   C  ASN460.OD1      A      3.21     - | polar/apolar packing
+C13   C  PHE409.CE1      A      3.83     - | hydrophobic contact
+C14   C  TYR465.OH       A      3.68     - | polar/apolar packing
+C16   C  PHE409.CB       A      3.52     - | hydrophobic contact
+C17   C  PHE409.CB       A      3.50     - | hydrophobic contact
+C18   C  ARG408.CB       A      3.92     - | hydrophobic contact
+C19   C  LYS420.CE       A      3.91     - | hydrophobic contact
+C2    C  TYR465.OH       A      3.93     - | polar/apolar packing
+C20   C  HIS456.ND1      A      3.86     - | polar/apolar packing
+C21   C  TYR224.CD2      A      3.58     - | hydrophobic contact
+C22   C  TYR514.CD2      A      3.31     - | hydrophobic contact
+C23   C  ASP295.OD1      A      3.61     - | polar/apolar packing
+C25   C  ASP295.OD1      A      3.27     - | polar/apolar packing
+C26   C  ASP295.OD1      A      3.79     - | polar/apolar packing
+C27   C  MET407.CG       A      3.73     - | hydrophobic contact
+C28   C  MET407.CG       A      3.44     - | hydrophobic contact
+C29   C  MET407.CB       A      3.58     - | hydrophobic contact
+C3    C  MET292.O        A      3.76     - | polar/apolar packing
+C30   C  PHE409.O        A      3.38     - | polar/apolar packing
+C31   C  MET407.CA       A      3.76     - | hydrophobic contact
+C32   C  LEU406.O        A      3.70     - | polar/apolar packing
+C33   C  ASP295.OD1      A      3.35     - | polar/apolar packing
+C34   C  ASP295.OD1      A      3.65     - | polar/apolar packing
+C4    C  MET292.O        A      3.79     - | polar/apolar packing
+C6    C  ASN460.CB       A      3.96     - | hydrophobic contact
+C7    C  ASN460.OD1      A      3.49     - | polar/apolar packing
+C8    C  ASN460.CB       A      3.49     - | hydrophobic contact
+C9    C  ASN460.OD1      A      3.83     - | polar/apolar packing
+N3    N  ASP295.OD1      A      3.56   105 | polar contact [INCOMPAT: ligand acceptor vs ASP acceptor]
+N4    N  GLN297.NE2      A      3.21   112 | H-bond, good geometry
+O1    O  TYR465.OH       A      2.46   139 | H-bond, good geometry
+O2    O  ASP295.OD1      A      2.86   110 | H-bond, good geometry
+O3    O  PHE409.N        A      3.13   135 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C15, C24, C5, N1, N2
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not TYR465, ASP295, VAL296, PHE409, GLN297, ASN460, TYR514, GLN417, MET407, ARG408, TYR224, GLN405, LEU406, MET292, ASN418, HIS456, LYS420, HIS294, GLN351, MET410, ASN218(B)
+    4.5 - 6.0 A                                          PHE291, ASP459, CYS223, ASN512, GLN293, ILE419, HIS461(B)
+    6.0 - 8.0 A                                          MET515, ILE421, ALA513, GLY458, LEU352, GLN219(B), SER457, GLU298, VAL455, HIS461, GLY220(B), ILE350, ASP483(B), ASN422, TYR411, LEU404, LEU454, LYS217(B), HIS464, THR222, SER353, GLY463, MET225
+    (X) = on chain X, not the ligand's own chain A
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 11 heavy atoms from the input molecule (41 -> 30)
+analogue SMILES: C[C@H](Cc1ccccc1)C(=O)N1CCC(O)(Cn2cnc3ccccc3c2=O)CC1
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (2 -> 1).
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C13    CHANGED
+   C14    CHANGED
+   C15    CHANGED
+   C16    CHANGED
+   C17    CHANGED
+   C18    CHANGED
+   C19    CHANGED
+   C2     CHANGED
+   C20    CHANGED
+   C3     CHANGED
+   C4     CHANGED
+   C5     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   N1     CHANGED
+
+conserved_interactions (8) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   N4     a:N22    GLN297.NE2       3.21 ->  2.72   input: H-bond, good geometry
+   C30    a:C27    PHE409.O         3.38 ->  3.11   input: polar/apolar packing
+   C1     a:C10    TYR465.OH        3.49 ->  3.12   input: polar/apolar packing
+   O1     a:O11    TYR465.OH        2.46 ->  2.36   input: H-bond, good geometry
+                                                    analogue: short polar [SHORT 2.36 uncertain]  [ANGLE-ONLY: typing weakens but the contact SHORTENS 2.46->2.36 A]
+        !! TYPING CHANGED - not retained
+   C21    a:C13    TYR224.CD2       3.58 ->  3.83   input: hydrophobic contact
+   C22    a:C14    TYR514.CD2       3.31 ->  3.18   input: hydrophobic contact
+   C32    a:C29    LEU406.O         3.70 ->  3.72   input: polar/apolar packing
+   O3     a:O30    PHE409.N         3.13 ->  2.95   input: H-bond, good geometry
+
+analogue_contacts -- 22 of 30 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  30 of 30 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C1   C  -          NEW            TYR465.OH       A      3.36     - polar/apolar packing
+   a:C2   C  C5         conserved      TYR465.OH       A      3.33     - polar/apolar packing
+   a:C3   C  C6         conserved      TYR465.OH       A      3.04     - polar/apolar packing
+   a:C4   C  C7         conserved      -               -      4.22     - no contact within 4.0 A (nearest protein atom is 4.22 A away)
+   a:C5   C  C12        conserved      PHE409.CG       A      3.39     - hydrophobic contact
+   a:C6   C  C11        conserved      PHE409.CB       A      3.31     - hydrophobic contact
+   a:C7   C  C10        conserved      LYS420.CG       A      3.40     - hydrophobic contact
+   a:C8   C  C9         conserved      LYS420.CD       A      3.64     - hydrophobic contact
+   a:C15  C  C23        conserved      ASP295.CB       A      3.79     - hydrophobic contact
+   a:C17  C  C33        conserved      ASP295.CB       A      3.93     - hydrophobic contact
+   a:C18  C  C34        conserved      ASP295.CB       A      3.84     - hydrophobic contact
+   a:C19  C  C24        conserved      LEU406.O        A      3.75     - polar/apolar packing
+   a:C21  C  C25        conserved      GLN297.NE2      A      3.34     - polar/apolar packing
+   a:C23  C  C26        conserved      ASP295.OD2      A      3.68     - polar/apolar packing
+   a:C24  C  C27        conserved      -               -      4.01     - no contact within 4.0 A (nearest protein atom is 4.01 A away)
+   a:C9   C  C8         conserved      HIS456.CG       A      3.69     - hydrophobic contact
+   a:N12  N  N2         conserved      -               -      4.30     - no contact within 4.0 A (nearest protein atom is 4.30 A away)
+   a:O16  O  O2         conserved      ASP295.CB       A      2.59     - polar/apolar packing [CLOSE 2.59/3.2 uncertain]
+   a:N20  N  N3         conserved      LEU406.O        A      3.81     - polar/apolar packing
+   a:C25  C  C28        conserved      MET407.CE       A      3.44     - hydrophobic contact
+   a:C26  C  C29        conserved      MET410.CE       A      3.50     - hydrophobic contact
+   a:C28  C  C31        conserved      -               -      4.07     - no contact within 4.0 A (nearest protein atom is 4.07 A away)
+   (8 unchanged analogue atoms are in conserved_interactions, not repeated here: a:N22, a:C27, a:C10, a:O11, a:C13, a:C14, a:C29, a:O30)
+
+
+
+REVIEW ITEM S02
+Sentence to assess: The cyclopropyl region near ASP76.OD1 at 3.15 Å becomes methyl, likely reducing that proximity, while the separate proline-to-cyclohexane change should reorganize the acid-bearing ring.
+
+====================================================================================================
+PAIR 7FZ5 WE6->WP0   target P15090   tanimoto 0.500   analogue crystal 7G1N
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: O=C(O)[C@H]1CCCN1C(=O)Nc1sc2c(c1-c1nc(C3CC3)no1)CCCC2
+ATOM TABLE COVERAGE: 28 of 28 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C10   C  ALA75.CB        A      3.56     - | hydrophobic contact
+C12   C  ASP76.OD1       A      3.53     - | polar/apolar packing
+C15   C  ASP76.OD1       A      3.15     - | polar/apolar packing
+C17   C  PHE16.CZ        A      3.58     - | hydrophobic contact
+C2    C  SER55.OG        A      3.22     - | polar/apolar packing
+C20   C  ARG126.NE       A      3.73     - | polar/apolar packing
+C21   C  CYS117.SG       A      3.65     - | polar/apolar packing
+C22   C  CYS117.SG       A      3.72     - | polar/apolar packing
+C23   C  PHE16.CZ        A      3.99     - | hydrophobic contact
+C24   C  TYR128.OH       A      3.44     - | polar/apolar packing
+C27   C  TYR19.CE2       A      3.62     - | hydrophobic contact
+C28   C  ARG78.NH2       A      3.32     - | polar/apolar packing
+C3    C  SER55.OG        A      2.93     - | polar/apolar packing
+C4    C  ALA33.CB        A      3.38     - | hydrophobic contact
+C7    C  ALA75.CB        A      3.65     - | hydrophobic contact
+C8    C  ALA33.CB        A      3.47     - | hydrophobic contact
+N13   N  ASP76.CB        A      3.16     - | polar/apolar packing
+         ASP76.OD1              3.70     - | polar partner: polar/apolar packing
+N16   N  PHE16.CZ        A      3.72     - | polar/apolar packing
+N18   N  PHE16.CZ        A      3.68     - | polar/apolar packing
+O14   O  ALA33.CB        A      3.62     - | polar/apolar packing
+O19   O  ARG126.NH2      A      2.80   138 | H-bond, good geometry
+O25   O  TYR128.OH       A      3.45    79 | polar contact, geometry poor
+O26   O  TYR128.OH       A      2.64   119 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C1, C6, C9, N11, S5
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not TYR128, ARG126, SER55, ASP76, ALA36, ARG78, ALA33, LYS58, ALA75, PHE16, TYR19, CYS117, MET20, VAL25, THR29, THR56, PRO38, ILE104, VAL115, VAL32, SER53
+    4.5 - 6.0 A                                          ARG106, VAL23, LEU10, THR74, MET40, GLN95
+    6.0 - 8.0 A                                          GLY34, LYS37, ARG30, ASP77, ASN59, GLU54, MET35, THR102, THR60, VAL127, GLU116, ILE51, ASN39, LYS21, LYS52, SER124, SER13, HIS93, GLY26, SER12, THR125, GLY24, LYS31, THR103, LYS105, ALA28, GLU72, VAL118, LEU113, VAL114
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 1 heavy atoms from the input molecule (28 -> 27)
+analogue SMILES: Cc1noc(-c2c(NC(=O)[C@@H]3CCCC[C@@H]3C(=O)O)sc3c2CCCC3)n1
+*** TWO TRANSFORMATIONS -- The edited atoms form 2 separate groups, and the nearest atoms of two of them are 8 bonds apart in the molecule -- too far to be one contiguous change. See rule 11.
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (1 -> 2).
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C12    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C15    CHANGED
+   N18    CHANGED
+
+conserved_interactions (12) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   C7     a:C2     ALA75.CB         3.65 ->  3.46   input: hydrophobic contact
+   C3     a:C8     SER55.OG         2.93 ->  3.72   input: polar/apolar packing
+   C4     a:C9     ALA33.CB         3.38 ->  3.74   input: hydrophobic contact
+   C10    a:C10    ALA75.CB         3.56 ->  3.85   input: hydrophobic contact
+   N16    a:N11    PHE16.CZ         3.72 ->  3.26   input: polar/apolar packing
+   O19    a:O13    ARG126.NH2       2.80 ->  3.32   input: H-bond, good geometry
+                                                    analogue: polar contact, geometry poor
+        !! TYPING CHANGED - not retained
+   C20    a:C15    ARG126.NE        3.73 ->  3.92   input: polar/apolar packing
+   C24    a:C20    TYR128.OH        3.44 ->  2.93   input: polar/apolar packing
+   O26    a:O21    TYR128.OH        2.64 ->  2.19   input: H-bond, good geometry
+                                                    analogue: short polar [SHORT 2.19 uncertain]  [ANGLE-ONLY: typing weakens but the contact SHORTENS 2.64->2.19 A]
+        !! TYPING CHANGED - not retained
+   O25    a:O22    TYR128.OH        3.45 ->  2.81   input: polar contact, geometry poor
+   C12    a:C24    ASP76.OD1        3.53 ->  3.63   input: polar/apolar packing
+   N13    a:N25    ASP76.CB         3.16 ->  3.23   input: polar/apolar packing
+
+analogue_contacts -- 15 of 27 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  27 of 27 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C1   C  C6         conserved      PHE16.CZ        A      3.89     - hydrophobic contact
+   a:C3   C  C8         conserved      ALA75.CB        A      3.48     - hydrophobic contact
+   a:C4   C  C9         conserved      ALA75.CB        A      3.97     - hydrophobic contact
+   a:S5   S  S5         conserved      -               -      4.17     - no contact within 4.0 A (nearest protein atom is 4.17 A away)
+   a:C6   C  C1         conserved      PHE57.CD2       A      3.48     - hydrophobic contact
+   a:C7   C  C2         conserved      PHE57.CD2       A      3.33     - hydrophobic contact
+   a:C12  C  C17        conserved      ARG126.NH2      A      3.66     - polar/apolar packing
+   a:C14  C  C21        conserved      ARG126.NE       A      3.54     - polar/apolar packing
+   a:C16  C  C28        conserved      -               -      4.16     - no contact within 4.0 A (nearest protein atom is 4.16 A away)
+   a:C17  C  C27        conserved      ILE104.CD1      A      3.55     - hydrophobic contact
+   a:C18  C  C23        conserved      CYS117.SG       A      3.78     - polar/apolar packing
+   a:C19  C  C22        conserved      PHE16.CE1       A      3.54     - hydrophobic contact
+   a:N23  N  N11        conserved      PHE16.CZ        A      3.76     - polar/apolar packing
+   a:O26  O  O14        conserved      ASP76.CB        A      3.56     - polar/apolar packing
+   a:C27  C  -          NEW            ARG78.NH2       A      3.65     - polar/apolar packing
+   (12 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C2, a:C8, a:C9, a:C10, a:N11, a:O13, a:C15, a:C20, a:O21, a:O22, a:C24, a:N25)
+
+
+
+REVIEW ITEM S03
+Sentence to assess: Replacing aminocyclohexyl with tetramethyltetrahydropyranyl should redistribute the ring edge near LEU218 at 3.57 Å, while retaining the chloroacetamide-derived CYS38 covalent anchor.
+
+====================================================================================================
+PAIR 8ARR NK6->NG9   target P03372   tanimoto 0.700   analogue crystal 8AR4
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: NC1CCC(Nc2ccc(Cl)cc2)(C(=O)N2CCC(CNC(=O)CCl)CC2)CC1
+ATOM TABLE COVERAGE: 28 of 29 input heavy atoms have a row (1 not modelled, 0 omitted as clashes)
+NOT MODELLED in this crystal (absent from the coordinates, so they appear in no row below): CL2
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C10   C  VAL595.OXT      B      3.58     - | polar/apolar packing
+C13   C  PRO167.CB       A      3.64     - | hydrophobic contact
+C14   C  ASN42.OD1       A      3.98     - | polar/apolar packing
+C15   C  ILE168.CG1      A      3.89     - | hydrophobic contact
+C16   C  ASN42.ND2       A      3.06     - | polar/apolar packing [INDEP, CYS38 excl]
+C17   C  CYS38.SG        A      1.75     - | COVALENT BOND to CYS38.SG
+C18   C  ASN42.OD1       A      2.85     - | polar/apolar packing
+C19   C  ASN42.OD1       A      3.59     - | polar/apolar packing
+C20   C  VAL595.CG1      B      3.82     - | hydrophobic contact
+C21   C  LEU218.CD2      A      3.57     - | hydrophobic contact
+C6    C  VAL595.CG2      B      3.97     - | hydrophobic contact
+C7    C  PRO167.O        A      3.44     - | polar/apolar packing
+C8    C  VAL595.CG2      B      3.90     - | hydrophobic contact
+C9    C  PHE119.CE1      A      3.90     - | hydrophobic contact
+CL1   Cl LYS122.CD       A      3.28     - | hydrophobic contact
+N1    N  LEU218.CD2      A      3.98     - | polar/apolar packing
+N4    N  ASN42.ND2       A      3.49   100 | polar contact [INCOMPAT: ligand both vs ASN donor] [INDEP, CYS38 excl]
+O1    O  ILE219.CD1      A      3.73     - | polar/apolar packing
+O2    O  ASN42.ND2       A      3.08    78 | polar contact, geometry poor [INDEP, CYS38 excl]
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C1, C11, C12, C2, C3, C4, C5, N2, N3
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not CYS38, ASN42, LYS122, PHE119, PRO167, ILE168, LEU218, VAL595(B)~, ARG41, ILE219, GLY171, LEU172
+    4.5 - 6.0 A                                          ASP215, GLU39, SER45, LEU222, ARG169, GLU115, LEU170, SER37
+    6.0 - 8.0 A                                          VAL46, ASN166, VAL118, ASN175, LYS49, ASP126, SER116, SER216, ALA173, GLU40, MET123, LYS214, LEU174, MET162, LEU36, TYR120
+    (X) = on chain X, not the ligand's own chain A   ~ = chain terminus, so probably a crystal-packing neighbour rather than site
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue adds 3 heavy atoms to the input molecule (29 -> 32)
+analogue SMILES: CC1(C)CC(Nc2ccc(Cl)cc2)(C(=O)N2CCC(CNC(=O)CCl)CC2)CC(C)(C)O1
+
+*** SYMMETRY -- SYMMETRY-EQUIVALENT ATOMS CARRY AN IDENTITY CLAIM HERE: C13, C18, C2, C21 are indistinguishable from other atoms of the same molecule by graph, so the mapping between the two molecules is arbitrary among them
+
+
+*** MULTI-CHAIN POCKET -- THE LIGAND CONTACTS MORE THAN ONE PROTEIN CHAIN
+
+*** CHAIN TERMINUS CONTACT -- contacts a protein CHAIN TERMINUS (VAL595, via its terminal carboxylate OXT)
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C1     CHANGED
+   C2     ATTACHMENT POINT (new group added here)
+   C21    ATTACHMENT POINT (new group added here)
+   N1     CHANGED
+
+conserved_interactions (5) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   C8     a:C9     VAL595.CG2       3.90 ->  3.76   input: hydrophobic contact
+   CL1    a:CL2    LYS122.CD        3.28 ->  3.38   input: hydrophobic contact
+   O1     a:O1     ILE219.CD1       3.73 ->  3.71   input: polar/apolar packing
+   C15    a:C16    ILE168.CG1       3.89 ->  3.70   input: hydrophobic contact
+   C17    a:C18    CYS38.SG         1.75 ->  1.82   input: COVALENT BOND to CYS38.SG
+
+analogue_contacts -- 26 of 31 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  !! INCOMPLETE TABLE (31 of 32 analogue heavy atoms appear in the table -- the one unlisted atom is a halogen on a covalent pair, i.e. the leaving group, so the table is effectively complete for APOLAR contacts (see analogue_polar_caveat for why polar absences still prove nothing).) -- absence is NOT evidence; see brief
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C1   C  -          NEW            -               -      4.11     - no contact within 4.0 A (nearest protein atom is 4.11 A away)
+   a:C2   C  C21        conserved      -               -      4.34     - no contact within 4.0 A (nearest protein atom is 4.34 A away)
+   a:C3   C  -          NEW            VAL595.CG1      B      3.98     - hydrophobic contact
+   a:C4   C  C20        conserved      -               -      4.34     - no contact within 4.0 A (nearest protein atom is 4.34 A away)
+   a:C5   C  C4         conserved      -               -      5.25     - no contact within 4.0 A (nearest protein atom is 5.25 A away)
+   a:C6   C  C5         conserved      -               -      4.09     - no contact within 4.0 A (nearest protein atom is 4.09 A away)
+   a:C10  C  C7         conserved      VAL595.OXT      B      3.88     - polar/apolar packing
+   a:C13  C  C12        conserved      -               -      4.48     - no contact within 4.0 A (nearest protein atom is 4.48 A away)
+   a:N1   N  N2         conserved      -               -      4.51     - no contact within 4.0 A (nearest protein atom is 4.51 A away)
+   a:C7   C  C10        conserved      VAL595.CG2      B      3.88     - hydrophobic contact
+   a:C8   C  C9         conserved      PRO167.O        A      3.48     - polar/apolar packing
+   a:C11  C  C6         conserved      VAL595.OXT      B      3.61     - polar/apolar packing
+   a:C12  C  C11        conserved      -               -      4.62     - no contact within 4.0 A (nearest protein atom is 4.62 A away)
+   a:N2   N  N3         conserved      -               -      5.04     - no contact within 4.0 A (nearest protein atom is 5.04 A away)
+   a:C14  C  C13        conserved      ASN42.OD1       A      3.53     - polar/apolar packing
+   a:C15  C  C14        conserved      -               -      4.06     - no contact within 4.0 A (nearest protein atom is 4.06 A away)
+   a:N3   N  N4         conserved      ASN42.OD1       A      2.92   119 H-bond, good geometry [INDEP, CYS38 excl]
+   a:C17  C  C16        conserved      ASN42.OD1       A      3.73     - polar/apolar packing [INDEP, CYS38 excl]
+   a:O2   O  O2         conserved      ILE168.CD1      A      3.35     - polar/apolar packing [INDEP, CYS38 excl]
+   a:C19  C  C18        conserved      PRO167.CB       A      3.56     - hydrophobic contact
+   a:C20  C  C19        conserved      -               -      4.01     - no contact within 4.0 A (nearest protein atom is 4.01 A away)
+   a:C21  C  C3         conserved      -               -      5.56     - no contact within 4.0 A (nearest protein atom is 5.56 A away)
+   a:C22  C  C2         conserved      -               -      4.50     - no contact within 4.0 A (nearest protein atom is 4.50 A away)
+   a:C23  C  -          NEW            LEU218.CD2      A      3.56     - hydrophobic contact
+   a:C24  C  -          NEW            -               -      5.48     - no contact within 4.0 A (nearest protein atom is 5.48 A away)
+   a:O3   O  -          NEW            -               -      4.10     - no contact within 4.0 A (nearest protein atom is 4.10 A away)
+   (5 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C9, a:CL2, a:O1, a:C16, a:C18)
+
+
+
+REVIEW ITEM S04
+Sentence to assess: Remodelling the macrocyclic linker near LYS121.CD at 3.53 Å with ether, hydroxyl and methyl groups should redirect its polar character toward GLN85 while retaining the ILE87 hydrogen bond.
+
+====================================================================================================
+PAIR 9GQ5 A1IN3->A1IOE   target Q13451   tanimoto 0.506   analogue crystal 9GQK
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COc1cc2cc(OC)c1OCC/C=C/CCOC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+ATOM TABLE COVERAGE: 35 of 35 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C     C  TYR113.OH       A      3.11     - | polar/apolar packing
+CA    C  TYR113.OH       A      3.72     - | polar/apolar packing
+CAB   C  TYR113.OH       A      3.44     - | polar/apolar packing
+CAF   C  PHE77.CZ        A      3.61     - | hydrophobic contact
+CAG   C  TYR57.CZ        A      3.45     - | hydrophobic contact
+CAH   C  TYR57.OH        A      3.72     - | polar/apolar packing
+CAI   C  ASP68.OD2       A      3.74     - | polar/apolar packing
+CAK   C  ASP68.CB        A      3.64     - | hydrophobic contact
+CAL   C  ILE122.CD1      A      3.81     - | hydrophobic contact
+CAM   C  LYS60.CA        A      3.86     - | hydrophobic contact
+CAN   C  LYS60.N         A      3.78     - | polar/apolar packing
+CAO   C  PHE130.CZ       A      3.67     - | hydrophobic contact
+CAP   C  ASP68.OD2       A      3.95     - | polar/apolar packing
+CAQ   C  TYR113.OH       A      3.61     - | polar/apolar packing
+CAR   C  LYS121.CD       A      3.72     - | hydrophobic contact
+CAT   C  SER118.OG       A      3.54     - | polar/apolar packing
+CAU   C  LYS121.CD       A      3.53     - | hydrophobic contact
+CB    C  TRP90.CE2       A      3.41     - | hydrophobic contact
+CBA   C  TYR113.OH       A      3.42     - | polar/apolar packing
+CBB   C  TYR113.OH       A      3.21     - | polar/apolar packing
+CBF   C  LYS121.NZ       A      3.85     - | polar/apolar packing
+CBH   C  ASP68.OD1       A      3.35     - | polar/apolar packing
+CBI   C  ASP68.OD2       A      3.25     - | polar/apolar packing
+N     N  TYR113.OH       A      3.85     - | polar/apolar packing
+O     O  ILE87.N         A      2.94   159 | H-bond, good geometry
+OAA   O  TYR113.OH       A      2.72   115 | H-bond, good geometry
+OAS   O  LYS121.CD       A      3.89     - | polar/apolar packing
+OAV   O  LYS121.NZ       A      3.22    99 | polar contact, geometry poor
+OBC   O  TYR113.OH       A      2.88    89 | polar contact, geometry poor
+OBG   O  LYS121.NZ       A      3.46    94 | polar contact, geometry poor
+NOTHING WITHIN 4.0 A (listed, so the table is complete): CAJ, CAW, CAX, CAY, CAZ
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not TYR113, ILE87, VAL86, LYS121, ASP68, TRP90, TYR57, SER118, PHE77, PHE130, LYS60, ILE122, LEU128, LEU61, LYS66, GLY59, GLN85
+    4.5 - 6.0 A                                          PHE67, PHE129
+    6.0 - 8.0 A                                          LYS88, PHE79, SER69, LYS58, LEU119, VAL55, ALA112, ILE132, ASP72, THR127, GLY117, GLY84, PRO120, SER62, LYS65, SER70, ARG73, ILE107, TYR111, ALA89, ASP91, PRO123, VAL78
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue adds 5 heavy atoms to the input molecule (35 -> 40)
+analogue SMILES: COc1cc2cc(c1OC)OC[C@H](C)OC/C=C/[C@H](O)[C@@H](C)OC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (2 -> 5).
+
+
+*** SYMMETRY -- SYMMETRY-EQUIVALENT ATOMS CARRY AN IDENTITY CLAIM HERE: CAK, CAO, CAQ, CAR, CBI are indistinguishable from other atoms of the same molecule by graph, so the mapping between the two molecules is arbitrary among them
+
+
+*** CHAINS RELABELLED CONSISTENTLY -- A->B
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   CAR    ATTACHMENT POINT (new group added here)
+   CAT    CHANGED
+   CAU    ATTACHMENT POINT (new group added here)
+   CAW    CHANGED
+   CAX    ATTACHMENT POINT (new group added here)
+   CBA    ATTACHMENT POINT (new group added here)
+   CBB    ATTACHMENT POINT (new group added here)
+   OAS    CHANGED
+   OAV    CHANGED
+
+conserved_interactions (14) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   CAP    a:C4     ASP68.OD2        3.95 ->  3.76   input: polar/apolar packing
+   N      a:N1     TYR113.OH        3.85 ->  3.75   input: polar/apolar packing
+   CBB    a:C16    TYR113.OH        3.21 ->  3.63   input: polar/apolar packing
+   OBC    a:O6     TYR113.OH        2.88 ->  3.22   input: polar contact, geometry poor
+   C      a:C18    TYR113.OH        3.11 ->  3.21   input: polar/apolar packing
+   O      a:O7     ILE87.N          2.94 ->  2.97   input: H-bond, good geometry
+   CA     a:C19    TYR113.OH        3.72 ->  3.56   input: polar/apolar packing
+   CB     a:C20    TRP90.CE2        3.41 ->  3.46   input: hydrophobic contact
+   CAG    a:C22    TYR57.CZ         3.45 ->  3.41   input: hydrophobic contact
+   CAH    a:C23    TYR57.OH         3.72 ->  3.76   input: polar/apolar packing
+   CAB    a:C24    TYR113.OH        3.44 ->  3.37   input: polar/apolar packing
+   OAA    a:O8     TYR113.OH        2.72 ->  2.60   input: H-bond, good geometry
+   CAI    a:C25    ASP68.OD2        3.74 ->  3.47   input: polar/apolar packing
+   CAM    a:C29    LYS60.CA         3.86 ->  3.78   input: hydrophobic contact
+
+analogue_contacts -- 26 of 40 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  40 of 40 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C14  C  CAZ        conserved      -               -      4.29     - no contact within 4.0 A (nearest protein atom is 4.29 A away)
+   a:C5   C  CAQ        conserved      ASP68.OD2       B      3.17     - polar/apolar packing
+   a:C6   C  CAR        conserved      LYS121.NZ       B      3.31     - polar/apolar packing
+   a:C11  C  -          NEW            ARG73.CZ        B      3.76     - hydrophobic contact
+   a:C7   C  CAU        conserved      LYS121.NZ       B      3.33     - polar/apolar packing
+   a:C8   C  -          NEW            -               -      4.49     - no contact within 4.0 A (nearest protein atom is 4.49 A away)
+   a:C9   C  -          NEW            -               -      4.09     - no contact within 4.0 A (nearest protein atom is 4.09 A away)
+   a:C10  C  -          NEW            -               -      4.73     - no contact within 4.0 A (nearest protein atom is 4.73 A away)
+   a:C12  C  CAX        conserved      -               -      4.33     - no contact within 4.0 A (nearest protein atom is 4.33 A away)
+   a:C13  C  CAY        conserved      -               -      4.23     - no contact within 4.0 A (nearest protein atom is 4.23 A away)
+   a:C3   C  CBI        conserved      TYR113.OH       B      3.60     - polar/apolar packing
+   a:C1   C  CBH        conserved      TYR113.OH       B      3.64     - polar/apolar packing
+   a:O1   O  OBG        conserved      -               -      4.32     - no contact within 4.0 A (nearest protein atom is 4.32 A away)
+   a:C2   C  CBF        conserved      LYS121.CD       B      3.96     - hydrophobic contact
+   a:O2   O  -          NEW            LYS121.NZ       B      3.18    84 polar contact, geometry poor
+   a:O3   O  -          NEW            LYS121.NZ       B      3.09    87 polar contact, geometry poor
+   a:O4   O  -          NEW            -               -      4.41     - no contact within 4.0 A (nearest protein atom is 4.41 A away)
+   a:C15  C  CBA        conserved      GLN85.O         B      3.67     - polar/apolar packing
+   a:O5   O  -          NEW            GLN85.O         B      2.92   110 H-bond, good geometry
+   a:C17  C  -          NEW            TYR113.OH       B      3.40     - polar/apolar packing
+   a:C21  C  CAF        conserved      TRP90.CH2       B      3.68     - hydrophobic contact
+   a:C26  C  CAJ        conserved      -               -      4.02     - no contact within 4.0 A (nearest protein atom is 4.02 A away)
+   a:C27  C  CAK        conserved      PHE130.CZ       B      3.78     - hydrophobic contact
+   a:C28  C  CAL        conserved      LYS60.N         B      3.84     - polar/apolar packing
+   a:C30  C  CAN        conserved      -               -      4.03     - no contact within 4.0 A (nearest protein atom is 4.03 A away)
+   a:C31  C  CAO        conserved      ASP68.CB        B      3.55     - hydrophobic contact
+   (14 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C4, a:N1, a:C16, a:O6, a:C18, a:O7, a:C19, a:C20, a:C22, a:C23, a:C24, a:O8, a:C25, a:C29)
+
+
+
+REVIEW ITEM S05
+Sentence to assess: Extending isopropyl to stereogenic sec-butyl should redistribute the alkyl group lying against ILE50(A) at 3.53 Å, relaxing that proximity while directing the extension toward ASP30(B).
+
+====================================================================================================
+PAIR 6PJH OQG->OQD   target Q8ULI9   tanimoto 0.873   analogue crystal 6PJK
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COC(=O)N[C@H](C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C[C@H](Cc1ccccc1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21)C(C)C
+ATOM TABLE COVERAGE: 43 of 43 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C02   C  GLY27.O         A      3.58     - | polar/apolar packing
+C03   C  ASP25.OD2       B      2.86     - | polar/apolar packing
+C04   C  ILE84.CD1       B      3.60     - | hydrophobic contact
+C05   C  ASP25.OD2       A      3.07     - | polar/apolar packing
+C06   C  ASP25.OD2       A      3.71     - | polar/apolar packing
+C09   C  GLY48.O         B      3.93     - | polar/apolar packing
+C11   C  ASP25.OD2       A      3.05     - | polar/apolar packing
+C13   C  GLY27.O         B      3.97     - | polar/apolar packing
+C14   C  GLY27.O         B      3.22     - | polar/apolar packing
+C15   C  VAL82.CG2       A      3.84     - | hydrophobic contact
+C16   C  PRO81.CG        A      3.66     - | hydrophobic contact
+C17   C  PRO81.CG        A      3.38     - | hydrophobic contact
+C18   C  ILE50.N         B      3.83     - | polar/apolar packing
+C19   C  GLY27.O         A      3.78     - | polar/apolar packing
+C22   C  GLY48.O         A      3.47     - | polar/apolar packing
+C23   C  VAL82.CG1       B      3.97     - | hydrophobic contact
+C24   C  VAL82.CG1       B      3.79     - | hydrophobic contact
+C26   C  PRO81.CG        B      3.87     - | hydrophobic contact
+C27   C  GLY49.C         A      3.28     - | hydrophobic contact
+C28   C  ILE50.N         A      3.50     - | polar/apolar packing
+C30   C  GLY48.O         B      3.65     - | polar/apolar packing
+C31   C  ILE50.CD1       A      3.64     - | hydrophobic contact
+C34   C  ILE50.CD1       A      3.53     - | hydrophobic contact
+C36   C  ASP29.OD2       B      3.13     - | polar/apolar packing
+C37   C  ALA28.CB        A      3.94     - | hydrophobic contact
+C39   C  ASP29.N         A      3.80     - | polar/apolar packing
+C40   C  GLY48.O         A      2.97     - | polar/apolar packing
+C42   C  ASP29.N         A      3.78     - | polar/apolar packing
+C43   C  GLY48.O         A      3.35     - | polar/apolar packing
+N01   N  GLY27.O         A      2.75   114 | H-bond, good geometry
+N07   N  GLY27.O         B      3.18   124 | H-bond, good geometry
+N29   N  GLY48.O         B      2.89   110 | H-bond, good geometry
+O10   O  ASP25.OD1       A      2.55   129 | H-bond, good geometry
+O12   O  GLY49.CA        B      3.55     - | polar/apolar packing
+O20   O  GLY49.CA        A      3.74     - | polar/apolar packing
+O21   O  ALA28.CA        A      3.58     - | polar/apolar packing
+         GLY27.O                3.77     - | polar partner: polar/apolar packing
+O32   O  GLY48.O         B      3.44   140 | polar contact [INCOMPAT: ligand acceptor vs GLY acceptor]
+O33   O  ASP29.N         B      2.99   164 | H-bond, good geometry
+O38   O  ASP30.N         A      3.44   147 | H-bond, good geometry
+O41   O  ASP29.N         A      2.85   116 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C08, C25, C35
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not ASP25, ASP25(B), GLY27, ASP29, GLY48(B), GLY48, ASP29(B), GLY27(B), GLY49, PRO81, ASP30, ALA28(B), ILE50, PRO81(B), GLY49(B), ARG8, ALA28, ILE84(B), ILE50(B), VAL82(B), VAL82, ILE84, ARG8(B), VAL32(B), ILE47(B), VAL32, LEU23, ASP30(B)
+    4.5 - 6.0 A                                          LEU23(B), ILE47, THR80, THR26(B), THR31, THR80(B), THR26, THR31(B)
+    6.0 - 8.0 A                                          LEU76(B), GLY51, LEU76, ARG87, GLY86, GLY51(B), GLY52, ARG87(B), GLY52(B), LEU24, GLY86(B), ASN83(B), ASN83, ILE54(B), LEU24(B), PHE53(B), ILE85(B), ASN88, PHE53, LYS45(B), ILE85, ILE54, PRO79
+    (X) = on chain X, not the ligand's own chain A
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue adds 1 heavy atoms to the input molecule (43 -> 44)
+analogue SMILES: CC[C@H](C)[C@H](NC(=O)OC)C(=O)N[C@@H](Cc1ccccc1)[C@@H](O)C[C@H](Cc1ccccc1)NC(=O)O[C@H]1CO[C@H]2OCC[C@H]21
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (7 -> 8).
+
+
+*** SYMMETRY -- SYMMETRY-EQUIVALENT ATOMS CARRY AN IDENTITY CLAIM HERE: C34 is indistinguishable from other atoms of the same molecule by graph, so the mapping between the two molecules is arbitrary among them
+
+
+*** MULTI-CHAIN POCKET -- THE LIGAND CONTACTS MORE THAN ONE PROTEIN CHAIN
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C34    ATTACHMENT POINT (new group added here)
+
+conserved_interactions (33) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   C15    a:C15    VAL82.CG2        3.84 ->  3.64   input: hydrophobic contact
+   C17    a:C17    PRO81.CG         3.38 ->  3.45   input: hydrophobic contact
+   C22    a:C22    GLY48.O          3.47 ->  3.65   input: polar/apolar packing
+   C26    a:C26    PRO81.CG         3.87 ->  3.83   input: hydrophobic contact
+   C02    a:C02    GLY27.O          3.58 ->  3.58   input: polar/apolar packing
+   C03    a:C03    ASP25.OD2        2.86 ->  2.89   input: polar/apolar packing
+   C04    a:C04    ILE84.CD1        3.60 ->  3.62   input: hydrophobic contact
+   C05    a:C05    ASP25.OD2        3.07 ->  3.04   input: polar/apolar packing
+   C06    a:C06    ASP25.OD2        3.71 ->  3.73   input: polar/apolar packing
+   C09    a:C09    GLY48.O          3.93 ->  3.89   input: polar/apolar packing
+   C11    a:C11    ASP25.OD2        3.05 ->  3.09   input: polar/apolar packing
+   C14    a:C14    GLY27.O          3.22 ->  3.20   input: polar/apolar packing
+   C19    a:C19    GLY27.O          3.78 ->  3.81   input: polar/apolar packing
+   C30    a:C30    GLY48.O          3.65 ->  3.71   input: polar/apolar packing
+   C31    a:C31    ILE50.CD1        3.64 ->  3.39   input: hydrophobic contact
+   C36    a:C34    ASP29.OD2        3.13 ->  3.18   input: polar/apolar packing
+   C37    a:C35    ALA28.CB         3.94 ->  3.73   input: hydrophobic contact
+   C39    a:C37    ASP29.N          3.80 ->  3.74   input: polar/apolar packing
+   C40    a:C38    GLY48.O          2.97 ->  3.13   input: polar/apolar packing
+   C42    a:C40    ASP29.N          3.78 ->  3.63   input: polar/apolar packing
+   C43    a:C41    GLY48.O          3.35 ->  3.20   input: polar/apolar packing
+   C34    a:C42    ILE50.CD1        3.53 ->  3.82   input: hydrophobic contact
+   N01    a:N01    GLY27.O          2.75 ->  2.75   input: H-bond, good geometry
+   N07    a:N07    GLY27.O          3.18 ->  3.12   input: H-bond, good geometry
+   N29    a:N29    GLY48.O          2.89 ->  2.90   input: H-bond, good geometry
+   O10    a:O10    ASP25.OD1        2.55 ->  2.49   input: H-bond, good geometry
+   O12    a:O12    GLY49.CA         3.55 ->  3.43   input: polar/apolar packing
+   O20    a:O20    GLY49.CA         3.74 ->  3.88   input: polar/apolar packing
+   O21    a:O21    ALA28.CA         3.58 ->  3.59   input: polar/apolar packing
+   O32    a:O32    GLY48.O          3.44 ->  3.52   input: polar contact [INCOMPAT: ligand acceptor vs GLY acceptor]
+   O33    a:O33    ASP29.N          2.99 ->  3.03   input: H-bond, good geometry
+   O38    a:O36    ASP30.N          3.44 ->  3.32   input: H-bond, good geometry
+   O41    a:O39    ASP29.N          2.85 ->  2.82   input: H-bond, good geometry
+
+analogue_contacts -- 11 of 44 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  44 of 44 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C13  C  C13        conserved      ILE84.CD1       A      3.74     - hydrophobic contact
+   a:C24  C  C24        conserved      ILE50.N         A      3.59     - polar/apolar packing
+   a:C28  C  C28        conserved      GLY27.O         A      3.95     - polar/apolar packing
+   a:C08  C  C08        conserved      -               -      4.09     - no contact within 4.0 A (nearest protein atom is 4.09 A away)
+   a:C16  C  C16        conserved      VAL82.CG2       A      3.59     - hydrophobic contact
+   a:C18  C  C18        conserved      ILE84.CD1       A      3.47     - hydrophobic contact
+   a:C23  C  C23        conserved      -               -      4.31     - no contact within 4.0 A (nearest protein atom is 4.31 A away)
+   a:C25  C  C25        conserved      GLY49.C         A      3.35     - hydrophobic contact
+   a:C27  C  C27        conserved      -               -      4.33     - no contact within 4.0 A (nearest protein atom is 4.33 A away)
+   a:C43  C  C35        conserved      ILE50.CD1       A      3.33     - hydrophobic contact
+   a:C44  C  -          NEW            ASP30.O         B      3.60     - polar/apolar packing
+   (33 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C15, a:C17, a:C22, a:C26, a:C02, a:C03, a:C04, a:C05, a:C06, a:C09, a:C11, a:C14, a:C19, a:C30, a:C31, a:C34, a:C35, a:C37, a:C38, a:C40, a:C41, a:C42, a:N01, a:N07, a:N29, a:O10, a:O12, a:O20, a:O21, a:O32, a:O33, a:O36, a:O39)
+
+
+
+REVIEW ITEM S06
+Sentence to assess: Replacing methylpyrazolyl near LEU86.CD2 at 3.46 Å with a tetrahydropyran spirocycle should redirect that end toward LEU15, while piperidine-to-piperazine substitution changes the opposite arm.
+
+====================================================================================================
+PAIR 8SIW ZXL->ZXP   target O14757   tanimoto 0.506   analogue crystal 8SIX
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: Cn1cc([C@H]2C[C@@H]2C(=O)Nc2cc3cc(C4CCN([C@]5(C)COC[C@@H]5O)CC4)c(Cl)cc3cn2)cn1
+ATOM TABLE COVERAGE: 36 of 36 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C     C  ALA87.O         A      3.77     - | polar/apolar packing
+C1    C  LEU15.CB        A      3.92     - | hydrophobic contact
+C10   C  HIS134.O        A      3.94     - | polar/apolar packing
+C11   C  ASN135.OD1      A      3.28     - | polar/apolar packing
+C12   C  GLU17.N         A      3.80     - | polar/apolar packing
+C13   C  GLY16.CA        A      3.87     - | hydrophobic contact
+C15   C  ASN135.OD1      A      3.51     - | polar/apolar packing
+C17   C  GLU17.O         A      3.69     - | polar/apolar packing
+C18   C  GLU17.O         A      3.64     - | polar/apolar packing
+C19   C  ALA87.O         A      3.46     - | polar/apolar packing
+C2    C  LEU137.CD1      A      3.46     - | hydrophobic contact
+C20   C  ALA87.O         A      3.24     - | polar/apolar packing
+C21   C  GLY90.CA        A      3.90     - | hydrophobic contact
+C24   C  LEU86.CD2       A      3.46     - | hydrophobic contact
+C26   C  LEU86.CD2       A      3.73     - | hydrophobic contact
+C3    C  LEU137.CD1      A      3.28     - | hydrophobic contact
+C4    C  ALA36.CB        A      3.60     - | hydrophobic contact
+C5    C  LEU137.CD1      A      3.61     - | hydrophobic contact
+C6    C  VAL23.CG1       A      4.00     - | hydrophobic contact
+C8    C  LEU137.CD1      A      3.94     - | hydrophobic contact
+C9    C  VAL23.CG2       A      4.00     - | hydrophobic contact
+N     N  ALA87.N         A      3.03   109 | H-bond, good geometry
+N2    N  ALA87.O         A      2.89   103 | H-bond, good geometry
+N3    N  LEU86.CD2       A      3.87     - | polar/apolar packing
+O     O  HIS134.CB       A      3.45     - | polar/apolar packing
+         LYS132.NZ              3.52   119 | polar partner: H-bond, good geometry
+O1    O  HIS134.CD2      A      3.90     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C14, C16, C22, C23, C25, C7, CL, N1, N4, O2
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not ALA87, ASN135, LEU137, HIS134, LEU86, LYS132, ALA36, GLU17, GLU85, SER88, ASP148, GLY16, GLY18, GLY90, LEU15, VAL23, MET84, GLN13, ALA147
+    4.5 - 6.0 A                                          ILE68, GLY89, LEU25, ALA19, LYS38, SER91, ASP130
+    6.0 - 8.0 A                                          LEU138, THR170, TYR149, THR14, LEU136, SER150, VAL35, ALA34, GLU22, VAL37, PRO133, GLU55, GLN24, ASP94, ILE146, GLY21, HIS128, PHE93, TYR20, GLU140, LEU82, LYS69
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 1 heavy atoms from the input molecule (36 -> 35)
+analogue SMILES: C[C@@]1(N2CCN(c3cc4cc(NC(=O)[C@H]5CC56CCOCC6)ncc4cc3Cl)CC2)COC[C@@H]1O
+*** TWO TRANSFORMATIONS -- The edited atoms form 2 separate groups, and the nearest atoms of two of them are 11 bonds apart in the molecule -- too far to be one contiguous change. See rule 11.
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (4 -> 3).
+
+
+*** SYMMETRY -- SYMMETRY-EQUIVALENT ATOMS CARRY AN IDENTITY CLAIM HERE: C10, C12, C13 are indistinguishable from other atoms of the same molecule by graph, so the mapping between the two molecules is arbitrary among them
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C10    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C12    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C13    MOVED (this atom is kept but its attachment point differs in the analogue)
+   C22    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C23    CHANGED
+   C24    CHANGED
+   C25    CHANGED
+   C26    CHANGED
+   C7     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C9     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   N3     CHANGED
+   N4     CHANGED
+
+conserved_interactions (13) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   N2     a:N1     ALA87.O          2.89 ->  2.93   input: H-bond, good geometry
+   C      a:C5     ALA87.O          3.77 ->  3.80   input: polar/apolar packing
+   C19    a:C6     ALA87.O          3.46 ->  3.55   input: polar/apolar packing
+   C20    a:C7     ALA87.O          3.24 ->  3.20   input: polar/apolar packing
+   C21    a:C13    GLY90.CA         3.90 ->  3.62   input: hydrophobic contact
+   C3     a:C15    LEU137.CD1       3.28 ->  3.36   input: hydrophobic contact
+   C6     a:C17    VAL23.CG1        4.00 ->  3.76   input: hydrophobic contact
+   C18    a:C21    GLU17.O          3.64 ->  3.35   input: polar/apolar packing
+   C17    a:C22    GLU17.O          3.69 ->  3.86   input: polar/apolar packing
+   C10    a:C      HIS134.O         3.94 ->  3.98   input: polar/apolar packing
+   C5     a:C16    LEU137.CD1       3.61 ->  3.50   input: hydrophobic contact
+   C2     a:C3     LEU137.CD1       3.46 ->  3.66   input: hydrophobic contact
+   N      a:N2     ALA87.N          3.03 ->  3.01   input: H-bond, good geometry
+
+analogue_contacts -- 22 of 35 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  35 of 35 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:N3   N  N1         conserved      -               -      4.25     - no contact within 4.0 A (nearest protein atom is 4.25 A away)
+   a:C4   C  C1         conserved      LEU15.CD1       A      3.87     - hydrophobic contact
+   a:C8   C  C22        conserved      -               -      4.40     - no contact within 4.0 A (nearest protein atom is 4.40 A away)
+   a:C10  C  C9         conserved      LEU15.CD2       A      3.80     - hydrophobic contact
+   a:C20  C  C14        conserved      -               -      4.20     - no contact within 4.0 A (nearest protein atom is 4.20 A away)
+   a:C24  C  C15        conserved      HIS134.CB       A      3.78     - hydrophobic contact
+   a:CL   CL CL         conserved      MET84.SD        A      3.80     - polar/apolar packing
+   a:C1   C  C7         conserved      VAL23.CG1       A      3.66     - hydrophobic contact
+   a:N    N  -          NEW            VAL23.CG2       A      3.95     - polar/apolar packing
+   a:C18  C  -          NEW            LEU15.O         A      3.82     - polar/apolar packing
+   a:C19  C  C12        conserved      GLY16.CA        A      3.69     - hydrophobic contact
+   a:O3   O  O          conserved      LYS132.CE       A      3.39     - polar/apolar packing
+   a:C23  C  C16        conserved      HIS134.CB       A      3.87     - hydrophobic contact
+   a:O2   O  O1         conserved      HIS134.CB       A      3.52     - polar/apolar packing
+   a:C25  C  C11        conserved      ASP148.CB       A      3.78     - hydrophobic contact
+   a:C2   C  C8         conserved      VAL23.CG1       A      3.99     - hydrophobic contact
+   a:C14  C  C4         conserved      GLU85.O         A      3.40     - polar/apolar packing
+   a:O    O  O2         conserved      LEU15.CD2       A      3.40     - polar/apolar packing
+   a:C12  C  -          NEW            SER88.O         A      3.64     - polar/apolar packing
+   a:C11  C  -          NEW            -               -      4.12     - no contact within 4.0 A (nearest protein atom is 4.12 A away)
+   a:O1   O  -          NEW            -               -      4.01     - no contact within 4.0 A (nearest protein atom is 4.01 A away)
+   a:C9   C  C13        MOVED          LEU15.CD2       A      3.81     - hydrophobic contact
+   (13 unchanged analogue atoms are in conserved_interactions, not repeated here: a:N1, a:C5, a:C6, a:C7, a:C13, a:C15, a:C17, a:C21, a:C22, a:C, a:C16, a:C3, a:N2)
+
+
+
+REVIEW ITEM S07
+Sentence to assess: Demethylating methoxy, whose oxygen hydrogen-bonds to ALA89.N at 3.37 Å, should change its polar presentation to phenol, but unshared residue numbering prevents a reliable directional comparison.
+
+====================================================================================================
+PAIR 5RVN ANN->PHB   target P0DTD1   tanimoto 0.500   analogue crystal 5RTJ
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COc1ccc(C(=O)O)cc1
+ATOM TABLE COVERAGE: 11 of 11 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C1    C  LYS90.CD        A      3.65     - | hydrophobic contact
+C2    C  LYS90.CB        A      3.56     - | hydrophobic contact
+C3    C  LYS90.CB        A      3.76     - | hydrophobic contact
+C4    C  PRO32.O         A      3.10     - | polar/apolar packing
+C5    C  LYS90.N         A      3.17     - | polar/apolar packing
+C6    C  LYS90.N         A      3.50     - | polar/apolar packing
+C7    C  LYS90.CB        A      3.70     - | hydrophobic contact
+C8    C  LYS31.CE        A      2.51     - | hydrophobic contact [CLOSE 2.51/3.4 uncertain]
+O1    O  LYS90.CD        A      3.45     - | polar/apolar packing
+O3    O  ALA89.CA        A      3.06     - | polar/apolar packing
+         ALA89.N                3.37   108 | polar partner: H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): O2
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not LYS31, ALA89, PRO32, LYS90, LEU88, VAL3, THR33, ASN87
+    4.5 - 6.0 A                                          HIS86, ALA27, HIS91, ASN4
+    6.0 - 8.0 A                                          VAL30, VAL34, GLY85, LYS28, LYS29, VAL35
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+*** PAIR FLAGGED UNLABELLABLE -- no shared numbering AND nothing conserved; no interaction survives between the two crystals
+
+
+EDIT: the analogue removes 1 heavy atoms from the input molecule (11 -> 10)
+analogue SMILES: O=C(O)c1ccc(O)cc1
+
+*** NO SHARED RESIDUE NUMBERING (overlap 0.00)
+
+
+numbering_consistent: False   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C8     CHANGED
+
+conserved_interactions (0) -- see brief
+
+analogue_contacts -- 10 of 10 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  10 of 10 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C1'  C  C1         conserved      VAL49.CG2       A      3.49     - hydrophobic contact
+   a:O1'  O  O2         conserved      VAL49.CG2       A      3.97     - polar/apolar packing
+   a:O2'  O  O1         conserved      VAL49.CG2       A      3.49     - polar/apolar packing
+   a:C1   C  C2         conserved      VAL49.CG2       A      3.81     - hydrophobic contact
+   a:C2   C  C3         conserved      PHE156.CD2      A      3.46     - hydrophobic contact
+   a:C3   C  C4         conserved      PHE156.CD2      A      3.52     - hydrophobic contact
+   a:C4   C  C5         conserved      ALA52.CB        A      3.84     - hydrophobic contact
+   a:C5   C  C6         conserved      GLY48.C         A      3.51     - hydrophobic contact
+   a:C6   C  C7         conserved      GLY48.C         A      3.67     - hydrophobic contact
+   a:O4   O  O3         conserved      ALA52.CB        A      3.36     - polar/apolar packing
+
+
+
+REVIEW ITEM S08
+Sentence to assess: Replacing the alkynyl acylated pyrrolidine arm with tetrahydrofuranylmethoxy should give up the 1.79 Å covalent bond to CYS800 while retaining the core's 2.97 Å MET796 hydrogen bond.
+
+====================================================================================================
+PAIR 9DF4 A1A4E->A1IMS   target P00533   tanimoto 0.514   analogue crystal 9DF2
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COc1c(Cl)cccc1Nc1c(-c2ccncc2C#C[C@@]2(C)CCCN2C(=O)C=CCN(C)C)[nH]c2c1C(=O)NCC2
+ATOM TABLE COVERAGE: 42 of 42 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C1    C  THR857.OG1      A      3.22     - | polar/apolar packing
+C11   C  THR857.CG2      A      3.78     - | hydrophobic contact
+C12   C  ASP858.OD2      A      3.74     - | polar/apolar packing
+C13   C  ASN845.OD1      A      3.32     - | polar/apolar packing
+C14   C  PHE723.CG       A      3.77     - | hydrophobic contact
+C15   C  LEU847.CD1      A      3.55     - | hydrophobic contact
+C16   C  LEU847.CD1      A      3.15     - | hydrophobic contact
+C17   C  ALA743.CB       A      3.28     - | hydrophobic contact
+C18   C  ALA743.CB       A      3.84     - | hydrophobic contact
+C2    C  THR793.CG2      A      3.64     - | hydrophobic contact
+C20   C  VAL726.CG1      A      3.99     - | hydrophobic contact
+C23   C  PHE723.CZ       A      3.67     - | hydrophobic contact
+C24   C  LEU718.CB       A      3.59     - | hydrophobic contact
+C25   C  LEU718.O        A      3.91     - | polar/apolar packing
+C27   C  ASP803.OD2      A      4.59     - | no contact within 4.0 A (nearest protein atom is 4.59 A away) [INDEP, CYS800 excl]
+C28   C  ASP803.OD2      A      3.31     - | polar/apolar packing [INDEP, CYS800 excl]
+C29   C  CYS800.SG       A      1.79     - | COVALENT BOND to CYS800.SG
+C3    C  THR793.CG2      A      3.40     - | hydrophobic contact
+C30   C  ASP803.OD1      A      3.86     - | polar/apolar packing [INDEP, CYS800 excl]
+C31   C  ARG844.O        A      3.65     - | polar/apolar packing
+C4    C  THR793.CG2      A      3.40     - | hydrophobic contact
+C5    C  LYS745.CB       A      3.39     - | hydrophobic contact
+C6    C  LYS745.CB       A      3.85     - | hydrophobic contact
+C7    C  THR793.CG2      A      3.96     - | hydrophobic contact
+C8    C  THR857.OG1      A      3.78     - | polar/apolar packing
+C9    C  LEU847.CD1      A      3.71     - | hydrophobic contact
+CL    Cl LEU791.CB       A      3.47     - | hydrophobic contact
+N1    N  THR857.OG1      A      3.06   123 | H-bond, good geometry
+N2    N  LEU847.CD2      A      3.96     - | polar/apolar packing
+N3    N  ASP858.OD2      A      2.94   116 | H-bond, good geometry
+N4    N  MET796.N        A      2.97   107 | H-bond, good geometry
+N6    N  ARG844.CB       A      4.36     - | no contact within 4.0 A (nearest protein atom is 4.36 A away) [INDEP, CYS800 excl]
+O1    O  THR857.OG1      A      3.01    85 | polar contact, geometry poor
+O2    O  LYS745.NZ       A      2.80   139 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C19, C21, C22, C26, C32, N5, O3
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not CYS800, LYS745, ASP858, MET796, THR857, LEU847, ALA743, GLU762, ASP803, ASN845, THR793, LEU791, LEU718, PHE723, CYS778, ARG844, GLN794, ILE744, MET766, LEU780, LEU795, VAL726, GLY719, ILE792
+    4.5 - 6.0 A                                          LEU802, GLY799, PHE859, ARG779, SER720, PRO797, LEU801, TYR727, ALA843, GLU1018, VAL742, GLY782
+    6.0 - 8.0 A                                          LEU781, VAL846, GLU746, THR725, TYR1019, ARG806, ILE856, GLN790, GLY860, VAL717, GLY724, PHE798, GLY721, ASP840, ALA722, LYS728, VAL848, ALA763, TYR804, ILE759, ILE783, PRO741, LEU747, GLU807
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 9 heavy atoms from the input molecule (42 -> 33)
+analogue SMILES: COc1c(Cl)cccc1Nc1c(-c2ccncc2OC[C@@H]2CCCO2)[nH]c2c1C(=O)NCC2
+
+*** STEREO -- stereochemistry at C22 cannot be compared: the edit changes the substituents on that centre, so its R/S label is not the same question on the two sides
+
+*** COVALENCY MISMATCH -- THE COVALENT BOND IS NOT PRESENT IN THE ANALOGUE
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C19    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C20    CHANGED
+   C21    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C22    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C23    CHANGED
+   C26    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C27    CHANGED
+   C28    CHANGED
+   C29    CHANGED
+   C30    CHANGED
+   C31    CHANGED
+   C32    CHANGED
+   N5     CHANGED
+   N6     CHANGED
+   O3     CHANGED
+
+conserved_interactions (23) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   N1     a:N      THR857.OG1       3.06 ->  2.84   input: H-bond, good geometry
+   CL     a:CL     LEU791.CB        3.47 ->  3.47   input: hydrophobic contact
+   C3     a:C2     THR793.CG2       3.40 ->  3.43   input: hydrophobic contact
+   C4     a:C3     THR793.CG2       3.40 ->  3.44   input: hydrophobic contact
+   C5     a:C4     LYS745.CB        3.39 ->  3.41   input: hydrophobic contact
+   C6     a:C5     LYS745.CB        3.85 ->  3.83   input: hydrophobic contact
+   C2     a:C1     THR793.CG2       3.64 ->  3.64   input: hydrophobic contact
+   O1     a:O      THR857.OG1       3.01 ->  2.98   input: polar contact, geometry poor
+   C8     a:C7     THR857.OG1       3.78 ->  3.59   input: polar/apolar packing
+   C9     a:C13    LEU847.CD1       3.71 ->  3.71   input: hydrophobic contact
+   N2     a:N2     LEU847.CD2       3.96 ->  3.70   input: polar/apolar packing
+   C14    a:C10    PHE723.CG        3.77 ->  3.65   input: hydrophobic contact
+   C13    a:C11    ASN845.OD1       3.32 ->  3.56   input: polar/apolar packing
+   N3     a:N1     ASP858.OD2       2.94 ->  2.73   input: H-bond, good geometry
+   C12    a:C12    ASP858.OD2       3.74 ->  3.50   input: polar/apolar packing
+   O2     a:O1     LYS745.NZ        2.80 ->  2.59   input: H-bond, good geometry
+   C11    a:C8     THR857.CG2       3.78 ->  3.95   input: hydrophobic contact
+   C15    a:C14    LEU847.CD1       3.55 ->  3.47   input: hydrophobic contact
+   C18    a:C17    ALA743.CB        3.84 ->  3.74   input: hydrophobic contact
+   N4     a:N3     MET796.N         2.97 ->  3.00   input: H-bond, good geometry
+   C17    a:C16    ALA743.CB        3.28 ->  3.21   input: hydrophobic contact
+   C16    a:C15    LEU847.CD1       3.15 ->  3.16   input: hydrophobic contact
+   C24    a:C21    LEU718.CB        3.59 ->  3.77   input: hydrophobic contact
+
+analogue_contacts -- 10 of 33 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  33 of 33 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C    C  C1         conserved      GLU762.OE2      A      3.27     - polar/apolar packing
+   a:C6   C  C7         conserved      THR857.OG1      A      3.81     - polar/apolar packing
+   a:C9   C  C10        conserved      VAL726.CG2      A      3.99     - hydrophobic contact
+   a:C18  C  C19        conserved      -               -      4.02     - no contact within 4.0 A (nearest protein atom is 4.02 A away)
+   a:O2   O  -          NEW            VAL726.CG1      A      3.78     - polar/apolar packing
+   a:C19  C  C21        conserved      GLY799.CA       A      3.91     - hydrophobic contact
+   a:C20  C  C22        conserved      -               -      4.13     - no contact within 4.0 A (nearest protein atom is 4.13 A away)
+   a:O3   O  -          NEW            CYS800.CB       A      3.72     - polar/apolar packing
+   a:C23  C  C26        conserved      -               -      4.04     - no contact within 4.0 A (nearest protein atom is 4.04 A away)
+   a:C22  C  C25        conserved      PHE723.CZ       A      3.86     - hydrophobic contact
+   (23 unchanged analogue atoms are in conserved_interactions, not repeated here: a:N, a:CL, a:C2, a:C3, a:C4, a:C5, a:C1, a:O, a:C7, a:C13, a:N2, a:C10, a:C11, a:N1, a:C12, a:O1, a:C8, a:C14, a:C17, a:N3, a:C16, a:C15, a:C21)
+
+
+
+REVIEW ITEM S09
+Sentence to assess: Replacing the spiro oxazolidinone–cyclobutane unit, near TYR194 at 3.41 Å, with a tethered six-membered lactam should redistribute that proximity while retaining the 2.98 Å HIS121 hydrogen bond.
+
+====================================================================================================
+PAIR 7L4W XOV->XP7   target A0A0C4DFN3   tanimoto 0.528   analogue crystal 7L4U
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: O=C1NC2(CO1)CC(C(=O)N1CCC(COc3ccc(F)cc3Cl)CC1)C2
+ATOM TABLE COVERAGE: 27 of 27 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C1    C  LEU205.CD1      A      3.51     - | hydrophobic contact
+C11   C  HIS269.NE2      A      3.70     - | polar/apolar packing
+C12   C  ALA51.O         A      3.34     - | polar/apolar packing
+C13   C  SER122.OG       A      3.76     - | polar/apolar packing
+C14   C  SER122.OG       A      3.15     - | polar/apolar packing
+C15   C  ALA51.O         A      3.47     - | polar/apolar packing
+C16   C  ALA51.O         A      3.30     - | polar/apolar packing
+C18   C  ALA51.O         A      3.89     - | polar/apolar packing
+C19   C  LEU205.CD1      A      3.92     - | hydrophobic contact
+C2    C  LEU205.CD1      A      4.00     - | hydrophobic contact
+C3    C  GLY210.O        A      3.65     - | polar/apolar packing
+C4    C  LEU213.CD1      A      3.75     - | hydrophobic contact
+C5    C  GLY210.O        A      3.60     - | polar/apolar packing
+C6    C  LEU213.CB       A      3.78     - | hydrophobic contact
+C7    C  GLU53.OE1       A      3.68     - | polar/apolar packing
+C8    C  SER122.OG       A      2.81     - | polar/apolar packing
+CL27  Cl LEU213.CB       A      3.81     - | hydrophobic contact
+F26   F  GLY210.O        A      3.19     - | polar/apolar packing
+N20   N  HIS121.NE2      A      2.98   119 | H-bond, good geometry
+N21   N  SER122.OG       A      2.99    69 | polar contact, geometry poor
+O22   O  ARG57.NH2       A      3.02   129 | H-bond, good geometry
+O23   O  MET123.N        A      2.80   145 | H-bond, good geometry
+O24   O  TYR194.CE1      A      3.41     - | polar/apolar packing
+         GLU53.OE1              3.79     - | polar partner: polar/apolar packing
+O25   O  LEU213.CD1      A      4.00     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C17, C9
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not MET123, SER122, ALA51, HIS121, ARG57, GLY210, GLU53, TYR194, VAL270, GLY50, LEU205, HIS269, LEU213, LEU148, LEU184, LEU214, VAL217, LEU241, ILE179
+    4.5 - 6.0 A                                          ILE211, GLY124, CYS242, ALA151, HIS272, LYS273, TYR58, LEU150, GLY52, HIS49, ASN152, PHE209, ILE200, SER155
+    6.0 - 8.0 A                                          VAL207, ALA164, LYS206, HIS54, GLN212, SER176, GLY125, SER146, MET88, ALA216, PRO147, CYS201, VAL149, ASN215, LEU271, HIS80, LYS160, ALA126, ALA156, GLU190, ASP239, VAL161, ILE145, VAL183, ARG240, SER48, CYS208, SER185, ILE127, SER181
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 1 heavy atoms from the input molecule (27 -> 26)
+analogue SMILES: O=C1CC[C@@H](CCC(=O)N2CCC(COc3ccc(F)cc3Cl)CC2)N1
+
+*** STEREO -- the edit changes the NUMBER of stereocentres (0 -> 1).
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C11    CHANGED
+   C15    CHANGED
+   C16    MOVED (this atom is kept but its attachment point differs in the analogue)
+   C18    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C8     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   O24    CHANGED
+
+conserved_interactions (13) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   C4     a:C4     LEU213.CD1       3.75 ->  3.71   input: hydrophobic contact
+   C5     a:C5     GLY210.O         3.60 ->  3.82   input: polar/apolar packing
+   C6     a:C6     LEU213.CB        3.78 ->  3.80   input: hydrophobic contact
+   C7     a:C7     GLU53.OE1        3.68 ->  3.46   input: polar/apolar packing
+   C8     a:C8     SER122.OG        2.81 ->  2.97   input: polar/apolar packing
+   C12    a:C10    ALA51.O          3.34 ->  3.44   input: polar/apolar packing
+   C14    a:C13    SER122.OG        3.15 ->  3.69   input: polar/apolar packing
+   C3     a:C3     GLY210.O         3.65 ->  3.78   input: polar/apolar packing
+   C13    a:C14    SER122.OG        3.76 ->  3.29   input: polar/apolar packing
+   N20    a:N20    HIS121.NE2       2.98 ->  3.01   input: H-bond, good geometry
+   N21    a:N21    SER122.OG        2.99 ->  3.12   input: polar contact, geometry poor
+   O25    a:O24    LEU213.CD1       4.00 ->  3.88   input: polar/apolar packing
+   F26    a:F25    GLY210.O         3.19 ->  3.50   input: polar/apolar packing
+
+analogue_contacts -- 13 of 26 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  26 of 26 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C15  C  C17        conserved      -               -      4.29     - no contact within 4.0 A (nearest protein atom is 4.29 A away)
+   a:C17  C  -          NEW            ALA51.O         A      3.48     - polar/apolar packing
+   a:C1   C  C1         conserved      LEU205.CD2      A      3.30     - hydrophobic contact
+   a:C2   C  C2         conserved      LEU205.CD2      A      2.92     - hydrophobic contact [CLOSE 2.92/3.4 uncertain]
+   a:C9   C  C16        MOVED          TYR194.CE1      A      3.63     - hydrophobic contact
+   a:C11  C  C10        conserved      ILE179.CG1      A      3.99     - hydrophobic contact
+   a:C12  C  C9         conserved      LEU213.CD1      A      3.97     - hydrophobic contact
+   a:C16  C  C18        conserved      -               -      4.01     - no contact within 4.0 A (nearest protein atom is 4.01 A away)
+   a:C18  C  C19        conserved      -               -      4.01     - no contact within 4.0 A (nearest protein atom is 4.01 A away)
+   a:C19  C  -          NEW            SER122.CB       A      3.66     - hydrophobic contact
+   a:O22  O  O22        conserved      GLU53.OE1       A      3.10    96 polar contact [INCOMPAT: ligand acceptor vs GLU acceptor]
+   a:O23  O  O23        conserved      ALA51.N         A      2.76   120 H-bond, good geometry
+   a:CL26 CL CL27       conserved      LEU148.CD1      A      3.85     - hydrophobic contact
+   (13 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C4, a:C5, a:C6, a:C7, a:C8, a:C10, a:C13, a:C3, a:C14, a:N20, a:N21, a:O24, a:F25)
+
+
+
+REVIEW ITEM S10
+Sentence to assess: Replacing nicotinoyl, shortening the pyridyl linker, and contracting naphthyl to phenyl should transfer heme coordination from the input pyridine's 2.19 Å iron anchor to the other pyridine.
+
+====================================================================================================
+PAIR 9COW A1A4V->A1A07   target P08684   tanimoto 0.525   analogue crystal 9COR
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: O=C(N[C@H](CS[C@H](Cc1ccccc1)C(=O)NCCCc1cccnc1)Cc1cccc2ccccc12)c1cccnc1
+ATOM TABLE COVERAGE: 43 of 43 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+C02   C  SER119.OG       A      3.71     - | polar/apolar packing
+C04   C  SER119.OG       A      3.78     - | polar/apolar packing
+C05   C  ILE301.CG2      A      3.59     - | hydrophobic contact
+C06   C  ALA305.CB       A      3.49     - | hydrophobic contact
+C07   C  ALA305.CB       A      3.58     - | hydrophobic contact
+C08   C  THR309.CG2      A      3.85     - | hydrophobic contact
+C09   C  THR309.CG2      A      3.44     - | hydrophobic contact
+C10   C  HEM601.FE       A      3.05     - | near FE
+C12   C  HEM601.FE       A      3.15     - | near FE
+C16   C  ILE301.CD1      A      3.97     - | hydrophobic contact
+C18   C  PHE304.CG       A      3.44     - | hydrophobic contact
+C19   C  PHE304.CE2      A      3.55     - | hydrophobic contact
+C22   C  SER119.O        A      3.33     - | polar/apolar packing
+C24   C  ARG105.CD       A      3.85     - | hydrophobic contact
+C29   C  ILE369.O        A      3.83     - | polar/apolar packing
+C32   C  HEM601.C1A      A      3.49     - | contact with cofactor HEM
+C33   C  HEM601.CHA      A      3.39     - | contact with cofactor HEM
+C34   C  ARG105.NH1      A      3.60     - | polar/apolar packing
+C38   C  PHE108.CD1      A      3.77     - | hydrophobic contact
+C39   C  PHE108.CD1      A      3.77     - | hydrophobic contact
+N11   N  HEM601.FE       A      2.19     - | METAL COORDINATION to FE in HEM601
+         HEM601.ND              2.97     - | polar partner: contact with cofactor HEM
+N40   N  ARG106.CB       A      3.87     - | polar/apolar packing
+O01   O  SER119.OG       A      2.73   136 | H-bond, good geometry
+S21   S  ILE120.CG1      A      3.60     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C13, C14, C15, C17, C20, C23, C25, C26, C27, C28, C30, C31, C36, C41, C42, C43, N03, N35, O37
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    <= 4.5 A -- close enough to touch; SOME are in the atom table, some are not HEM601*, SER119, ILE301, PHE304, THR309, ALA305, ARG105, ILE120, PHE108, ARG106, ILE369, ALA370, LEU221, PRO107, THR224
+    4.5 - 6.0 A                                          CYS442, MET114, ILE300, ARG372, ILE223, ALA117, GLY109, PHE302
+    6.0 - 8.0 A                                          VAL111, GLU374, MET371, GLY306, GLU308, ARG440, ILE118, ILE230, ILE443, GLY481, GLY444, LEU373, ILE303, PHE435, ASN441, ALA121, PRO434, PHE203, PHE220, ALA297, PRO368, ARG375, ASP76, PRO227, LEU483, MET445, PHE57, LEU482, ALA448, THR310
+    * = cofactor or ion, not an amino acid
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 3 heavy atoms from the input molecule (43 -> 40)
+analogue SMILES: O=C(CNC(=O)C(F)(F)F)N[C@H](CS[C@H](Cc1ccccc1)C(=O)NCCc1cccnc1)Cc1ccccc1
+*** TWO TRANSFORMATIONS -- The edited atoms form 3 separate groups, and the nearest atoms of two of them are 11 bonds apart in the molecule -- too far to be one contiguous change. See rule 11.
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   C05    MOVED (this atom is kept but its attachment point differs in the analogue)
+   C06    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C07    CHANGED
+   C08    CHANGED
+   C09    CHANGED
+   C10    CHANGED
+   C12    CHANGED
+   C27    CHANGED
+   C28    CHANGED
+   C29    CHANGED
+   C30    CHANGED
+   C36    SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   C38    MOVED (this atom is kept but its attachment point differs in the analogue)
+   N11    CHANGED
+
+conserved_interactions (3) -- see brief
+   input  analog   both face       input -> analog   typing on each side
+   C02    a:C23    SER119.OG        3.71 ->  3.66   input: polar/apolar packing
+   C32    a:C38    HEM601.C1A       3.49 ->  3.40   input: contact with cofactor HEM
+   O01    a:O24    SER119.OG        2.73 ->  2.96   input: H-bond, good geometry
+
+analogue_contacts -- 37 of 40 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  40 of 40 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C13  C  C22        conserved      -               -      4.93     - no contact within 4.0 A (nearest protein atom is 4.93 A away)
+   a:C15  C  C13        conserved      -               -      5.08     - no contact within 4.0 A (nearest protein atom is 5.08 A away)
+   a:C17  C  C15        conserved      PHE241.CE1      A      3.78     - hydrophobic contact
+   a:C20  C  C18        conserved      PHE241.CE1      A      3.33     - hydrophobic contact
+   a:C21  C  C17        conserved      PHE241.CZ       A      3.11     - hydrophobic contact
+   a:C22  C  C16        conserved      PHE241.CZ       A      3.39     - hydrophobic contact
+   a:C26  C  C04        conserved      -               -      4.68     - no contact within 4.0 A (nearest protein atom is 4.68 A away)
+   a:C28  C  C38        MOVED          ALA305.CA       A      3.71     - hydrophobic contact
+   a:C02  C  -          NEW            -               -      4.71     - no contact within 4.0 A (nearest protein atom is 4.71 A away)
+   a:C05  C  C06        conserved      -               -      4.89     - no contact within 4.0 A (nearest protein atom is 4.89 A away)
+   a:C08  C  -          NEW            -               -      5.10     - no contact within 4.0 A (nearest protein atom is 5.10 A away)
+   a:C09  C  C36        conserved      -               -      6.02     - no contact within 4.0 A (nearest protein atom is 6.02 A away)
+   a:C12  C  C23        conserved      -               -      6.30     - no contact within 4.0 A (nearest protein atom is 6.30 A away)
+   a:C16  C  C14        conserved      -               -      4.77     - no contact within 4.0 A (nearest protein atom is 4.77 A away)
+   a:C18  C  C20        conserved      PHE304.CG       A      3.42     - hydrophobic contact
+   a:C19  C  C19        conserved      PHE304.CD2      A      3.24     - hydrophobic contact
+   a:C27  C  C05        MOVED          ALA305.CA       A      3.55     - hydrophobic contact
+   a:C29  C  C39        conserved      HEM601.ND       A      2.99     - contact with cofactor HEM
+   a:C31  C  C41        conserved      HEM601.NB       A      2.87     - contact with cofactor HEM
+   a:C32  C  C42        conserved      THR309.CG2      A      3.36     - hydrophobic contact
+   a:C33  C  C43        conserved      THR309.CG2      A      3.82     - hydrophobic contact
+   a:C34  C  C24        conserved      -               -      5.47     - no contact within 4.0 A (nearest protein atom is 5.47 A away)
+   a:C35  C  C25        conserved      -               -      4.90     - no contact within 4.0 A (nearest protein atom is 4.90 A away)
+   a:C36  C  C34        conserved      ARG105.CD       A      3.75     - hydrophobic contact
+   a:C37  C  C33        conserved      ARG105.NE       A      3.45     - polar/apolar packing
+   a:C39  C  C31        conserved      HEM601.C2A      A      3.82     - contact with cofactor HEM
+   a:C40  C  C26        conserved      -               -      4.48     - no contact within 4.0 A (nearest protein atom is 4.48 A away)
+   a:F01  F  -          NEW            PHE108.CD1      A      3.79     - hydrophobic contact
+   a:F03  F  -          NEW            PHE220.CB       A      3.63     - hydrophobic contact
+   a:F04  F  -          NEW            -               -      4.03     - no contact within 4.0 A (nearest protein atom is 4.03 A away)
+   a:N07  N  -          NEW            -               -      5.20     - no contact within 4.0 A (nearest protein atom is 5.20 A away)
+   a:N11  N  N35        conserved      -               -      6.17     - no contact within 4.0 A (nearest protein atom is 6.17 A away)
+   a:N25  N  N03        conserved      SER119.OG       A      3.48    85 polar contact, geometry poor
+   a:N30  N  N40        conserved      HEM601.FE       A      2.13     - METAL COORDINATION to FE in HEM601
+   a:O06  O  -          NEW            -               -      4.19     - no contact within 4.0 A (nearest protein atom is 4.19 A away)
+   a:O10  O  O37        conserved      -               -      5.67     - no contact within 4.0 A (nearest protein atom is 5.67 A away)
+   a:S14  S  S21        conserved      PHE108.CD2      A      3.85     - polar/apolar packing
+   (3 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C23, a:C38, a:O24)
+

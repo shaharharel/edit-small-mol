@@ -1,0 +1,18 @@
+Independent chemistry review of crystallographic rationale labels
+
+This packet contains ten sentences with their full evidence: six reproducibly random cases from the first 1,100 finalized labels, and four deliberately selected stress cases. It is a qualitative spot check, not a representative population error-rate estimate. Original verdicts and adjudication reasons are withheld until your scores are recorded.
+
+Please read PIPELINE.md and briefs/REVIEWER.md for the training objective, then evidence_and_labels.txt. Use scorecard.csv to record judgments. Evaluate the sentence, not its fluency or whether it resembles an example. Distinguish a flawed sentence from a pair whose evidence cannot support a positive training example.
+
+For each case:
+1. Do both SMILES support the named chemical edit, ring size, substituent, and stereochemical or multi-site description?
+2. Is the measured anchor genuinely input-side, correctly assigned to its chemical group, and supported by reliable geometry and typing?
+3. Does the qualitative pocket consequence follow from the edit and evidence, without inventing interactions or treating an envelope band as a contact?
+4. Are retained/lost hydrogen bonds, covalent bonds, and metal interactions supported despite atom-mapping, numbering, uncertainty, symmetry, and chain caveats?
+5. Would this teach a model useful prospective reasoning, or merely a generic claim that the group redistributes?
+
+Rationale usefulness: 1 = misleading or no usable pocket rationale; 2 = thin or largely generic; 3 = defensible but limited; 4 = useful and specific; 5 = clear, chemically sound, well grounded rationale.
+
+For any concern, identify the relevant atom/group, residue, table row or caveat. A suggested repair should be one sentence of at most 35 words, with only input-side measurements and a qualitative consequence. Keep uncertainty explicit. Do not force repairs merely to satisfy a lexical checker. No potency evidence is supplied.
+
+The AI review, if present, is a separate model opinion, not a human chemist endorsement. For an independent human assessment, do not read ai_review.json or sample_key.json until completing the scorecard.

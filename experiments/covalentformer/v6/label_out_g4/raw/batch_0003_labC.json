@@ -1,0 +1,602 @@
+{
+  "8RVA A1H3D->A1H3E": {
+    "sentence": "Adding a hydroxypropenyl arm at the phenyl carbon near ASN43.ND2 at 2.99 Å should redirect the aromatic arm away from ASN43 toward PRO134.",
+    "basis": "Both SMILES identify addition of an aryl–CH=CH–CH2OH substituent, leaving the carboxyl group present. Site_of_change marks C23 as the attachment point; the input atom table places C23 near ASN43.ND2 at 2.99 Å, typed polar/apolar packing. Analogue_contacts maps a:C23 to C23 with no contact within 4.0 Å and similarly removes nearest-neighbour proximity for several other phenyl carbons. NEW a:C30 and a:C31 lie near PRO134.CG; PRO134 is nameable from the input pocket envelope. These rows support redirection toward PRO134 without claiming a predicted contact.",
+    "confidence": "high",
+    "concern": "Input carboxyl oxygen O29 has an uncertain short contact to GLY81 and is excluded from the rationale; carboxyl oxygen mappings also swap names."
+  },
+  "9Q4X A1CN2->A1CN9": {
+    "sentence": "Replacing the dimethylamino terminus near HEM501.O1A at 3.73 Å with a difluoropiperidine should redirect the terminal group toward PHE105 while retaining the ethyl link's heme association.",
+    "basis": "The SMILES replace N(CH3)2 with a six-membered 4,4-difluoropiperidine, not a smaller nitrogen ring. Input site atom N19 is near HEM501.O1A at 3.73 Å, typed cofactor contact; C20 is near the same heme oxygen at 3.51 Å. Conserved_interactions retains linker C18 against HEM501.O2A, input distance 3.25 Å. Analogue_contacts lists NEW ring carbons a:C24/a:C25 and F27 near PHE105.CZ, while NEW N21 has no contact within 4.0 Å. PHE105 is nameable from the input envelope.",
+    "confidence": "high",
+    "concern": "NEW F28 lies near chain-B TRP74, a distant cross-chain envelope residue without corroborating multi-chain-pocket disclosure; that association is not used. The short incompatible N01–GLU361 contact is not called a hydrogen bond."
+  },
+  "7O3S V1H->TZK": {
+    "sentence": "Replacing methoxyazetidine near ASN42.ND2 at 3.52 Å with morpholine should redistribute the ring around ASN42 while retaining the aryl methyl's 1.43 Å covalent bond to LYS122.",
+    "basis": "Both SMILES show a four-membered methoxy-substituted azetidine replaced by six-membered morpholine, with the arylsulfonyl portion preserved. Input boundary C03 lies near ASN42.ND2 at 3.52 Å; conserved_interactions maps it to a:C10 against the same atom. NEW morpholine O11 has only a poor-geometry polar contact to ASN42.ND2, and NEW C12 is nearby, supporting redistribution without a hydrogen-bond claim. Input C14 and its conserved a:C01 counterpart explicitly carry COVALENT BOND to LYS122.NZ, with input distance 1.43 Å.",
+    "confidence": "high",
+    "concern": "The pocket includes chain-P ILE128, whose biological versus lattice origin is unresolved. Symmetry makes individual aryl-carbon mappings arbitrary; the sentence uses group identities and a nonsymmetric covalent anchor."
+  },
+  "7FVQ ZQ5->ZQ9": {
+    "sentence": "Replacing the butyl arm near PRO1340.O at 3.87 Å with thienylmethyl should redirect that arm toward GLU1339 while retaining the urea hydrogen bond to PRO1340.",
+    "basis": "SMILES confirm N-butyl becomes N-(thiophen-2-ylmethyl), introducing a five-membered thiophene rather than phenyl. Input changed C3 lies near PRO1340.O at 3.87 Å, typed packing; retained linker C4 lies near that oxygen at 3.50 Å. Analogue_contacts lists NEW thiophene carbons a:C5/a:C6 near GLU1339.OE1, supporting direction toward envelope-listed GLU1339. Conserved_interactions explicitly retains urea N1–PRO1340.O hydrogen bonding, input distance 2.87 Å.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "8QXQ X8Q->XP6": {
+    "sentence": "Removing the amine methyls near ASN183 at 3.43 and 3.23 Å should reduce local apolar proximity and redirect the resulting primary amine toward PRO184.",
+    "basis": "Both SMILES identify dimethylaminoethyl becoming aminoethyl; the indole phosphate remains. Site_of_change deletes CM and CN. The input atom table places CM near ASN183.ND2 at 3.43 Å and CN near ASN183.OD1 at 3.23 Å, both packing rather than hydrogen bonds. Analogue_contacts maps retained amine N to a:N, now hydrogen-bond typed against PRO184.O, supporting qualitative redirection toward PRO184, which appears in the input envelope.",
+    "confidence": "high",
+    "concern": "Phosphate oxygen names are permuted across the mapping, so individual phosphate oxygen movements are not interpreted. Terminus-flagged SAH401 is not used."
+  },
+  "6R19 JON->JP5": {
+    "sentence": "Replacing pyrrolidinylmethyl with benzyl should redistribute the carbamate arm near PRO51.CD at 3.43 Å toward ILE87 while preserving the core's ASN50 hydrogen bond.",
+    "basis": "The SMILES replace a chiral five-membered pyrrolidine with six-membered phenyl, retaining the carbamate O–CH2 connection and removing one stereocentre. Edited C4/C10 and deleted N3 have no input contact within 4.0 Å, so the closest useful local measured anchor is carbamate O4 near PRO51.CD at 3.43 Å. Analogue_contacts maps that oxygen to a:O near ASN50.CB and lists NEW phenyl carbons CAQ/CAR near ILE87.CD1. ILE87 is input-envelope listed. Conserved_interactions retains core O2–ASN50.ND2 hydrogen bonding, input distance 2.93 Å, with consistently relabelled B-to-A chains.",
+    "confidence": "medium",
+    "concern": "The measured anchor is adjacent to the edited ring rather than on a contacted edited atom. Chain relabelling is explicitly consistent; the removed pyrrolidine stereocentre precludes a stereochemically unchanged-arm interpretation."
+  },
+  "7IJ5 A1CJ1->A1CKC": {
+    "sentence": "Replacing pyridyl with chlorophenyl should redistribute the ring near ALA129.O at 3.17 Å and project chlorine toward ILE131 while retaining the carboxyl hydrogen bond to PHE156.",
+    "basis": "The SMILES replace pyridine nitrogen with carbon and add chlorine to the resulting six-membered phenyl ring. Input boundary C15 lies near ALA129.O at 3.17 Å; deleted pyridyl N5 has only packing neighbours, not a hydrogen bond. Analogue_contacts lists NEW a:C16 near VAL49 and NEW CL1 near ILE131.CG1; ILE131 is present in the input envelope and supplies direction only. Conserved_interactions retains carboxyl O1–PHE156.N hydrogen bonding, input distance 2.79 Å.",
+    "confidence": "high",
+    "concern": "Analogue conserved C4–VAL49 and O2–VAL49 rows are uncertain and are excluded. The replaced pyridyl nitrogen had no supported hydrogen bond to lose."
+  },
+  "7UEV N0I->A1BHH": {
+    "sentence": "Relocating the sulfonamide para-to-meta and transferring its N-methyl to sulfur should withdraw the sulfonyl hydrogen bond to SER195 at 2.49 Å while retaining the amide hydrogen bond to ARG207.",
+    "basis": "SMILES show two linked chemical changes: para N-methyl methanesulfonamido becomes meta ethanesulfonamido, introducing an NH rather than retaining N-methyl. Site_of_change marks aryl C15 and sulfonamide N16 MOVED, C17 deleted, and sulfur-bound C20 as a boundary. Input sulfonyl O19 hydrogen-bonds SER195.OG at 2.49 Å; analogue mapped O21 and O22, and S18, explicitly have no contact within 4.0 Å. Conserved_interactions retains amide O24–ARG207.NH2 hydrogen bonding, input distance 2.81 Å.",
+    "confidence": "high",
+    "concern": "MOVED atoms cannot support retained-contact claims. The sentence explicitly includes both positional relocation and methyl transfer rather than treating the edit as simple growth."
+  },
+  "6CTV FFJ->VT7": {
+    "sentence": "Replacing cytosine with thymine should alter polar functionality beside ASP276.CB at 3.43 Å, although residue-numbering ambiguity prevents a reliable assignment of the resulting pocket interactions.",
+    "basis": "The SMILES convert cytosine's exocyclic amino group to thymine's carbonyl and add a ring methyl; the sugar and difluoromethylene-linked phosphate system remain. Input site C4 is near ASP276.CB at 3.43 Å, typed hydrophobic proximity, and C5 at 3.60 Å. Analogue_contacts identifies NEW O4 and C5M, but the explicit unlabellable warning says a residue number denotes different residues, so apparent retained protein contacts are not accepted as reliable comparisons. The sentence confines its consequence to changed local functionality and the limitation.",
+    "confidence": "low",
+    "concern": "PAIR FLAGGED UNLABELLABLE contradicts the numbering_consistent boolean and overrides it. Mg and Na are renumbered and exchanged labels between structures; missing metal conserved rows do not demonstrate lost coordination."
+  },
+  "5OTP AT8->AQ8": {
+    "sentence": "Replacing the benzimidazole chlorines near LEU45.CB at 3.83 and 3.52 Å with methoxy at another ring position should redirect that substituent toward HIS160.",
+    "basis": "Both SMILES show two benzimidazole chlorines removed and one methoxy group installed at a different ring position; the biphenyl chlorine remains. Input changed CL and CL1 lie near LEU45.CB at 3.83 and 3.52 Å, both hydrophobic proximity. Analogue_contacts lists NEW ether O near HIS160.NE2 with good hydrogen-bond geometry and NEW methoxy carbon near that atom, supporting direction toward input-listed HIS160. Input CL2 maps to analogue a:CL and is not one of the deleted chlorines.",
+    "confidence": "high",
+    "concern": "The substitution changes positions as well as chemical groups. Reused CL and N1/N2 names have different mappings across crystals; no identity is inferred from names."
+  },
+  "9Y8Q A1CTO->A1CTP": {
+    "sentence": "Shortening isopropoxymethyl to hydroxymethyl should withdraw the arm near LEU533.CG at 3.72 Å and favor polar alignment toward GLN293, alongside a separate chlorine-to-methyl substitution.",
+    "basis": "SMILES show two transformations: Ar–CH2–O–isopropyl becomes Ar–CH2OH, and one aryl chlorine is replaced with methyl. Input deleted C18 lies near LEU533.CG at 3.72 Å; deleted C17 lies near GLN293.NE2 at 3.75 Å. The retained ether oxygen O2 is initially near PHE289.CE2 at 3.35 Å, then maps to analogue hydroxyl O1 with a hydrogen-bond row against GLN293.NE2. Deleted CL2 lies near TYR512.CD2 at 3.51 Å; NEW methyl C1 lies near CYS558. The sentence explicitly discloses both edits.",
+    "confidence": "high",
+    "concern": "Symmetry makes C13's individual aromatic mapping arbitrary; the rationale uses substituent groups rather than positional motion inferred from that carbon."
+  },
+  "8BSP RD9->RCU": {
+    "sentence": "Adding aryl chlorine should project toward PRO287 beside the trifluoromethyl group near PRO287.CB at 3.59 Å, while methyl-to-ethyl ester extension remains geometrically unresolved.",
+    "basis": "Both SMILES reveal two modifications although the site list shows only aryl C16: methyl ester becomes ethyl ester and aryl chlorine is added. C16 has no input contact within 4.0 Å, so neighbouring trifluoromethyl carbon C18 near PRO287.CB at 3.59 Å supplies a safe measured local anchor. Analogue_contacts lists NEW CL23 near PRO287.CB, supporting direction toward that input-listed residue. Five input ester-arm atoms are unmodelled, and the analogue table covers only 17 of 23 atoms, leaving the ester extension unresolved.",
+    "confidence": "medium",
+    "concern": "The site list misses the second transformation evident in SMILES. Missing input coordinates and incomplete analogue coverage prevent ester contact or loss claims. room_contradicts_edit prohibits enclosure interpretations."
+  },
+  "9GPX A1INX->A1INR": {
+    "sentence": "Removing the linker methyl and inverting another stereocentre should redistribute the macrocycle away from ARG73.NH2, initially 3.54 Å from the chiral linker, while retaining the ILE87 hydrogen bond.",
+    "basis": "SMILES show deletion of the methyl on the triazole-to-ester linker, destroying that stereocentre, and inversion of the separate methyl-bearing O-propyl-to-triazole centre. Input C11 lies near ARG73.NH2 at 3.54 Å, with C12 nearby at 3.59 Å; analogue_contacts maps both to atoms with no contact within 4.0 Å. Deleted C17 itself had no contact within 4.0 Å. Conserved_interactions retains ester O5–ILE87.N hydrogen bonding, input distance 2.96 Å. This supports redistribution associated with the combined stereochemical and deletion edit.",
+    "confidence": "medium",
+    "concern": "The consequence cannot be attributed to methyl deletion alone because another centre inverts. The deleted methyl lacks a measured nearest-contact distance; the sentence anchors the other edited region. Cyclohexyl symmetry mappings are not interpreted."
+  },
+  "7OEF VAT->UDK": {
+    "sentence": "Replacing benzylamino with methylamino should withdraw the phenyl arm near THR408.O at 3.37 Å, while separate spirocycle-to-methylpiperidine remodeling should relax the 2.60 Å ASP395 salt bridge.",
+    "basis": "SMILES show benzylamino becomes methylamino and the azetidine/cyclopentane spirocycle becomes a six-membered 4-methylpiperidine. Input deleted benzyl phenyl carbon C35 lies near THR408.O at 3.37 Å; deleted C36/C37 lie near GLY407.CA. Conserved_interactions maps terminal basic N11 to a:N05 against ASP395.OD1, with input salt-bridge distance 2.60 Å and a longer analogue separation, supporting qualitative relaxation. The sentence explicitly includes both transformations, separated by 18 bonds in the flag.",
+    "confidence": "high",
+    "concern": "Several aliphatic carbons are symmetry equivalent or MOVED, so their individual motions are not interpreted. PHE534 typing changes carry ANGLE-ONLY and do not establish hydrogen-bond weakening."
+  },
+  "29IW UY1->PSU": {
+    "sentence": "O-demethylation should change the ribose's polar presentation relative to the input phosphate's 2.70 Å K5116 coordination, but incompatible numbering prevents assigning a specific pocket gain or loss.",
+    "basis": "Both SMILES identify removal of the ribose O-methyl carbon, retaining pseudouridine and phosphate. Changed CM2 and nearby O2' face suspect K5142, so neither their distances nor that ion supplies a trustworthy anchor. The input atom table instead supports phosphate OP1–K5116 metal coordination at 2.70 Å. No conserved interaction rows exist; residue numbering has zero overlap and the pair is flagged unlabellable. The sentence supplies an input measurement and a limited qualitative chemical consequence without assigning cross-crystal partners.",
+    "confidence": "low",
+    "concern": "The changed-site geometry is unsafe because K5142 is suspect and CM2 is uncertain. The anchor is remote from the edit. No shared numbering, multi-chain contacts, an unmodelled input phosphate oxygen, and incomplete analogue coverage prevent reliable pocket comparison."
+  },
+  "7AYZ SEQ->SDW": {
+    "sentence": "Replacing cyclohexyl near LEU256.CD2 at 3.67 Å with para-iodophenyl should redirect the ring toward PHE319 and iodine toward GLY312, while relaxing the amino hydrogen bond to GLY42.",
+    "basis": "SMILES replace a six-membered saturated cyclohexyl group with six-membered para-iodophenyl, not simply iodinate an unchanged ring. Input attachment C17 lies near LEU256.CD2 at 3.67 Å. Analogue_contacts maps that carbon to a:C near PHE319.CD2 and lists NEW iodine near GLY312.O; GLY312 is nameable from the input envelope. Conserved_interactions shows amino N13–GLY42.O initially hydrogen bonded at 2.90 Å, with a longer and poor-geometry analogue contact, supporting relaxation alongside real ring redirection.",
+    "confidence": "medium",
+    "concern": "Cyclohexyl symmetry makes some ring-carbon joins arbitrary. The GLY42 consequence is not based solely on a typing flip; distance and substantial ring replacement also change. No iodine interaction is asserted."
+  },
+  "7P5K 5UZ->5RB": {
+    "sentence": "Adding N-methyltriazole to cyclopropyl near SER555.OG at 3.73 Å should project toward GLN530, while separate defluorination removes the substituent near ALA556.CB at 3.34 Å.",
+    "basis": "The SMILES retain the three-membered cyclopropane, append a five-membered N-methyltriazole, introduce two cyclopropane stereocentres, and remove aryl fluorine. Input attachment C36 lies near SER555.OG at 3.73 Å; changed F19 lies near ALA556.CB at 3.34 Å. Analogue_contacts lists NEW triazole N39 with hydrogen-bond typing against GLN530.NE2 and N40 against SER555.OG, supporting directional projection toward envelope-listed GLN530. The sentence discloses the distinct defluorination rather than describing one contiguous edit.",
+    "confidence": "high",
+    "concern": "Equivalent input cyclopropyl carbons C35/C36 are arbitrarily mapped, and new stereocentres complicate individual carbon comparisons. The rationale uses group-level direction rather than exact ring-carbon motion."
+  },
+  "7FX4 Q29->WNF": {
+    "sentence": "Replacing aryl chlorines near VAL25.CG2 at 3.47 Å and ALA33.CB at 3.57 Å with methyl, alongside cyclohexane stereochemical inversion, should redistribute the aryl arm and carboxylate anchoring.",
+    "basis": "Both SMILES show dichlorophenoxy becomes methylphenoxy while retaining a six-membered cyclohexane; the flag identifies inversion of both cyclohexane stereocentres. Input changed CL19/CL20 lie near VAL25.CG2 at 3.47 Å and ALA33.CB at 3.57 Å. Analogue_contacts shows broad aryl relocation and NEW methyl C20 near LYS58.O. Input carboxylate O09 forms an ARG126.NH1 salt bridge at 3.19 Å; its mapped analogue counterpart instead hydrogen-bonds TYR128.OH. O08's initial TYR128 hydrogen bond also lengthens and changes typing, supporting redistributed anchoring rather than a bare typing-flip label.",
+    "confidence": "medium",
+    "concern": "The aryl substitution and two stereochemical inversions act together; pocket changes cannot be assigned to dechlorination alone. The sentence does not infer atom identity from reused aromatic names."
+  },
+  "8P6V I74->X58": {
+    "sentence": "Adding a hydroxyl at the piperidine attachment centre should redirect the arm's 2.69 Å ASN141.O hydrogen bond toward ASN142 while retaining the 2.79 Å MET94.O hydrogen bond.",
+    "basis": "SMILES add OH to the substituted carbon of a six-membered piperidine; the existing ring OH and secondary amine remain. Input attachment C41 has no contact within 4.0 Å, so ring amine N44–ASN141.O at 2.69 Å provides the local measured anchor. Analogue_contacts maps N44 to a:N25 with good-geometry hydrogen bonding to ASN142.OD1, supporting directional redirection toward input-envelope ASN142. NEW hydroxyl O22 has only packing proximity to ASP155.OD2, not a supported hydrogen bond. Conserved_interactions retains N10–MET94.O hydrogen bonding, input distance 2.79 Å.",
+    "confidence": "medium",
+    "concern": "C41 stereochemistry is explicitly incomparable after substituent addition and is not called an inversion. The measured anchor is on the nearby ring amine rather than the noncontacting attachment centre."
+  },
+  "9DF4 A1A4E->A1IMS": {
+    "sentence": "Replacing the alkynyl acylated pyrrolidine arm with tetrahydrofuranylmethoxy should give up the 1.79 Å covalent bond to CYS800 while retaining the core's 2.97 Å MET796 hydrogen bond.",
+    "basis": "SMILES replace the alkynyl methylpyrrolidine bearing an unsaturated amide and dimethylamino tail with O–CH2–tetrahydrofuran; both terminal heterocycles are five-membered but differ in chemistry and attachment. Input changed C29 explicitly carries COVALENT BOND to CYS800.SG at 1.79 Å. The reliable COVALENCY MISMATCH states this bond is absent in the analogue; no anomalously short analogue contact undermines that warning. Conserved_interactions retains core N4–MET796.N hydrogen bonding, input distance 2.97 Å. NEW tetrahydrofuran oxygen lies only in packing proximity to CYS800.CB.",
+    "confidence": "high",
+    "concern": "The edited stereocentre has changed substituents and cannot be compared by R/S labels. The replacement retains noncovalent proximity near CYS800, which must not be confused with retention of its covalent bond."
+  },
+  "7FS2 O7X->O8X": {
+    "sentence": "Removing the extra dihydroxyphenyl ring should give up its 2.74 Å hydrogen bond to TYR402(A), while lengthening the sulfonamide–aryl linker should redistribute nearby aromatic packing.",
+    "basis": "Both SMILES show loss of one dihydroxyphenyl ring and conversion of NCc to NCCc: two transformations. Input atom table/site-of-change O4, deleted, hydrogen-bonds TYR402.N chain A at 2.74 Å, 131°; deleted C5/C6 sit near PHE38 chain A at 3.68/3.60 Å. MOVED C16 is near LEU365.O chain A at 3.86 Å; analogue_contacts maps it to a:C9 with no contact within 4.0 Å. The added linker carbon a:C5 sits near PHE38, supporting redistribution rather than simple deletion.",
+    "confidence": "high",
+    "concern": "Multi-chain pocket and chain relabelling require explicit chain identification; symmetry-equivalent sulfonyl oxygen mappings are unsuitable for atom-specific movement claims."
+  },
+  "6E41 HQS->BBJ": {
+    "sentence": "Replacing the thioether sulfur beside HEM501.C3A at 3.40 Å with an amino linker should preserve proximity to the heme while changing the linker’s polar character.",
+    "basis": "SMILES directly identify SCC versus NCC as the sulfur-to-NH substitution, with unchanged atom count. Input site S10 has contact with cofactor HEM501.C3A at 3.40 Å; analogue_contacts NEW a:N18 faces the same cofactor atom, supporting maintained heme proximity. Boundary C09 remains near GLY262.O in conserved_interactions, input 3.56 Å.",
+    "confidence": "high",
+    "concern": "Oxime O04–iron coordination is unusually short and uncertain on both sides; it cannot support a retained coordination claim. No hydrogen bond is assigned to the new linker nitrogen."
+  },
+  "6H4X FNQ->FQB": {
+    "sentence": "Replacing the distal pyridyl ring with a dimethylaminoethyl arm should redistribute peripheral packing while retaining the core’s 2.84 Å hydrogen bond to LYS206.",
+    "basis": "Both SMILES show a distal six-membered pyridyl ring replaced by an acyclic dimethylaminoethyl substituent; neither the phenyl nor piperidine ring is removed. Input O hydrogen-bonds LYS206.NZ at 2.84 Å, 154°, and conserved_interactions maps O to a:O with the same hydrogen-bond partner. Input peripheral C17 lies near VAL313.CG2 at 3.97 Å; its mapped analogue atom a:C8 has no contact within 4.0 Å. NEW dimethylaminoethyl atoms also have no nearby contacts.",
+    "confidence": "low",
+    "concern": "The listed site C29 and boundary C19 have no measured nearby contact, and five distal atoms are unmodelled. The mapper represents a substantial ring-to-chain replacement as deletion of one atom; the sentence therefore uses a remote conserved anchor."
+  },
+  "9M13 A1L70->A1L7Y": {
+    "sentence": "Chlorinating both aromatic rings should redirect their peripheral packing toward SER274 and ILE264 while retaining the ring positioned beside VAL230.CG2 at 3.53 Å.",
+    "basis": "Both SMILES establish two separate aromatic chlorine additions. Input site C15 sits near VAL230.CG2 at 3.53 Å and is conserved as a:C10 near that partner. Analogue_contacts NEW a:CL31 lies near SER274.OG and NEW a:CL32 near ILE264.CD1; both residues are nameable from the input pocket envelope, used only for directional consequences.",
+    "confidence": "medium",
+    "concern": "Site C03 is labelled an attachment point but its mapping and symmetry warning do not safely identify an aromatic chlorination position; the SMILES place both chlorines on aromatic rings, not on the tertiary-alcohol alkyl arm."
+  },
+  "6G97 EQZ->ESK": {
+    "sentence": "Replacing the methoxyethyl arm, whose ether hydrogen-bonds LYS54 at 3.48 Å, with a chiral hydroxyphenylethyl amide should redistribute polar anchoring toward ASP167 and aromatic bulk toward TYR36.",
+    "basis": "SMILES show N-methoxyethyl replaced by N-CH2-C(=O)-NH-CH(phenyl)-CH2OH, creating a stereocentre. Input MOVED O2 is the ether oxygen: its polar-partner line supports a LYS54.NZ hydrogen bond at 3.48 Å, 129°. Analogue_contacts maps O2 to alcohol a:O1 with an ASP167.OD1 hydrogen bond; NEW carbonyl a:O6 hydrogen-bonds LYS54. NEW phenyl carbons a:C32–a:C34 sit near TYR36. ASP167 and TYR36 are present in input evidence.",
+    "confidence": "medium",
+    "concern": "O2 changes chemical identity from ether oxygen to alcohol oxygen under the graph mapping, so its interaction is replaced rather than retained. TYR64 and THR68 are analogue-only and are not named."
+  },
+  "9GQ3 A1IN1->A1IOB": {
+    "sentence": "The linker extension, alkene saturation and aryl-ether relocation should move the macrocycle away from SER115(A), beside which an input linker carbon sits at 3.68 Å.",
+    "basis": "Both SMILES show an alkene-containing linker becoming a longer saturated chain and a changed aromatic ether substitution pattern; the packet flags two separated transformations. Input attachment CBC sits near SER115.CB chain A at 3.68 Å. Analogue_contacts maps CBC to a:C15 with no contact within 4.0 Å; mapped CAW/CAX/CAY also redistribute or lose their nearest SER115 relationships. Conserved ILE87 and TYR113 hydrogen bonds support a localized peripheral rearrangement.",
+    "confidence": "medium",
+    "concern": "SER115 belongs to another protein chain in a disclosed multi-chain pocket; biological versus lattice origin is unresolved. Symmetry prevents interpreting equivalent ring-carbon swaps as specific movement."
+  },
+  "7R05 HQX->IIV": {
+    "sentence": "Replacing the isoleucine side chain near VAL1013 at 3.13 Å and TYR1063 at 3.45 Å with an asparagine side chain should replace branched apolar packing with a polar terminus.",
+    "basis": "SMILES identify an isoleucine-derived sec-butyl side chain replaced by CH2CONH2, removing its side-chain stereocentre. Input deleted C1 and C2 lie near VAL1013.CG2 at 3.13 Å and TYR1063.CE2 at 3.45 Å. Analogue_contacts NEW carbonyl a:O2 lies near VAL1013, supporting replacement of apolar bulk by a polar terminus without asserting a hydrogen bond.",
+    "confidence": "high",
+    "concern": "NEW amide nitrogen a:N2 has an uncertain, donor-incompatible short contact to ASN1064; input O2 also has uncertain proximity to ILE1074. Neither is used to claim an interaction."
+  },
+  "7NLE UHW->UST": {
+    "sentence": "Replacing N-methylpiperazine beside ASN42 at 3.54 Å with tetrahydroquinoline should redirect peripheral packing toward the peptide chain while retaining the 1.43 Å covalent bond to LYS122.",
+    "basis": "Both SMILES establish a six-membered N-methylpiperazine replaced by fused tetrahydroquinoline, not simple phenyl addition to unchanged piperazine. Input site C10 lies near ASN42.ND2 at 3.54 Å. Analogue_contacts maps it to a:C11 near GLY48.O chain P; the new fused-ring carbons also lie near peptide-chain residues. Conserved_interactions C02→a:C02 confirms the LYS122.NZ covalent bond, input 1.43 Å.",
+    "confidence": "medium",
+    "concern": "The pocket includes peptide chain P; no biological-interface interpretation is assumed. One analogue atom and the input aldehyde oxygen are unmodelled, so omissions cannot establish losses. Equivalent ring-carbon mappings are arbitrary."
+  },
+  "9F0Q A1H8W->A1H8V": {
+    "sentence": "Reworking benzothiophene into a tetrahydrobenzothiophene should relax its aromatic packing beside PHE62 at 3.52 Å and redirect the sulfur-bearing edge toward ASP117.",
+    "basis": "SMILES show saturation of the fused six-membered carbocycle plus a changed thiophene/carboxamide arrangement. Input deleted C17 lies near PHE62.CZ at 3.52 Å; boundary C16 is near the same atom at 3.78 Å, and deleted S18 lies nearby at 3.88 Å. Analogue_contacts maps C16 to a:C9 with no contact within 4.0 Å; NEW sulfur a:S1 is near ASP117.OD2. ASP117 is named only as an input-envelope direction.",
+    "confidence": "medium",
+    "concern": "The edit is more than simple ring hydrogenation. Zinc ions are renumbered, so missing conserved metal rows do not imply loss; uncertain phosphorus–zinc proximity is excluded."
+  },
+  "9GQ4 A1IN2->A1IN5": {
+    "sentence": "Shortening the macrocyclic ether linker should give up its carbon’s 3.84 Å proximity to TYR113 and displace the linker oxygen hydrogen-bonded to LYS121 at 2.82 Å.",
+    "basis": "SMILES show deletion of one linker carbon and one ether oxygen, retaining the alkene. Input deleted CAZ lies near TYR113.OH at 3.84 Å; deleted OAY has no contact within 4.0 Å. Input OAV hydrogen-bonds LYS121.NZ at 2.82 Å, 105°; analogue_contacts maps it to a:O3 with no nearby contact, and mapped OBF/CAU likewise lose their listed LYS121 proximity.",
+    "confidence": "high",
+    "concern": "Consistent A→B chain relabelling supports matched pocket residues. Analogue SER115 contacts involve a second chain and are not used to claim a new binding-site interaction."
+  },
+  "9TFH A1JVW->A1JVQ": {
+    "sentence": "Replacing methylquinazoline with a pyrazole-substituted fused azaheterocycle should extend toward GLY676 while retaining the 2.97 Å hydrogen bond to CYS673 and nearby LEU799 packing.",
+    "basis": "Both SMILES show a rebuilt fused heteroaromatic head and a five-membered N-methylpyrazole substituent, while the piperazine–benzylpyrimidine region remains. Input site N30 hydrogen-bonds CYS673.N at 2.97 Å, 124°; conserved_interactions N30→a:N32 retains that partner and hydrogen-bond typing. Input site C07 lies near LEU799.CD1 at 3.56 Å and remains near it. NEW pyrazole-region carbons lie near GLY676, which is in the input envelope and is used only directionally.",
+    "confidence": "medium",
+    "concern": "Multiple attachment labels reflect a substantial heterocycle rebuild rather than simple decoration of an unchanged quinazoline. Atom names alone do not establish the identities of rebuilt ring atoms."
+  },
+  "8ALT MU9->NQ9": {
+    "sentence": "Replacing gem-difluoro with amino and the anilino linker with ether should relinquish fluorine proximity to LEU218 at 3.70 Å while retaining the 1.85 Å covalent bond to CYS38.",
+    "basis": "Both SMILES show two substitutions: cyclohexane gem-difluoro becomes a primary amino substituent, and the aryl–NH–cyclohexane linkage becomes aryl–O–cyclohexane. Input deleted F1 lies near LEU218.CD2 at 3.70 Å; F2 and deleted N3 have no contact within 4.0 Å. Analogue NEW amino a:N1 and ether a:O1 explicitly have no nearby contact. Conserved_interactions C2→a:C17 confirms CYS38.SG covalency, input 1.85 Å.",
+    "confidence": "high",
+    "concern": "VAL595 is a chain terminus and probable lattice neighbour, so its rows are excluded. The leaving-group halogen is unmodelled and the analogue table incomplete; uncertain a:C13–ASN42 proximity is also excluded."
+  },
+  "8RV6 A1H3B->A1H3D": {
+    "sentence": "Deleting the hydroxyphenyl appendage should relinquish its 3.60 Å proximity to PRO134 and permit the remaining carboxyphenyl group to reorient, while retaining ribose hydrogen bonding to ASP99.",
+    "basis": "SMILES show removal of the entire six-membered para-hydroxyphenyl appendage. Input deleted C30/C31/C32/C35 lie near PRO134.CG at 3.60/3.62/3.95/3.92 Å; deleted phenolic O36 has no nearby contact. Analogue_contacts records broad movement of the remaining aryl/carboxyl region. Conserved_interactions O6/O7 retain ASP99 hydrogen bonds, with input distances 2.72/2.85 Å.",
+    "confidence": "high",
+    "concern": "Analogue carboxyl oxygen a:O29 has an uncertain short contact and is excluded. No specific destination or new hydrogen bond is assigned to the reoriented carboxyphenyl group."
+  },
+  "9GPW A1INW->A1INU": {
+    "sentence": "Relocating the linker methyl across the triazole should redistribute packing around ARG73, beside which an input linker carbon sits at 3.67 Å, while retaining the ILE87 hydrogen bond.",
+    "basis": "Both SMILES place the methyl-bearing stereocentre on opposite sides of the five-membered triazole; atom count is unchanged. Input substitution boundary C10 lies near ARG73.NH1 at 3.67 Å; mapped a:C10 has no nearby contact, while NEW relocated methyl a:C11 lies near ARG73.NH1. Conserved_interactions O5→a:O5 retains the ILE87.N hydrogen bond, input 2.98 Å.",
+    "confidence": "medium",
+    "concern": "The stereocentre cannot be compared across the relocation; no inversion is claimed. The TYR113 oxygen typing flip is explicitly angle-only and does not establish strengthening. Chain B→A relabelling is consistent."
+  },
+  "9GPS A1INV->A1INX": {
+    "sentence": "Relocating one linker methyl and adding another should redirect the segment beside SER115(B) at 3.52 Å away from that chain while retaining the 2.92 Å ILE87 hydrogen bond.",
+    "basis": "SMILES show methyl relocation along the aryl-ether–triazole arm and methyl addition on the triazole–ester arm, creating an additional stereocentre; two transformations are disclosed. Input attachment C16 sits near SER115.OG chain B at 3.52 Å; mapped a:C16 explicitly has no nearby contact, as does NEW a:C17. Input C8 also lies near SER115(B) at 3.78 Å and its mapped atom loses that proximity. Conserved_interactions O5 retains ILE87.N hydrogen bonding, input 2.92 Å.",
+    "confidence": "medium",
+    "concern": "SER115 is on the minority chain of a multi-chain pocket; its biological relevance is unresolved. ARG73 is absent from input evidence and is not named despite informative analogue rows."
+  },
+  "9GQ7 A1IN5->A1IN6": {
+    "sentence": "Lengthening and saturating the macrocyclic linker should redistribute its carbons beside SER115(A) at 3.17 Å and redirect the aryl ether toward LYS121 while retaining the ILE87 hydrogen bond.",
+    "basis": "SMILES show a five-carbon alkene-containing linker replaced by a six-carbon saturated linker. Input attachment C10 lies near SER115.OG chain A at 3.17 Å and C11 at 3.74 Å; analogue_contacts maps both to atoms with no nearby contact, while NEW a:CBC lies near SER115. Input O1 lies near TYR113 at 3.91 Å; its mapped a:OBH faces LYS121. Conserved_interactions O5 retains ILE87 hydrogen bonding, input 2.99 Å.",
+    "confidence": "medium",
+    "concern": "SER115 belongs to a second protein chain. Equivalent carbon mappings are arbitrary, so the claim is about redistribution of the linker as a group rather than individual carbon displacement."
+  },
+  "9QOW A1I8X->A1I8Z": {
+    "sentence": "Replacing the acetamide arm beside ALA36 at 3.74 Å with a chiral hydroxyalkyl arm should redirect peripheral polar character toward GLY31 while retaining the ILE98 hydrogen bonds.",
+    "basis": "SMILES identify N-CH2-CONH2 replaced by N-CH(CH3)-CH2-CH2OH, creating a stereocentre. Input site C2 lies near ALA36.CB at 3.74 Å and is conserved near it; deleted amide N1 is near ALA36 at 3.58 Å, while deleted O3 has no nearby contact. Analogue_contacts NEW alcohol a:O01 and arm carbon a:C02 lie near GLY31.N, with packing rather than hydrogen-bond typing. Conserved N14/N16 retain ILE98 hydrogen bonds, input 2.81/2.95 Å.",
+    "confidence": "high",
+    "concern": "The new alcohol’s GLY31 proximity is not typed as a hydrogen bond; the sentence states direction and polar character only."
+  },
+  "7IIW A1CJB->A1CJD": {
+    "sentence": "Methylating the heterocycle beside GLY48 at 2.98 Å and inverting the side-chain stereocentre should reorganize local packing, but the methyl’s pocket consequence remains uncertain.",
+    "basis": "SMILES establish methyl addition to the fused heterocycle; the packet separately reports C3 stereochemical inversion. Input attachment C16 lies near GLY48.CA at 2.98 Å. Analogue_contacts maps C16 to a:C2 near ILE23, but NEW methyl a:C1 has an uncertain short ILE23 contact, preventing a defensible methyl-specific gain claim. Multiple other mapped atoms redistribute, supporting only general packing reorganization.",
+    "confidence": "low",
+    "concern": "The new methyl contact, analogue bromine contact, one GLY130 row and a carboxyl hydrogen-bond row are uncertain. Methylation and stereochemical inversion confound attribution; uncertain rows cannot establish retained or gained interactions."
+  },
+  "9Q1P A1CNO->A1CM5": {
+    "sentence": "Opening the hydroxyindane ring beside GLY48(B) at 3.82 Å into a hydroxyethyl substituent, with stereochemical inversion, should redirect its hydroxyl toward the ASP30 backbone.",
+    "basis": "SMILES show the fused five-membered hydroxyindane carbocycle replaced by an acyclic aryl-CH(OH)-CH3 substituent; C28 is deleted, not the aromatic ring. Input site C28 lies near GLY48.O chain B at 3.82 Å. Input O08 lies near ASP30.OD2 chain B at 2.86 Å with poor geometry; analogue_contacts maps O08 to ASP30.N, supporting directional reorientation toward the backbone. C31 is explicitly flagged inverted.",
+    "confidence": "medium",
+    "concern": "The stereo flag accompanies changed ring connectivity, so local geometry cannot be attributed to ring opening alone. The multi-chain protease pocket requires chain-specific GLY48 anchoring; the polar typing change is not the sentence’s sole content."
+  },
+  "7NLE UHW->UHQ": {
+    "sentence": "Replacing N-methylpiperazine beside ASN42 at 3.54 Å with dimethylaminopiperidine should redirect that ring toward peptide-chain ARG50 while retaining the 1.43 Å covalent bond to LYS122.",
+    "basis": "SMILES establish a six-membered N-methylpiperazine replaced by a six-membered piperidine bearing an exocyclic dimethylamino group; the added nitrogen is not an unchanged ring nitrogen. Input attachment C10 lies near ASN42.ND2 at 3.54 Å; mapped a:C04 lies near ARG50.O chain P. NEW a:C20 also lies near ARG50.O. ARG50(P) is nameable from the input envelope, used directionally. Conserved_interactions C02→a:C15 confirms LYS122.NZ covalency, input 1.43 Å.",
+    "confidence": "medium",
+    "concern": "The analogue table lacks one atom and the input aldehyde oxygen is unmodelled, so missing rows cannot prove losses. Symmetric ring-carbon mappings and the peptide-chain pocket limit precise positional interpretation."
+  },
+  "9YKP YUJ->YUA": {
+    "sentence": "Extending the isobutyl branches, one lying near chain B GLY27.O at 3.81 Å, should redistribute alkyl proximity toward THR80 while retaining the terminal hydroxyl hydrogen bond to chain B ASP30.",
+    "basis": "SMILES change N-isobutyl to N-(2-ethylbutyl), extending both branches by one carbon. Site table identifies C34/C35 as attachment points; input C34 faces GLY27.O on chain B at 3.81 Å, while C35 has no contact within 4 Å. Analogue NEW a:C43 lies near THR80.OG1; THR80 is nameable from the input envelope. Conserved O41/a:O42 supports retention of the chain B ASP30.N hydrogen bond, input 2.95 Å.",
+    "confidence": "medium",
+    "concern": "Branch mapping is symmetry-dependent; avoid assigning a unique branch trajectory. The ligand spans two protein chains."
+  },
+  "9LDF A1EJE->A1EJC": {
+    "sentence": "Replacing the distal phosphorylated sugar with ribose phosphate substituents should redistribute polar anchoring, including the removed sugar oxygen’s 3.06 Å hydrogen bond to ARG136, although the overall pose is not safely comparable.",
+    "basis": "Both SMILES retain adenine but replace the diphosphate-linked distal bicyclic sugar phosphate with an adenosine triphosphate substitution pattern. Input changed O26 hydrogen-bonds ARG136.NH1 at 3.06 Å; changed O32 hydrogen-bonds LYS63.NZ at 3.04 Å. No conserved interactions survive. Analogue phosphate oxygens have different nearest partners throughout, supporting broad redistribution rather than a localized gain.",
+    "confidence": "low",
+    "concern": "Explicitly flagged unlabellable because no interaction survives; extensive pose change, phosphate relocation, stereocentre-count change and symmetric oxygen mapping prevent causal attribution."
+  },
+  "7FZ0 WBR->UUX": {
+    "sentence": "Redistributing ethyl and phenyl substituents into methyl and benzyl groups should alter peripheral packing around the pyridine carbon near PHE16.CZ at 3.87 Å, but residue inconsistencies prevent reliable directional assignment.",
+    "basis": "SMILES show ethyl-to-benzyl and directly attached phenyl-to-methyl changes around the substituted pyridine, with unchanged total heavy-atom count. Site boundary C15 faces PHE16.CZ at 3.87 Å. C18 is marked MOVED, and C29 is removed. Analogue mappings show widespread partner changes; purported conserved C15/PHE16 cannot override the pair-level residue-identity warning.",
+    "confidence": "low",
+    "concern": "Explicit unlabellable residue-identity warning conflicts with numbering_consistent=True; SER53/THR53 and PHE57/LEU57 demonstrate unsafe correspondence. Multiple substituents change, and C18 status differs between site and analogue tables."
+  },
+  "9ETE DXC->JN3": {
+    "sentence": "Relocating a steroid hydroxyl should give up its 2.81 Å hydrogen bond to HIS99.ND1 without replacing that local anchor, while the other hydroxyl’s GLN101 hydrogen bond should remain.",
+    "basis": "Both SMILES describe dihydroxylated steroid acids, with one hydroxyl moved between steroid positions. Changed input O1 hydrogen-bonds HIS99.ND1 at 2.81 Å, 120°. NEW a:O7 has no contact within 4 Å. Conserved O2/a:O3 faces GLN101.OE1, input 2.78 Å, with hydrogen-bond typing on both sides.",
+    "confidence": "high",
+    "concern": "C13 stereochemistry cannot be compared across the edit; avoid interpreting the relocation as a simple stereochemical inversion."
+  },
+  "5OTZ AUT->A4Q": {
+    "sentence": "Removing the aryl chlorine near TYR125.N at 3.56 Å should reduce proximity on that ring edge and allow the aminomethyl group to redirect its hydrogen bonding toward VAL162.",
+    "basis": "SMILES remove one of the two aryl chlorines. Site changed CL1 faces TYR125.N at 3.56 Å, typed polar/apolar packing. Input aminomethyl N hydrogen-bonds PRO159.O at 2.75 Å; mapped analogue a:N instead hydrogen-bonds VAL162.O. VAL162 is present in the input atom table. Consistent chain relabelling A-to-B permits comparison.",
+    "confidence": "medium",
+    "concern": "The remaining input chlorine CL has an uncertain MET221 proximity and is excluded from the rationale; substantial pose redistribution limits attribution solely to dechlorination."
+  },
+  "7FAK 1UI->1TI": {
+    "sentence": "Replacing methoxypyridine with N-methylpyrazole should reorganize proximity around ARG481, where the methoxy oxygen lies at 3.32 Å, while separately methylating cyclopropyl and retaining the lactam hydrogen bond to THR592.",
+    "basis": "Direct SMILES comparison establishes a six-membered methoxypyridine-to-five-membered N-methylpyrazole replacement and cyclopropyl-to-1-methylcyclopropyl change. Input changed methoxy O has a poor-geometry polar contact with ARG481.NH2 at 3.32 Å; changed C lies near the same atom at 3.18 Å. Analogue pyrazole N has only poor-geometry polar proximity to ARG481. Conserved lactam O2/a:O1 hydrogen-bonds THR592.OG1, input 3.20 Å.",
+    "confidence": "medium",
+    "concern": "Two separate chemical changes are evident despite no multi-site flag. Methoxy proximity is not a hydrogen bond; avoid chain-terminal envelope residues."
+  },
+  "8U6G VVE->VQ0": {
+    "sentence": "Replacing the N-propionyl benzimidazolone with chlorouracil should remove the acyl carbon’s 1.48 Å covalent attachment to LYS102, while also reorganizing ring proximity around VAL106.",
+    "basis": "Input SMILES contain N-propionyl benzimidazolone; analogue contains a chlorinated pyrimidinedione without that propionyl group or fused benzene. Changed input C1 is explicitly covalently bonded to LYS102.NZ at 1.48 Å. Pair flag states the analogue lacks this covalent bond, with no unreliable-mismatch flag or suspiciously short analogue nonbonded row. Removed fused-ring C25 faces VAL106.CG2 at 3.33 Å. Conserved C7/a:C12 retains proximity to VAL106.",
+    "confidence": "high",
+    "concern": "LYS103 is suspect throughout and cannot support hydrogen-bond retention; uncertain C2/C3 proximities are excluded. The headgroup replacement includes several structural changes."
+  },
+  "8ATP O0O->N0L": {
+    "sentence": "Lengthening the linker near ILE168.CG1 at 3.82 Å should redistribute alkyl proximity toward PHE119, while the separate piperidine-to-tetrahydropyran substitution should retain the 1.82 Å CYS38 covalent anchor.",
+    "basis": "SMILES lengthen the chloroacetamide-to-piperidine tether by two methylenes and replace the distal six-membered piperidine nitrogen with oxygen. Input attachment C3 faces ILE168.CG1 at 3.82 Å. NEW linker a:C05 lies near PHE119, which is input-envelope named; NEW a:C06 lies near ILE168. Conserved C2/a:C01 explicitly retains CYS38.SG covalency, input 1.82 Å.",
+    "confidence": "medium",
+    "concern": "Two transformations; symmetric ring mappings cannot localize growth reliably. VAL595 chain B is a chain terminus and is excluded. Missing leaving-group chlorine and incomplete-table warning prohibit absence-based polar conclusions."
+  },
+  "9OHQ A1CBH->A1CBG": {
+    "sentence": "Replacing the heteroaromatic N-methyl group near HIS353.NE2 at 3.50 Å with oxetanyl should broaden substituent proximity toward chain B HIS141 while retaining the pyrrolidine’s GLU377 salt bridge.",
+    "basis": "SMILES replace aromatic N-methyl with N-linked oxetan-3-yl, a four-membered oxygen-containing ring. Changed C21 faces HIS353.NE2 at 3.50 Å. NEW a:C24 is near HIS353 and NEW a:C26 is near chain B HIS141.O, supporting redistribution without asserting a new polar bond. Conserved pyrrolidine N2/a:N3 salt-bridges GLU377.OE1, input 2.81 Å.",
+    "confidence": "high",
+    "concern": "Multi-chain pocket; chain B HIS141 proximity is real in the packet but its biological versus lattice role is unresolved."
+  },
+  "6F6U CV8->CZT": {
+    "sentence": "Replacing the amide carbonyl near PHE506.CZ at 3.93 Å with a hydroxypropyl amine linker should redirect polar functionality toward HIS326 and reorganize the stereochemically altered morpholine region.",
+    "basis": "SMILES change oxime-O-CH2-C(=O)-N to oxime-O-CH2-CH(OH)-CH2-N. Changed input O04 faces PHE506.CZ at 3.93 Å, typed packing rather than hydrogen bonding. NEW hydroxyl a:O04 lies near HIS326.CE1, and HIS326 is input-envelope named; this supports direction only. Input C19 lies near SER374.CB at 3.47 Å, while mapped a:C02 shifts toward PHE506. The GLN535 O03 typing flip is angle-only and is not interpreted as weakening.",
+    "confidence": "medium",
+    "concern": "Mapper attachment labels do not cleanly describe the chemical linker replacement. Stereo flag lists C01/C19 inversions, so conserved atom identities must not imply conserved geometry."
+  },
+  "6CTP TTE->FCJ": {
+    "sentence": "Replacing thymine with adenine should exchange the base oxygen’s 2.95 Å ASN279 hydrogen bond for a nitrogen-based polar anchor, although residue-identity warnings limit reliable comparison of the surrounding pocket.",
+    "basis": "SMILES establish thymine-to-adenine replacement on the deoxyribose phosphonate nucleotide. Changed input O2 hydrogen-bonds ASN279.ND2 at 2.95 Å, 135°. MOVED analogue a:N3 faces ASN279.ND2 with hydrogen-bond typing, supporting a chemically different base anchor rather than retention of the same group. MG coordination is excluded from the sentence because its renumbering and one uncertain analogue coordination require separate treatment.",
+    "confidence": "low",
+    "concern": "Explicitly flagged unlabellable for residue identity despite numbering_consistent=True. MG403/MG402 join fails; analogue O1B coordination is uncertain. Stereo-count change and MOVED N1 prohibit treating the base anchor as conserved."
+  },
+  "9GBN A1IJZ->A1IJY": {
+    "sentence": "Replacing the phenylalanine-derived acyl group with carboxybenzoyl should remove its amino group’s 2.88 Å ALA356.O hydrogen bond and redistribute the new carboxyl functionality toward PHE391 and HIS410.",
+    "basis": "SMILES replace proline-N-C(=O)-CH(NH2)-CH2-phenyl with proline-N-C(=O)-para-carboxyphenyl. Changed N13 hydrogen-bonds ALA356.O at 2.88 Å, 127°. NEW carboxyl oxygens a:O17/a:O18 lie near PHE391.CE1 and HIS410.CD2, respectively; both residues are input-envelope named, so the sentence states direction without contact chemistry. Zinc-binding O23/O24 remain modelled but are not used as a conserved-row claim.",
+    "confidence": "high",
+    "concern": "ZN703/ZN701 renumbering causes a join failure, not loss of coordination. Near-zinc carbon rows are uncertain. The removed amino-bearing stereocentre reduces stereocentre count."
+  },
+  "7TSP K8O->K9C": {
+    "sentence": "Replacing difluoropiperidine with methylamine should reduce peripheral proximity near ASN338, where fluorine lies at 3.03 Å, and redirect the terminal amine toward the heme propionate while retaining the aminopyridine anchor.",
+    "basis": "SMILES replace a six-membered difluoropiperidine with acyclic methylamine. Removed F18 lies near ASN338.ND2 at 3.03 Å, typed packing; removed C12/C13 have heme O2D cofactor contacts. NEW a:N11/a:C12 face HEM501.O2A, supporting redirection toward the propionate without upgrading cofactor typing to salt bridge. Conserved N02 retains GLU361.OE2 hydrogen-bond typing, input 2.61 Å.",
+    "confidence": "high",
+    "concern": "Input N01/GLU361 acceptor incompatibility is not a hydrogen bond. New a:N11 is chemically distinct from removed piperidine N11 despite reused naming."
+  },
+  "8CXV T9R->T96": {
+    "sentence": "Exchanging para-hydroxyl for amino on the benzyl ring near TYR178.CE1 at 3.95 Å should modestly reorganize that aromatic edge while retaining the ribose hydrogen bonds to ASP114.",
+    "basis": "SMILES change para-hydroxybenzyl to para-aminobenzyl without changing heavy-atom count. Changed phenolic O2 has no input contact within 4 Å; boundary C12 faces TYR178.CE1 at 3.95 Å. Analogue mapped C12 has no contact within 4 Å, and NEW amino a:N5 likewise has none. Conserved ribose O/a:O and O4/a:O3 retain ASP114 hydrogen-bond typing, input 2.72 and 2.60 Å.",
+    "confidence": "high",
+    "concern": "Symmetric aromatic C10/C14 mapping is arbitrary; no new amino hydrogen bond is supported."
+  },
+  "7I82 A1BZ0->A1B0E": {
+    "sentence": "Amidating the carboxylate should remove its 2.85 Å LYS68 salt bridge, while phenyl deletion reduces proximity near ILE140 and the separate amine-to-ether linker replacement reorganizes the MET163 region.",
+    "basis": "SMILES establish three changes: carboxylic acid-to-carboxamide, removal of the terminal biphenyl phenyl ring, and NCCNCCC-to-NCCOCCCC linker replacement. Input O salt-bridges LYS68.NZ at 2.85 Å; mapped analogue a:O instead has packing near ASP175.CA, while NEW amide a:N has incompatible polar typing. Removed phenyl C26/C27 lie near ILE140.CD1 at 3.50/3.24 Å. Input boundary C15 faces MET163.SD at 3.51 Å; NEW linker O lies near MET163.CE.",
+    "confidence": "high",
+    "concern": "Three spatially separated transformations prevent assigning all pose changes to one edit. The new amide nitrogen’s incompatible ASP175 proximity is not a hydrogen bond."
+  },
+  "8ARY NQU->NUO": {
+    "sentence": "Replacing cyclohexyl ether with cyclobutyl aniline should reduce proximity near ILE219.CD1, where oxygen lies at 3.58 Å, while separately removing chlorine near LYS122 and retaining the CYS38 covalent anchor.",
+    "basis": "SMILES show six-membered cyclohexane-to-four-membered cyclobutane contraction, aryl ether-to-anilino replacement, and aryl dechlorination. Changed O3 lies near ILE219.CD1 at 3.58 Å; changed CL2 lies near LYS122.CE at 3.56 Å. Mapped ring C16/C17 have no analogue contact within 4 Å. Conserved C2/a:C2 explicitly retains CYS38.SG covalency, input 1.78 Å.",
+    "confidence": "medium",
+    "concern": "Multi-site edit and altered pose. Chain B VAL595 terminus is excluded. Missing leaving-group chlorine yields an incomplete table, so no unsupported polar absence is inferred."
+  },
+  "8P73 X50->X4L": {
+    "sentence": "Contracting the hydroxylated piperidine arm to pyrrolidine should relinquish its 2.75 Å ASN142 hydrogen bond and reduce peripheral ring proximity, while retaining the core’s MET94 hydrogen bonds.",
+    "basis": "SMILES replace NH-CH2-dihydroxypiperidine with directly linked NH-pyrrolidine, removing a linker carbon, a ring carbon and both hydroxyl oxygens. Changed C26 lies near ASN142.OD1 at 3.84 Å; input ring N25 hydrogen-bonds ASN142.OD1 at 2.75 Å. Mapped a:N12 explicitly has no contact within 4 Å. Conserved N09/a:N16 and N06/a:N25 retain MET94.O/N hydrogen bonds, input 2.86/3.25 Å.",
+    "confidence": "high",
+    "concern": "Ring contraction and linker shortening accompany hydroxyl deletion; stereocentre count changes, so geometry is not conserved merely because atoms map."
+  },
+  "7IJA A1CJ6->A1CJ4": {
+    "sentence": "Moving the aryl methyl near LEU126.O at 3.28 Å onto the central stereocentre should redistribute local carbon proximity, while the heterocycle’s 2.69 Å ASP22 hydrogen bond should remain.",
+    "basis": "SMILES move an ortho-tolyl methyl to the amino-bearing central carbon, producing a substituted quaternary stereocentre. Changed input methyl C1 faces LEU126.O at 3.28 Å. NEW analogue methyl a:C1 has an uncertain GLY130 proximity, so no destination contact is claimed. Conserved N4/a:N4 supports the heterocycle hydrogen bond to ASP22.OD1, input 2.69 Å, 127°.",
+    "confidence": "medium",
+    "concern": "Many analogue rows are uncertain, and all input PHE156 rows are suspect. C17 is only a stretched probable adduct and cannot support covalency. Central stereochemistry is incomparable after substituent change."
+  },
+  "9EUD A1H7G->A1H7E": {
+    "sentence": "Replacing pyrazole N-isopropyl with hydroxyethyl should loosen alkyl proximity to PHE77.CZ, initially 3.55 Å, without establishing a replacement hydroxyl anchor, while retaining the scaffold’s ILE87 hydrogen bond.",
+    "basis": "SMILES replace pyrazole N-isopropyl with N-hydroxyethyl at unchanged heavy-atom count. Input boundary CBG lies near PHE77.CZ at 3.55 Å; changed CBF has no contact within 4 Å. Mapped a:CBF from CBG and NEW hydroxyl a:OBG both have no contact within 4 Å, supporting reduced local anchoring rather than a new polar interaction. Conserved O/a:O retains ILE87.N hydrogen-bond typing, input 2.92 Å.",
+    "confidence": "high",
+    "concern": "Equivalent isopropyl methyl mapping is arbitrary. Analogue-only chain B SER115 is absent from the input envelope and is excluded."
+  },
+  "7TAF GFI->W11": {
+    "sentence": "Replacing dimethylcarboxamide with methyl should reduce proximity near PHE115.CE2, initially 3.60 Å, while added aryl methyl substitution and heterocycle reorientation should redistribute packing around ILE119.",
+    "basis": "SMILES show dimethylcarboxamide-to-methyl replacement on the terminal isoxazole, an additional phenyl methyl, and changed isoxazole attachment orientation. Removed amide methyl C30 faces PHE115.CE2 at 3.60 Å; removed carbonyl O27 lies near ASP215.CB at 3.84 Å. NEW a:CM2 lies near ILE119.CD1, which is already input-table named. Input boundary C17 lies near ILE184.CG1 at 3.41 Å and maps to a ring carbon near ILE119.",
+    "confidence": "medium",
+    "concern": "SMILES reveal multiple transformations beyond the printed site list; atom mapping traverses chemically reoriented heterocycles. Input F26 and analogue a:F2 contacts are uncertain and excluded."
+  },
+  "6UWX QKD->QJ1": {
+    "sentence": "Shortening ethoxy to methoxy should remove the terminal methyl's proximity to PRO82.O at 3.21 Å while retaining the carbamate carbonyl's 2.92 Å hydrogen bond to ASN140.ND2.",
+    "basis": "Both SMILES establish ethyl-to-methyl carbamate contraction. Site-of-change C17 is deleted; input C17 faces PRO82.O at 3.21 Å, typed polar/apolar packing. Conserved O14/a:O01 supports retention of the input O14–ASN140.ND2 hydrogen bond at 2.92 Å.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "7NXO UU8->UTE": {
+    "sentence": "Replacing phenylsulfonyl with trifluoromethyl should relinquish its 3.15 Å ARG163.NH2 hydrogen bond and redirect the substituent toward GLN234, while the separate fluorine-to-methyl edit changes the THR260-facing region.",
+    "basis": "SMILES show phenylsulfonyl-to-CF3 and aryl F-to-methyl substitutions. Site O10 is removed; input O10–ARG163.NH2 is a good hydrogen bond at 3.15 Å. Input F16 lies near THR260.CG2 at 3.42 Å. Analogue NEW CF3 rows face GLN234; that residue is independently nameable from input C17–GLN234.NE2 at 3.32 Å. Conserved O5 maintains the VAL175 chain B hydrogen bond.",
+    "confidence": "high",
+    "concern": "Two transformations seven bonds apart and a multi-chain pocket; GLN234 is used as a direction, without asserting a new polar interaction."
+  },
+  "7Z6K CFL->6HC": {
+    "sentence": "Replacing the fluorinated five-membered sugar with a six-membered ring should reorganize the SER300-facing region anchored by the fluorine's 3.21 Å proximity, although the changed pose prevents a reliable interaction-level comparison.",
+    "basis": "Direct SMILES inspection establishes a five-membered input sugar and six-membered analogue oxygen-containing ring, with fluorine removed and stereocentre count reduced. Input F–SER300.OG is polar/apolar packing at 3.21 Å; boundary C1'–SER300.OG is 3.76 Å. Mapped analogue F replacement and sugar rows largely lack nearby protein atoms; no conserved interactions exist.",
+    "confidence": "low",
+    "concern": "Flagged unlabellable because no interaction survives. Ligand chain B contacts protein chain A; analogue coverage is incomplete and input phosphate O3P is unmodelled. Pose changes cannot confidently be attributed to ring expansion."
+  },
+  "9TFG A1JVT->A1JVV": {
+    "sentence": "Extending both methoxy groups toward the ASP677/TYR672 region, anchored by methyl proximity to ASP677.OD1 at 3.73 Å, should redistribute peripheral packing while quinoline-to-quinazoline replacement retains the CYS673 hydrogen bond.",
+    "basis": "SMILES show two methoxy-to-methoxyethoxy extensions and quinoline-to-quinazoline conversion. Input site C01–ASP677.OD1 is 3.73 Å packing; site C10–TYR672.OH is 3.31 Å packing. NEW extension rows face ASP677 and TYR672. Conserved N11/a:N39 supports retention of the input 2.98 Å CYS673.N hydrogen bond. NEW a:N37 is near LEU799 rather than forming a hydrogen bond.",
+    "confidence": "high",
+    "concern": "Three separated edits must be considered together. Mapping of pyrimidine N22/N33 is symmetry-arbitrary and is not used for atom-specific movement claims."
+  },
+  "9QP1 A1I8V->A1I8O": {
+    "sentence": "Replacing the chiral hydroxylated alkyl arm with benzyl should give up its 2.52 Å GLY31.N hydrogen bond and redirect aromatic bulk toward CYS34 and LYS46 while preserving the ILE98 hydrogen bonds.",
+    "basis": "SMILES identify N-linked CH2–CH(CH3)–CH2OH replacement by benzyl, removing the side-chain stereocentre. Input deleted O01 hydrogen-bonds GLY31.N at 2.52 Å. NEW phenyl carbons face CYS34.O and LYS46.CE; both residues are input-nameable, CYS34 through the envelope and LYS46 through input rows. Conserved N14 and N19 retain input ILE98.N/O hydrogen bonds at 2.89/2.63 Å.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "6UNG QEP->QDJ": {
+    "sentence": "Replacing anilino with naphthylmethyl, alongside sulfur-linkage relocation and stereochemical inversion, should redistribute packing around ILE301 near the input nitrogen at 3.33 Å while retaining pyridine coordination to heme iron.",
+    "basis": "SMILES establish replacement of NH–phenyl by CH2–naphthyl and relocation of the thioether connectivity, together with the flagged C09 inversion. Input changed N14 lies near ILE301.CD1 at 3.33 Å. NEW naphthyl carbons lie near ILE301/PHE241; MOVED sulfur changes its nearest partner from PHE213 to PHE108. Conserved N27/a:N30 supports retention of input pyridine–HEM601.FE coordination at 2.20 Å.",
+    "confidence": "medium",
+    "concern": "Multiple chemical and stereochemical changes complicate attribution. Aromatic C19/C20 mapping is symmetry-arbitrary. Uncertain C26–iron proximity is excluded."
+  },
+  "6OXZ NJG->NF7": {
+    "sentence": "Shortening the chiral alkyl arm to isobutyl should reorganize its proximity to ALA28(B), measured at 3.47 Å, while retaining the carbamate's 3.04 Å hydrogen bond to GLY27(A).",
+    "basis": "SMILES establish 2-methylbutyl-to-isobutyl contraction and loss of one stereocentre. Input alkyl-region C03–ALA28.CB chain B is 3.47 Å; analogue alkyl rows remain near ALA28(B), although their joins permute C02/C03/C05/C06. Conserved N16/a:N16 supports input carbamate NH–GLY27.O chain A hydrogen bonding at 3.04 Å.",
+    "confidence": "medium",
+    "concern": "The listed deleted site C36 faces PRO81(A), whereas the SMILES edit is on the N-alkyl arm; this suggests a chemically misleading mapping. Symmetry-arbitrary alkyl joins prevent precise carbon-level gain/loss claims. Multi-chain pocket; uncertain O14–ASP25 contact excluded."
+  },
+  "7IIX A1CJC->A1CJS": {
+    "sentence": "Heterocycle replacement and demethylation, with stereochemical inversion, should redirect the ring edge near GLY48.O at 3.67 Å toward PHE156 and disrupt the input 3.03 Å ILE23.N hydrogen bond.",
+    "basis": "SMILES show methylated pyrrolopyrimidine-to-purine replacement, including methyl removal and a ring carbon-to-nitrogen substitution. Input changed C15–GLY48.O is packing at 3.67 Å; NEW a:N2 lies near PHE156.CD1. Input N4–ILE23.N hydrogen bond at 3.03 Å changes to a mapped N4 row facing GLY48.O with incompatible acceptors. C5 inversion is explicitly flagged.",
+    "confidence": "medium",
+    "concern": "Two separated edits plus stereochemical inversion prevent isolated attribution. Deleted methyl C1 has an uncertain ALA154 contact and is not used as an anchor. Several analogue contacts, including bromine and carboxyl contacts, are uncertain and excluded."
+  },
+  "9Y1Z A1CR2->A1CR1": {
+    "sentence": "Contracting the bicyclic diamine to a smaller bicyclic monoamine should reorganize the GLY60-facing region near an input methylene at 2.97 Å while retaining the phenol's 2.52 Å ASP69 hydrogen bond.",
+    "basis": "SMILES establish replacement of the N-attached bicyclic diamine by a C-attached smaller bicyclic monoamine. Deleted C27 lies near GLY60.O at 2.97 Å; deleted N26 lies near GLU62.CB at 3.73 Å. Mapped nearby bicyclic carbons change partners, supporting reorganization rather than a single preserved pose. Conserved O12/a:O1 retains the input phenol–ASP69.OD1 hydrogen bond at 2.52 Å.",
+    "confidence": "medium",
+    "concern": "C28 stereochemistry cannot be compared. N33–GLY60 typing changes through an angle-only effect, so no weakening or loss of that hydrogen bond is inferred."
+  },
+  "9ESX A1H6Y->T5G": {
+    "sentence": "Replacing the sulfone methyl near PHE80.CE2 at 3.56 Å with sulfonamide NH2 should introduce donor character at that end, but inconsistent residue numbering prevents assigning a reliable pocket partner.",
+    "basis": "SMILES show methyl aryl sulfone-to-primary aryl sulfonamide conversion. Input changed C1–PHE80.CE2 is hydrophobic proximity at 3.56 Å. Analogue NEW nitrogen has a good hydrogen bond, supporting donor character, but its MET210 partner has no verified input correspondence. No conserved interactions exist.",
+    "confidence": "low",
+    "concern": "Flagged unlabellable: no shared residue numbering and no conserved interactions. Analogue-only residue identities cannot be transferred to the input pocket; uncertain bromine proximity is excluded."
+  },
+  "5WEB KU5->GY7": {
+    "sentence": "Replacing phenylsulfonylethyl with phenethyl should remove the sulfone oxygen's 3.30 Å LEU106.N hydrogen bond, while the separate chlorophenylthioacetyl-to-difluorobenzoyl substitution changes the other arm; numbering prevents a reliable overall comparison.",
+    "basis": "Both SMILES establish removal of the phenylsulfonylethyl sulfone and conversion of N-acyl CH2–S–chlorophenyl to difluorobenzoyl. Input deleted O5 hydrogen-bonds LEU106.N at 3.30 Å; deleted O6 is only near TYR24.OH at 3.68 Å. No conserved rows exist. Input O1/O2/O3 coordinate manganese, whereas analogue O2/O3 coordinate magnesium and O4 manganese, precluding simple metal-retention claims.",
+    "confidence": "low",
+    "concern": "Flagged unlabellable with inconsistent numbering and two edits eleven bonds apart. Hetero partners are renumbered, and one metal site changes element; coordination absence is not evidence of loss. Uncertain near-metal carbon rows are excluded."
+  },
+  "6YK3 PVQ->CG8": {
+    "sentence": "N-methylation beside the input amine's 3.04 Å GLU13 salt bridge should alter that ionic anchor, although the modeled covalent methyl attachment makes a conventional binding rationale questionable.",
+    "basis": "SMILES establish methyl addition to the saturated fused-ring nitrogen N3. Input N3–GLU13.OE2 is explicitly a salt bridge at 3.04 Å. Analogue NEW methyl a:C8 is typed COVALENT BOND to GLU13.OE1, with the nearby nitrogen and carbon rows reporting independent contacts excluding GLU13. This is a covalency mismatch rather than evidence for simple salt-bridge retention.",
+    "confidence": "low",
+    "concern": "The reported methyl carbon–glutamate covalent linkage is chemically unusual for this N-methyl analogue and lacks an obvious reactive group in the supplied SMILES. It is disclosed without treating it as a routine predicted covalent gain."
+  },
+  "8V73 YIG->YJQ": {
+    "sentence": "Replacing phenoxy with cyclopropanecarboxamido should reorganize the ILE142-facing region near the input ether oxygen at 3.74 Å, directing the carbonyl toward ARG182 while retaining the tetrazole's LYS75 hydrogen bond.",
+    "basis": "SMILES establish terminal phenoxy-to-N-linked cyclopropanecarboxamide substitution; the new saturated ring is cyclopropane. Input deleted O2 lies near ILE142.CD1 at 3.74 Å, and deleted C18 near ILE142.CG2 at 3.10 Å. NEW carbonyl oxygen is near ARG182.CD, supporting direction only; ARG182 is input-envelope-nameable. Conserved N3/a:N3 supports retention of the input tetrazole–LYS75.NZ hydrogen bond at 3.06 Å.",
+    "confidence": "high",
+    "concern": "The common-subgraph mapping crosses chemically different substituent atoms, so no individual terminal carbon is described as retained. VAL133 hydrogen-bond typing changes and is not used as a retained interaction."
+  },
+  "9GBM A1IJW->A1IJY": {
+    "sentence": "Replacing the para-amino group's 3.56 Å HIS410.NE2 hydrogen bond with a carboxyl group should trade that donor interaction for oxygen proximity around HIS410 and PHE391 while retaining zinc coordination.",
+    "basis": "SMILES establish para-NH2-to-COOH substitution. Input deleted N16 hydrogen-bonds HIS410.NE2 at 3.56 Å. NEW a:O18/a:O17 lie near HIS410.CD2/PHE391.CE1 and are typed packing, supporting oxygen proximity rather than new hydrogen bonds or salt bridges. Conserved O22/a:O24 retains the input 2.05 Å ZN701 coordination.",
+    "confidence": "high",
+    "concern": "Aromatic C13/C18 joins are symmetry-arbitrary. Uncertain C20–zinc proximity is excluded; the new carboxyl group is not assigned an unsupported ionic interaction."
+  },
+  "8ATS O5I->O4I": {
+    "sentence": "Replacing the anilinocyclopentyl group with dimethyl phenoxy substitution should reorganize the peptide-facing region near ASN262(P).O at 3.38 Å and relinquish the input chloroacetamide's 1.90 Å covalent bond to CYS38.",
+    "basis": "SMILES establish anilinocyclopentane carboxamide replacement by a dimethyl phenoxy-substituted acyl group; the input saturated ring is cyclopentane. Deleted C16 lies near ASN262.O chain P at 3.38 Å. Input C2–CYS38.SG is explicitly covalent at 1.90 Å; mapped analogue C2 has only a noncovalent GLU115-facing row, consistent with the reliable covalency-mismatch flag.",
+    "confidence": "medium",
+    "concern": "Multi-chain pocket includes peptide chain P; its terminal VAL263 is not used. Analogue has an additional chain-terminus contact excluded from the rationale. Input warhead chlorine is unmodelled, so its counterpart is NOTCOMPARABLE; uncertain aryl chlorine proximity is excluded."
+  },
+  "5SBC 5JS->5IS": {
+    "sentence": "Removing the phenylacetyl ester should eliminate its carbonyl oxygen's proximity to ASN101.CB at 3.44 Å, leaving a hydroxyl while retaining the macrocycle's 2.98 Å hydrogen bond to VAL181.N.",
+    "basis": "SMILES show phenylacetate ester deacylation to an alcohol, removing nine heavy atoms. Deleted ester carbonyl O41 lies near ASN101.CB at 3.44 Å; its ASN101.ND2 polar continuation is packing, not hydrogen bonding. Conserved O32/a:O32 supports retention of the input VAL181.N hydrogen bond at 2.98 Å.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "8P73 X58->X4F": {
+    "sentence": "Contracting the dihydroxypiperidine arm to hydroxypyrrolidine should remove the linker carbon's 3.80 Å proximity to VAL26.CG2 and reposition the ring nitrogen away from its 3.30 Å ASN142 hydrogen bond.",
+    "basis": "SMILES establish six-membered dihydroxypiperidine-to-five-membered hydroxypyrrolidine contraction with direct amino attachment replacing the methylene linker. Deleted C20 lies near VAL26.CG2 at 3.80 Å. Input ring nitrogen N25 hydrogen-bonds ASN142.OD1 at 3.30 Å; mapped analogue a:N22 has no contact within the reporting cutoff. Deleted O28 lacks an input contact.",
+    "confidence": "high",
+    "concern": "A stereocentre is incomparable across the contraction; no stereochemical retention is asserted."
+  },
+  "9COX A1A4K->A1A4T": {
+    "sentence": "Replacing pyridylcarbonyl with pivaloyl near LEU482.CD1 at 3.62 Å, alongside naphthyl-to-biphenyl substitution and stereochemical inversion, should redistribute peripheral packing while retaining the terminal pyridine's 2.22 Å heme-iron coordination.",
+    "basis": "SMILES identify two distinct edits: pyridylcarbonyl-to-pivaloyl and naphthylmethyl-to-biphenylmethyl, plus inversion of the sulfur-adjacent stereocentre. Input deleted cap C38 lies near LEU482.CD1 at 3.62 Å; analogue pivaloyl-region carbons remain near LEU482. Conserved N33/a:N24 supports retention of terminal pyridine–HEM601.FE coordination at the input 2.22 Å.",
+    "confidence": "medium",
+    "concern": "Two separated edits and stereochemical inversion confound attribution. MOVED aromatic atoms are not described as retained. Input O12–SER119 is uncertain and excluded, regardless of the analogue's hydrogen-bond typing."
+  },
+  "8PPB 3I2->2KM": {
+    "sentence": "Hydroxylating the deoxy ring position should redirect local polarity toward MET316 while retaining the phosphate's 2.78 Å ARG319 salt bridge, although the new stereocentre complicates attribution of wider ionic rearrangements.",
+    "basis": "SMILES show conversion of the sole ring methylene to a hydroxylated stereocentre in a six-membered carbocycle; site C3 has no measured input contact. The adjacent ionic scaffold provides the input anchor: O24–ARG319.NH2 salt bridge at 2.78 Å, supported by conserved O24/a:O15. NEW hydroxyl a:O6 lies near MET316.CE, supporting direction only; MET316 is input-envelope-nameable.",
+    "confidence": "medium",
+    "concern": "No measured contact exists directly at attachment C3, so the anchor is a neighboring retained phosphate interaction. Stereocentre count increases; individual phosphate oxygen movements may not represent unique oxygen identities, and no new hydroxyl hydrogen bond is asserted."
+  },
+  "6G9D ER8->ESN": {
+    "sentence": "Replacing tert-butyl with a chiral hydroxymethyl-tolyl arm and methylating the linker should redirect bulk toward TYR36/THR68 while retaining the amide's 3.38 Å ASP167 hydrogen bond and the MET108 hinge anchors.",
+    "basis": "SMILES establish tert-butylamide replacement by NH–CH(tolyl)–CH2OH and linker CH2-to-CH(CH3) conversion, creating two stereocentres. Input N5–ASP167.OD1 is a good hydrogen bond at 3.38 Å; mapped analogue a:N29 retains hydrogen bonding to ASP167. Input deleted tert-butyl-region C1/C4 lie near GLY169/GLU71 at 3.51/3.45 Å. NEW aromatic and side-chain carbons lie near TYR36/THR68. Conserved N22/N29 support input MET108.O/N hydrogen bonds at 2.93/3.11 Å.",
+    "confidence": "high",
+    "concern": "Two stereocentres are created and the tert-butyl carbon join is symmetry-arbitrary, so individual methyl trajectories are not asserted. The new alcohol's ASP167 row has poor geometry and is not called a hydrogen bond. Uncertain chlorine–GLN105 proximity is excluded."
+  },
+  "6Y6H OBW->QM2": {
+    "sentence": "Replacing benzothiophene, whose ring carbon lies against LEU39.O at 3.22 Å, with cyclopropylphenyl should redistribute aromatic packing and direct the cyclopropyl group toward LYS37 and GLU38.",
+    "basis": "Both SMILES establish benzothiophene versus para-cyclopropylphenyl, with unchanged heavy-atom count. Site-of-change C8 is deleted and its input atom-table row gives LEU39.O 3.22 Å, polar/apolar packing; deleted C7 gives GLY116.CA 3.78 Å. Analogue NEW a:C11 lies near LYS37.CE and a:C13 near GLU38.O; these support qualitative direction only. LYS37 and GLU38 are nameable from the input envelope. Conserved C9 and C10 remain near LEU39.O.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "7FUT ZJ8->ZO5": {
+    "sentence": "Replacing the propyl arm near PRO1340.O at 3.30 Å with benzodioxolylmethyl should extend toward GLU1339 while retaining the urea's PRO1340 hydrogen bond.",
+    "basis": "SMILES identify N-propyl urea replaced by N-benzodioxolylmethyl urea. Deleted site atom C1 has input PRO1340.O 3.30 Å, polar/apolar packing; C2 gives 3.59 Å. Conserved N1 supports the urea hydrogen bond to PRO1340.O, input 2.81 Å and good geometry. NEW aromatic carbons a:C5–a:C8 lie near GLU1339.O, supporting extension toward the envelope-listed residue. NEW ether a:O2 is acceptor-incompatible with GLU1339.O and does not support a hydrogen bond.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "9S9M A1JMO->A1JMR": {
+    "sentence": "Alongside replacing dimethylphosphine oxide with methylcarboxamide and adding methoxy, fluorinating the piperidine near THR150.OG1 at 3.49 Å should redirect that ring toward SER149.",
+    "basis": "Both SMILES show replacement of aryl P(=O)(C)C by C(=O)NC, addition of aryl methoxy, and fluorination of the six-membered piperidine with two specified stereocentres. Site attachment C12 has input THR150.OG1 3.49 Å, polar/apolar packing. NEW a:F20 lies near SER149.CA; SER149 is in the input envelope, allowing direction without asserting interaction. Deleted phosphine-oxide methyl C32 has PRO153.CG 3.80 Å; P31, O34 and C33 have no input contact within 4.0 Å.",
+    "confidence": "medium",
+    "concern": "Two separated transformations and newly specified stereochemistry prevent attributing pose changes solely to fluorination. Symmetry includes C12 and several other mapped atoms; the statement uses group-level direction rather than an exact atom trajectory."
+  },
+  "7G07 WJH->WE6": {
+    "sentence": "Replacing the six-membered oxygen-containing ring near CYS117.SG at 3.47 Å with chiral pyrrolidine should reorganize that face while retaining the carboxyl hydrogen bond to TYR128.",
+    "basis": "Input SMILES contain a six-membered unsaturated oxygen heterocycle; analogue contains a five-membered N-acyl pyrrolidine and a new stereocentre. Deleted ring ether O24 has input CYS117.SG 3.47 Å, geometry-poor polar contact; deleted C25 lies near CYS117.SG at 3.71 Å. NEW ring nitrogen a:N18 lies near PHE16.CZ. Conserved carboxyl oxygen O28 supports retained TYR128.OH hydrogen bonding, input 2.73 Å, good geometry. Conserved amide O21 also retains its ARG126 hydrogen bond.",
+    "confidence": "high",
+    "concern": "The ring replacement changes connectivity and creates stereochemistry; it is not simple ether-to-amine substitution at a fixed position."
+  },
+  "7Z5Y A9Z->AF2": {
+    "sentence": "Replacing the ethyltriazolyl substituent bearing the 1.77 Å CYS5 chain-C covalent bond with fluorine should remove that tether, although residue renumbering prevents a reliable comparison of the remaining pocket.",
+    "basis": "SMILES show ribose ethyltriazolyl replaced by fluorine. Deleted site C7T has an explicit input COVALENT BOND to CYS5.SG on chain C at 1.77 Å. The COVALENCY MISMATCH flag states the bond is absent from the analogue, and the replacement removes the bond-bearing group. No conserved-interaction rows exist and numbering overlap is zero; therefore no retained phosphate or base interactions are claimed.",
+    "confidence": "low",
+    "concern": "Pair flagged unlabellable: no shared numbering and no conserved interactions. Pocket spans protein chain A and CYS5 chain C. OP3 is unmodelled; analogue completeness and leaving-group annotation are internally awkward. Remaining-site comparisons and stereochemical inversion claims are unsafe."
+  },
+  "7RPZ 6IC->7NL": {
+    "sentence": "Removing the ethynyl group near TYR96.CE1 at 3.33 Å and fluorine near VAL9.CG1 at 3.45 Å should give up those substituent proximities, with additional bicyclic stereochemical changes.",
+    "basis": "SMILES identify loss of naphthyl ethynyl and aryl fluorine; the fluorine elsewhere in the bicyclic arm and heteroaromatic fluorine remain. Deleted ethynyl C33 has input TYR96.CE1 3.33 Å and C32 TYR96.CD1 3.83 Å, both hydrophobic proximity. Deleted F23 has VAL9.CG1 3.45 Å. STEREO reports C12 and C11 inversion, so the sentence acknowledges a further geometric change rather than attributing all rearrangement to deletions.",
+    "confidence": "medium",
+    "concern": "The stereochemical flag reports two inversions despite similar displayed bicyclic stereochemical notation; treat the annotation as a limit on causal attribution. Deleted-group proximity does not establish loss of all contacts to either residue."
+  },
+  "9T3M A1JTB->A1JTA": {
+    "sentence": "Replacing methoxyphenyl near TYR106.OH at 3.80 Å with pyridyl should redistribute that aromatic face while preserving the carboxylate's 3.54 Å ARG28 ion pair.",
+    "basis": "SMILES show ortho-methoxyphenyl replaced by pyridyl, not demethylation alone. Deleted site C13 is near TYR106.OH at input 3.80 Å; deleted C15 gives 3.48 Å and methoxy O14 3.94 Å. Input O1 polar-partner continuation explicitly gives SALT BRIDGE to ARG28.NH2 3.54 Å, and analogue a:O2 mapped to O1 also has an ARG28 ion pair. Aromatic mapped carbons change nearest neighbours, supporting redistribution without naming analogue-only GLN15.",
+    "confidence": "medium",
+    "concern": "LYS12 is globally suspect and has severe clashes on both sides; none of its distances or apparent retained salt bridges are used. GLN15 is absent from the supplied input envelope and cannot be named in the sentence."
+  },
+  "28IS A1JY7->A1JY5": {
+    "sentence": "Replacing the hexyl segment near MET199.CE at 3.49 Å with a butyltriazolylmethyl arm should redirect it toward GLN214, while separate aryl fluorination changes the NAD-adjacent face.",
+    "basis": "SMILES establish aryl hexyl replaced by aryl-CH2-triazole-butyl and a separate fluorine on the other aryl ring. Deleted site C22 lies near MET199.CE at input 3.49 Å; attachment C23 is near TYR158.CD1 3.53 Å. NEW triazole nitrogens a:N5 and a:N4 have GLN214 polar contacts typed hydrogen bonds, used only for qualitative direction; GLN214 is nameable from the input envelope. Fluorination attachment C21 has an input NAD301.O7N contact at 3.52 Å, retained in the conserved table.",
+    "confidence": "medium",
+    "concern": "Two separated transformations and symmetry-arbitrary mappings prohibit a precise carbon-by-carbon motion narrative. A distal analogue contact involves chain C and an input-absent residue; it is not used."
+  },
+  "10KZ A1C6O->A1C6X": {
+    "sentence": "Replacing the benzyl linker near LEU418.O at 3.45 Å with an aminophenylpyrazole arrangement should introduce hydrogen-bond donation toward LEU418 and reposition the phenyl group.",
+    "basis": "SMILES show N-benzyl pyrazole converted to N-phenyl aminopyrazole: loss of a methylene and gain of amino nitrogen, maintaining heavy-atom count. Deleted site C6 has input LEU418.O 3.45 Å, polar/apolar packing. NEW a:N4 has a good-geometry hydrogen bond to LEU418.O, supporting qualitative donor introduction. Mapped phenyl carbons change nearest neighbours or leave the contact cutoff, supporting repositioning. The sentence does not identify reused a:N1 as the new amino group.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "5SDY IB4->II5": {
+    "sentence": "Demethylating the dimethylamide methyl near MET713.CE at 3.00 Å should reduce local alkyl packing and introduce an amide donor while retaining the 3.06 Å GLN726 hydrogen bond.",
+    "basis": "SMILES establish N,N-dimethylcarboxamide converted to N-methylcarboxamide, removing one methyl and creating NH. Deleted C31 is near MET713.CE at input 3.00 Å, typed hydrophobic contact without an uncertainty flag. Remaining mapped methyl C30 and adjacent C32 no longer have close nearest neighbours, supporting reduced local alkyl proximity. Conserved O19 to a:O17 supports the GLN726.NE2 hydrogen bond, input 3.06 Å and good geometry. No hydrogen bond is assigned to the newly available amide NH.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "9GQH A1IOH->A1IN0": {
+    "sentence": "Simplifying the macrocycle removes carbons near PHE77.CE1 at 3.53 Å and GLN85.O at 3.23 Å, which should reduce those proximities while retaining the ILE87 hydrogen bond.",
+    "basis": "SMILES show a shorter, less substituted macrocycle lacking the hydroxymethyl-bearing ether segment and methyl substituents, with five stereocentres reduced to two. Deleted site C12 gives input PHE77.CE1 3.53 Å, C13 3.90 Å; deleted C16 gives GLN85.O 3.23 Å. Conserved O7 supports the ILE87.N hydrogen bond, input 2.94 Å, with consistent B-to-A chain relabelling. MOVED O3 is not treated as retained. O6 typing change is not used as the rationale.",
+    "confidence": "high",
+    "concern": "Extensive macrocycle remodelling and lost stereocentres limit assignment of individual movements. Symmetry-arbitrary cyclohexyl mapping and the O6 typing flip are excluded from the claim."
+  },
+  "7AWX S5W->R3B": {
+    "sentence": "Lengthening the diether bridge by methylene should redirect its ether toward LYS121 while retaining the macrocycle's 2.71 Å TYR113 hydrogen bond.",
+    "basis": "Both SMILES establish O-CH2-CH2-O changed to O-CH2-CH2-CH2-O. Site atoms CAV and OBP have no input contact within 4.0 Å, so no local measured residue anchor exists. The sentence uses conserved OAB, input TYR113.OH 2.71 Å, good hydrogen-bond geometry, as the nearest defensible retained scaffold anchor. Mapped bridge ether OBP becomes a:OBW with a LYS121.NZ hydrogen bond; only direction is stated. LYS121 is nameable from the input envelope. Chains are consistently relabelled A-to-AAA.",
+    "confidence": "medium",
+    "concern": "Measured anchor is remote from the bridge edit because both attachment atoms lack input contacts. LYS121 is envelope-only on the input side, so no input interaction with it is asserted."
+  },
+  "7NQ7 UL8->UME": {
+    "sentence": "Replacing the phenylethoxy linkage near LEU381.CD1 at 3.93 Å with direct phenylethyl attachment on pyridine should withdraw that oxygen-associated proximity while retaining the amide's ASN429 hydrogen bond.",
+    "basis": "SMILES establish phenyl-O-CH(CH3)-phenyl converted to pyridyl-CH(CH3)-phenyl, combining ether deletion with phenyl-to-pyridyl replacement. Deleted O18 has input LEU381.CD1 3.93 Å, polar/apolar packing. Boundary C36 lies near LEU383.CD1 3.99 Å and mapped a:C6 lacks a close contact. Conserved N08 supports retained amide hydrogen bonding to ASN429.OD1, input 2.88 Å. The new pyridine nitrogen a:N1 lacks a close contact, so no gained polar interaction is claimed.",
+    "confidence": "medium",
+    "concern": "Analogue SMILES omit stereochemical specification at the phenylethyl carbon; this is not evidence of physical inversion. Consistent chain relabelling permits retention claims. ASN429 triazole typing flip is not used."
+  },
+  "9M1D A1L8B->A1L7Z": {
+    "sentence": "Redistributing silicon-bound and aryl alkyl groups at multiple sites should reposition the acid arm and relinquish its 2.66 Å ARG270 ion pair.",
+    "basis": "SMILES show silicon propyl/methyl converted to two silicon methyls while both aryl methyls become ethyl groups; the edit redistributes carbons rather than changing overall size. Input carboxylate O33 has ARG270.NE 2.66 Å SALT BRIDGE and O32 ARG270.NH1 3.17 Å SALT BRIDGE. Mapped analogue O33 instead lies near LYS236.CG, and O32 has an ASP144.N hydrogen bond, supporting a repositioned acid arm rather than retention of the input ion pair. Site MOVED C35 shifts from TYR291.CB to SER274.OG; deleted C27 is near SER233.CB 3.39 Å.",
+    "confidence": "medium",
+    "concern": "Measured anchor is on the rearranged acid arm rather than a directly edited alkyl atom. Two transformations and loss of silicon stereogenicity prevent assigning the acid shift to one alkyl change. MOVED C11 is not a retained group despite its conserved-table row."
+  },
+  "7PX7 8DB->89H": {
+    "sentence": "Replacing thiophenylmethyl, whose ring lies near SER585.OG at 3.51 Å, with cyclopropylmethyl should withdraw the sulfur-bearing ring from that face and redistribute packing toward TYR598.",
+    "basis": "SMILES show O-CH2-thiophene converted to O-CH2-cyclopropane, a five-membered sulfur aromatic ring replaced by a three-membered carbocycle. Deleted C10 gives input SER585.OG 3.51 Å and deleted S1 3.72 Å, both packing proximity. Mapped ring carbon C11 to a:C10 is near TYR598.CE1, while C12 to a:C11 remains near TYR598; these support redistributed ring packing. Input TYR598 rows permit naming. No GLY560 hydrogen bond is inferred from incompatible nitrogen contacts.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "8P72 X2Z->X4L": {
+    "sentence": "Contracting piperidine to pyrrolidine removes a methylene near VAL26.CG2 at 3.68 Å and should reduce that ring's local packing while retaining the MET94 hydrogen bonds.",
+    "basis": "SMILES directly establish six-membered piperidine versus five-membered pyrrolidine. Deleted site C21 lies near VAL26.CG2 at input 3.68 Å, hydrophobic proximity; mapped adjacent ring C20 becomes a:C09 without a close contact, supporting reduced packing on that side. Conserved N09 gives MET94.O 2.78 Å and N06 gives MET94.N 3.14 Å, both good hydrogen bonds retained through mapped rows.",
+    "confidence": "high",
+    "concern": "C20 stereochemistry is explicitly incomparable after ring contraction; opposite SMILES chirality symbols do not establish inversion."
+  },
+  "5WA6 KU7->G1K": {
+    "sentence": "Replacing phenoxyethylamide with carboxylate and separately deleting fluorine should remove arm proximity to TYR24 at 3.90 Å and fluorine proximity to ILE38 at 3.22 Å.",
+    "basis": "SMILES show ring carboxamide N-CH2-CH2-O-phenyl replaced by carboxylic acid and a separate fluorine removed from the other phenoxy ring. Deleted arm C24 has input TYR24.CD2 3.90 Å, C25 ALA20.O 3.44 Å, and C21 LYS34.CE 3.85 Å. Deleted F1 lies near ILE38.CD1 at 3.22 Å. NEW carboxylate a:O3 has a LYS134 salt bridge, but no claim is made because LYS134 is absent from the input envelope. Both structures retain credible manganese coordination rows, so the failed metal join is not read as lost coordination.",
+    "confidence": "high",
+    "concern": "Two separated transformations are explicitly disclosed. MN201 is suspect and its coordination is unusually short; those rows are excluded. Metal renumbering and conflicting closest metal assignments prevent a simple site-specific retained coordination claim."
+  },
+  "6S6K KXK->KUH": {
+    "sentence": "Replacing azepane with diethyl sulfonamide should redirect the peripheral arm toward GLN85 while retaining the scaffold's 2.82 Å PRO82 and 3.06 Å ASN140 hydrogen bonds.",
+    "basis": "SMILES establish N-sulfonyl azepane, a seven-membered ring containing six carbons and nitrogen, replaced by N,N-diethyl sulfonamide. All deleted site atoms C17–C22 and N2, plus sulfur boundary S, have no input contact within 4.0 Å. Thus conserved scaffold N-to-PRO82.O 2.82 Å and O-to-ASN140.ND2 3.06 Å provide measured anchors, both good hydrogen bonds. NEW ethyl carbon a:C18 lies near GLN85.CD, supporting direction only; GLN85 is in the input envelope.",
+    "confidence": "medium",
+    "concern": "No measured residue contact exists at the edited azepane or sulfur boundary, so the anchors are on the retained scaffold. GLN85 is used only for direction, not an asserted new contact."
+  },
+  "9RL1 A1JG8->A1I8M": {
+    "sentence": "Removing the triazole's methyl acetate arm should relinquish its carbonyl hydrogen bond to LYS46 at 3.54 Å while retaining the azaindole's ILE98 hydrogen bonds.",
+    "basis": "SMILES establish removal of N-CH2-C(=O)-OCH3 from the triazole, yielding an NH triazole. Deleted O4 input polar-partner row explicitly supports a hydrogen bond to LYS46.NZ at 3.54 Å, angle 113 degrees; its nearest atom is LYS46.CE at 3.12 Å and is not itself the hydrogen-bond partner. Conserved azaindole N15 and N17 support ILE98.N 2.89 Å and ILE98.O 3.00 Å hydrogen bonds. Analogue triazole nitrogens remain near LYS46 carbons, but that does not preserve the deleted carbonyl interaction.",
+    "confidence": "high",
+    "concern": ""
+  },
+  "6X4A 7AY->UO4": {
+    "sentence": "Replacing chlorine near LEU100.CD2 at 3.63 Å with cyclopropylmethyl should spread alkyl packing across that face and extend toward PRO95 and TYR188.",
+    "basis": "SMILES establish aryl chlorine replaced by CH2-cyclopropane, not directly attached cyclopropane or a four-membered ring. Deleted CL1 has input LEU100.CD2 3.63 Å, hydrophobic proximity; attachment CAH has TYR188.CD2 3.57 Å. NEW linker a:C13 lies near LEU100.CD1, while NEW cyclopropyl carbons a:C1C and a:C1H lie near PRO95.CG and a:C1G near TYR188.CD2. These support qualitative spreading and direction; PRO95 is input-envelope-nameable. The PRO236 typing change is not used as a standalone effect.",
+    "confidence": "high",
+    "concern": ""
+  }
+}
