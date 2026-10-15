@@ -150,10 +150,29 @@ This buys **breadth**, not only depth: at TC 0.70 it adds 254 targets absent fro
 Expect ~85% to survive evidence-building, less an unquantified loss from cross-paper residue
 numbering.
 
-External sources, checked: there is **no MMP + crystal-structure database**. CovPDB (2,294
-complexes, to Aug 2020) and CovBinderInPDB (3,555 structures, to Jan 2022) are PDB **subsets** —
-our mirror is larger and newer, so they add no structures; their value is curated warhead /
-targeted-residue / mechanism annotation. Fragalysis-XChem is the one place with possibly
+### Is Tanimoto >= 0.70 enough to mean "same series"? Yes — measured.
+
+| | mean TC | identical Murcko | scaffold-TC | MCS coverage (p10) |
+|---|---|---|---|---|
+| existing corpus (same paper, TC >= 0.50) | 0.653 | 37.8% | 0.765 | 0.890 (0.696) |
+| **g5 candidates (cross-paper, TC >= 0.70)** | 0.805 | **49.0%** | **0.865** | **0.937 (0.800)** |
+| cross-paper, TC >= 0.60 | 0.734 | 42.5% | 0.788 | 0.917 (0.775) |
+
+**Do not add a scaffold-identity filter.** The corpus we already trust shares an identical Murcko
+scaffold only 37.8% of the time -- these edits routinely touch the ring system -- so the filter
+would reject ~62% of the pairs everything is built on. g5 at TC >= 0.70 is already a TIGHTER
+series than the baseline on every measure, including a p10 MCS coverage of 0.800. If a
+belt-and-braces check is ever wanted, use **MCS coverage >= 0.70**, not scaffold identity.
+
+### External sources
+
+There is **no MMP + crystal-structure database**.
+
+**CovPDB adds real structures, contrary to an earlier assumption here.** Of its 2,261 complexes
+only **334 (14.8%) are in our mirror**; **1,927 are not**, and just 43 appear among our 7,069
+labelled pairs. Our 39,711-entry mirror is therefore a SELECTIVE sweep, not a comprehensive
+protein-ligand one, so fetching those 1,927 entries is a genuine covalent expansion for g6.
+CovBinderInPDB (3,555 structures, to Jan 2022) has not been intersected yet. Fragalysis-XChem is the one place with possibly
 undeposited structures, but fragments mostly fall under our `HEAVY_MIN = 10` cut. PDBbind,
 BindingMOAD and PoseBusters are PDB subsets; PDB-REDO is re-refinement of the same entries; the CSD
 has no protein pocket; predicted complexes would break the premise that the contact table is
