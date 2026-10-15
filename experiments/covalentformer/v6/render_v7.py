@@ -185,7 +185,10 @@ def _hetero_renumbered(r, lo):
 
 
 _ENVELOPE = None
-_ENV_PATH = D + '/v7_envelope.json'
+# g5 is an extension of g4 rendered by this same code, but against its own envelope file.
+# The env var keeps that switchable without forking the renderer; unset, it is exactly the
+# path g1-g4 were rendered with, so their packets stay byte-identical.
+_ENV_PATH = os.environ.get('COVF_ENVELOPE', D + '/v7_envelope.json')
 
 
 def _envelope_block(pair):

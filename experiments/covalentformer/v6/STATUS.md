@@ -56,6 +56,43 @@ Tanimoto mean 0.815 (min 0.700) and mean heavy-atom change 2.2 — a tighter ser
 whose mean Tanimoto is 0.653. Zero duplicate pair ids, zero SMILES-pair duplicates, zero
 collisions with g1–g4 or the built corpus, and both cif files present for all 1,602.
 
+### g5 is packaged and ready to label (2026-10-16)
+
+`~/Downloads/covalentformer_labelling_task/g5/` — 13 batches of 100 (the last holds 49),
+**1,249 pairs**, the same briefs plus two new rules, the same `tools/`, an empty `label_out/raw/`.
+`tools/verify_output.py` reads the g5 manifest and currently reports all 1,249 unlabelled, which is
+the correct state. The briefs, START_HERE and README_G5 are mirrored in `labelling_task_g5/` here;
+`batches_g5/` is regenerable and not committed, as with g4.
+
+1,249 of the 1,602 pairs carry evidence (78%); the rest drop at 211 no usable complex, 134 no site
+of change, 8 edited atom not modelled.
+
+**New rules 1c and 1d**, from the two blind panels: a trailing "toward ⟨residue⟩" clause is allowed
+only if that residue contacts a **changed** atom in the input table, and every changed site must be
+named (these are same-series analogue pairs, not MMPs — a pair may change three sites).
+
+**Two build steps were nearly missed.** `gen_ev5` is not the whole pipeline: `clean_v7.py` flags
+the unlabellable pairs and repairs water clashes, and `apply_completeness.py` adds the INCOMPLETE
+table warning. Skipping them left 399 water clashes, 125 unflagged unlabellable pairs and a dead
+`analogue_contact_warning`; `qa_final.py` caught all of it. g5 variants are `clean_g5.py` and
+`apply_completeness_g5.py`. **The order is gen_ev5 → clean → apply_completeness → build_envelope →
+make_full_batches → qa_final + check_packet_fresh.**
+
+Two `qa_final_g5.py` floors were rescaled for a 1,249-pair corpus, each with the reason in the
+check's own note: the analogue-side INDEP-row floor 500 → 50 (g5 has 156 rows over 52 pairs,
+0.125/pair against v7's 0.325/pair — lower because g5 holds fewer covalent pairs, but demonstrably
+live, which is all that check can establish), and the HETATM-only `numbering_caveat` floor 1 → 0
+(21 rows in v7's 7,069 pairs, so ~4 expected here and 0 is unremarkable). Everything else passes
+unchanged: QA PASSED on 1,249 pairs, every caveat visible, every batch byte-fresh against the live
+corpus and renderer.
+
+**`build_envelope.py` bug fixed.** The non-greedy `_RES` regex split `SF4504.FE2` (comp_id `SF4`,
+seq 504) as `('SF','4504')` while the envelope held `('SF4','504')`, so the verification refused to
+write g5. The comparison now uses the concatenated token, which is exact for digit-suffixed comp
+ids. This touches **only** the verification path — `envelope_for()` never reads the regex — and
+that was verified, not asserted: rebuilding `v7_envelope.json` gives all 7,069 keys with
+**0 value differences** (the files differ only in key order, which `imap_unordered` never fixed).
+
 ### g3 vs g4, measured with identical scoring code
 
 | | g3 | g4 |
@@ -96,20 +133,20 @@ input table, and every changed site must be named.
 Benchmark = the g2 val split, copied verbatim into every training arm by `build_sft_arms.py`, so
 only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist panel.
 
-| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | elem self | dir self | sensible | reasoning |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Llama-3.1-8B-Inst **base** | – | 0.519 | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | 0.998 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | Llama-3.1-8B-Inst | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | SmileyLlama-8B **base** | – | 0.882 | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | – | – | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.794 | 0.782 | 64.4% | 15.6% |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.709 | 0.748 | ❌ | ❌ |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | ❌ | ❌ |
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.275 | – | – | – | – | ❌ | ❌ |
-| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | **0.800** | **0.935** | **81.1%** | **25.6%** |
-| ChemDFM-14B | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
+| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | ❌ | ❌ |
 | ether0-24B **base** | – | ⏳ | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | ether0-24B schema A | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | ether0-24B schema B | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | – | – |
+| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
@@ -133,8 +170,14 @@ scaffold retention are **band** metrics, not higher-is-better.
 - **attrib 1a / 1b** — cited distance exists in the input table / (residue, distance) co-occur in
   one row. Input-side only, so valid whichever analogue was proposed. 1b has a heuristic noise
   floor (reference labels score 0.709) and is denominator-sensitive — see the g3/g4 note above.
-- **elem self / dir self** — element-count and direction fidelity of the sentence against the
-  **model's own** molecule, not the reference. Reference-free.
+- **elem/dir vs REF** — element-count and direction fidelity of the sentence against the
+  **crystallographer's** analogue. Penalises a model for proposing a different VALID analogue, so
+  it is not a fair primary metric for a generative task.
+- **elem/dir vs OWN** — the same two checks against the **model's own generated molecule**:
+  does the prose describe the edit the model actually made? Reference-free, and the honest reading.
+  The two families must never be quoted interchangeably. Both are listed because they can
+  disagree in sign: against the reference ChemDFM g2 looked *worse* than SmileyLlama on direction
+  (0.582 vs 0.598), while against its own output it is far better (0.935 vs 0.782).
 - **sensible / reasoning** — chemist columns, from the blind self-consistency panel.
 
 ### Known caveats on this table

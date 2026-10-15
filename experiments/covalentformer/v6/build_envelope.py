@@ -111,7 +111,14 @@ def table_residues(rec):
         for k, dk in (('faces', 'distance_A'), ('polar_partner', 'polar_distance_A')):
             m = _RES.match(str(a.get(k) or ''))
             if m and a.get(dk) is not None:
-                key = (m.group(1), m.group(2))
+                # Key on the CONCATENATED token, not the (name, number) split. _RES is non-greedy,
+                # so a comp_id that ends in a digit splits wrong: `SF4504.FE2` (comp_id SF4, seq
+                # 504, a 4Fe-4S cluster) parses as ('SF','4504') while the envelope, built from the
+                # structure, holds ('SF4','504'). Comparing 'SF4504' to 'SF4'+'504' is exact and
+                # unambiguous for every name, digit-suffixed or not. This function is read ONLY by
+                # the verification below -- envelope_for() never touches the regex -- so the written
+                # JSON is unchanged and g1-g4 rebuild byte-for-byte.
+                key = m.group(1) + m.group(2)
                 out[key] = min(out.get(key, 1e9), float(a[dk]))
     return out
 
@@ -178,7 +185,7 @@ def main():
         S['rows_hetero'] += sum(1 for x in env['residues'] if x['hetero'])
         # NECESSARY CONDITION, correctly scoped: a table residue recorded INSIDE the cut must be
         # in the envelope. One recorded beyond the cut must not be, and demanding it was the bug.
-        have = {(x['res'], x['rn']) for x in env['residues']}
+        have = {'%s%s' % (x['res'], x['rn']) for x in env['residues']}
         tbl = table_residues(rec)
         inside = {k for k, d in tbl.items() if d <= CUT + 0.01}
         S['table_residues_beyond_cut'] += len(tbl) - len(inside)
