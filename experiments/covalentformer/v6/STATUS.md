@@ -195,7 +195,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
 | ether0-24B **base** | – | ⏳ | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
 | ether0-24B schema A | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| ether0-24B schema B | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | ⏳ | ⏳ | 0.844 | 0.779 | ❌ | ❌ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
@@ -255,6 +255,33 @@ scaffold retention are **band** metrics, not higher-is-better.
   a group the edit retained. Their proposed mechanical fix, which needs no new labels: reject any
   rationale citing a distance whose owning atom is not in the edited substructure, and reject any
   "hydrogen bond" whose partner atom name begins with C.
+
+### ether0-24B schema B, landed 2026-10-16
+
+`TRAIN rc=0` 21:42, `EVAL rc=0` 23:06, run dir `sft_runs/ether0_schema_g3_v2/`. **schema_ok =
+1.000 and format_compliance = 1.000**, against 0/262 before — so the unmerged-adapter fix is
+confirmed in the artifact, not just in the diagnostic. Response loss 0.575 against the 0.765 the
+merged run reported, i.e. back near the training value.
+
+- **TC→input 0.682 lands exactly on the human band (0.680)** — the joint best in the table with
+  ChemDFM g3's 0.683, and it gets there with validity 0.863 and novelty 1.000.
+- **attrib-1a 0.985 is above the reference ceiling of 0.962**: nearly every distance it cites
+  exists in the input table.
+- **attrib-1b 0.330 repeats the field-wide failure** — the cited distance and the residue it is
+  attached to co-occur in one table row only a third of the time. ChemDFM g2 0.327, g3 0.290,
+  SmileyLlama 0.419, reference 0.709. No arm has solved this.
+- **selectivity 0.465 is still below the 0.5625 zero-parameter distance-sort baseline**, as for
+  every other arm.
+- 12.2% of its sentences exceed the 35-word limit the brief imposes (reference: 0%).
+
+Two numbers were nearly wrong here. `eval_sft.py` writes `eval_summary.json` one level deeper
+(`<run>/eval/`), so a `sft_runs/*/eval_summary.json` count sees 8 when there are 24. And a first
+`eval_axes.py` pass against the default `sft_out/sft_pocket.jsonl` warned **262 of 262 rows have
+no ground-truth match** — every reference-dependent column would have been meaningless. The arm
+trains on `sft_out_g3_ether0_v2/sft_pocket.jsonl`; the numbers above come from that, via
+`big_table.py` and `table_extra.py` so the column definitions match every other row.
+
+elem/dir **vs REF** stay ⏳: `table_extra.py` emits the self/OWN pair only.
 
 ### Known caveats on this table
 
