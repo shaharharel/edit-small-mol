@@ -67,6 +67,22 @@ single "paper". What still holds, and is the part that mattered in v6: both stru
 the target's UniProt accession, so **no pair is two different proteins**. What is lost is the
 one-series, one-lab, one-assay guarantee.
 
+**Checked against the deposited cif citation blocks, not just `meta.json` (all 1,602 pairs, both
+structures each):**
+
+| | pairs |
+|---|---|
+| same DOI/PubMed on both cif — provably one publication | 467 |
+| **no DOI and no PubMed on either cif**, identical deposition title | 514 |
+| **no DOI and no PubMed on either cif**, titles differ | 621 |
+| different DOI/PubMed — provably two publications | **0** |
+
+So the right statement is **not** "g5 is cross-paper". It is: 1,135 pairs have **no publication at
+all** on either side, so same-paper is unverifiable, and 514 of those share an identical deposition
+title, which is weak but real evidence of one depositing series. `meta.json` and the cif files
+agree exactly — the `?` is the depositions' own, not a parsing artifact. On the 1,249 labellable
+pairs: 226 provably one paper, 445 identical title, 578 unknown — **671 with one-series evidence**.
+
 Attribution of all 1,602 g5 pairs against the original build's filter chain:
 
 | why the original build did not have it | n |
