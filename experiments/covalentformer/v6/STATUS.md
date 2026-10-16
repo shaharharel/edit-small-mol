@@ -183,22 +183,22 @@ input table, and every changed site must be named.
 Benchmark = the g2 val split, copied verbatim into every training arm by `build_sft_arms.py`, so
 only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist panel.
 
-| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | 75.0%§ | 4.2%§ |
-| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ |
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ |
-| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | 97.0%¶ | **23.0%**¶ |
-| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | 89.7%¶ | 15.8%¶ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | **98.6%**¶ | 14.7%¶ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 97.4%¶ | 15.4%¶ |
-| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
-| *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
+| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning  sensible_codex | reasoning_codex |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ | 85.4% | 6.2% |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | 75.0%§ | 4.2%§ | TBD | TBD |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ | – | – |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% | TBD | TBD |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ | TBD | TBD |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** |
+| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
+| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% |
+| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – |
+| *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
 keep the Murcko scaffold only 38.9% of the time and the warhead 76% of the time, so TC→input and
@@ -401,6 +401,67 @@ the edit retained. Three phantom residues were found by all three reviewers inde
 (TRP154, GLU148-for-LEU148, ASP119). The cleanest discrimination in the set: in 8FPE four of five
 arms deleted the hexafluorocarbinol and still claimed its 2.71 Å HIS407.NE2 hydrogen bond was
 retained; the one arm that kept the hydroxyl was the only one whose claim was true.
+
+### sensible_codex / reasoning_codex — the external 165-case panel, kept in its own columns
+
+The `sensible` / `reasoning` columns stay as scored in-house (16 cases, 3 reviewers, 48 judgements
+per arm). The external 165-case panel lands in **separate** columns rather than replacing them,
+because the two scales do not agree in a way a single column could honestly represent:
+
+| arm | sensible (48) | sensible_codex (495) | reasoning (48) | reasoning_codex (495) |
+|---|---|---|---|---|
+| ChemDFM g3 | 100%† | 97.0% | 31.2%† | 23.0% |
+| ether0 schema A | 91.7%§ | 89.7% | 39.6%§ | 15.8% |
+| ether0 schema B | 85.4%§ | 98.6% | 35.4%§ | 14.7% |
+| ether0 g2 | 89.6%§ | 97.4% | 29.2%§ | 15.4% |
+
+**The disagreement is not a uniformly higher bar.** The external reviewers are MORE generous on
+`sensible` (schema B 85.4 → 98.6) and FAR stricter on `reasoning` (35.4 → 14.7). A stricter panel
+cannot move two rates in opposite directions, so this is a calibration difference on two different
+questions, not one scorer being harsh.
+
+**And the ranking changed, not just the level.** The in-house numbers put schema A (39.6%) above
+ChemDFM g3 (31.2%); the external panel puts ChemDFM (23.0%) above schema A (15.8%). A pure bar
+shift preserves rank, so something else is going on — **but the old ordering was never a valid
+comparison**: 31.2% came from the g2-vs-g3 panel and 39.6% from the five-arm panel, two different
+reviewer sets, which is exactly what the dagger footnote warns against. **The 165-case panel is the
+first time ether0 and ChemDFM g3 were scored in the same panel at all.**
+
+A head-to-head is running in-house to separate the two explanations: ChemDFM g3 against ether0
+schema B, same panel, 16 cases subsampled from the same 165, scored by the in-house reviewers. If
+they also rank ChemDFM above schema B, only the absolute level is scorer-dependent. If they rank
+schema B above ChemDFM, the ranking itself depends on who scores, which would mean neither panel
+can decide the arm.
+
+### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
+
+48 single-slot items per arm (16 cases x 3 reviewers), scored by the SAME external reviewers as the
+165-case panel, so these numbers sit on the `_codex` scale and are directly comparable to it.
+
+| arm | edit identified | attribution‡‡ | invented | sensible | **reasoning** |
+|---|---|---|---|---|---|
+| ChemDFM base | **56.2%** | 29.2% | 70.8% | **97.9%** | **14.6%** |
+| ether0 base | 12.5% | 100.0% | **37.5%** | 85.4% | 12.5% |
+| Llama-Inst base | 31.2% | 35.4% | 85.4% | 85.4% | 6.2% |
+
+**The result that matters, and it is uncomfortable.** Untrained ChemDFM scores **14.6%** on
+reasoning. The same reviewers scored fine-tuned **ether0 schema B at 14.7%**, schema A at 15.8% and
+ether0 g2 at 15.4%. **Fine-tuning ether0 on our labels produced rationales chemists rate no better
+than an off-the-shelf ChemDFM with no training at all.** Per-reviewer counts are tight (2/3/2,
+2/2/2, 1/1/1), so this is not one scorer. It does not say fine-tuning is worthless — the automated
+columns show large gains in validity, heavy-atom error and groundedness — but it does say the
+chemist-facing quality of ether0's reasoning is not where the gain landed.
+
+**‡‡ `attribution` is NOT the same measurement on these rows.** All three base arms cite **zero
+distances** in the sampled items (ChemDFM base 0.0 per item with 2.3 residues named, ether0 base 0.0
+and 0.0 across 111.7 words, Llama base 0.0 and 0.9). ether0 base's 100% is therefore vacuous —
+nothing is cited, so nothing is miscited — while ChemDFM and Llama score 29–35% because they name
+residues *without* a distance and reviewers counted that as unsupported. Do not read this column
+across the base and trained rows.
+
+Raw scores: `~/Downloads/covalentformer_labelling_task/base_model_eval/score_out/` (9 files,
+verified complete: 720 of 720 booleans); rates in `base_eval_results.json`; key in
+`panel_base_KEY_DO_NOT_SHIP.json`.
 
 ### ¶ The 165-case chemist panel, 2026-10-16 — and it REVERSES the 48-judgement read
 
