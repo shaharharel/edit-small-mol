@@ -122,7 +122,12 @@ CORPUS = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_
 # (1,000 -> 1,800 pairs once, and 2,000 records that were really 1,950 unique pairs plus 50
 # superseded readings the other time).
 GENERATION = 'g1_v1_retrospective'
-LABEL_GLOB = os.path.join(HERE, 'label_out', 'batch_*.json')
+# g4 re-labels the SAME 7,069 pairs under the SAME batch numbers in a SEPARATE directory, so a
+# glob spanning both label_out/ and label_out_g4/ would hand two records to one pair id and break
+# the one-record-per-pair data model this file rests on. The directory is therefore selected, not
+# merged: COVF_LABEL_DIR picks it, and the default is unchanged so every g1-g3 build stays
+# byte-reproducible.
+LABEL_GLOB = os.path.join(HERE, os.environ.get('COVF_LABEL_DIR', 'label_out'), 'batch_*.json')
 N_PAIRS_EXPECTED = 2000
 N_USABLE_EXPECTED = 1714
 

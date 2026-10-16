@@ -41,6 +41,10 @@ GEN_ALIASES = {
     'g1': 'g1_v1_retrospective',
     'g2': 'g2_v2_input_anchored',
     'g3': 'g3_v2_input_anchored_envelope',
+    # g4 is the independent SECOND pass over the full 7,069-pair corpus -- same pipeline, same
+    # briefs, different labellers and chairs. Its records live in label_out_g4/, so a g4 build
+    # must run with COVF_LABEL_DIR=label_out_g4.
+    'g4': 'g4_v2_input_anchored_envelope_pass2',
 }
 
 
