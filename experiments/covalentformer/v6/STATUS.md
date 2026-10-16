@@ -194,8 +194,9 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
 | ether0-24B **base** | – | ⏳ | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| ether0-24B schema A | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | ⏳ | ⏳ | 0.849 | 0.853 | ❌ | ❌ |
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | ⏳ | ⏳ | 0.844 | 0.779 | ❌ | ❌ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | ⏳ | ⏳ | **0.875** | **0.858** | ❌ | ❌ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
@@ -282,6 +283,47 @@ trains on `sft_out_g3_ether0_v2/sft_pocket.jsonl`; the numbers above come from t
 `big_table.py` and `table_extra.py` so the column definitions match every other row.
 
 elem/dir **vs REF** stay ⏳: `table_extra.py` emits the self/OWN pair only.
+
+### ether0 re-evals complete, 2026-10-16 — and schema training COSTS attribution
+
+`ALL DONE 04:56`. The probe gate passed first (loss 0.3310 unmerged against 0.7647 merged, training
+best 0.3982, schema_ok 8/8), which is what licensed the ~5 GPU-hours. Both old ether0 numbers were
+invalid — `merge_and_unload()` on an NF4 base discarded the LoRA, so each scored the base model —
+and these replace them. Schema A re-eval took 4h25m against schema B's 1h24m; it was slow, not
+stuck, and writes nothing until it finishes. I nearly recommended killing it at the 3-hour mark on
+exactly that ambiguity. It would have been wrong.
+
+**The headline is ether0-g2's attrib-1b of 0.551.** That is the metric every arm has failed —
+whether a cited distance and the residue it is attached to actually co-occur in one table row:
+
+| arm | attrib 1b |
+|---|---|
+| *reference ceiling* | 0.709 |
+| **ether0 g2 (no schema)** | **0.551** |
+| SmileyLlama g2 | 0.419 |
+| ether0 schema B g3 | 0.330 |
+| ChemDFM g2 | 0.327 |
+| ChemDFM g3 | 0.290 |
+| **ether0 schema A g3** | **0.183** |
+
+Both ether0 schema arms sit at or below the ChemDFM arms while the **unschema'd** g2 arm clears
+them all by a wide margin. The think/answer schema buys format compliance and a much better loss
+(schema A 0.379, essentially its training best of 0.3982, against g2's 0.630) **and gives up
+attribution**. Reasoning-formatted output that cites the wrong atom is exactly the failure three
+chemists independently called dominant, so this is not a cosmetic trade.
+
+Other reads from these two rows:
+- **ether0 g2 is the strongest arm overall**: TC→input 0.692 (just over the 0.680 human band),
+  validity 0.897, grounded 1.000, scaffold 0.532, elem/dir vs OWN 0.875 / 0.858 — best in table.
+- **schema A has the highest selectivity in the table at 0.537**, and it is still **below the
+  0.5625 zero-parameter distance-sort baseline**. No arm has beaten that baseline yet.
+- schema A's scaffold 0.223 against the reference's 0.389 is the worst in the table; g2's 0.532
+  overshoots it the other way.
+- `schema_ok = 0.000` for ether0 g2 is **not a failure**: the g2 arm predates the schema and never
+  emitted think/answer. Its `format_compliance` is 1.000. Do not read the two as one column.
+
+Columns come from `big_table.py` and `table_extra.py` against each arm's OWN training file
+(`sft_out_g3_ether0/` and `sft_out_g2/`), so they mean the same thing as every other row.
 
 ### Known caveats on this table
 
