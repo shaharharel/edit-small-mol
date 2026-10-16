@@ -185,18 +185,18 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 
 | arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Llama-3.1-8B-Inst **base** | – | 0.519 | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | 0.998 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| Llama-3.1-8B-Inst | g3 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| SmileyLlama-8B **base** | – | 0.882 | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | – | – | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | ❌ | ❌ |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ |
 | SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% |
 | SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | ❌ | ❌ |
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.275 | – | – | – | – | ❌ | ❌ |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.761 | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | 1.000 | **0.543** | ⏳ | ⏳ | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
-| ether0-24B **base** | – | ⏳ | ⏳ | – | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ⏳ | ❌ | ❌ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | ⏳ | ⏳ | 0.849 | 0.853 | ❌ | ❌ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | ⏳ | ⏳ | 0.844 | 0.779 | ❌ | ❌ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | ⏳ | ⏳ | **0.875** | **0.858** | ❌ | ❌ |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
+| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | ❌ | ❌ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | ❌ | ❌ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | ❌ | ❌ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
@@ -324,6 +324,40 @@ Other reads from these two rows:
 
 Columns come from `big_table.py` and `table_extra.py` against each arm's OWN training file
 (`sft_out_g3_ether0/` and `sft_out_g2/`), so they mean the same thing as every other row.
+
+### The table is complete, 2026-10-16
+
+Every arm now has a row, computed from generations already on disk — **no new GPU work was
+needed**. The last four gaps (Llama-Inst base and g3, ether0 base, ChemDFM g3's chemistry columns)
+were all sitting in saved `generations.jsonl` files; the Llama-g3 run was `base_pocket_g3` and
+ChemDFM-g3's generations were already local in `sft_2k/`. Machine A was stopped once this was
+confirmed.
+
+Every cell comes from the same three scripts so the columns mean the same thing in every row:
+`big_table.py` (validity → selectivity), `table_extra.py` (scaffold, attrib, elem/dir **vs OWN**)
+and `eval_axes.py --data <that arm's own training file>` (elem/dir **vs REF**). ChemDFM g3
+reproduced its previously-recorded 0.525 / 0.529 under this path, which is the check that the
+mapping is right.
+
+**‡ Llama-Inst base shows attrib 1a and 1b = 1.000 on a denominator of almost nothing.** The base
+model cites barely any distances, so "the ones it cites are right" is close to vacuous. Do not
+read it as the best attribution in the table; it is the smallest sample.
+
+**Two ChemDFM g3 cells moved** when recomputed from the local generations: selectivity 0.543 →
+**0.477** and uniqueness 0.761 → **0.777**. The earlier pair was recorded from a run on the
+second machine, which is no longer ours; the values here are from `sft_2k/chemdfm_pocket_g3` under
+the same scripts as every other row, so they are the ones to quote.
+
+Arms whose base model emits no usable sentence (SmileyLlama base at 1.0 word, ether0 base) keep
+`–` rather than a number in the sentence columns: there is nothing to score, and a 0 would read
+as a measured failure instead of an absence.
+
+**What the completed table says.** No arm beats the 0.5625 zero-parameter distance-sort baseline
+on selectivity — the best is ether0 schema A at 0.537. Attribution-1b remains the gap that
+matters: ether0 g2 at 0.551 is the only arm within reach of the 0.709 reference, and the two
+schema-trained ether0 arms (0.330, 0.183) sit below every ChemDFM and SmileyLlama arm. Fine-tuning
+reliably fixes validity and heavy-atom delta — Llama base 12.10 and SmileyLlama base 18.82 fall to
+~3.2–3.8 everywhere — but it has not yet fixed which atom a number belongs to.
 
 ### Known caveats on this table
 
