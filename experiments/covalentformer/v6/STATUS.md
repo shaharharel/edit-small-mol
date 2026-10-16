@@ -186,17 +186,17 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | ❌ | ❌ |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | 75.0%§ | 4.2%§ |
 | SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ |
 | SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | ❌ | ❌ |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ |
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | ❌ | ❌ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | ❌ | ❌ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | ❌ | ❌ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
@@ -358,6 +358,49 @@ matters: ether0 g2 at 0.551 is the only arm within reach of the 0.709 reference,
 schema-trained ether0 arms (0.330, 0.183) sit below every ChemDFM and SmileyLlama arm. Fine-tuning
 reliably fixes validity and heavy-atom delta — Llama base 12.10 and SmileyLlama base 18.82 fall to
 ~3.2–3.8 everywhere — but it has not yet fixed which atom a number belongs to.
+
+### § The five-arm chemist panel, 2026-10-16 — the sensible/reasoning columns
+
+Five arms had never had a chemist panel, so those cells sat at ❌. They are now filled from ONE
+panel rather than five pairwise ones: 16 cases, all five arms' proposals side by side per case,
+slot letters randomised per case, key withheld, three independent blind reviewers
+(`panel_5arm/`, 240 slot-judgements). One panel because the ChemDFM g2-vs-g3 panel scored
+`would_show_a_chemist` at 12.5% for an arm the earlier panel put at 25.6% — panel-to-panel drift
+on these columns exceeds most differences between arms, so only same-panel numbers compare.
+**§ marks the five arms scored together here; they are comparable to each other and NOT to the †
+or un-marked rows above.**
+
+| arm | edit identified | attribution ok | invented chem | **sensible** | **reasoning** | best-in-case |
+|---|---|---|---|---|---|---|
+| ether0 schema A | 79.2% | 43.8% | 64.6% | **91.7%** | **39.6%** | 16 |
+| ether0 schema B | 79.2% | **54.2%** | **54.2%** | 85.4% | 35.4% | **18** |
+| ether0 g2 | 56.2% | 52.1% | 62.5% | 89.6% | 29.2% | 8 |
+| Llama-Inst g3 | 35.4% | 22.9% | 87.5% | 75.0% | 4.2% | 1 |
+| SmileyLlama g3 | 25.0% | 18.8% | 85.4% | 56.2% | 4.2% | 2 |
+
+**The three ether0 arms beat the two 8B arms on every column, and all three reviewers ordered them
+the same way** — the would-show gap is 29–40% against 4.2%, and the 8B arms invent chemistry on
+85–88% of slots. R1 scored more generously than R2 and R3 in absolute terms (24, 16 and 14
+would-show out of 80) but the ranking is identical across all three, which is the part to trust.
+
+**A caution on reading the panel's own best_overall tallies.** R3 reported that "no slot letter
+separates itself", and that is true and misleading: slots are re-randomised per case, so a tally
+by LETTER is noise by construction. Only the key-resolved, by-ARM aggregation above is meaningful,
+and it separates cleanly.
+
+**The chemists and the computable metric disagree on ether0 g2.** It leads the table on
+attribution-1b (0.551, the best of any arm) yet the panel puts its edit-identification at 56.2%,
+far below the schema arms' 79.2%. Both can hold: 1b asks whether a cited distance sits in one
+table row with its residue, while the panel asks whether the rationale describes the edit that
+separates the input from *that model's own molecule*. g2 cites honestly about the wrong edit.
+
+All three reviewers independently converged on the same dominant failure, and it is not
+fabrication: of roughly 200–226 cited distances each, about 60–70 were wrong, and **almost all
+were real table rows attached to the wrong owning atom** — usually a contact belonging to a group
+the edit retained. Three phantom residues were found by all three reviewers independently
+(TRP154, GLU148-for-LEU148, ASP119). The cleanest discrimination in the set: in 8FPE four of five
+arms deleted the hexafluorocarbinol and still claimed its 2.71 Å HIS407.NE2 hydrogen bond was
+retained; the one arm that kept the hydroxyl was the only one whose claim was true.
 
 ### Known caveats on this table
 
