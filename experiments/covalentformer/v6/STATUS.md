@@ -192,11 +192,11 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ |
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | 97.0%¶ | **23.0%**¶ |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | 89.7%¶ | 15.8%¶ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | **98.6%**¶ | 14.7%¶ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 97.4%¶ | 15.4%¶ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – |
 
@@ -401,6 +401,41 @@ the edit retained. Three phantom residues were found by all three reviewers inde
 (TRP154, GLU148-for-LEU148, ASP119). The cleanest discrimination in the set: in 8FPE four of five
 arms deleted the hexafluorocarbinol and still claimed its 2.71 Å HIS407.NE2 hydrogen bond was
 retained; the one arm that kept the hydroxyl was the only one whose claim was true.
+
+### ¶ The 165-case chemist panel, 2026-10-16 — and it REVERSES the 48-judgement read
+
+External reviewers, 165 cases, 4 arms side by side per case, letters reshuffled, 3 independent
+reviewers, **495 judgements per arm** and 9,900 booleans with zero missing slots.
+
+| arm | edit identified | attribution | invented | sensible | **reasoning** | best-in-case |
+|---|---|---|---|---|---|---|
+| **ChemDFM g3** | **66.9%** | 32.1% | 63.2% | 97.0% | **23.0%** | **88** |
+| ether0 schema A | 43.0% | 21.2% | 76.6% | 89.7% | 15.8% | 31 |
+| ether0 g2 | 49.9% | **38.6%** | **58.2%** | 97.4% | 15.4% | 55 |
+| ether0 schema B | 51.5% | 34.3% | 60.6% | **98.6%** | 14.7% | 41 |
+
+**What the small panel got wrong.** At 48 judgements the ether0 arms read 39.6 / 35.4 / 29.2% on
+reasoning and appeared ordered A > B > g2. At 495 they are **15.8 / 14.7 / 15.4% — a dead heat** —
+and the absolute rates were inflated about twofold. The earlier ordering was noise, and the lead-arm
+recommendation built on it (schema B) does not survive. All three reviewers agree here
+(per-reviewer would-show: 12/18/18%, 13/15/16%, 13/18/15%), so this is not one harsh scorer.
+
+**ChemDFM g3 is the best arm on the chemist axis** and it was never in the five-arm panel, which is
+why this is new information rather than a revision: 23.0% reasoning against ~15%, best-in-case 88
+against 31–55, and edit identification 15 points clear.
+
+**What got STRONGER.** The chemists and the computable attrib-1b now agree on attribution ordering —
+ether0 g2 (38.6% / 1b 0.551) > schema B (34.3% / 0.330) > schema A (21.2% / 0.183). The
+contradiction flagged after the small panel was an artefact of n=48. **The think/answer schema
+costs attribution, and that result survives tenfold more data.**
+
+**The number to lead with: `best_overall` was "none" in 280 of 495 judgements — 57%.** More than half
+the time a chemist saw four proposals and judged none worth putting in front of an audience. Every
+between-arm difference above sits inside that fact.
+
+Raw scores: `~/Downloads/covalentformer_labelling_task/metrics_eval/score_out/` (21 files, verified
+complete before unblinding); per-arm rates in `metrics_eval_results.json`; key in
+`panel_metrics_eval_KEY_DO_NOT_SHIP.json`.
 
 ### Known caveats on this table
 
