@@ -194,6 +194,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
 | **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | 92.4%¤ | 38.9%¤ | TBD | TBD |
+| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | **2.84** | 0.818 | 0.455 | 0.969 | 0.469 | **1.000** | 0.495 | 0.476 | 0.571 | 0.855 | 0.911 | TBD | TBD | TBD | TBD |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
 | ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
@@ -532,6 +533,45 @@ Two methodology notes from the reviewers, both worth fixing in the next panel: c
 repeat inputs with the same proposal in every slot and every boolean true, so they carry no
 discriminating signal, and duplicate-input families (6XOL/6XOM/6XOP, 7I9G) triple-count a single
 rationale's errors.
+
+### g3+g4 combined: ChemDFM recovers what g4 alone cost, 2026-10-17
+
+7,692 train rows over 5,407 pairs, the 2,285 shared pairs keeping BOTH labellings (2x sampling
+weight on those, recorded in `sft_out_g3g4/build_note.json`). Same fixed 262-pair benchmark.
+
+| | g3 | g4 | **g3+g4** |
+|---|---|---|---|
+| validity | 0.958 | 0.966 | **0.973** |
+| TC→input | **0.683** | 0.644 | 0.658 |
+| heavyΔ MAE | 3.31 | 3.67 | **2.84** |
+| warhead | 0.818 | 0.767 | **0.818** |
+| grounded | **1.000** | 0.981 | 0.969 |
+| selectivity | 0.477 | 0.447 | 0.469 |
+| attrib 1b | 0.290 | **0.594** | 0.495 |
+| distances/sentence | 2.88 | 1.61 | 1.95 |
+| correct anchors/sentence | 0.835 | 0.956 | **0.965** |
+
+**Combining recovered the costs g4 alone imposed**: warhead retention is back at g3's 0.818,
+TC→input moves part-way back toward the 0.680 human band, and **heavy-atom MAE 2.84 is the best of
+any trained arm in the table** (next best ether0 at 3.20). Attribution and verbosity land between
+the two parents, which is what mixing two label styles should do. Highest validity of any ChemDFM
+arm at 0.973.
+
+**Training behaviour, measured at 0.2-epoch resolution for the first time.** The curve was
+0.7865, 0.7023, 0.6737, 0.6378, 0.6330, 0.6305, 0.6290, 0.6282, then **0.6045 at epoch 2.00
+(best)**, then 0.6599, 0.6555, 0.7097 by 3.39. Two findings:
+
+* **The optimum is at epoch 2.0, twice as late as the g4-only arms' epoch 1** — the combined
+  corpus carries more learnable signal than g4 alone.
+* **There is a real stall from epoch 0.8 to 1.6** (0.6378 → 0.6282, under 0.01 across four
+  evaluations) that then resolves into a 0.024 improvement. Stopping on that plateau would have
+  cost a genuine gain. This is the reason to keep patience above one epoch, and it is invisible at
+  epoch-boundary resolution.
+
+The run was stopped by hand at 7 of 10 patience evaluations once the turn was unambiguous; its
+adapter was materialised from checkpoint-1920 and byte-verified, with provenance recorded beside
+it. **ether0 schema B on the same corpus runs next with patience 5** — one epoch of patience,
+which still clears the 0.8-1.6 stall while not spending two hours past a turn as this run did.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 
