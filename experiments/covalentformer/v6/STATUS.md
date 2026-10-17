@@ -183,25 +183,25 @@ input table, and every changed site must be named.
 Benchmark = the g2 val split, copied verbatim into every training arm by `build_sft_arms.py`, so
 only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist panel.
 
-| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning  sensible_codex | reasoning_codex |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ | 85.4% | 6.2% |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | 75.0%§ | 4.2%§ | TBD | TBD |
-| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ | – | – |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% | TBD | TBD |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ | TBD | TBD |
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** |
-| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
-| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | 92.4%¤ | 38.9%¤ | TBD | TBD |
-| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | **2.84** | 0.818 | 0.455 | 0.969 | 0.469 | **1.000** | 0.495 | 0.476 | 0.571 | 0.855 | 0.911 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ |
-| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% |
-| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | 86.1%¤ | 37.5%¤ | TBD | TBD |
-| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – |
-| *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – |
+| arm | data | validity | uniq | novelty | TC→in | heavyΔ MAE | warhead | scaffold | grounded | selectivity | attrib 1a | attrib 1b | **elem vs REF** | **dir vs REF** | **elem vs OWN** | **dir vs OWN** | sensible | reasoning  sensible_codex | reasoning_codex  invented chem ↓ |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ | 85.4% | 6.2% | 85.4%◊ |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 3.32 | 0.632 | 0.322 | 1.000 | 0.463 | 0.977 | 0.384 | 0.441 | 0.553 | 0.809 | 0.765 | 75.0%§ | 4.2%§ | TBD | TBD | TBD |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ | – | – | – |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 3.40 | 0.758 | 0.444 | 1.000 | 0.436 | 0.958 | 0.459 | 0.419 | 0.598 | 0.794 | 0.782 | 64.4% | 15.6% | TBD | TBD | TBD |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 3.77 | 0.700 | 0.332 | 0.996 | 0.481 | 1.000 | 0.268 | 0.425 | 0.505 | 0.709 | 0.748 | 56.2%§ | 4.2%§ | TBD | TBD | TBD |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** | 70.8%◊ |
+| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD | TBD |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** | 63.2%¶ |
+| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | 92.4%¤ | 38.9%¤ | TBD | TBD | 51.5%¶ |
+| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | **2.84** | 0.818 | 0.455 | 0.969 | 0.469 | **1.000** | 0.495 | 0.476 | 0.571 | 0.855 | 0.911 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ | **42.0%**◊ |
+| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% | 37.5%◊‡‡ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% | 76.6%¶ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
+| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
+| *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – | – |
+| *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – | – |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
 keep the Murcko scaffold only 38.9% of the time and the warhead 76% of the time, so TC→input and
@@ -533,6 +533,39 @@ Two methodology notes from the reviewers, both worth fixing in the next panel: c
 repeat inputs with the same proposal in every slot and every boolean true, so they carry no
 discriminating signal, and duplicate-input families (6XOL/6XOM/6XOP, 7I9G) triple-count a single
 rationale's errors.
+
+### invented chemistry — the column that matters most, and the most trustworthy
+
+Added to the table 2026-10-18. It asks whether the rationale asserts a contact, bond or interaction
+the input table does not support. **It is the least contaminated of the three chemist columns:**
+
+* `would_show_a_chemist` is a comparative judgement, so it moves with which arms sat beside it
+  (paired vs single-slot panels).
+* `atom_attribution_ok` moves with the undecidable-ownership convention — 16% to 50% on one panel.
+* **`invented_chemistry` is an absolute check against the input table.** No convention touches it,
+  and it is not a comparison. Two independent pools put ChemDFM g3+g4 at **42.0%** (external, 450
+  judgements) and **38.9%** (in-house, 144), which is close enough to trust.
+
+| arm | invented chemistry ↓ |
+|---|---|
+| Llama-Inst base | 85.4% |
+| ether0 schema A g3 | 76.6% |
+| ChemDFM base | 70.8% |
+| ChemDFM g3 | 63.2% |
+| ether0 schema B g4 | 61.6% |
+| ether0 schema B g3 | 60.6% |
+| ether0 no-schema g2 | 58.2% |
+| ChemDFM g4 | 51.5% |
+| **ChemDFM g3+g4** | **42.0%** |
+| *ether0 base* ‡‡ | *37.5%* |
+
+Across the ChemDFM family it falls **70.8 → 63.2 → 51.5 → 42.0**, which is genuine progress and
+still means **roughly two proposals in five invent chemistry that is not in the pocket.** That, not
+the reasoning column, is what stands between these models and use.
+
+**‡‡ ether0 base's 37.5% is vacuous**, in the same way as its 100% attribution: it cites no
+distances and names no residues, so there is nothing for it to invent. Do not read it as the best
+row.
 
 ### ◊ ChemDFM g3+g4 chemist panels — and TWO comparisons that are NOT valid, 2026-10-18
 
