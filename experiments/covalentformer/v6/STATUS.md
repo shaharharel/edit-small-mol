@@ -435,7 +435,7 @@ they also rank ChemDFM above schema B, only the absolute level is scorer-depende
 schema B above ChemDFM, the ranking itself depends on who scores, which would mean neither panel
 can decide the arm.
 
-### g4 LABELS ROUGHLY DOUBLE ATTRIBUTION — the headline result, 2026-10-17
+### g4 labels improve attribution by ~14% per sentence, NOT 2x — corrected 2026-10-17
 
 ChemDFM-g4 (`TRAIN rc=0` 22:17, `EVAL rc=0` 22:42) and ether0-schema-B-g4 (`rc=0` 04:28 and
 05:40, `ALL DONE`). Same models, same schema, same fixed 262-pair benchmark as every other row —
@@ -447,15 +447,32 @@ only the labels changed, from the g3 pass to the independent g4 pass.
 | ether0 schema B | 0.330 | **0.693** |
 | *reference ceiling* | 0.709 | 0.709 |
 
-**ether0 schema B on g4 reaches 0.693 against a 0.709 ceiling.** attrib-1b is the "real distance,
-wrong residue" metric — six reviewers across five panels named wrong-owner citation as THE dominant
+**ether0 schema B on g4 reaches 0.693 against a 0.709 ceiling** — read with the denominator
+caveat below. attrib-1b is the "real distance, wrong residue" metric — six reviewers across five panels named wrong-owner citation as THE dominant
 failure, and no arm had previously cleared 0.551. It turns out the ceiling was in the labels, not
 the architecture.
 
 That is consistent with what the label sets themselves measure: the g4 pass scores **100%** on
 "every cited distance exists in the input table" and **78.6%** on "(residue, distance) co-occur in
-one row", against g3's 92.4% and 55.2%. The label-quality difference propagates to the models, and
-more than proportionally — g4 labels are +42% relative on 1b, the models +110%.
+one row", against g3's 92.4% and 55.2%.
+
+**CORRECTION, and it cuts the headline down by a factor of eight.** I first wrote that the models
+gained +110% relative on 1b. **attrib-1b is a rate whose denominator the model controls**, and the
+g4 arms cite far fewer distances, so they have far fewer chances to mis-attribute:
+
+| arm | distances/sentence | words | 1b | **correct anchors per sentence** |
+|---|---|---|---|---|
+| ChemDFM g3 | 2.88 | 33.3 | 0.290 | 0.835 |
+| ChemDFM g4 | **1.61** | 26.5 | 0.594 | **0.956** (+14%) |
+| ether0 schema B g3 | 2.81 | 33.1 | 0.330 | 0.927 |
+| ether0 schema B g4 | **1.52** | 26.2 | 0.693 | **1.053** (+14%) |
+
+Multiplied through, g4 delivers about **14% more correct anchors per sentence**, not twice as many.
+Real and worth having; not a doubling. The models inherited the g4 labels' style faithfully —
+terser (26.5 against 33.3 words), fewer citations, each one better attributed — which is exactly
+the pattern the g3-vs-g4 LABEL comparison already showed (g4 labels cite 1.44 distances per
+sentence against g3's 2.65). I had flagged that denominator trap for the labels and then walked
+into it reading the model rows. **Quote 1b only alongside distances-per-sentence.**
 
 Also improved on both arms: `attrib 1a` is now **1.000** (from 0.996 and 0.985); over-35-word
 sentences fell from 12.2% to **0.0%**; elem/dir vs OWN rose (ChemDFM 0.907/0.780 → 0.898/0.914,

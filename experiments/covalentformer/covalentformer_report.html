@@ -853,8 +853,8 @@ schema B (34.3%, 0.330) beats schema A (21.2%, 0.183) &mdash; <b>the think/answe
 attribution</b>. The figure to carry, though, is that <b>&ldquo;none of the four&rdquo; won
 280 of 495 judgements &mdash; 57%</b>: more than half the time a chemist saw four proposals and
 judged none worth showing an audience. Every difference between arms sits inside that fact.</p>
-<p class="note"><b>The g4 labelling pass roughly doubles attribution &mdash; the strongest
-result here.</b> Same models, same schema, same benchmark; only the labels change. <b>attrib 1b</b>
+<p class="note"><b>The g4 labelling pass improves attribution per sentence by about 14% &mdash; not the
+doubling the raw rate suggests.</b> Same models, same schema, same benchmark; only the labels change. <b>attrib 1b</b>
 goes from 0.290 to <b>0.594</b> for ChemDFM and from 0.330 to <b>0.693</b> for ether0 schema B,
 against a reference ceiling of 0.709. That metric is the &ldquo;real distance, wrong residue&rdquo;
 class six reviewers across five panels called the dominant failure, and no arm had previously passed
@@ -862,6 +862,12 @@ class six reviewers across five panels called the dominant failure, and no arm h
 themselves: the g4 pass scores 100% on &ldquo;every cited distance exists in the table&rdquo; and
 78.6% on &ldquo;(residue, distance) co-occur in one row&rdquo; against g3&rsquo;s 92.4% and 55.2%.
 <b>attrib 1a</b> is now 1.000 on both arms and over-35-word sentences fell from 12.2% to zero.
+<b>Read 1b with its denominator, though:</b> the g4 arms cite 1.5&ndash;1.6 distances per sentence
+against g3&rsquo;s 2.8&ndash;2.9, so they have ~45% fewer chances to mis-attribute. Multiplied
+through, g4 delivers about <b>14% more correct anchors per sentence</b> (0.835&rarr;0.956 and
+0.927&rarr;1.053), not twice as many. The arms inherited the g4 labels&rsquo; terser style
+(26.5 against 33.3 words) along with their better attribution, and 1b should never be quoted
+without distances-per-sentence beside it.
 The cost is real and not free: TC&rarr;input leaves the human band (0.683&rarr;0.644 and
 0.682&rarr;0.624), groundedness dips, and selectivity falls. The chemist columns on both g4 arms
 are not yet measured.</p>
