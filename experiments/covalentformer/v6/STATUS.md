@@ -194,7 +194,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
 | **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | 92.4%¤ | 38.9%¤ | TBD | TBD |
-| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | **2.84** | 0.818 | 0.455 | 0.969 | 0.469 | **1.000** | 0.495 | 0.476 | 0.571 | 0.855 | 0.911 | TBD | TBD | TBD | TBD |
+| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | **2.84** | 0.818 | 0.455 | 0.969 | 0.469 | **1.000** | 0.495 | 0.476 | 0.571 | 0.855 | 0.911 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
 | ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
@@ -533,6 +533,57 @@ Two methodology notes from the reviewers, both worth fixing in the next panel: c
 repeat inputs with the same proposal in every slot and every boolean true, so they carry no
 discriminating signal, and duplicate-input families (6XOL/6XOM/6XOP, 7I9G) triple-count a single
 rationale's errors.
+
+### ◊ ChemDFM g3+g4 chemist panels — and TWO comparisons that are NOT valid, 2026-10-18
+
+Both panels run on the same arm: in-house 48 items (3 reviewers, 144 judgements) and external 150
+items (3 reviewers, 450). The 48 were drawn from inside the 150, so the two scorer pools judged
+overlapping molecules.
+
+| | in-house (48 / 46 distinct) | external (150 / 126 distinct) |
+|---|---|---|
+| edit identified | 84.8% | 66.4% |
+| attribution, lenient | 65.2% | 68.8% |
+| attribution, strict | **~46%** | not computed |
+| invented chemistry (bad) | 39.9% | 43.4% |
+| **sensible** | **94.9%** | **96.0%** |
+| **reasoning** | **47.8%** | **38.1%** |
+
+**Duplicate items, and the fix.** A reviewer caught that the panels contained byte-identical
+repeats: 2 of 48 in-house, and **24 of 150 external (126 distinct)**. The cause was deduplicating
+on pair id while the same input in the same PDB under a different TARGET ligand code yields a
+different id but an identical input and proposal. De-duplicating moves the external reasoning
+35.8% → 38.1% and edit identification 62.4% → 66.4%, so the redundant items were the weaker ones.
+**Quote the distinct-only figures.** `build_g3g4_single_panel.py` now dedupes on content (255
+eligible → 197 distinct); the ether0 g3+g4 package will not have this.
+
+**TWO comparisons in the table are NOT valid, and both flatter this arm.**
+
+| ChemDFM arm | panel design | undecidable-ownership rule | reasoning | attribution |
+|---|---|---|---|---|
+| base | single-slot | none stated | 14.6% | 29.2% |
+| g3 | **paired, 4-arm** | none stated | 23.0% | 32.1% |
+| g4 | **paired, 2-arm** | none stated | 22.4% | 34.7% |
+| **g3+g4** | single-slot | **undecidable → TRUE** | **38.1%** | **68.8%** |
+
+* **The attribution doubling is substantially MY OWN convention change.** I added "where atom
+  ownership is undecidable, score attribution true" to this brief; no earlier panel had it. On the
+  in-house g4 panel that same convention moved attribution from 16% to 50%. So 68.8% against
+  32-35% is mostly instrument, not model. The in-house strict reading, ~46%, is the honest
+  comparator.
+* **The reasoning jump is confounded by panel design.** 38.1% is single-slot absolute scoring;
+  23.0% and 22.4% came from paired panels where arms sit beside each other and the implied bar
+  rises. The ONE clean comparison is against ChemDFM base, also single-slot and also external:
+  **14.6% → 38.1%, a genuine 2.6x on an identical instrument.**
+
+**What can be claimed:** g3+g4 is clearly better than untrained ChemDFM on the same measuring
+stick. **What cannot:** that it beats g3-alone or g4-alone on the chemist axis. Settling that needs
+one paired panel holding g3, g4 and g3+g4 together under a single convention — and nothing short of
+that will do, because every cross-panel comparison we have attempted has been confounded.
+
+**In-house vs external converged for the first time**: 47.8% against 38.1%, a 1.25x gap, where
+earlier arms ran 2-3x apart. The difference is that this pair shared both the single-slot design and
+the stated convention. That is evidence the earlier gaps were instrument, not scorer generosity.
 
 ### g3+g4 combined: ChemDFM recovers what g4 alone cost, 2026-10-17
 

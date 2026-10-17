@@ -1,0 +1,194 @@
+{
+ "item_001": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Benzyl->3-pyridylmethyl is the only difference (RDKit: single c->n, 22 heavy atoms both); 3.23 A row (C16) and the 1.78 A CYS161 covalent row (C3) are both real. C16 carries the CYS161-exclusion flag, so it is more likely a warhead-proximal core carbon than a benzyl carbon (the ring's own HIS125.NE2 rows are 3.24/3.28/3.69), but with gapped PDB numbering (C1-C7, C14-C23) ownership of C16 vs C17 is genuinely undecidable, so attribution scored true per convention."
+ },
+ "item_002": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Piperidine-triol/CH2OH -> 3,4-dihydroxypyrrolidine (ring 6->5, 4 heavy atoms lost) is described as 'chiral sugar -> hydroxylated pyrrolidine', correct; cited 3.07 A (O3/ASP586.OD1) and 2.66 A (O2/GLY584.O) are both real H-bond rows on sugar-region oxygens and which specific hydroxyl survives is undecidable from the table (convention: true); GLU585 appears only as a prospective redirect, not as an asserted input contact."
+ },
+ "item_003": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Cyclopentanecarbonyl->cyclopropylacetyl is right (ring 5->3, one C lost), but the 3.62 A HIS323.CE1 contact belongs to C28; the table's heteroatom serials (N5,N8,O10 then F22,N25,O27,N34) pin label n to SMILES atom n or n-1, putting the cyclopentane at C11-C15 (LEU391/PHE486/LEU483/ILE397/MET365 contacts) and C28 in the retained benzonitrile ring - so a contact of a group the edit keeps is credited to the group it replaces; the 2.85 A O10/HIS479.NE2 amide H-bond is cited correctly."
+ },
+ "item_004": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "N-methylpiperazine -> 2-pyrrolidinone matches the structures (MCS loses CN, gains O; ring 6->5); the 3.54 A row is N7/SER144.CB and N7/N8 are the only pair of nitrogens both facing SER144, consistent with the solvent-exposed piperazine, and the retained 2.96 A N6/GLN97.NE2 H-bond is a diaminopyrimidine NH2 that the edit does not touch."
+ },
+ "item_005": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "THF-oxycarbonyl -> Boc is the real change, but the 3.00 A 'given up' H-bond is row N1/GLY27.O - a nitrogen, and the formulas (C25H35N3O6S -> C25H37N3O5S) show no nitrogen is removed: only one C and the THF ring oxygen go, so the cited bond is made by an atom the proposal keeps; 'GLY27(A)' and 'chain B' also assert chain identities the table never provides."
+ },
+ "item_006": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Tetrahydropyran->cyclopropyl confirmed (COC lost, ring 6->3); 3.50 A is C26/ASP111.OD2, in the ASP111/THR110/LYS114 cluster that the THP-bearing end occupies, and the retained 2.76 A N21/MET108.O hinge H-bond is donated by the aminopyrimidine NH that the proposal keeps."
+ },
+ "item_007": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Acid->primary amide is the only difference (one O replaced by N); O1 (2.73 A GLN329.NE2) and O2 (2.81 A PHE498.N) are the only two H-bonding oxygens and must be the two carboxyl oxygens - the other two O rows are ether/isoxazole packing on LEU505 - so both citations sit on the group actually being changed and the amide can still accept from the PHE498 backbone NH."
+ },
+ "item_008": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "The only difference is one inserted methylene (N-CH2-furan -> N-CH2CH2-furan; C14->C15, 22->23 heavy atoms): the thiazolidinone and the spiro piperidine are present in BOTH, so 'replacing the five-membered fused ring with an ethyl-linked thiazolidine' describes removing a ring the proposal retains; the cited 2.80 A O2/GLN131.N and 3.43 A C11/CYS113.SG rows are real and their ownership is not resolvable from the table."
+ },
+ "item_009": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Only N->O changes (C11 both sides), i.e. the terminal CH2NH2 becomes CH2OH, which is what the rationale says (the word 'aminoethyl' is loose for aminomethyl); the 3.09 A row is N9/GLU390.OE1 flagged SALT BRIDGE with a cationic ligand atom, and since the ligand's only other N (N5) is the acetamido NH donating to TYR463.O, the primary amine is pinned as the owner - so losing the salt bridge on amine->alcohol is correct."
+ },
+ "item_010": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": false,
+  "would_show_a_chemist": false,
+  "one_line_why": "The swap (N-methylpiperidin-4-yl -> hydroxypiperidinyl-methyl) is described correctly and the 3.32 A C11/LEU318.CD1 row plus the two MET265 H-bonds (N30 3.25, N34 2.67) all exist, with C10/C11/N29 clustering on LEU318 consistent with the piperidine; but the proposed ring puts the OH on the carbon bonded to ring NH - a cyclic hemiaminal that ring-opens in water - and both new stereocentres are left unspecified in the SMILES while being called 'chiral'."
+ },
+ "item_011": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Best-grounded item: THP->cyclopropyl verified (COC lost, ring 6->3), and all three citations land on the right atoms - O26 is the THP ring oxygen (sequential labels C25/O26/C27 all sit in the ASP111/THR110/LYS114 cluster), C27 is the adjacent THP carbon at 3.41 A on ASP111.OD2, and the retained 2.93 A N22/MET108.O hinge H-bond is donated by the untouched anilino NH; only flaw is calling an achiral NH-cyclopropyl 'stereodefined' (RDKit finds no stereocentre)."
+ },
+ "item_012": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Naphthalene -> fluorophenyl is stated with the fluorine acknowledged, matching RDKit (C23H17N3O4 -> C19H14FN3O4, 4 rings -> 3); cited rows are all real (CAH/CAI/CAY on TYR188.CB at 3.69/3.57/3.80, CAJ+CBB on LEU234.CD2 at 3.46, O0Q/LYS103.N 3.15) and these alphanumeric PDB names (CAH...CBC, C00...C0P) cannot be mapped to atoms at all, so ownership is undecidable -> true by convention."
+ },
+ "item_013": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Isopropoxy->methoxy confirmed (two carbons lost, C18H20O4 -> C16H16O4); 3.36 A C18/GLN15.CB and 2.88 A O2/ARG28.NH2 (flagged SALT BRIDGE, anionic atom = carboxylate) are real rows, and with five different carbons facing GLN15 the specific isopropyl carbon is not recoverable from the table, so attribution is scored true per convention."
+ },
+ "item_014": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Naphthalenyl->2-chlorophenyl is the real change; labels here are a complete global serial 01-30 (gaps exactly at N02,S07,N10,O13,O14,O17), and the warhead block C11/C12(1.81 A covalent)/O13 plus furan O17 place C23 inside the C21-C30 aromatic block, so the 3.34 A HIS27.CE1 citation is on a naphthalene carbon - correct; but 'toward chain C HIS27' invents a second, chain-assigned copy of HIS27 that the chain-less table does not support."
+ },
+ "item_015": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Biphenylylmethyl -> 3-pyridylmethyl verified (a whole phenyl plus one c->n; 39 -> 33 heavy atoms); the sulfonyl S12/O13/O14 rows sit on GLN285/TRP299 while the C01-C06 ring faces PHE288/MET246/SER247 and the C33/C34/C38+F35-F41+O42 block is the hexafluoropropanol, so C01-C06 is the distal phenyl of the arm being replaced and the 3.78 A citation is on the right group; 2.71 A O42/HIS407.NE2 is a genuine good-geometry H-bond from the retained alcohol, though 'redirect toward PHE288' after deleting the PHE288 contact is circular."
+ },
+ "item_016": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Phthalimide opened to an N-aryl (chloro, carboxy) aniline with the glutarimide kept - described as 'fused-dione ring -> chlorinated phenyl', correct; 3.13 A O2/LYS40.NZ is flagged as an anionic-atom salt bridge so it is certainly the carboxylate, while O1 (2.94 A ILE116.N) is one of four imide carbonyls and the table cannot say whether it belongs to the deleted phthalimide or the retained glutarimide (N2/GLU115.OE2 fixes only the glutarimide NH), so attribution is true by convention; note the carboxylate already salt-bridges LYS60 at 2.59 A, making 'redirect toward LYS60' redundant."
+ },
+ "item_017": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Two edits (hydroxybutyl->phenyl and Leu->Ile) and the rationale does flag both, but the 2.50 A 'terminal hydroxyl' bond is row O4/ASN55.OD1 while the arm's own oxygen is O19, which the table shows only packing HIS49.CB at 3.66 A with no H-bond: the appended arm is the C13-C18/O19 block (all facing LYS634/MET635/HIS49) whereas O4 and O5 both face ASN55.OD1 like a retained ring diol, so an H-bond made by an atom the edit keeps is credited to the group it deletes; the 2.87 A salt bridge is correctly the free alpha-amine (label N, flagged cationic)."
+ },
+ "item_018": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "2-Hydroxyethylsulfonyl -> methoxy confirmed (O=S(=O)CCO lost, 32 -> 28 heavy atoms); all three oxygens in the table belong to the deleted sulfone/alcohol group, so whichever of O1/O2/O3 is the alcohol the 2.81 A TYR553.OH H-bond is genuinely given up, and GLN467 (O3, 2.94 A) is a real neighbouring row."
+ },
+ "item_019": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Two faults: (1) reverting the methoxy to chlorine reproduces the input except that one ribose stereocentre is written as unspecified 'C' instead of [C@H] (RDKit: 4 assigned centres -> 3 + one '?'), an unacknowledged second difference; (2) the '2.74 A carboxylate hydrogen bond to ASP99' is row O6, and O6/O7 are the bidentate pair on ASP99.OD2/OD1 (2.74/2.62) that in the near-identical 8RV8 ligand (item_032) sit in the same sugar-numbering slot - the carboxylate oxygens are the high-numbered O29/O30 (TYR132.CE2 3.66 and nothing within 4.7 A of LYS170), so a ribose-diol H-bond is credited to the carboxylate."
+ },
+ "item_020": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Aniline NH2 -> OH is the only change (one N replaced by O); the 3.10 A row is N5/GLY109.N and its flag 'ligand both vs GLY donor' marks a donor-and-acceptor nitrogen, i.e. the primary arylamine, while the retained 2.85 A N4/GLY72.O bond is the amide NH - and the rationale correctly declines to call the 3.10 A incompatible contact a hydrogen bond."
+ },
+ "item_021": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Decisive case: here the labels map exactly onto SMILES order (O05,O07,P11,O12,O13,O14 all at their SMILES positions, 18/18), so C01 and C18 are the two methyls - the second methyl's own row is 'C18 faces VAL73.CG1 4.17 A, no contact within 4.0 A', and the quoted 3.83 A MET67.CE contact is C17, a retained aromatic ring carbon; the 3.50 A C01/PHE70.CE2 and 1.88 A O13/ZN301 metal coordination citations are correct."
+ },
+ "item_022": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Only one oxygen is added (C15H14O3 -> C15H14O4), exactly the 'phenolic hydroxyl' claimed; O1's 3.24 A ARG28.NH2 row is flagged as an anionic-atom salt bridge so it must be a carboxylate oxygen (which also rules out the naive label-to-SMILES mapping that would make it the furan ether), and C14/GLN15.CB 3.64 A is a real row whose assignment to a pendant-phenyl carbon is plausible but not strictly recoverable."
+ },
+ "item_023": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Phenol OH -> Br is the single difference (O for Br, 25 heavy atoms both); of the three oxygens, O1 sits on MET98 (aldehyde) and O9 on NAD301.O2D (diaryl ether), so O16's 2.53 A good-geometry H-bond to TYR158.OH is pinned to the phenol being deleted, corroborated by C14/C15 on the same ring facing TYR158.CE1/OH."
+ },
+ "item_024": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Cyclohexylmethyl sulfone -> isopropyl sulfone (41 -> 37 heavy atoms, ring gone); calling it 'cyclohexyl -> isopropyl' glosses over the lost linker methylene but names the right site, and the cited 3.50 A C27/ALA104.O and 3.05 A O4/GLY138.N rows are real - with six oxygens of which two are carboxylate and the table truncated by one row, neither O2 nor O4 can be pinned, so attribution is true by convention."
+ }
+}

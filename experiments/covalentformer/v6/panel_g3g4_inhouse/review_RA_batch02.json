@@ -1,0 +1,194 @@
+{
+ "item_025": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Benzyl ether -> 3-pyridylmethyl ether is the sole change (one c->n, 25 heavy atoms both); labels are a complete global serial 01-25 with gaps exactly at F01/N08/O15/O24/O25, which puts the benzyl ring at C17-C22 (so the cited 3.80 A C22/PHE406.CE2 row is on the group being replaced) and the carboxyl at C23/O24/O25 - corroborated by C23 and O25 both facing CYS380.N (3.41 and the cited 2.73 A H-bond)."
+ },
+ "item_026": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "N-methylpiperazine -> 4-(pyrrolidin-1-yl)piperidine confirmed (CN out, C4H8N ring in; 40 -> 44 heavy atoms, one extra 5-ring); the retained 2.98 A bond is N5/GLN97.OE1 and N4/N5/N6 are the three good-geometry donors on GLU53/GLN97, i.e. the diaminopyrimidine core the edit does not touch, and LEU82 is a real table residue (C27, 3.67 A)."
+ },
+ "item_027": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "A methoxy is indeed added, but it is added PARA to the sulfonyl, and the labels decode cleanly (global serial 01-13: C01 methoxy methyl, N02, O03, C04 N-methyl, S05, O06/O07 sulfonyl, C08-C13 the ring from the ipso carbon), so the para position is C11 - which faces VAL646.CG2 at 3.45 A - while the quoted 3.61 A ALA635.CB row is C09, an ortho carbon that keeps its hydrogen; the prediction that the new ether oxygen will lie against the ALA635 face is therefore unsupported by the table."
+ },
+ "item_028": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Three problems: the methyl is not where the phenol was (an in-place OH->CH3 does not reproduce the proposal, and reverting CH3->OH does not reproduce the input - the substituent moved from meta to ortho relative to the benzylic CH2, unacknowledged); the phenol oxygen is almost certainly the row 'O ... TYR158.OH 2.39 A' (the same phenol-to-TYR158.OH motif gives 2.53 and 2.48 A in items 23 and 37) rather than the cited O4/NAD301.O2D; and no row pairs 3.55 A with MET103.CE at all (MET103.CE appears only as C24 at 3.73 A), so that citation is fabricated."
+ },
+ "item_029": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Ortho-chlorophenyl -> meta-hydroxyphenyl, and the rationale explicitly says 'relocated hydroxyl', so the positional move is acknowledged; CL1/TYR129.CE2 3.50 A is the only halogen row and O13/TRP128.N 2.69 A is the ligand's only oxygen (the fused triazolone carbonyl), so both citations are uniquely pinned and correct."
+ },
+ "item_030": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "RDKit: C17H34O2 -> C16H32O2, i.e. ONE methylene is removed, not 'two'; and with C21 pinned as the thioester carbon (1.83 A covalent to COA703.S1P) the chain numbers outward to a terminus at C39 (ALA160.O 3.51 A), so the deleted carbon is C39 while the cited 3.36 A TYR126.OH contact belongs to C36, which the shortened chain retains."
+ },
+ "item_031": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Pyrazole carboxamide -> methyl ester verified by reverting the ester (the only residual difference is the 1H-pyrazole NH tautomer, the same species in solution, and the stereocentre stays R); N27 and O28 are consecutive labels after the whole F/N core, i.e. the terminal CONH2, so the 2.84 A GLU182.OE2 donation is correctly assigned to the group being deleted and O28 already lies 2.90 A from LYS229.CE as claimed."
+ },
+ "item_032": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Cl->CH3 is exact (reverting methyl to chlorine reproduces the input including all four stereocentres) and the 3.56 A C25/TYR132.CD2 row is in the C20-C26 aryl block being modified; but the '2.64 A carboxylate hydrogen bond to ASP99' is row O13, one of the bidentate pair O13/O15 on ASP99.OD1/OD2 (2.64/2.61) that sits in the ribose numbering run C11,C12,O13,C14,O15,O16 - the carboxylate is O28/O29 (4.51 A from LYS170.NZ, 3.70 A to TYR132.CE2) - and a good-geometry donation to an aspartate carboxylate also requires an OH, not an ionised carboxylate."
+ },
+ "item_033": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "More than a demethylation: neither in-place OMe->OH on the input reproduces the proposal (RDKit), because the surviving methoxy also moves - input is the bicycle with one OMe ortho and one meta, the proposal has OH ortho and OMe para - so an unacknowledged ring rearrangement separates the structures; the cited rows are real and consistent (C12 and O3 both sit on SER14, so C12 is plausibly a methoxy methyl, and O1's 2.98 A ARG28.NH2 row is flagged anionic, i.e. the carboxylate)."
+ },
+ "item_034": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": false,
+  "would_show_a_chemist": false,
+  "one_line_why": "The site and consequence are right - the alpha-hydroxy-sulfonate carbon IS the atom bonded to Cys148 (row C19, 1.80 A covalent, with the adjacent O20 hemithioacetal OH donating to HIS41.NE2), so deleting it does give up the covalent bond, and N03's 2.94 A GLN192.OE1 bond is the retained carbamate NH; but the replacement puts the new sulfamate nitrogen on the carbon that already bears the amide nitrogen, making a geminal N,N-aminal that hydrolyses back to aldehyde plus sulfamic acid in water (and 'sulfonated thioether'/'sulfamide' are loose names for a bisulfite adduct and an N-sulfamate)."
+ },
+ "item_035": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Duplicate of item_033 (same input, proposal and rationale) and the same verdict: RDKit shows no in-place OMe->OH reproduces the proposal because the remaining methoxy shifts to the para position, an unacknowledged second change; the 3.02 A C12/SER14.O and 2.98 A O1/ARG28.NH2 (anionic-flagged carboxylate) citations themselves are sound."
+ },
+ "item_036": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Ring swap named correctly, though RDKit shows a methylene is also inserted (OCH2-cyclohexyl -> OCH2CH2-phenyl, 22 -> 23 heavy atoms) and the rationale does not mention the homologation; 3.33 A C12/ARG392.CG falls in the high-numbered C10-C15 block whose contacts (ARG392, SER391, GLU390, GLN389) mark the lipophilic ether arm, and O4's 2.87 A acceptance from GLN389.NE2 could be the glycosidic O or the acetamido C=O - undecidable, and either way an atom the edit retains."
+ },
+ "item_037": {
+  "edit_identified_correctly": false,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Attribution is excellent - the heteroatom serials match SMILES order exactly, pinning N1 as the thiosemicarbazide NH2 (3.64 A PHE97.CE1) and N4 as its NH (3.04 A MET98.O), both genuinely deleted, with O27 the retained phenol making the 2.48 A TYR158.OH bond - but the proposal is not just 'thiocarbonylhydrazine -> methoxy': it adds a SECOND aryl methoxy and moves the diaryl ether from para to meta of the oxime carbon, neither of which is mentioned."
+ },
+ "item_038": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "The ring-opening to an acyclic polyol is the real change (RDKit: rings [6,6] -> [6], C14H25NO8 -> C13H25NO9), although the ring is a 1,4-dioxane not a 'dioxolane' and the product arm carries three hydroxyls not two; N1 is the ligand's only nitrogen so the retained 2.80 A GLU390.O H-bond is correctly the acetamido NH, and C8's 3.84 A TYR351.CE2 row cannot be assigned to a specific carbon from this table."
+ },
+ "item_039": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "4-Hydroxybutylamino -> anilino is the only change (CCCO out, five aromatic carbons in) and the 1.43 A C1/LYS43.NZ covalent row belongs to the untouched acetyl end, so 'retained' is right; the 3.44 A C9/TYR7.CB row is real but with eleven carbons in two clusters (TYR7/TYR95/ARG94) the specific arm carbon is not recoverable, so attribution is true by convention, and TYR62/TRP156 are both genuine table residues."
+ },
+ "item_040": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Pyrrolidinyl -> phenyl is correct, but the labels decode as a clean walk round the molecule (O01 lactam C=O, C02-C05 pyridinone with C05 the CH2 bonded to P06, O07-O09 the phosphonate, C10-C13 benzo, N14 + C15-C18 pyrrolidine, N21 lactam N, C22 N-methyl), and every pyrrolidine atom is listed as having NO contact within 4 A (N14 4.75, C15 4.45, C16 5.26, C17 5.14, C18 4.22) - so the quoted 3.41 A ASN220.CB contact (C12, a retained benzo carbon) cannot belong to the ring being replaced; the 2.70 A O08/LYS211.NZ phosphonate salt bridge is cited correctly."
+ },
+ "item_041": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Acetamidomethyl-piperidine -> (piperidin-1-ylmethyl)piperidine is exactly what RDKit sees (the single oxygen is lost, three carbons gained); labels are opaque alphanumerics (CAB...CBN, NBB, OBJ) and only 33 of 40 atoms have rows, so CAM's 3.47 A GLY255.O ownership is undecidable - true by convention, though the arm's only oxygen OBJ sits on ASP233.CB, hinting the acetamide end is in the ASP233 rather than the GLY255 subsite; the 2.77 A NBB/GLU236.OE2 salt bridge is correctly a retained cationic amine."
+ },
+ "item_042": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "THP->cyclopropyl is right but the oxygen is swapped: the global serial labels walk the molecule as CL1,C2,C3,N4,C5,N6,C7,C8,C9,O10,C11,C12 - a C-C-C-O-C-C six-ring hanging off the anilino N6, i.e. O10 is the THP ether (and O10's partner LYS114.NZ at 2.81 A matches the THP oxygen's partner in the sister ligand of item_011) - while O22 sits between the lactam N20/C21 and is the isoindolinone carbonyl, so the '3.23 A ether hydrogen bond to LYS54.NZ' that the proposal claims to remove is made by a carbonyl the proposal keeps."
+ },
+ "item_043": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Nitrile -> primary carboxamide is the only change (one N plus one O added); N0H/N0M pair with the uracil oxygens O0Q/O0S in the LYS103/PRO236 subsite, leaving N19 as the nitrile nitrogen, whose PHE227.CG partner matches where this series' nitrile sits in the sister structures, and O0Q's 2.98 A LYS103.N H-bond is the same uracil carbonyl row seen at 3.15 A in item_012 - so both citations are on the right atoms."
+ },
+ "item_044": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "4-Chlorophenyl -> 3-pyridyl confirmed (Cl lost, one c->n, stereocentre S retained); CL1's 3.33 A TYR106.CE1 row is unique to the halogen, C1 also faces TYR106.CE1 (3.83 A) so the ring does sit on TYR106 and a ring carbon at 3.57 A is credible, and the 1.36 A C7/LYS12.NZ covalent bond belongs to the untouched carboxyl end - only looseness is that the 3.57 A row is to TYR106.OH, not CE1 as 'there' implies."
+ },
+ "item_045": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Acrylamide -> methoxyethyl ether is described correctly, and O1 (3.60 A TYR318.OH) is indeed the acrylamide carbonyl, but the '3.48 A amide nitrogen' row is N2 while in-order numbering (O1 carbonyl, O2 ether, O3 diaryl ether; N1 then N2) makes N1 the amide nitrogen - and N1 at 3.75 A from TYR318.CE2 sits with O1 in the TYR318 subsite whereas N2 is out at TRP229, exactly where this series' aryl nitrile binds - so a retained nitrile's packing is credited to the deleted amide nitrogen."
+ },
+ "item_046": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": false,
+  "invented_chemistry": true,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": false,
+  "one_line_why": "Worst case in the batch: the acetyl carbon IS the covalent atom (row C1, 1.43 A to LYS43.NZ, with its only two neighbours C and C2 carrying the LYS43-exclusion flag), and the proposal converts that carbon into a fully substituted ketimine carbon (methyl + CH2 + =N-Ar), leaving no valence for the lysine - so 'retaining the 1.43 A LYS43 covalent bond' is impossible; the cited 3.43 A TYR7.CB row is C10, which cannot be in the three-carbon acetyl arm (C, C1, C2) and so belongs to the retained polyol arm; GLU67 and GLU68 appear nowhere in the table."
+ },
+ "item_047": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Methyl -> hydroxyl is the single change (one C for one O, 22 heavy atoms both); the labels number outward from the solvent-exposed ester (C1 6.30 A and C2 5.07 A from any protein atom, matching the far ester oxygens O1 5.97 A and O2 5.12 A), which puts the stereocentre at C3 and its methyl at C4 - the exact row cited at 3.49 A - and the 2.80 A O5/GLN389.NE2 acceptance is consistent with the retained acetamido carbonyl, whose NH (N1) donates to GLU390.O at 2.67 A."
+ },
+ "item_048": {
+  "edit_identified_correctly": true,
+  "atom_attribution_ok": true,
+  "invented_chemistry": false,
+  "chemically_sensible_edit": true,
+  "would_show_a_chemist": true,
+  "one_line_why": "Duplicate of item_036 and scored the same: the named cyclohexyl->phenyl change is real but RDKit also shows an inserted methylene (22 -> 23 heavy atoms, OCH2-cyclohexyl -> OCH2CH2-phenyl) that goes unmentioned; C12 at 3.33 A on ARG392.CG lies in the C10-C15 lipophilic-arm block and O4's 2.87 A GLN389.NE2 H-bond belongs either to the glycosidic oxygen or the acetamido carbonyl, both retained, so attribution stands."
+ }
+}
