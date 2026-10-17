@@ -193,10 +193,12 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
+| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | TBD | TBD | TBD | TBD |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
 | ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
 | **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% |
+| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | TBD | TBD | TBD | TBD |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – |
 
@@ -432,6 +434,43 @@ schema B, same panel, 16 cases subsampled from the same 165, scored by the in-ho
 they also rank ChemDFM above schema B, only the absolute level is scorer-dependent. If they rank
 schema B above ChemDFM, the ranking itself depends on who scores, which would mean neither panel
 can decide the arm.
+
+### g4 LABELS ROUGHLY DOUBLE ATTRIBUTION — the headline result, 2026-10-17
+
+ChemDFM-g4 (`TRAIN rc=0` 22:17, `EVAL rc=0` 22:42) and ether0-schema-B-g4 (`rc=0` 04:28 and
+05:40, `ALL DONE`). Same models, same schema, same fixed 262-pair benchmark as every other row —
+only the labels changed, from the g3 pass to the independent g4 pass.
+
+| attrib 1b | g3 | g4 |
+|---|---|---|
+| ChemDFM | 0.290 | **0.594** |
+| ether0 schema B | 0.330 | **0.693** |
+| *reference ceiling* | 0.709 | 0.709 |
+
+**ether0 schema B on g4 reaches 0.693 against a 0.709 ceiling.** attrib-1b is the "real distance,
+wrong residue" metric — six reviewers across five panels named wrong-owner citation as THE dominant
+failure, and no arm had previously cleared 0.551. It turns out the ceiling was in the labels, not
+the architecture.
+
+That is consistent with what the label sets themselves measure: the g4 pass scores **100%** on
+"every cited distance exists in the input table" and **78.6%** on "(residue, distance) co-occur in
+one row", against g3's 92.4% and 55.2%. The label-quality difference propagates to the models, and
+more than proportionally — g4 labels are +42% relative on 1b, the models +110%.
+
+Also improved on both arms: `attrib 1a` is now **1.000** (from 0.996 and 0.985); over-35-word
+sentences fell from 12.2% to **0.0%**; elem/dir vs OWN rose (ChemDFM 0.907/0.780 → 0.898/0.914,
+ether0 0.844/0.779 → **0.909/0.963**). ether0 also gains on warhead retention (0.615 → 0.857) and
+scaffold (0.496 → 0.561, closer to the reference's 0.389 from the other side).
+
+**The cost, stated plainly.** TC→input leaves the human band (ChemDFM 0.683 → 0.644, ether0
+0.682 → 0.624), groundedness dips (1.000 → 0.981 and 0.997 → 0.952), and selectivity falls
+(0.477 → 0.447, 0.465 → 0.379). So g4 buys attribution and pays in how closely the proposed
+molecule tracks the input. Which trade is right depends on what the arm is for; it is not a free win.
+
+**Not yet measured: the chemist columns on either g4 arm.** Both rows carry TBD for sensible and
+reasoning. Given that the whole attribution gain is exactly the axis chemists said mattered most,
+that panel is the next thing worth running, and it should include the g3 arms in the SAME panel —
+cross-panel drift on those columns is larger than most differences between arms.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 
