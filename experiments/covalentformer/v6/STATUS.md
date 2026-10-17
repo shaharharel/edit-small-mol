@@ -193,12 +193,12 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** |
-| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | TBD | TBD | TBD | TBD |
+| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 3.67 | 0.767 | 0.462 | 0.981 | 0.447 | **1.000** | **0.594** | 0.521 | 0.482 | 0.898 | 0.914 | 92.4%¤ | 38.9%¤ | TBD | TBD |
 | ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% |
 | ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 3.62 | 0.808 | 0.223 | 0.996 | **0.537** | 0.969 | 0.183 | 0.491 | 0.527 | 0.849 | 0.853 | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% |
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% |
 | **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% |
-| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | TBD | TBD | TBD | TBD |
+| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | 86.1%¤ | 37.5%¤ | TBD | TBD |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – |
 
@@ -488,6 +488,50 @@ molecule tracks the input. Which trade is right depends on what the arm is for; 
 reasoning. Given that the whole attribution gain is exactly the axis chemists said mattered most,
 that panel is the next thing worth running, and it should include the g3 arms in the SAME panel —
 cross-panel drift on those columns is larger than most differences between arms.
+
+### ¤ In-house 48-case panel on the two g4 arms — they are indistinguishable, and the chemist attribution audit is NOT reliable
+
+3 reviewers x 48 cases drawn from the same 165 the external g4 package uses, so the two scorer
+pools will describe identical molecules. 144 judgements per arm.
+
+| | ChemDFM g4 | ether0 schema B g4 |
+|---|---|---|
+| edit identified | 65.3% | **70.8%** |
+| attribution ok | **59.7%** | 56.2% |
+| invented chemistry (bad) | **22.2%** | 31.2% |
+| sensible | **92.4%** | 86.1% |
+| **reasoning** | 38.9% | 37.5% |
+| best-in-case | 67 | **73** (neither 4) |
+
+**The two arms do not separate** — reasoning 38.9% against 37.5%, every other column within a few
+points. Same outcome as schema A vs B: a chemist panel of this size cannot tell our arms apart.
+
+**RETRACTION, within the hour.** After two reviewers reported ~50% of cited distances wrong (G1 45
+of ~90, G2 47 of 93) I told the user the g4 arms were WORSE at attribution than the g3 arms'
+~24%. The third reviewer found **16%** (23 of 146) and explained the gap: **32 of the 48 contact
+tables use element-grouped atom names that carry no global ordering**, so atom ownership is often
+undecidable from the table. G3 scored those undecidable cases as attribution-OK; G1 and G2 failed
+them. The three reviewers also counted different things as a citation — **90, 93 and 146 for the
+identical 96 slots**.
+
+Per-reviewer attribution: **48% / 52% / 77%**. That spread is larger than any difference between
+arms or between generations, so **the chemist attribution audit cannot be compared across panels**
+and must not be used to confirm or refute an attrib-1b change. My "g4 is worse at attribution" was
+one scoring convention reported as a finding.
+
+**Where the g4 attribution claim stands after two corrections.** Automated attrib-1b rose
+(0.290 -> 0.594, 0.330 -> 0.693) but the model controls its denominator; per sentence g4 delivers
+**~14% more correct anchors**, which is the defensible number; and the chemist audit can neither
+confirm nor refute a change at this level of reviewer agreement.
+
+`reasoning` here is 37-39% against the external panel's 14.7-23.0% on the g3 arms — consistent with
+the 2-3x in-house/external calibration gap already recorded, which is why the external 165-case run
+on these two arms is the one that will decide anything.
+
+Two methodology notes from the reviewers, both worth fixing in the next panel: cases 44-48 are
+repeat inputs with the same proposal in every slot and every boolean true, so they carry no
+discriminating signal, and duplicate-input families (6XOL/6XOM/6XOP, 7I9G) triple-count a single
+rationale's errors.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 

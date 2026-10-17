@@ -1,0 +1,458 @@
+{
+ "7XEJ 9PV->9ZN": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "Not a methyl-to-chlorine edit at all: RDKit shares only 10 of 22 atoms, the pyridine has contracted to a five-membered ring and a second carboxylic acid has appeared; 3.46 A to ALA28.O is atom C, the cysteine CARBOXYL carbon (C/O/OXT is the standard carboxylate triad, with O and OXT both salt-bridging ARG376), and the ARG376 salt bridges it calls the phosphate's belong to those carboxylate oxygens - the phosphate oxygens go to THR92, THR93, SER221 and LYS224."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Demethylating the input does not reproduce its molecule (RDKit), because the phosphomethyl has also moved ring position; and its own two citations contradict each other - it assigns 3.46 A (atom C) to the methyl and 2.75 A (atom O) to the carboxylate when both rows belong to the same cysteine carboxylate group, the 2.75 A one being correct."
+  },
+  "best_overall": "B"
+ },
+ "7Z5M 5ZK->IFZ": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Ring methyl to 1-hydroxypropan-2-yl, and 2.87 A to LYS416.O is C07, which with C08 at 3.11 A forms the methyl-plus-its-ring-carbon pair at the edit site; the retained 2.68 A CYS433.O hydrogen bond is N02, whose bonded partner C01 sits on the same CYS433.O at 3.27 A."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Methylamino to hydroxypropylamino is right, but it has its two citations inverted: 3.26 A to TRP491.CH2 is C09, a core carbon stacking on Trp491, while the methylamino group's own rows are exactly the 2.68/3.27 A pair on CYS433.O that it instead credits to the heterocycle."
+  },
+  "best_overall": "A"
+ },
+ "7ZI8 J5U->J98": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "The methylpiperazinylethyl arm is what changed, and 3.99 A to SER144.OG is C18, inside the C17-C24/N7 cluster that is the only part of the ligand near SER144, so the withdrawn contact is correctly owned; ASP133 is a real table residue (N5, 2.94 A)."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "The arm it replaces is a C-linked 2-(4-methylpiperazin-1-yl)ethyl, not a dimethylaminopropylamino; and 3.28 A to GLU53.OE1 is N4, one of the diaminopyrimidine NH2 groups at the far end of the molecule, which its edit never touches."
+  },
+  "best_overall": "A"
+ },
+ "7ZIA J29->J6M": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "There is no dimethylaminopropyl arm in the input - the arm it names is a sulfonyl methylpiperazine that its own molecule retains - and what actually changed (23 of 40 atoms shared) is a rearrangement of the aminothiazole-aniline into a hydrolytically labile N-acyl 2-iminothiazoline; the 3.71 A TYR86.OH row therefore cannot belong to the group it cites."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "The removed ring is a 2,4-diaminopyrimidine, not a pyrazine, though the site is right and the 3.09 A GLU53.OE1 hydrogen bond it relinquishes is correctly N4, one of the deleted NH2 groups; but the GLN97 hydrogen bonds it claims to retain are N5 (2.98 A) and N6 (3.07 A), also part of that deleted aminopyrimidine - the sulfonamide's own atoms reach only TYR204.CB and PRO201.CG, both carbons."
+  },
+  "best_overall": "B"
+ },
+ "8AO2 NXI->N6K": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "One carbon shorter, and it correctly says this REMOVES the 1.81 A CYS166.SG covalent anchor - C1 is precisely the carbon it deletes - with ASN154 (C2, 3.33 A) and the retained indazole hydrogen bonds (N11 2.74 A, N13 2.71 A) all real; the rare case of a proposal owning up to losing the warhead."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "It deletes the whole propionamide, C1 included, yet claims to retain the 1.81 A covalent bond to CYS166 that C1 alone makes; and 3.50 A to ALA52.CB is C10, a retained indazole carbon, not the arm it redistributes."
+  },
+  "best_overall": "A"
+ },
+ "8AO7 N3X->NXI": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Adding a methyl and CF3 at the acyl alpha-carbon is fairly described, and the covalent carbon C14 does survive, but 3.11 A to ASP106.O is C1, the indazole N-methyl on the opposite end of the molecule, not the acyl arm being redistributed."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "It is not simply a shorter acyl group: the amide nitrogen is deleted too, turning the anilide into an aryl methyl ketone (11 of 16 atoms shared); 3.11 A to ASP106.O is the retained indazole N-methyl C1; and it claims to retain the 1.82 A CYS166 covalent anchor while removing C14, the carbon that makes it."
+  },
+  "best_overall": "A"
+ },
+ "8AY3 OE3->QPZ": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Restoring the N-ethyl to its molecule reproduces the input exactly (RDKit), so N-ethyl-to-N-methyl is its ONLY change and the separate quinoline methylation it reports never happened - the 4-methyl is present in both; 3.74 A to SER121.CB is C6, a ring carbon, while the ethyl's own rows are C1 (GLU123.OE2 4.14) and C2 (VAL112.CG2 4.02)."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "N-ethyl to hydroxyalkyl is verified as the only change, but 3.47 A to HIS144.CG is C10, a ring carbon rather than the ethyl; GLN119 is absent from the table; and the 2.68 A GLU123.OE2 hydrogen bond it calls the lactam's belongs to N1, the sulfonamide NH - the lactam nitrogen is fully N-alkylated and has no proton to donate."
+  },
+  "best_overall": "A"
+ },
+ "8BSL R90->5XX": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "The input carries a pyrrolidine and two 1,3,4-thiadiazoles, not an azetidine and a triazole, and the molecule is cut from 27 heavy atoms to 12 - the phenylacetamide and second thiadiazole vanish unmentioned, leaving a fragment rather than an analogue; the 2.87 A LEU323 row exists but is ambiguous between two rows (N at LEU323.O and N6 at LEU323.N)."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Clean pyrrolidine-to-piperidine ring expansion (RDKit rings [5,5,5,6] to [5,5,6,6], one carbon added) and 3.68 A to LEU321.CD1 is C4, which with C5 at 3.70 A and C15 at LEU321.CB is the ring cluster it says it redistributes."
+  },
+  "best_overall": "B"
+ },
+ "8BTC RIQ->RG0": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "3.68 A to SER232.OG is C02, the acetyl carbonyl carbon it replaces, so that citation is correctly owned - but it then promises to retain an acetamide carbonyl hydrogen bond to ALA233 after deleting the carbonyl entirely, and ALA233.CB is a side-chain carbon 3.40 A away that cannot accept a hydrogen bond; GLN231 is also absent from the table."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "Besides the acyl change its molecule aromatises the saturated five-ring into a 2H-isoindole, a scaffold change it never mentions and a poorly stable one in water; no table row has the 3.41 A it cites (the ALA233.CB row is 3.40 A and to a carbon, so no hydrogen bond), and GLN235 does not appear in the table."
+  },
+  "best_overall": "A"
+ },
+ "8CVD OW0->OVR": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "The 3.02 A HIS217.NE2 hydrogen bond (O1) is correctly the hydroxyl it removes, but its molecule is the ENANTIOMER of the input tropane: applying CH2OH-to-CH3 to the input gives B's SMILES exactly, not A's, so every scaffold stereocentre has been inverted without comment."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Verified as exactly the input with hydroxymethyl replaced by methyl, stereochemistry intact; it correctly owns both the removed 3.02 A HIS217.NE2 hydroxyl bond and the retained 2.67 A GLU116.OE2 salt bridge of the cationic tropane nitrogen N1."
+  },
+  "best_overall": "B"
+ },
+ "8EKN WLQ->2I7": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Its molecule RETAINS the diazine ring and merely adds a chlorine to the central benzene, so replacing that ring with chlorine never happened (and the ring is a pyridazine, not a pyrazole); 3.80 A to PHE475.CD2 is N2, whereas the diazine nitrogens N3 and N4 are listed at 5.33 and 5.31 A with no contact."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Clean removal of the diazinyl ring in favour of a methyl (RDKit: five atoms lost, nothing else changed) with the retained 2.46 A ASP424 hydrogen bond correctly owned by iminosugar hydroxyl O1, but the ring is a pyridazine rather than a pyridyl and 3.83 A to PHE475.CD2 is C13, a benzylic/central-ring carbon, not the ring it removed (whose carbons sit at 4.3-6.4 A)."
+  },
+  "best_overall": "B"
+ },
+ "8FAV LKY->XNR": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Cyclopentyl to cyclopropyl confirmed (rings [5,6,6,6] to [3,6,6,6], two carbons lost), 3.45 A to ALA368.CB is C26 in the same cluster as that acyl group's own carbonyl oxygen O27 (3.56 A), and the retained 2.88 A PHE377.O anilide NH bond (N25) is correctly owned."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "The cyclopentanecarboxamide-to-trifluoro amide swap is right and the retained 2.85 A HIS479.NE2 bond (O10) is correctly owned, but 3.93 A to HIS323.CD2 is C18, which sits in a different cluster (with C28 on HIS323.CE1) from the acyl group it replaces - that group's rows are the C26/C35/O27 set on ALA368.CB."
+  },
+  "best_overall": "A"
+ },
+ "8GEZ ZMB->UM9": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Methyl ester to primary alcohol is right, but that side chain makes NO contact in this crystal - its atoms C1, O1, C2, O2 are listed at 6.30, 5.97, 5.07 and 5.12 A - so it cannot relinquish anything; the 2.67 A GLU390 hydrogen bond it cites is N1, the acetamido NH, which its own molecule retains."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "What its molecule actually does is insert a carbonyl at the anomeric oxygen, turning the glycoside into an anomeric carbonate (16 of 22 atoms shared) that would not survive in water; and 3.31 A to GLU390.OE1 is C9, a retained sugar ring carbon, not the arm's methyl, which is C4 at GLU390.O 3.49 A."
+  },
+  "best_overall": "A"
+ },
+ "8GFF ZHE->UL6": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Cyclohexylmethyl to hydroxyethyl, and both citations are correctly owned: 3.33 A to ARG392.CG is C12, inside the C10-C15 cluster that is the cyclohexyl ring, and the retained 2.77 A GLU390.O hydrogen bond is the acetamido NH N1 (matching the same ligand series in 8GEZ)."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "Its citations are owned correctly (3.45 A GLN389.O is cyclohexyl carbon C10; 2.77 A GLU390.O is the retained acetamido NH), but RDKit shows the pyranose has become a carbocyclic five-ring - rings [6,6] to [5], the ring oxygen deleted - so this is no longer a glycoside and the rationale never mentions it."
+  },
+  "best_overall": "A"
+ },
+ "8GFF ZHE->ZG9": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Same slot as the sibling case and equally clean: 3.33 A to ARG392.CG is cyclohexyl carbon C12, part of the group it removes, and the retained 2.77 A GLU390.O bond is acetamido NH N1."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "Correctly owned citations, but again the sugar ring is silently converted from a pyranose to a cyclopentane (rings [6,6] to [5], ring oxygen gone), which is a chemotype change rather than the arm swap described."
+  },
+  "best_overall": "A"
+ },
+ "8QEG THC->UDL": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Its product is a 3,3,3-trifluoro-2-methylpropanamide (C8H12F3NO4), not the trifluoroacetamide it claims (which would be C6H8F3NO4); 3.96 A to ARG60.NH1 is correctly the acetyl carbonyl carbon CN, but the 2.83 A hydrogen bond it credits to the carboxyl group is ON, the acetyl oxygen - the carboxylate's own row is the 3.70 A ARG60.NH1 salt bridge."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": false,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "It has the edit backwards: the acetyl became a free carbamic acid (which decomposes in water) and the CARBOXYLATE is what was replaced by the hydroxyalkyl chain; 3.69 A to PHE75.CZ is CB of the retained threonine core, and it claims to retain the 3.70 A ARG60 carboxylate salt bridge whose oxygen it has just deleted."
+  },
+  "best_overall": "A"
+ },
+ "8ZBG A1L1N->A1L1O": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "It names BOTH of its changes - aryl CF3 to chlorine and the alpha-fluoro stereocentre inversion, the latter confirmed by RDKit (input R, proposal S) - and 3.59 A to ALA301.CB is C19, which shares ALA301.CB with CF3 fluorine F3 at 2.53 A, pinning C19 as the CF3 carbon."
+  },
+  "B": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Both citations are correctly owned (3.33 A LEU378.CD2 is CF3 fluorine F2, the atom removed; 2.88 A CYS368.N is amide carbonyl O1, retained), but applying CF3-to-methyl to the input does not give its SMILES - the alpha-fluoro centre is inverted from R to S, which the rationale never mentions."
+  },
+  "best_overall": "A"
+ },
+ "9FLB A1IDB->A1IDA": {
+  "A": {
+   "edit_identified_correctly": false,
+   "atom_attribution_ok": true,
+   "invented_chemistry": true,
+   "chemically_sensible_edit": false,
+   "would_show_a_chemist": false,
+   "one_line_why": "3.73 A to VAL498.CG2 is C11, genuinely one of the pyridyl carbons (the C10-C14/N3 cluster), but the molecule is wrecked: 8 of 21 atoms shared, a four-membered ring appears, aromaticity collapses from four aromatic rings to one and an extra nitrogen appears - so the core whose 3.03 A GLY608.N hydrogen bond it promises to retain no longer exists."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "It declares both changes - N-methylpyrazole to pyridine and the separate pyridyl-to-phenyl swap - which is what its molecule does (16 of 21 atoms shared, four aromatic rings preserved), and 3.03 A GLY608.N is N1, in the same GLY608/GLY609 pocket as the pyrazole N-methyl (C, 3.09 A)."
+  },
+  "best_overall": "B"
+ },
+ "9RN5 A1JR3->A1B6U": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Bromothiophene to pyridyl, and both citations land on their own atoms: the 2.83 A GLN15.NE2 contact is BR1, the bromine actually deleted, and the 1.40 A LYS12.NZ covalent bond is C6, well away from the replaced ring (which is the C10-C13/S1 cluster on GLN15 and TYR106)."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": false,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": false,
+   "one_line_why": "Same molecule as A and the retained 2.51 A LYS12 salt bridge (O1) is right, but 3.21 A to TYR39.OH is C8, part of the C5/C7/C8/C9 carbocycle cluster, not the thiophene ring it is redistributing - the thiophene sits on GLN15 and TYR106."
+  },
+  "best_overall": "A"
+ },
+ "9T0T A1JS0->A1B6O": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Single-atom Br-to-Cl swap with both citations correctly owned - 3.31 A ARG13.NE is BR18 itself and 2.73 A LYS12.NZ is carboxylate O1 - though predicting the substituent will be redirected toward ARG13 is vacuous when ARG13.NE is the contact it already makes."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Identical molecule and the same two correctly owned citations (BR18 at 3.31 A, carboxylate O1 at 2.73 A), but the forward prediction is the more informative one: GLN16 is a real neighbouring residue (C16/C17 at 3.91/3.92 A) rather than the residue the bromine already touches."
+  },
+  "best_overall": "B"
+ },
+ "9T0T A1JS0->A1JR3": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Br-to-Cl with 3.31 A ARG13.NE correctly owned by BR18 and the retained 2.73 A LYS12 salt bridge by carboxylate O1, and it points the new halogen at GLN16, a genuine neighbour (C16/C17 at 3.91/3.92 A)."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Same molecule and the same correctly owned rows, but it proposes redirecting the substituent toward ARG13 when ARG13.NE at 3.31 A is precisely the contact the bromine already makes, so the prediction says nothing."
+  },
+  "best_overall": "A"
+ },
+ "9T0T A1JS0->A1JS4": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Br-to-Cl, 3.31 A ARG13.NE correctly owned by BR18, retained 2.73 A LYS12 salt bridge correctly owned by carboxylate O1, and GLN16 is a real nearby residue for the new halogen to move toward."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Identical molecule with the same correctly owned citations; marked below A only because redirecting the substituent toward ARG13 restates the contact the bromine already has."
+  },
+  "best_overall": "A"
+ },
+ "9T3G A1JTA->A1B6F": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Verified as pyridyl-to-3-methylphenyl on an otherwise untouched scaffold (RDKit), with 3.44 A GLN15.NE2 correctly owned by pyridine carbon C12 and the retained 3.53 A ARG28 salt bridge by carboxylate O2."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Pyridyl to 3-chlorophenyl as the single change, with 3.77 A GLN15.CB correctly owned by pyridine carbon C13 (the ring is the C10-C14/N1 cluster) and the retained 3.53 A ARG28 salt bridge by carboxylate O2."
+  },
+  "best_overall": "B"
+ },
+ "9T3G A1JTA->A1JS4": {
+  "A": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Same clean pyridyl-to-methylphenyl change with the scaffold verified unchanged; 3.44 A GLN15.NE2 is pyridine carbon C12 and 3.53 A ARG28.NH2 is carboxylate O2, both correctly owned."
+  },
+  "B": {
+   "edit_identified_correctly": true,
+   "atom_attribution_ok": true,
+   "invented_chemistry": false,
+   "chemically_sensible_edit": true,
+   "would_show_a_chemist": true,
+   "one_line_why": "Pyridyl to chlorophenyl, a tight single-atom-class swap, with both cited rows correctly owned (C13 on GLN15.CB 3.77 A; carboxylate O2 on ARG28.NH2 3.53 A)."
+  },
+  "best_overall": "B"
+ }
+}

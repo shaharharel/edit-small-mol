@@ -1,0 +1,1517 @@
+================================================================================
+CASE 25 of 48   id 7XEJ 9PV->9ZN   target O32164
+================================================================================
+INPUT LIGAND
+  SMILES: Cc1ncc(COP(=O)(O)O)c(/C=N/[C@H](CS)C(=O)O)c1O
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C     C   faces ALA28.O       3.46 A  polar/apolar packing
+    CA    C   faces HIS121.NE2    3.92 A  polar/apolar packing
+    CAA   C   faces HIS121.NE2    3.38 A  polar/apolar packing
+    CAB   C   faces ASP198.OD2    3.37 A  polar/apolar packing
+    CAD   C   faces ASP198.OD2    3.50 A  polar/apolar packing
+    CAE   C   faces HIS121.CD2    3.43 A  hydrophobic contact
+    CAF   C   faces HIS121.NE2    3.35 A  polar/apolar packing
+    CAG   C   faces ASP198.OD2    3.56 A  polar/apolar packing
+    CAI   C   faces HIS121.NE2    3.49 A  polar/apolar packing
+    CAL   C   faces THR93.OG1     3.51 A  polar/apolar packing
+    CB    C   faces ALA29.O       3.79 A  polar/apolar packing
+    N     N   faces HIS121.NE2    3.25 A  polar contact, geometry poor
+    NAC   N   faces ASP198.OD2    2.55 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ASP acceptor): not a hydrogen bond -- unusually close (2.55 A vs 3.1 A vdW sum); treat the crystal model as uncertain
+    O     O   faces ARG376.NH1    2.75 A  SALT BRIDGE to ARG376.NH1 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    OAH   O   faces LYS224.NZ     2.92 A  H-bond, good geometry
+    OAM   O   faces THR92.CB      3.61 A  polar/apolar packing
+    OAO   O   faces THR93.OG1     2.52 A  H-bond, good geometry
+    OAP   O   faces THR93.OG1     3.91 A  polar/apolar packing
+    OAQ   O   faces SER221.OG     2.52 A  H-bond, good geometry
+    OXT   O   faces ARG376.NH2    2.86 A  SALT BRIDGE to ARG376.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    PAN   P   faces SER221.OG     3.52 A  polar/apolar packing
+    SG    S   faces ALA29.O       3.36 A  polar contact, geometry poor
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: O=C(O)C(=Nc1c(Cl)cn(COP(=O)(O)O)c1O)[C@H](CS)C(=O)O
+      RATIONALE: Replacing the methyl near ALA28.O at 3.46 Å with chlorine should redirect that substituent toward ASP198 while retaining the phosphate salt bridge to ARG376.
+
+  [B] PROPOSED MOLECULE: O=C(O)[C@H](CS)/N=C/c1ccnc(COP(=O)(O)O)c1O
+      RATIONALE: Replacing the methylated pyridine with pyridine should remove the methyl's 3.46 Å proximity to ALA28.O while retaining the carboxylate's 2.75 Å ARG376 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 26 of 48   id 7Z5M 5ZK->IFZ   target Q9Y5A9
+================================================================================
+INPUT LIGAND
+  SMILES: CNc1ncnc2c(C)n[nH]c12
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces CYS433.O      3.27 A  polar/apolar packing
+    C03   C   faces TRP491.CZ2    3.49 A  hydrophobic contact
+    C04   C   faces TRP491.CH2    3.34 A  hydrophobic contact
+    C07   C   faces LYS416.O      2.87 A  polar/apolar packing
+    C08   C   faces LYS416.O      3.11 A  polar/apolar packing
+    C09   C   faces TRP491.CH2    3.26 A  hydrophobic contact
+    C11   C   faces ASP422.OD2    3.17 A  polar/apolar packing
+    N02   N   faces CYS433.O      2.68 A  H-bond, good geometry
+    N05   N   faces TRP491.CZ3    3.53 A  polar/apolar packing
+    N06   N   faces ASP528.OD2    2.72 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ASP acceptor): not a hydrogen bond
+    N10   N   faces TYR418.N      3.01 A  H-bond, good geometry
+    N12   N   faces ASP422.OD2    2.67 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ASP acceptor): not a hydrogen bond
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CNc1ncnc2c([C@@H](C)CO)n[nH]c12
+      RATIONALE: Replacing the methyl near LYS416.O at 2.87 Å with a chiral hydroxypropyl group should redirect the substituent toward ASP422 while retaining the heterocycle's 2.68 Å CYS433 hydrogen bond.
+
+  [B] PROPOSED MOLECULE: Cc1n[nH]c2c(N[C@@H](C)CO)ncnc12
+      RATIONALE: Replacing the methylamino group near TRP491.CH2 at 3.26 Å with a chiral hydroxypropylamino arm should redirect the arm toward ASP422 while retaining the heterocycle's 2.68 Å hydrogen bond to CYS433.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 27 of 48   id 7ZI8 J5U->J98   target P27707
+================================================================================
+INPUT LIGAND
+  SMILES: CCCN(c1nc(-c2nc(N)cc(N)n2)cs1)c1cc(-c2ccc(CCN3CCN(C)CC3)nc2)ccc1C
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces TYR86.OH      3.84 A  polar/apolar packing
+    C10   C   faces PHE96.CE2     3.34 A  hydrophobic contact
+    C11   C   faces TYR86.CE1     4.45 A  no contact within 4.0 A (nearest protein atom is 4.45 A away)
+    C12   C   faces TYR204.OH     3.89 A  polar/apolar packing
+    C13   C   faces MET85.CE      4.56 A  no contact within 4.0 A (nearest protein atom is 4.56 A away)
+    C14   C   faces PRO89.CB      4.83 A  no contact within 4.0 A (nearest protein atom is 4.83 A away)
+    C15   C   faces PRO89.CG      4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C16   C   faces PRO89.CG      4.53 A  no contact within 4.0 A (nearest protein atom is 4.53 A away)
+    C17   C   faces SER144.OG     4.44 A  no contact within 4.0 A (nearest protein atom is 4.44 A away)
+    C18   C   faces SER144.OG     3.99 A  polar/apolar packing
+    C19   C   faces SER144.OG     4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    C2    C   faces ILE30.CD1     3.77 A  hydrophobic contact
+    C20   C   faces SER144.O      3.98 A  polar/apolar packing
+    C21   C   faces SER144.O      4.94 A  no contact within 4.0 A (nearest protein atom is 4.94 A away)
+    C22   C   faces GLU145.OE1    4.21 A  no contact within 4.0 A (nearest protein atom is 4.21 A away)
+    C23   C   faces SER144.CB     4.00 A  hydrophobic contact
+    C24   C   faces SER144.CB     3.96 A  hydrophobic contact
+    C25   C   faces TYR204.CE1    3.89 A  hydrophobic contact
+    C26   C   faces MET85.O       3.59 A  polar/apolar packing
+    C27   C   faces MET85.O       3.58 A  polar/apolar packing
+    C28   C   faces TYR86.CE1     3.78 A  hydrophobic contact
+    C29   C   faces TYR86.CZ      3.44 A  hydrophobic contact
+    C3    C   faces TYR86.OH      3.63 A  polar/apolar packing
+    C4    C   faces PHE96.CE2     3.88 A  hydrophobic contact
+    C5    C   faces PHE96.CE2     3.34 A  hydrophobic contact
+    C6    C   faces PHE137.CG     3.36 A  hydrophobic contact
+    C7    C   faces VAL55.CG1     3.69 A  hydrophobic contact
+    C8    C   faces PHE137.CD2    3.69 A  hydrophobic contact
+    C9    C   faces PHE137.CD2    3.63 A  hydrophobic contact
+    N1    N   faces TYR204.OH     4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    N2    N   faces PHE96.CE2     3.69 A  polar/apolar packing
+    N3    N   faces PHE137.CD1    3.83 A  polar/apolar packing
+    N4    N   faces GLU53.OE1     3.28 A  H-bond, good geometry
+    N5    N   faces ASP133.OD1    2.94 A  H-bond, good geometry
+    N6    N   faces GLN97.NE2     2.96 A  H-bond, good geometry
+    N7    N   faces SER144.CB     3.54 A  polar/apolar packing
+    N8    N   faces SER144.CA     4.85 A  no contact within 4.0 A (nearest protein atom is 4.85 A away)
+    N9    N   faces TYR204.CE1    3.86 A  polar/apolar packing
+    S1    S   faces PHE96.CE2     3.75 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CCCN(c1nc(-c2nc(N)cc(N)n2)cs1)c1cc(-c2ccc([C@@H](C)CO)nc2)ccc1C
+      RATIONALE: Replacing the ethylpiperazine arm with a chiral hydroxyethylmethyl arm should withdraw the ring near SER144.OG at 3.99 Å and redirect the terminal polar group toward ASP133.
+
+  [B] PROPOSED MOLECULE: CCCN(c1nc(-c2nc(N)cc(N)n2)cs1)c1cc(-c2ccc(N[C@@H](C)CO)nc2)ccc1C
+      RATIONALE: Replacing the dimethylaminopropylamino arm with a chiral hydroxypropylamino arm should withdraw the 3.28 Å GLU53 hydrogen bond and redirect the shorter arm toward TYR86.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 28 of 48   id 7ZIA J29->J6M   target P27707
+================================================================================
+INPUT LIGAND
+  SMILES: CCCN(c1nc(-c2nc(N)cc(N)n2)cs1)c1cc(-c2ccc(S(=O)(=O)N3CCN(C)CC3)nc2)ccc1C
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces TYR86.OH      3.71 A  polar/apolar packing
+    C10   C   faces PHE96.CE2     3.40 A  hydrophobic contact
+    C11   C   faces TYR86.CE1     4.27 A  no contact within 4.0 A (nearest protein atom is 4.27 A away)
+    C12   C   faces TYR204.OH     3.89 A  polar/apolar packing
+    C13   C   faces ILE200.CD1    4.40 A  no contact within 4.0 A (nearest protein atom is 4.40 A away)
+    C14   C   faces ILE200.CD1    4.33 A  no contact within 4.0 A (nearest protein atom is 4.33 A away)
+    C15   C   faces ILE200.CD1    3.84 A  hydrophobic contact
+    C16   C   faces PRO201.CD     4.36 A  no contact within 4.0 A (nearest protein atom is 4.36 A away)
+    C17   C   faces TYR204.CD1    4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    C18   C   faces SER144.OG     4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    C19   C   faces SER144.CB     4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    C2    C   faces ILE30.CD1     3.84 A  hydrophobic contact
+    C20   C   faces SER146.OG     4.27 A  no contact within 4.0 A (nearest protein atom is 4.27 A away)
+    C21   C   faces PRO89.CG      6.23 A  no contact within 4.0 A (nearest protein atom is 6.23 A away)
+    C22   C   faces PRO89.CG      6.06 A  no contact within 4.0 A (nearest protein atom is 6.06 A away)
+    C23   C   faces TYR204.CE1    3.72 A  hydrophobic contact
+    C24   C   faces TYR86.CD1     3.87 A  hydrophobic contact
+    C25   C   faces TYR86.CD1     3.42 A  hydrophobic contact
+    C26   C   faces TYR86.CE1     3.72 A  hydrophobic contact
+    C27   C   faces LEU82.CD2     3.67 A  hydrophobic contact
+    C3    C   faces TYR86.OH      3.61 A  polar/apolar packing
+    C4    C   faces TYR204.OH     3.91 A  polar/apolar packing
+    C5    C   faces PHE137.CD1    3.43 A  hydrophobic contact
+    C6    C   faces PHE137.CD1    3.40 A  hydrophobic contact
+    C7    C   faces PHE137.CE2    3.74 A  hydrophobic contact
+    C8    C   faces ASP133.OD1    3.67 A  polar/apolar packing
+    C9    C   faces PHE137.CG     3.56 A  hydrophobic contact
+    N1    N   faces TYR204.OH     4.26 A  no contact within 4.0 A (nearest protein atom is 4.26 A away)
+    N2    N   faces PHE96.CE2     3.83 A  polar/apolar packing
+    N3    N   faces PHE137.CE1    3.75 A  polar/apolar packing
+    N4    N   faces GLU53.OE1     3.09 A  H-bond, good geometry
+    N5    N   faces GLN97.OE1     2.98 A  H-bond, good geometry
+    N6    N   faces GLN97.NE2     3.07 A  H-bond, good geometry
+    N7    N   faces SER144.OG     5.43 A  no contact within 4.0 A (nearest protein atom is 5.43 A away)
+    N8    N   faces SER144.O      4.88 A  no contact within 4.0 A (nearest protein atom is 4.88 A away)
+    N9    N   faces TYR204.CD1    3.54 A  polar/apolar packing
+    O1    O   faces TYR204.CB     3.57 A  polar/apolar packing
+    O2    O   faces PRO201.CG     3.31 A  polar/apolar packing
+    S1    S   faces TYR204.OH     3.74 A  polar/apolar packing
+    S2    S   faces TYR204.CB     4.30 A  no contact within 4.0 A (nearest protein atom is 4.30 A away)
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1ccc(-c2ccc(S(=O)(=O)N3CCN(C)CC3)nc2)cc1C(=O)/N=c1\scc(-c2nc(N)cc(N)n2)n1[C@@H](C)CO
+      RATIONALE: Replacing the dimethylaminopropyl arm with a chiral hydroxypropyl arm should remove the methyl proximity to TYR86.OH at 3.71 Å and redirect the shorter arm toward ASP133.
+
+  [B] PROPOSED MOLECULE: CCCN(c1nc([C@@H](O)CO)cs1)c1cc(-c2ccc(S(=O)(=O)N3CCN(C)CC3)nc2)ccc1C
+      RATIONALE: Replacing the pyrazine with a chiral dihydroxypropyl arm should relinquish the amino group's 3.09 Å GLU53 hydrogen bond and redirect the arm toward ASP133, while retaining the sulfonamide hydrogen bonds to GLN97.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 29 of 48   id 8AO2 NXI->N6K   target P28482
+================================================================================
+INPUT LIGAND
+  SMILES: CCC(=O)NCc1ccc2[nH]ncc2c1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces CYS166.SG     1.81 A  COVALENT BOND to CYS166.SG
+    C10   C   faces ALA52.CB      3.50 A  hydrophobic contact
+    C14   C   faces MET108.O      3.44 A  polar/apolar packing
+    C15   C   faces ALA52.CB      3.98 A  hydrophobic contact
+    C16   C   faces LEU156.CD2    4.02 A  no contact within 4.0 A (nearest protein atom is 4.02 A away)
+    C2    C   faces ASN154.OD1    3.33 A  polar/apolar packing [nearest INDEPENDENT contact; CYS166 is excluded as the residue its covalent link already describes]
+    C3    C   faces LEU156.CD2    4.76 A  no contact within 4.0 A (nearest protein atom is 4.76 A away) [nearest INDEPENDENT contact; CYS166 is excluded as the residue its covalent link already describes]
+    C6    C   faces VAL39.CG2     4.10 A  no contact within 4.0 A (nearest protein atom is 4.10 A away)
+    C7    C   faces VAL39.CG1     4.13 A  no contact within 4.0 A (nearest protein atom is 4.13 A away)
+    C8    C   faces GLN105.OE1    3.73 A  polar/apolar packing
+    C9    C   faces GLN105.OE1    3.50 A  polar/apolar packing
+    N11   N   faces ASP106.O      2.74 A  H-bond, good geometry
+    N13   N   faces MET108.N      2.71 A  H-bond, good geometry
+    N5    N   faces CYS166.SG     4.30 A  no contact within 4.0 A (nearest protein atom is 4.30 A away)
+    O4    O   faces CYS166.SG     3.88 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC(=O)NCc1ccc2[nH]ncc2c1
+      RATIONALE: Replacing propionamide with acetyl should remove the 1.81 Å CYS166 covalent anchor and redirect the shorter acetyl arm toward ASN154, while retaining the indazole hydrogen bonds.
+
+  [B] PROPOSED MOLECULE: C[C@H](Cc1ccc2[nH]ncc2c1)C(F)(F)F
+      RATIONALE: Replacing propionamide with a chiral trifluoroalkyl arm should redistribute the arm near ALA52.CB at 3.50 Å while retaining the 1.81 Å covalent bond to CYS166.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 30 of 48   id 8AO7 N3X->NXI   target P28482
+================================================================================
+INPUT LIGAND
+  SMILES: CCC(=O)NCc1ccc2cnn(C)c2c1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces ASP106.O      3.11 A  polar/apolar packing
+    C11   C   faces TYR36.CD2     3.52 A  hydrophobic contact [nearest INDEPENDENT contact; CYS166 is excluded as the residue its covalent link already describes]
+    C13   C   faces TYR36.CE2     3.31 A  hydrophobic contact [nearest INDEPENDENT contact; CYS166 is excluded as the residue its covalent link already describes]
+    C14   C   faces CYS166.SG     1.82 A  COVALENT BOND to CYS166.SG
+    C15   C   faces LEU156.CD1    4.21 A  no contact within 4.0 A (nearest protein atom is 4.21 A away)
+    C16   C   faces ALA52.CB      4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    C4    C   faces MET108.O      3.18 A  polar/apolar packing
+    C5    C   faces MET108.O      4.28 A  no contact within 4.0 A (nearest protein atom is 4.28 A away)
+    C6    C   faces ILE31.CG2     4.17 A  no contact within 4.0 A (nearest protein atom is 4.17 A away)
+    C7    C   faces VAL39.CG1     3.92 A  hydrophobic contact
+    C8    C   faces VAL39.CG1     3.96 A  hydrophobic contact
+    C9    C   faces VAL39.CG2     3.92 A  hydrophobic contact
+    N10   N   faces TYR36.CD2     3.68 A  polar/apolar packing
+    N2    N   faces ALA52.CB      3.41 A  polar/apolar packing
+    N3    N   faces MET108.N      2.85 A  H-bond, good geometry
+    O12   O   faces TYR36.CG      3.63 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: C[C@H](C(=O)NCc1ccc2cnn(C)c2c1)C(F)(F)F
+      RATIONALE: Replacing propionamide with a chiral trifluoroisopropyl amide should redistribute the arm near ASP106.O at 3.11 Å while retaining the 1.82 Å covalent bond to CYS166.
+
+  [B] PROPOSED MOLECULE: CC(=O)Cc1ccc2cnn(C)c2c1
+      RATIONALE: Replacing propionamide with acetyl should withdraw the arm near ASP106.O at 3.11 Å and redirect the shorter carbonyl toward TYR36, while retaining the 1.82 Å CYS166 covalent anchor.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 31 of 48   id 8AY3 OE3->QPZ   target A0A067E666
+================================================================================
+INPUT LIGAND
+  SMILES: CCn1c(=O)cc(C)c2cc(CNS(=O)(=O)c3ccccc3)ccc21
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces GLU123.OE2    4.14 A  no contact within 4.0 A (nearest protein atom is 4.14 A away)
+    C10   C   faces HIS144.CG     3.47 A  hydrophobic contact
+    C11   C   faces ALA118.CB     4.05 A  no contact within 4.0 A (nearest protein atom is 4.05 A away)
+    C12   C   faces GLU123.OE2    3.41 A  polar/apolar packing
+    C13   C   faces GLU123.OE2    4.28 A  no contact within 4.0 A (nearest protein atom is 4.28 A away)
+    C14   C   faces PHE137.CZ     3.68 A  hydrophobic contact
+    C15   C   faces TYR149.CE1    3.41 A  hydrophobic contact
+    C16   C   faces TYR149.CZ     3.74 A  hydrophobic contact
+    C17   C   faces VAL192.CG1    3.78 A  hydrophobic contact
+    C18   C   faces VAL192.CG1    4.27 A  no contact within 4.0 A (nearest protein atom is 4.27 A away)
+    C19   C   faces VAL192.CG2    3.82 A  hydrophobic contact
+    C2    C   faces VAL112.CG2    4.02 A  no contact within 4.0 A (nearest protein atom is 4.02 A away)
+    C3    C   faces VAL112.CG2    3.98 A  hydrophobic contact
+    C4    C   faces VAL112.CG2    4.22 A  no contact within 4.0 A (nearest protein atom is 4.22 A away)
+    C5    C   faces VAL112.CG2    4.51 A  no contact within 4.0 A (nearest protein atom is 4.51 A away)
+    C6    C   faces SER121.CB     3.74 A  hydrophobic contact
+    C7    C   faces HIS144.CB     3.97 A  hydrophobic contact
+    C8    C   faces HIS144.CB     3.57 A  hydrophobic contact
+    C9    C   faces ALA118.CB     3.42 A  hydrophobic contact
+    N1    N   faces GLU123.OE2    2.68 A  H-bond, good geometry
+    N2    N   faces ALA118.CB     3.73 A  polar/apolar packing
+    O1    O   faces LYS88.CD      3.34 A  polar/apolar packing
+    O2    O   faces LYS88.NZ      2.97 A  H-bond, good geometry
+    O3    O   faces PHE188.CZ     3.24 A  polar/apolar packing
+    S1    S   faces GLU123.OE2    3.85 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1cc(=O)n(C)c2ccc(CNS(=O)(=O)c3ccccc3)cc12
+      RATIONALE: Replacing the ethyl group near SER121.CB at 3.74 Å with methyl should reduce that arm's reach, while the separate quinoline methylation should redirect the opposite edge toward TYR149.
+
+  [B] PROPOSED MOLECULE: Cc1cc(=O)n([C@@H](C)CCO)c2ccc(CNS(=O)(=O)c3ccccc3)cc12
+      RATIONALE: Replacing the ethyl group near HIS144.CG at 3.47 Å with a chiral hydroxypropyl arm should redirect that arm toward GLN119 while retaining the lactam hydrogen bond to GLU123.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 32 of 48   id 8BSL R90->5XX   target O94925
+================================================================================
+INPUT LIGAND
+  SMILES: Nc1nnc(N2CC[C@@H](Nc3nnc(NC(=O)Cc4ccccc4)s3)C2)s1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C     C   faces LEU321.CD1    4.68 A  no contact within 4.0 A (nearest protein atom is 4.68 A away)
+    C1    C   faces GLU325.CB     4.93 A  no contact within 4.0 A (nearest protein atom is 4.93 A away)
+    C10   C   faces PHE322.CD2    3.81 A  hydrophobic contact
+    C11   C   faces PHE322.CE2    3.60 A  hydrophobic contact
+    C12   C   faces PHE322.CD2    3.42 A  hydrophobic contact
+    C13   C   faces LYS320.O      3.21 A  polar/apolar packing
+    C14   C   faces TYR394.OH     3.46 A  polar/apolar packing
+    C15   C   faces LEU321.CB     3.66 A  hydrophobic contact
+    C2    C   faces GLU325.CA     4.53 A  no contact within 4.0 A (nearest protein atom is 4.53 A away)
+    C3    C   faces GLU325.CA     4.15 A  no contact within 4.0 A (nearest protein atom is 4.15 A away)
+    C4    C   faces LEU321.CD1    3.68 A  hydrophobic contact
+    C5    C   faces LEU321.CD1    3.70 A  hydrophobic contact
+    C6    C   faces ASN324.O      3.70 A  polar/apolar packing
+    C7    C   faces LEU323.O      3.90 A  polar/apolar packing
+    C8    C   faces LEU323.O      3.46 A  polar/apolar packing
+    C9    C   faces TYR394.OH     3.46 A  polar/apolar packing
+    N     N   faces LEU323.O      2.87 A  H-bond, good geometry
+    N1    N   faces LEU323.N      2.88 A  H-bond, good geometry
+    N2    N   faces PHE322.N      2.71 A  H-bond, good geometry
+    N3    N   faces TYR394.OH     3.67 A  polar/apolar packing
+    N4    N   faces TYR394.CZ     3.78 A  polar/apolar packing
+    N5    N   faces PHE322.N      2.54 A  polar contact, geometry poor
+    N6    N   faces LEU323.N      2.87 A  H-bond, good geometry
+    N7    N   faces LEU323.O      3.23 A  H-bond, good geometry
+    O     O   faces LYS320.CD     3.22 A  polar/apolar packing
+    S     S   faces TYR394.OH     3.50 A  polar contact, geometry poor
+    S1    S   faces TYR394.OH     3.24 A  polar contact, geometry poor
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Nc1nnc(NC(CO)CO)s1
+      RATIONALE: Replacing the azetidine–triazole arm with a chiral dihydroxypropyl arm should relinquish the 2.87 Å LEU323(B) hydrogen bond and redirect the arm toward ASN324(B).
+
+  [B] PROPOSED MOLECULE: Nc1nnc(N2CCC[C@H](Nc3nnc(NC(=O)Cc4ccccc4)s3)C2)s1
+      RATIONALE: Replacing the chiral pyrrolidine with a stereogenic piperidine should redistribute the ring near LEU321(B).CD1 at 3.68 Å while retaining the 2.87 Å LEU323(B) hydrogen bond.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 33 of 48   id 8BTC RIQ->RG0   target Q6P988
+================================================================================
+INPUT LIGAND
+  SMILES: CC(=O)N1CCc2c1ccc(Cl)c2Cl
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C01   C   faces TRP128.CD2    3.29 A  hydrophobic contact
+    C02   C   faces SER232.OG     3.68 A  polar/apolar packing
+    C05   C   faces PHE268.CZ     3.58 A  hydrophobic contact
+    C06   C   faces TYR129.OH     3.88 A  polar/apolar packing
+    C07   C   faces PHE268.CE2    3.44 A  hydrophobic contact
+    C08   C   faces PHE268.CD2    3.29 A  hydrophobic contact
+    C09   C   faces PHE268.CD2    3.43 A  hydrophobic contact
+    C10   C   faces THR236.OG1    3.33 A  polar/apolar packing
+    C11   C   faces PHE268.CE2    3.35 A  hydrophobic contact
+    C12   C   faces PHE268.CE2    3.26 A  hydrophobic contact
+    CL13  Cl  faces PHE319.O      3.01 A  polar/apolar packing
+    CL14  Cl  faces PRO287.CB     3.56 A  hydrophobic contact
+    N04   N   faces PHE268.CZ     3.52 A  polar/apolar packing
+    O03   O   faces ALA233.CB     3.40 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: C[C@@H](CCO)N1CCc2c1ccc(Cl)c2Cl
+      RATIONALE: Replacing acetyl with a chiral hydroxybutyl arm should redirect the arm near SER232.OG at 3.68 Å toward GLN231 while retaining the acetamide carbonyl hydrogen bond to ALA233.
+
+  [B] PROPOSED MOLECULE: C[C@@H](CO)n1cc2ccc(Cl)c(Cl)c2c1
+      RATIONALE: Replacing acetyl with a chiral hydroxypropyl group should redirect the arm from its 3.41 Å ALA233 hydrogen bond toward GLN235, while retaining the scaffold's 3.52 Å proximity to PHE268.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 34 of 48   id 8CVD OW0->OVR   target Q9XJ43
+================================================================================
+INPUT LIGAND
+  SMILES: CN1[C@@H]2CC(OC(=O)[C@H](CO)c3ccccc3)C[C@H]1[C@@H]1O[C@@H]12
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces LEU198.CD2    3.84 A  hydrophobic contact
+    C10   C   faces LEU289.CD2    3.67 A  hydrophobic contact
+    C11   C   faces TYR325.CE2    4.08 A  no contact within 4.0 A (nearest protein atom is 4.08 A away)
+    C12   C   faces ASN221.N      3.72 A  polar/apolar packing
+    C13   C   faces TYR318.OH     3.14 A  polar/apolar packing
+    C14   C   faces TYR318.OH     3.72 A  polar/apolar packing
+    C15   C   faces LEU326.CD1    3.94 A  hydrophobic contact
+    C16   C   faces LEU326.CD2    3.96 A  hydrophobic contact
+    C17   C   faces LEU289.CD2    3.74 A  hydrophobic contact
+    C2    C   faces ASP219.OD1    3.38 A  polar/apolar packing
+    C3    C   faces GLU116.OE1    3.50 A  polar/apolar packing
+    C4    C   faces GLU116.OE2    3.47 A  polar/apolar packing
+    C5    C   faces GLU116.OE2    3.48 A  polar/apolar packing
+    C6    C   faces TYR325.OH     3.31 A  polar/apolar packing
+    C7    C   faces GLU116.OE2    3.74 A  polar/apolar packing
+    C8    C   faces GLU116.OE2    3.28 A  polar/apolar packing
+    C9    C   faces LEU289.CD2    4.26 A  no contact within 4.0 A (nearest protein atom is 4.26 A away)
+    N1    N   faces GLU116.OE2    2.67 A  SALT BRIDGE to GLU116.OE2 (cationic ligand atom against anionic residue; charge pairing, so no angle criterion applies)
+    O1    O   faces HIS217.NE2    3.02 A  H-bond, good geometry
+    O2    O   faces TYR325.CE2    4.01 A  no contact within 4.0 A (nearest protein atom is 4.01 A away)
+    O3    O   faces MET196.CG     3.81 A  polar/apolar packing
+    O4    O   faces PHE103.CD1    3.33 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: C[C@H](C(=O)OC1C[C@H]2[C@@H]3O[C@@H]3[C@H](C1)N2C)c1ccccc1
+      RATIONALE: Replacing hydroxymethyl with methyl should remove the 3.02 Å hydrogen bond to HIS217.NE2 and redirect the remaining phenyl-bearing ester arm toward LEU289.
+
+  [B] PROPOSED MOLECULE: C[C@@H](C(=O)OC1C[C@@H]2[C@H]3O[C@H]3[C@H](C1)N2C)c1ccccc1
+      RATIONALE: Replacing hydroxymethyl with methyl should remove the hydroxyl hydrogen bond to HIS217.NE2 at 3.02 Å while retaining the amine's GLU116 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 35 of 48   id 8EKN WLQ->2I7   target G0SFD1
+================================================================================
+INPUT LIGAND
+  SMILES: Cc1cc(NCc2ccc(CN3C[C@H](O)[C@@H](O)[C@H](O)[C@H]3CO)cc2)cc(-c2cccnn2)c1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces ASP424.OD1    3.40 A  polar/apolar packing
+    C10   C   faces ASP586.OD2    4.36 A  no contact within 4.0 A (nearest protein atom is 4.36 A away)
+    C11   C   faces PHE417.CE1    4.19 A  no contact within 4.0 A (nearest protein atom is 4.19 A away)
+    C12   C   faces PHE475.CD2    4.39 A  no contact within 4.0 A (nearest protein atom is 4.39 A away)
+    C13   C   faces PHE475.CD2    3.83 A  hydrophobic contact
+    C14   C   faces PHE475.CD2    3.92 A  hydrophobic contact
+    C15   C   faces PRO472.CD     4.58 A  no contact within 4.0 A (nearest protein atom is 4.58 A away)
+    C16   C   faces PRO472.CD     3.74 A  hydrophobic contact
+    C17   C   faces PHE475.CE2    4.98 A  no contact within 4.0 A (nearest protein atom is 4.98 A away)
+    C18   C   faces PHE417.CE1    4.77 A  no contact within 4.0 A (nearest protein atom is 4.77 A away)
+    C19   C   faces PHE417.CZ     5.42 A  no contact within 4.0 A (nearest protein atom is 5.42 A away)
+    C2    C   faces GLY584.O      3.66 A  polar/apolar packing
+    C20   C   faces PHE417.CZ     5.49 A  no contact within 4.0 A (nearest protein atom is 5.49 A away)
+    C21   C   faces PHE417.CZ     6.39 A  no contact within 4.0 A (nearest protein atom is 6.39 A away)
+    C22   C   faces GLU723.OE2    5.77 A  no contact within 4.0 A (nearest protein atom is 5.77 A away)
+    C23   C   faces PHE475.CE2    4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C24   C   faces PHE417.CE1    3.55 A  hydrophobic contact
+    C25   C   faces PHE417.CE1    3.38 A  hydrophobic contact
+    C3    C   faces ASP586.OD1    3.78 A  polar/apolar packing
+    C4    C   faces TYR725.OH     3.18 A  polar/apolar packing
+    C5    C   faces ASP424.OD1    4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    C6    C   faces ASP424.OD2    3.24 A  polar/apolar packing
+    C7    C   faces TYR725.OH     3.54 A  polar/apolar packing
+    C8    C   faces PHE417.CZ     3.62 A  hydrophobic contact
+    C9    C   faces TYR725.OH     3.55 A  polar/apolar packing
+    N1    N   faces TYR725.OH     3.77 A  polar/apolar packing
+    N2    N   faces PHE475.CD2    3.80 A  polar/apolar packing
+    N3    N   faces GLU723.OE2    5.33 A  no contact within 4.0 A (nearest protein atom is 5.33 A away)
+    N4    N   faces PHE475.CE2    5.31 A  no contact within 4.0 A (nearest protein atom is 5.31 A away)
+    O1    O   faces ASP424.OD1    2.46 A  H-bond, good geometry
+    O2    O   faces GLY584.O      2.67 A  H-bond, good geometry
+    O3    O   faces ASP586.OD1    2.76 A  H-bond, good geometry
+    O4    O   faces ASP424.OD2    2.48 A  H-bond, good geometry
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1cc(NCc2ccc(CN3C[C@H](O)[C@@H](O)[C@H](O)[C@H]3O)cc2)cc(-c2cccnn2)c1Cl
+      RATIONALE: Replacing the pyrazole near PHE475.CD2 at 3.80 Å with chlorine should reduce that aromatic proximity, while the separate hydroxymethyl-to-hydroxyl substitution should retain the 2.67 Å GLY584 hydrogen bond.
+
+  [B] PROPOSED MOLECULE: Cc1cc(C)cc(NCc2ccc(CN3C[C@H](O)[C@@H](O)[C@H](O)[C@H]3CO)cc2)c1
+      RATIONALE: Replacing the pyridyl ring near PHE475.CD2 at 3.83 Å with a methyl-bearing phenyl should redistribute local proximity while retaining the 2.46 Å ASP424 hydrogen bond.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 36 of 48   id 8FAV LKY->XNR   target P51449
+================================================================================
+INPUT LIGAND
+  SMILES: Cc1c(CN2CCN(C(=O)C3CCCC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces VAL376.CG2    3.66 A  hydrophobic contact
+    C11   C   faces LEU391.CD1    3.81 A  hydrophobic contact
+    C12   C   faces LEU391.CD1    3.86 A  hydrophobic contact
+    C13   C   faces PHE486.CE2    3.77 A  hydrophobic contact
+    C14   C   faces LEU483.CD2    3.94 A  hydrophobic contact
+    C15   C   faces ILE397.CG1    3.95 A  hydrophobic contact
+    C16   C   faces MET365.CE     3.97 A  hydrophobic contact
+    C18   C   faces HIS323.CD2    3.93 A  hydrophobic contact
+    C19   C   faces MET365.CE     3.88 A  hydrophobic contact
+    C2    C   faces PHE377.O      3.60 A  polar/apolar packing
+    C20   C   faces VAL376.CG1    3.54 A  hydrophobic contact
+    C21   C   faces VAL376.CG1    3.46 A  hydrophobic contact
+    C23   C   faces MET365.O      3.59 A  polar/apolar packing
+    C24   C   faces PHE377.O      3.74 A  polar/apolar packing
+    C26   C   faces ALA368.CB     3.45 A  hydrophobic contact
+    C28   C   faces HIS323.CE1    3.62 A  hydrophobic contact
+    C29   C   faces PHE377.O      3.16 A  polar/apolar packing
+    C3    C   faces VAL376.CG2    3.68 A  hydrophobic contact
+    C30   C   faces PHE377.CD2    3.61 A  hydrophobic contact
+    C31   C   faces PHE377.CD2    3.71 A  hydrophobic contact
+    C32   C   faces GLN286.OE1    4.26 A  no contact within 4.0 A (nearest protein atom is 4.26 A away)
+    C33   C   faces GLN286.CB     3.96 A  hydrophobic contact
+    C35   C   faces ALA368.CB     3.49 A  hydrophobic contact
+    C4    C   faces PHE401.CE1    3.70 A  hydrophobic contact
+    C6    C   faces PHE388.CE1    3.68 A  hydrophobic contact
+    C7    C   faces CYS320.SG     3.76 A  polar/apolar packing
+    C9    C   faces HIS479.NE2    3.99 A  polar/apolar packing
+    F22   F   faces SER404.OG     2.92 A  polar/apolar packing
+    N25   N   faces PHE377.O      2.88 A  H-bond, good geometry
+    N34   N   faces LEU287.N      3.24 A  H-bond, good geometry
+    N5    N   faces PHE388.CZ     3.99 A  polar/apolar packing
+    N8    N   faces CYS320.SG     4.44 A  no contact within 4.0 A (nearest protein atom is 4.44 A away)
+    O10   O   faces HIS479.NE2    2.85 A  H-bond, good geometry
+    O27   O   faces ALA368.CB     3.56 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1c(CN2CCN(C(=O)C3CC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+      RATIONALE: Replacing cyclopentyl with cyclopropyl should reduce the ring's 3.45 Å proximity to ALA368.CB and redirect the smaller ring toward GLN286, while retaining the amide hydrogen bond to PHE377.
+
+  [B] PROPOSED MOLECULE: Cc1c(CN2CCN(C(=O)[C@H](C)C(F)(F)F)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+      RATIONALE: Replacing cyclopentanecarboxamide with a chiral trifluoropropyl amide should redistribute the arm near HIS323.CD2 at 3.93 Å while retaining the amide hydrogen bond to HIS479.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 37 of 48   id 8GEZ ZMB->UM9   target A0A3I4HTM2
+================================================================================
+INPUT LIGAND
+  SMILES: COC(=O)[C@@H](C)CO[C@@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1NC(C)=O
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces TYR351.OH     6.30 A  no contact within 4.0 A (nearest protein atom is 6.30 A away)
+    C10   C   faces GLU390.OE1    3.11 A  polar/apolar packing
+    C11   C   faces GLU390.O      3.27 A  polar/apolar packing
+    C12   C   faces GLN408.OE1    3.61 A  polar/apolar packing
+    C13   C   faces GLU390.O      3.83 A  polar/apolar packing
+    C2    C   faces GLU390.O      5.07 A  no contact within 4.0 A (nearest protein atom is 5.07 A away)
+    C3    C   faces GLN389.O      4.11 A  no contact within 4.0 A (nearest protein atom is 4.11 A away)
+    C4    C   faces GLU390.O      3.49 A  polar/apolar packing
+    C5    C   faces GLN389.O      3.53 A  polar/apolar packing
+    C6    C   faces GLU390.O      3.37 A  polar/apolar packing
+    C7    C   faces GLU390.OE1    3.81 A  polar/apolar packing
+    C8    C   faces GLU498.OE1    3.72 A  polar/apolar packing
+    C9    C   faces GLU390.OE1    3.31 A  polar/apolar packing
+    N1    N   faces GLU390.O      2.67 A  H-bond, good geometry
+    O1    O   faces GLU390.O      5.97 A  no contact within 4.0 A (nearest protein atom is 5.97 A away)
+    O2    O   faces GLU390.O      5.12 A  no contact within 4.0 A (nearest protein atom is 5.12 A away)
+    O3    O   faces GLU390.O      3.97 A  polar/apolar packing
+    O4    O   faces GLN389.NE2    4.09 A  no contact within 4.0 A (nearest protein atom is 4.09 A away)
+    O5    O   faces GLN389.NE2    2.80 A  H-bond, good geometry
+    O6    O   faces GLU390.OE1    2.65 A  H-bond, good geometry
+    O7    O   faces GLN408.OE1    2.67 A  H-bond, good geometry
+    O8    O   faces SER399.CA     3.51 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC(=O)N[C@H]1[C@H](OC[C@@H](C)CO)O[C@H](CO)[C@@H](O)[C@@H]1O
+      RATIONALE: Replacing the methylacetate-bearing side chain with a chiral hydroxypropyl group should relinquish the 2.67 Å GLU390 hydrogen bond and redirect the shorter arm toward GLU498.
+
+  [B] PROPOSED MOLECULE: CC(=O)N[C@H]1[C@H](OC(=O)OCC[C@@H](C)O)O[C@H](CO)[C@@H](O)[C@@H]1O
+      RATIONALE: Replacing the chiral methyl-bearing ester arm with a chiral hydroxyethyl arm should relinquish the methyl's 3.31 Å proximity to GLU390.OE1 and redirect the shorter arm toward GLU390.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 38 of 48   id 8GFF ZHE->UL6   target A0A3I4HTM2
+================================================================================
+INPUT LIGAND
+  SMILES: CC(=O)N[C@H]1[C@H](OCC2CCCCC2)O[C@H](CO)[C@@H](O)[C@@H]1O
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces GLN408.OE1    3.73 A  polar/apolar packing
+    C10   C   faces GLN389.O      3.45 A  polar/apolar packing
+    C11   C   faces GLN389.O      3.56 A  polar/apolar packing
+    C12   C   faces ARG392.CG     3.33 A  hydrophobic contact
+    C13   C   faces ARG392.CG     3.55 A  hydrophobic contact
+    C14   C   faces SER391.C      4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C15   C   faces GLU390.O      4.52 A  no contact within 4.0 A (nearest protein atom is 4.52 A away)
+    C2    C   faces GLN408.OE1    3.54 A  polar/apolar packing
+    C3    C   faces GLU390.O      3.47 A  polar/apolar packing
+    C4    C   faces GLU390.OE1    3.02 A  polar/apolar packing
+    C5    C   faces GLU390.OE1    3.21 A  polar/apolar packing
+    C6    C   faces GLU390.OE1    3.70 A  polar/apolar packing
+    C7    C   faces GLU498.OE1    3.63 A  polar/apolar packing
+    C8    C   faces GLU390.O      3.64 A  polar/apolar packing
+    C9    C   faces GLN389.O      3.83 A  polar/apolar packing
+    N1    N   faces GLU390.O      2.77 A  H-bond, good geometry
+    O1    O   faces SER399.CB     3.44 A  polar/apolar packing
+    O2    O   faces GLN408.OE1    2.62 A  H-bond, good geometry
+    O3    O   faces GLU390.OE1    2.62 A  H-bond, good geometry
+    O4    O   faces GLN389.NE2    2.87 A  H-bond, good geometry
+    O5    O   faces GLN389.NE2    4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+    O6    O   faces GLU390.O      4.29 A  no contact within 4.0 A (nearest protein atom is 4.29 A away)
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC(=O)N[C@H]1[C@H](OCCO)O[C@H](CO)[C@@H](O)[C@@H]1O
+      RATIONALE: Replacing cyclohexylmethyl with hydroxyethyl should withdraw the ring from its 3.33 Å ARG392 proximity and redirect the hydroxyl toward GLN389, while retaining the 2.77 Å GLU390 hydrogen bond.
+
+  [B] PROPOSED MOLECULE: CC(=O)N[C@@H]1[C@@H](CO)[C@H](O)[C@H](O)[C@H]1O[C@@H](C)CO
+      RATIONALE: Replacing cyclohexylmethoxy with a chiral hydroxyalkyl arm should redistribute the arm near GLN389.O at 3.45 Å while retaining the acetyl hydrogen bond to GLU390.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 39 of 48   id 8GFF ZHE->ZG9   target A0A3I4HTM2
+================================================================================
+INPUT LIGAND
+  SMILES: CC(=O)N[C@H]1[C@H](OCC2CCCCC2)O[C@H](CO)[C@@H](O)[C@@H]1O
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces GLN408.OE1    3.73 A  polar/apolar packing
+    C10   C   faces GLN389.O      3.45 A  polar/apolar packing
+    C11   C   faces GLN389.O      3.56 A  polar/apolar packing
+    C12   C   faces ARG392.CG     3.33 A  hydrophobic contact
+    C13   C   faces ARG392.CG     3.55 A  hydrophobic contact
+    C14   C   faces SER391.C      4.31 A  no contact within 4.0 A (nearest protein atom is 4.31 A away)
+    C15   C   faces GLU390.O      4.52 A  no contact within 4.0 A (nearest protein atom is 4.52 A away)
+    C2    C   faces GLN408.OE1    3.54 A  polar/apolar packing
+    C3    C   faces GLU390.O      3.47 A  polar/apolar packing
+    C4    C   faces GLU390.OE1    3.02 A  polar/apolar packing
+    C5    C   faces GLU390.OE1    3.21 A  polar/apolar packing
+    C6    C   faces GLU390.OE1    3.70 A  polar/apolar packing
+    C7    C   faces GLU498.OE1    3.63 A  polar/apolar packing
+    C8    C   faces GLU390.O      3.64 A  polar/apolar packing
+    C9    C   faces GLN389.O      3.83 A  polar/apolar packing
+    N1    N   faces GLU390.O      2.77 A  H-bond, good geometry
+    O1    O   faces SER399.CB     3.44 A  polar/apolar packing
+    O2    O   faces GLN408.OE1    2.62 A  H-bond, good geometry
+    O3    O   faces GLU390.OE1    2.62 A  H-bond, good geometry
+    O4    O   faces GLN389.NE2    2.87 A  H-bond, good geometry
+    O5    O   faces GLN389.NE2    4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+    O6    O   faces GLU390.O      4.29 A  no contact within 4.0 A (nearest protein atom is 4.29 A away)
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC(=O)N[C@H]1[C@H](OCCO)O[C@H](CO)[C@@H](O)[C@@H]1O
+      RATIONALE: Replacing cyclohexylmethyl with hydroxyethyl should withdraw the ring from its 3.33 Å ARG392 proximity and redirect the hydroxyl toward GLN389, while retaining the 2.77 Å GLU390 hydrogen bond.
+
+  [B] PROPOSED MOLECULE: CC(=O)N[C@@H]1[C@@H](CO)[C@H](O)[C@H](O)[C@H]1O[C@@H](C)CO
+      RATIONALE: Replacing cyclohexylmethoxy with a chiral hydroxyalkyl arm should redistribute the arm near GLN389.O at 3.45 Å while retaining the acetyl hydrogen bond to GLU390.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 40 of 48   id 8QEG THC->UDL   target P29992
+================================================================================
+INPUT LIGAND
+  SMILES: CC(=O)N[C@H](C(=O)O)[C@@H](C)O
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C     C   faces ARG60.NH1     3.62 A  polar/apolar packing
+    CA    C   faces PHE75.CZ      4.00 A  hydrophobic contact
+    CB    C   faces PHE75.CZ      3.69 A  hydrophobic contact
+    CG2   C   faces GLY74.O       3.72 A  polar/apolar packing
+    CM    C   faces ASP71.OD1     4.09 A  no contact within 4.0 A (nearest protein atom is 4.09 A away)
+    CN    C   faces ARG60.NH1     3.96 A  polar/apolar packing
+    N1    N   faces ARG60.NH1     4.51 A  no contact within 4.0 A (nearest protein atom is 4.51 A away)
+    O     O   faces ARG60.NH1     3.70 A  SALT BRIDGE to ARG60.NH1 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    OG1   O   faces PHE75.CZ      4.90 A  no contact within 4.0 A (nearest protein atom is 4.90 A away)
+    ON    O   faces ARG60.NH2     2.83 A  H-bond, good geometry
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC(C(=O)N[C@H](C(=O)O)[C@@H](C)O)C(F)(F)F
+      RATIONALE: Replacing acetyl with trifluoroacetyl should redirect the arm near ARG60.NH1 at 3.96 Å toward GLY74, while retaining the carboxyl group's 2.83 Å hydrogen bond to ARG60.
+
+  [B] PROPOSED MOLECULE: C[C@H](O)[C@H](NC(=O)O)[C@H](C)CCO
+      RATIONALE: Replacing the acetyl group with a chiral hydroxybutyl arm should redirect the arm near PHE75.CZ at 3.69 Å toward ARG60, while retaining the carboxylate's 3.70 Å ARG60 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 41 of 48   id 8ZBG A1L1N->A1L1O   target Q99594
+================================================================================
+INPUT LIGAND
+  SMILES: C[C@@H](F)C(=O)N1CCc2ccc(-c3ccc(C(F)(F)F)cc3)cc2C1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces THR333.CG2    4.01 A  no contact within 4.0 A (nearest protein atom is 4.01 A away)
+    C10   C   faces CYS368.SG     3.57 A  polar/apolar packing
+    C11   C   faces CYS368.SG     3.38 A  polar/apolar packing
+    C12   C   faces CYS368.SG     3.30 A  polar/apolar packing
+    C13   C   faces MET371.CE     4.10 A  no contact within 4.0 A (nearest protein atom is 4.10 A away)
+    C14   C   faces PHE416.CE2    3.60 A  hydrophobic contact
+    C15   C   faces PHE416.CD2    4.00 A  hydrophobic contact
+    C16   C   faces PHE248.CB     4.07 A  no contact within 4.0 A (nearest protein atom is 4.07 A away)
+    C17   C   faces PHE248.CB     3.42 A  hydrophobic contact
+    C18   C   faces ILE375.CD1    3.61 A  hydrophobic contact
+    C19   C   faces ALA301.CB     3.59 A  hydrophobic contact
+    C2    C   faces MET367.CG     3.41 A  hydrophobic contact
+    C3    C   faces VAL317.CG2    3.93 A  hydrophobic contact
+    C4    C   faces TYR230.OH     3.82 A  polar/apolar packing
+    C5    C   faces TYR230.OH     3.03 A  polar/apolar packing
+    C6    C   faces MET371.CE     3.61 A  hydrophobic contact
+    C7    C   faces ALA232.CB     3.93 A  hydrophobic contact
+    C8    C   faces ILE396.CD1    3.57 A  hydrophobic contact
+    C9    C   faces ILE396.CD1    3.42 A  hydrophobic contact
+    F1    F   faces LEU303.CD2    2.94 A  hydrophobic contact
+    F2    F   faces LEU378.CD2    3.33 A  hydrophobic contact
+    F3    F   faces ALA301.CB     2.53 A  hydrophobic contact -- unusually close (2.53 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    F4    F   faces THR333.CB     3.95 A  hydrophobic contact
+    N1    N   faces MET371.CG     4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    O1    O   faces CYS368.N      2.88 A  H-bond, good geometry
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: C[C@H](F)C(=O)N1CCc2ccc(-c3ccc(Cl)cc3)cc2C1
+      RATIONALE: Replacing trifluoromethyl near ALA301.CB at 3.59 Å with chlorine should reduce that local proximity, while the separate stereochemical inversion should redirect the fluorinated arm.
+
+  [B] PROPOSED MOLECULE: Cc1ccc(-c2ccc3c(c2)CN(C(=O)[C@H](C)F)CC3)cc1
+      RATIONALE: Replacing trifluoromethyl with methyl should reduce the substituent's 3.33 Å proximity to LEU378.CD2 and redirect the smaller group toward ILE396, while retaining the 2.88 Å CYS368 hydrogen bond.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 42 of 48   id 9FLB A1IDB->A1IDA   target Q8TF76
+================================================================================
+INPUT LIGAND
+  SMILES: Cn1cc(-c2ccc3scc(-c4ccncc4)c3n2)cn1
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C     C   faces GLY609.O      3.09 A  polar/apolar packing
+    C1    C   faces GLU606.O      3.17 A  polar/apolar packing
+    C10   C   faces VAL498.CG2    4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    C11   C   faces VAL498.CG2    3.73 A  hydrophobic contact
+    C12   C   faces VAL498.CG2    3.78 A  hydrophobic contact
+    C13   C   faces GLU492.O      3.74 A  polar/apolar packing
+    C14   C   faces GLY491.CA     3.87 A  hydrophobic contact
+    C15   C   faces VAL498.CG2    4.10 A  no contact within 4.0 A (nearest protein atom is 4.10 A away)
+    C2    C   faces LEU656.CD1    3.38 A  hydrophobic contact
+    C3    C   faces LEU656.CD1    3.58 A  hydrophobic contact
+    C4    C   faces ILE686.CG2    4.19 A  no contact within 4.0 A (nearest protein atom is 4.19 A away)
+    C5    C   faces PHE605.CD2    3.60 A  hydrophobic contact
+    C6    C   faces PHE605.CD2    3.47 A  hydrophobic contact
+    C7    C   faces ILE686.CD1    3.85 A  hydrophobic contact
+    C8    C   faces ILE686.CB     4.12 A  no contact within 4.0 A (nearest protein atom is 4.12 A away)
+    C9    C   faces LYS511.NZ     3.93 A  polar/apolar packing
+    N     N   faces LEU656.CD1    3.35 A  polar/apolar packing
+    N1    N   faces GLY608.N      3.03 A  H-bond, good geometry
+    N2    N   faces ILE686.CD1    3.82 A  polar/apolar packing
+    N3    N   faces GLY491.CA     3.42 A  polar/apolar packing
+    S     S   faces ASP687.CA     3.67 A  polar/apolar packing
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: CC1=NC(C2=CN3N=C(c4cnn(C)c4)C=CC3=CS2)=C1
+      RATIONALE: Replacing pyridyl with methyl should reduce the ring's 3.73 Å proximity to VAL498.CG2 while retaining the core's 3.03 Å hydrogen bond to GLY608.N.
+
+  [B] PROPOSED MOLECULE: c1ccc(-c2csc3ccc(-c4ccccn4)nc23)cc1
+      RATIONALE: Replacing N-methylpyrazole with pyridine should redistribute the ring near GLY608.N at 3.03 Å while retaining the heteroaromatic hydrogen bond, alongside a separate pyridyl-to-phenyl substitution.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 43 of 48   id 9RN5 A1JR3->A1B6U   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@H](c1cc(Br)cs1)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    BR1   Br  faces GLN15.NE2     2.83 A  polar/apolar packing -- unusually close (2.83 A vs 3.4 A vdW sum); treat the crystal model as uncertain
+    C1    C   faces LYS12.NZ      3.10 A  polar/apolar packing
+    C10   C   faces GLN15.CG      3.94 A  hydrophobic contact
+    C11   C   faces GLN15.CD      3.22 A  hydrophobic contact
+    C12   C   faces TYR106.OH     2.74 A  polar/apolar packing -- unusually close (2.74 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    C13   C   faces TYR39.OH      4.14 A  no contact within 4.0 A (nearest protein atom is 4.14 A away)
+    C2    C   faces LYS53.O       3.84 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C3    C   faces LYS53.O       3.69 A  polar/apolar packing
+    C4    C   faces TYR39.OH      4.15 A  no contact within 4.0 A (nearest protein atom is 4.15 A away) [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C5    C   faces TYR39.OH      3.90 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C6    C   faces LYS12.NZ      1.40 A  COVALENT BOND to LYS12.NZ
+    C7    C   faces TYR39.OH      3.92 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C8    C   faces TYR39.OH      3.21 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C9    C   faces TYR39.OH      3.84 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.51 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O2    O   faces LYS53.O       4.03 A  no contact within 4.0 A (nearest protein atom is 4.03 A away)
+    O3    O   faces ARG28.NH2     3.03 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    S1    S   faces TYR106.OH     3.50 A  polar contact, geometry poor
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@H](c1ccccn1)C2
+      RATIONALE: Replacing bromothiophene with pyridyl should remove bromine proximity to GLN15.NE2 at 2.83 Å and redirect the aromatic arm toward TYR39, while retaining the 1.40 Å LYS12 covalent anchor.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@H](c1ccccn1)C2
+      RATIONALE: Replacing bromothiophene with pyridine should redistribute the ring near TYR39.OH at 3.21 Å while retaining the carboxylate's 2.51 Å LYS12 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 44 of 48   id 9T0T A1JS0->A1B6O   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Br)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    BR18  Br  faces ARG13.NE      3.31 A  polar/apolar packing
+    C10   C   faces ARG13.O       3.76 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C11   C   faces LEU111.CD1    4.54 A  no contact within 4.0 A (nearest protein atom is 4.54 A away)
+    C12   C   faces TYR106.OH     4.04 A  no contact within 4.0 A (nearest protein atom is 4.04 A away)
+    C14   C   faces TYR106.OH     3.65 A  polar/apolar packing
+    C15   C   faces PRO110.O      3.82 A  polar/apolar packing
+    C16   C   faces GLN16.NE2     3.91 A  polar/apolar packing
+    C17   C   faces GLN16.NE2     3.92 A  polar/apolar packing
+    C19   C   faces SER14.O       3.96 A  polar/apolar packing
+    C2    C   faces LYS12.NZ      3.39 A  polar/apolar packing
+    C3    C   faces SER14.O       3.47 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C4    C   faces SER14.O       3.19 A  polar/apolar packing
+    C6    C   faces SER14.O       3.33 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C7    C   faces SER14.O       3.59 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C8    C   faces LYS12.NZ      1.34 A  COVALENT BOND to LYS12.NZ
+    C9    C   faces TYR39.OH      3.23 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    CL13  Cl  faces TYR106.OH     3.30 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.73 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O20   O   faces ARG28.NH2     2.90 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O5    O   faces SER14.O       3.11 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs SER acceptor): not a hydrogen bond
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect that substituent toward ARG13, while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect the halogen toward GLN16 while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 45 of 48   id 9T0T A1JS0->A1JR3   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Br)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    BR18  Br  faces ARG13.NE      3.31 A  polar/apolar packing
+    C10   C   faces ARG13.O       3.76 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C11   C   faces LEU111.CD1    4.54 A  no contact within 4.0 A (nearest protein atom is 4.54 A away)
+    C12   C   faces TYR106.OH     4.04 A  no contact within 4.0 A (nearest protein atom is 4.04 A away)
+    C14   C   faces TYR106.OH     3.65 A  polar/apolar packing
+    C15   C   faces PRO110.O      3.82 A  polar/apolar packing
+    C16   C   faces GLN16.NE2     3.91 A  polar/apolar packing
+    C17   C   faces GLN16.NE2     3.92 A  polar/apolar packing
+    C19   C   faces SER14.O       3.96 A  polar/apolar packing
+    C2    C   faces LYS12.NZ      3.39 A  polar/apolar packing
+    C3    C   faces SER14.O       3.47 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C4    C   faces SER14.O       3.19 A  polar/apolar packing
+    C6    C   faces SER14.O       3.33 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C7    C   faces SER14.O       3.59 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C8    C   faces LYS12.NZ      1.34 A  COVALENT BOND to LYS12.NZ
+    C9    C   faces TYR39.OH      3.23 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    CL13  Cl  faces TYR106.OH     3.30 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.73 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O20   O   faces ARG28.NH2     2.90 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O5    O   faces SER14.O       3.11 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs SER acceptor): not a hydrogen bond
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect the halogen toward GLN16 while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect that substituent toward ARG13, while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 46 of 48   id 9T0T A1JS0->A1JS4   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Br)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    BR18  Br  faces ARG13.NE      3.31 A  polar/apolar packing
+    C10   C   faces ARG13.O       3.76 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C11   C   faces LEU111.CD1    4.54 A  no contact within 4.0 A (nearest protein atom is 4.54 A away)
+    C12   C   faces TYR106.OH     4.04 A  no contact within 4.0 A (nearest protein atom is 4.04 A away)
+    C14   C   faces TYR106.OH     3.65 A  polar/apolar packing
+    C15   C   faces PRO110.O      3.82 A  polar/apolar packing
+    C16   C   faces GLN16.NE2     3.91 A  polar/apolar packing
+    C17   C   faces GLN16.NE2     3.92 A  polar/apolar packing
+    C19   C   faces SER14.O       3.96 A  polar/apolar packing
+    C2    C   faces LYS12.NZ      3.39 A  polar/apolar packing
+    C3    C   faces SER14.O       3.47 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C4    C   faces SER14.O       3.19 A  polar/apolar packing
+    C6    C   faces SER14.O       3.33 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C7    C   faces SER14.O       3.59 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    C8    C   faces LYS12.NZ      1.34 A  COVALENT BOND to LYS12.NZ
+    C9    C   faces TYR39.OH      3.23 A  polar/apolar packing [nearest INDEPENDENT contact; LYS12 is excluded as the residue its covalent link already describes]
+    CL13  Cl  faces TYR106.OH     3.30 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.73 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O20   O   faces ARG28.NH2     2.90 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O5    O   faces SER14.O       3.11 A  polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs SER acceptor): not a hydrogen bond
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect the halogen toward GLN16 while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@@H](c1c(Cl)cccc1Cl)C2
+      RATIONALE: Replacing bromine near ARG13.NE at 3.31 Å with chlorine should redirect that substituent toward ARG13, while retaining the carboxylate's 2.73 Å LYS12 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 47 of 48   id 9T3G A1JTA->A1B6F   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@H](c1ccccn1)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces LYS12.NZ      3.11 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C10   C   faces TYR106.OH     3.46 A  polar/apolar packing
+    C11   C   faces TYR106.OH     3.36 A  polar/apolar packing
+    C12   C   faces GLN15.NE2     3.44 A  polar/apolar packing
+    C13   C   faces GLN15.CB      3.77 A  hydrophobic contact
+    C14   C   faces TYR39.OH      4.17 A  no contact within 4.0 A (nearest protein atom is 4.17 A away)
+    C2    C   faces LYS12.NZ      3.09 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C3    C   faces LYS53.O       3.66 A  polar/apolar packing
+    C4    C   faces LYS12.NZ      3.67 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C5    C   faces LYS12.NZ      2.45 A  polar/apolar packing -- unusually close (2.45 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    C7    C   faces LYS12.NZ      2.58 A  polar/apolar packing -- unusually close (2.58 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    C8    C   faces TYR39.OH      3.68 A  polar/apolar packing
+    C9    C   faces LEU111.CD1    3.86 A  hydrophobic contact
+    N1    N   faces GLN15.CB      3.49 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.66 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies) [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    O2    O   faces ARG28.NH2     3.53 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O3    O   faces LYS53.O       4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1cccc([C@H]2CCc3c(C(=O)O)coc3C2)c1
+      RATIONALE: Replacing pyridyl with methylphenyl should redistribute the ring near GLN15.NE2 at 3.44 Å toward TYR106, while retaining the carboxylate's 3.53 Å ARG28 salt bridge.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@H](c1cccc(Cl)c1)C2
+      RATIONALE: Replacing pyridyl with chlorophenyl should redirect the ring near GLN15.CB at 3.77 Å toward GLN15.N, while retaining the carboxylate's 3.53 Å ARG28 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
+================================================================================
+CASE 48 of 48   id 9T3G A1JTA->A1JS4   target Q06187
+================================================================================
+INPUT LIGAND
+  SMILES: O=C(O)c1coc2c1CC[C@H](c1ccccn1)C2
+
+INPUT CONTACT TABLE -- each atom's NEAREST protein atom, measured in the input crystal
+    C1    C   faces LYS12.NZ      3.11 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C10   C   faces TYR106.OH     3.46 A  polar/apolar packing
+    C11   C   faces TYR106.OH     3.36 A  polar/apolar packing
+    C12   C   faces GLN15.NE2     3.44 A  polar/apolar packing
+    C13   C   faces GLN15.CB      3.77 A  hydrophobic contact
+    C14   C   faces TYR39.OH      4.17 A  no contact within 4.0 A (nearest protein atom is 4.17 A away)
+    C2    C   faces LYS12.NZ      3.09 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C3    C   faces LYS53.O       3.66 A  polar/apolar packing
+    C4    C   faces LYS12.NZ      3.67 A  polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    C5    C   faces LYS12.NZ      2.45 A  polar/apolar packing -- unusually close (2.45 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    C7    C   faces LYS12.NZ      2.58 A  polar/apolar packing -- unusually close (2.58 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+    C8    C   faces TYR39.OH      3.68 A  polar/apolar packing
+    C9    C   faces LEU111.CD1    3.86 A  hydrophobic contact
+    N1    N   faces GLN15.CB      3.49 A  polar/apolar packing
+    O1    O   faces LYS12.NZ      2.66 A  SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies) [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+    O2    O   faces ARG28.NH2     3.53 A  SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+    O3    O   faces LYS53.O       4.20 A  no contact within 4.0 A (nearest protein atom is 4.20 A away)
+
+--------------------------------------------------------------------------------
+TWO INDEPENDENT PROPOSALS. Each is one model's OWN proposed molecule together with
+its OWN rationale. There is no reference answer and you are NOT being asked whether
+the proposed molecule is the one a crystallographer made -- many analogues are valid.
+
+  [A] PROPOSED MOLECULE: Cc1cccc([C@H]2CCc3c(C(=O)O)coc3C2)c1
+      RATIONALE: Replacing pyridyl with methylphenyl should redistribute the ring near GLN15.NE2 at 3.44 Å toward TYR106, while retaining the carboxylate's 3.53 Å ARG28 salt bridge.
+
+  [B] PROPOSED MOLECULE: O=C(O)c1coc2c1CC[C@H](c1cccc(Cl)c1)C2
+      RATIONALE: Replacing pyridyl with chlorophenyl should redirect the ring near GLN15.CB at 3.77 Å toward GLN15.N, while retaining the carboxylate's 3.53 Å ARG28 salt bridge.
+--------------------------------------------------------------------------------
+For EACH of A and B, judge ONLY self-consistency and groundedness:
+
+  edit_identified_correctly  Compare the INPUT SMILES with that proposal's OWN molecule. Does the
+                             rationale describe the change that actually separates those two
+                             structures? If the rationale talks about removing a group that is
+                             present in both, or ignores the group that actually changed, this is
+                             false.
+  atom_attribution_ok        Every distance or contact the rationale cites: is it a real row of
+                             the input contact table, AND attached to the atom that owns it?
+  invented_chemistry         Does it assert a contact, bond or interaction the table does not
+                             support?
+  chemically_sensible_edit   Is the proposed molecule a reasonable medicinal-chemistry analogue of
+                             the input at all (not a different scaffold, not nonsense)?
+  would_show_a_chemist       Would you put this molecule-plus-rationale in front of a medicinal
+                             chemistry audience?
+  one_line_why
+
+Then: best_overall (A | B | none) and why.
+
+Return ONE json object keyed by the case id, each value holding a key per slot A-B with the five
+booleans plus one_line_why, and best_overall. Score every slot on every case: a slot you skip is
+indistinguishable from a slot you judged false, and the rates are what the table reports.
