@@ -200,6 +200,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
 | **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
 | **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
+| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | **1.000** | 0.639 | 3.34 | 0.724 | 0.487 | 0.972 | 0.445 | **1.000** | 0.378 | 0.552 | 0.564 | 0.889 | 0.874 | TBD | TBD | TBD | TBD | TBD |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – | – |
 
@@ -654,8 +655,27 @@ arm at 0.973.
 
 The run was stopped by hand at 7 of 10 patience evaluations once the turn was unambiguous; its
 adapter was materialised from checkpoint-1920 and byte-verified, with provenance recorded beside
-it. **ether0 schema B on the same corpus runs next with patience 5** — one epoch of patience,
+it. **ether0 schema B on the same corpus ran next with patience 5** — one epoch of patience,
 which still clears the 0.8-1.6 stall while not spending two hours past a turn as this run did.
+
+**ether0 schema B on g3+g4, completed 2026-10-18 03:48 UTC, patience 5.** Curve at 0.2-epoch
+resolution: 0.7755, 0.6901, 0.6494, 0.6203, 0.6083, 0.6189, 0.6136, 0.6079, 0.5934, then
+**0.5897 at epoch 2.00 (best, checkpoint-1920)**, then 0.6620, 0.6580, 0.6642, 0.6762, 0.6465 —
+five consecutive worse evaluations, so early stopping fired correctly at epoch 3.0 and
+`load_best_model_at_end` restored epoch 2.00. Step 2,880 of a 9,620 ceiling. Two things this
+confirms independently of the ChemDFM run:
+
+* **The optimum is at epoch 2.0 here too**, and the apparent convergence at epoch 1.00 (0.6083)
+  is a false floor — the same shape, on a different model and a different schema. The epoch-2.0
+  optimum on this corpus is now a two-model finding, not a one-off.
+* **Patience 2 would have stopped at epoch 1.4 and locked in 0.6083**, forfeiting the real 0.0186
+  improvement. The 1.0-1.6 region (0.6083, 0.6189, 0.6136, 0.6079) is flat to within 0.011 and
+  then drops twice. Patience 5 was the correct setting and patience 2 would have been wrong on
+  both arms.
+
+It also beats the ChemDFM g3+g4 arm on eval loss (0.5897 against 0.6045), the first time an ether0
+schema arm has led its ChemDFM counterpart on this corpus. That is a loss comparison across two
+different tokenizers and is **not** a quality claim; the chemist panels decide that.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 
