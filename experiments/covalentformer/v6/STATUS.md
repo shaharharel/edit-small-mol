@@ -187,9 +187,9 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – | – |
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | ❌ | ❌ | **97.9%** | **14.6%** | 70.8%◊ |
-| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | ❌ | ❌ | 85.4% | 12.5% | 37.5%◊‡‡ |
-| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | ❌ | ❌ | 85.4% | 6.2% | 85.4%◊ |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 2.84 | 0.750 | 0.104 | 1.000 | 0.366 | – | – | 0.253 | 0.516 | 0.706 | 1.000 | 89.6%¤∅ | 33.3%¤∅ | **97.9%** | **14.6%** | 70.8%◊ |
+| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 4.31 | 1.000 | 0.247 | – | – | 0.000 | – | 0.547 | 0.625 | 0.809 | 0.000 | 56.2%¤∅ | 0.0%¤∅ | 85.4% | 12.5% | 37.5%◊‡‡ |
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 12.10 | 0.857 | 0.761 | 0.996 | 0.405 | 1.000‡ | 1.000‡ | 0.238 | 0.577 | 0.584 | 0.941 | 62.5%¤∅ | 12.5%¤∅ | 85.4% | 6.2% | 85.4%◊ |
 | SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 18.82 | 0.786 | – | – | – | – | – | 0.000 | – | – | – | ❌ | ❌ | – | – | – |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | 3.74 | **0.828** | 0.523 | 1.000 | 0.478 | 0.927 | 0.327 | 0.422 | 0.582 | 0.800 | **0.935** | **81.1%** | **25.6%** | TBD | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 3.31 | 0.818 | 0.482 | 1.000 | 0.477 | **0.996** | 0.290 | **0.525** | 0.529 | **0.907** | 0.780 | **100%**† | **31.2%**† | **97.0%** | **23.0%** | 63.2%¶ |
@@ -709,6 +709,46 @@ gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but acro
 within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
+
+### Base-arm in-house panel, 2026-10-19 — the cells exist, and they measure the convention
+
+Six reviewer-runs over the SAME 48 items (16 per arm) the external pool scored, so the two scales
+are comparable item-for-item. They are not close:
+
+| arm | field | in-house | external |
+|---|---|---|---|
+| ChemDFM base | invented chem | 18.8% | 70.8% |
+| Llama base | invented chem | 29.2% | 85.4% |
+| ether0 base | invented chem | 0.0% | 37.5% |
+| ChemDFM base | sensible | 89.6% | 97.9% |
+| ether0 base | sensible | 56.2% | 85.4% |
+| Llama base | sensible | 62.5% | 85.4% |
+
+**The 40-55 point `invented chem` gap is a definition, not a disagreement about chemistry.** The
+external pool counted a rambling monologue asserting unsupported interactions as invention; the
+in-house pool counted an output that returns its input unchanged as asserting nothing. On the
+trained arms both readings coincide because the models actually propose edits and actually cite
+numbers; on base arms they diverge because most outputs do neither.
+
+**`sensible` is close to vacuous on base arms.** 11 of 24 items in one batch returned the input
+byte-identical (RDKit-confirmed), and an echo is trivially "a reasonable analogue of the input"
+unless the rubric forbids it. In-house reviewers split **12% / 62% / 94%** on ether0 base for
+exactly that reason — an 82-point spread on 16 items, where the same reviewers agreed to within
+1 point on `edit_identified_correctly` (all three 12%). That is the clearest demonstration so far
+that the field needs "must differ from the input" written into it.
+
+**ether0 base's 100% attribution in BOTH pools** is the same artefact from the other side: it cites
+no distances, so there is nothing to attribute wrongly. Already flagged `‡‡` on its invented-chem
+cell; it applies to attribution too.
+
+**n=16 per arm is the data ceiling, not a choice.** Of 262 benchmark pairs, only 136 / 59 / 31
+yield a sentence plus a parseable molecule for Llama / ether0 / ChemDFM base, and the three overlap
+on exactly one pair. Each rate carries roughly ±12 points before any convention effect. SmileyLlama
+base stays excluded: its outputs average 1.0 word, so any rate would describe the parser.
+
+Conclusion: the six base chemist cells are filled and marked `∅`. They establish that a floor
+exists. They should not be used to rank the base models against each other, and the `invented chem`
+column should not be compared across the two pools at all.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 
