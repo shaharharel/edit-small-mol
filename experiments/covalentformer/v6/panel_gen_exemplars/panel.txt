@@ -1,0 +1,905 @@
+
+================================================================================
+PAIR 1 of 12   pair_id pair_01   8SVQ WSX->WSO
+================================================================================
+TARGET: O75469
+INPUT SMILES: CCC[C@H](CC)Oc1ccc(C(C)(C)C)cc1NC(=O)c1nnn(-c2cc(OC)ccc2OC)c1C
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C02   C  MET243.CE       A      3.91     - | hydrophobic contact
+C04   C  MET243.CE       A      4.00     - | hydrophobic contact
+C07   C  MET243.CE       A      3.60     - | hydrophobic contact
+C08   C  MET243.CE       A      3.85     - | hydrophobic contact
+C09   C  TRP299.CE3      A      3.49     - | hydrophobic contact
+C10   C  PHE288.CD2      A      3.65     - | hydrophobic contact
+C11   C  GLN285.OE1      A      3.36     - | polar/apolar packing
+C12   C  GLN285.OE1      A      3.17     - | polar/apolar packing
+C13   C  VAL211.CG2      A      3.62     - | hydrophobic contact
+C14   C  LEU209.O        A      3.29     - | polar/apolar packing
+C15   C  LEU209.O        A      4.00     - | polar/apolar packing
+C17   C  LEU239.CB       A      3.80     - | hydrophobic contact
+C18   C  MET243.CG       A      3.61     - | hydrophobic contact
+C19   C  LEU206.CD2      A      3.99     - | hydrophobic contact
+C21   C  SER247.OG       A      3.84     - | polar/apolar packing
+C22   C  SER247.OG       A      3.38     - | polar/apolar packing
+C23   C  SER247.OG       A      3.32     - | polar/apolar packing
+C27   C  PHE281.CD1      A      3.41     - | hydrophobic contact
+C28   C  PHE281.CD1      A      3.39     - | hydrophobic contact
+C30   C  PHE281.CD1      A      3.59     - | hydrophobic contact
+C31   C  PHE429.CE1      A      3.47     - | hydrophobic contact
+C32   C  LEU428.CD2      A      3.46     - | hydrophobic contact
+C33   C  PHE281.CA       A      3.79     - | hydrophobic contact
+C35   C  ALA280.O        A      3.35     - | polar/apolar packing
+N24   N  PHE281.CD1      A      3.65     - | polar/apolar packing
+         SER247.OG              3.85     - | polar partner: polar/apolar packing
+N25   N  GLN285.NE2      A      2.72    77 | polar contact, geometry poor
+N26   N  GLN285.NE2      A      2.77   174 | H-bond, good geometry
+O01   O  MET243.CE       A      3.27     - | polar/apolar packing
+         SER247.OG              3.91     - | polar partner: polar/apolar packing
+O29   O  PHE281.CD1      A      3.60     - | polar/apolar packing
+O34   O  LEU428.CD2      A      3.33     - | polar/apolar packing
+         PHE281.N               3.69     - | polar partner: polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C05, C16, C20, C36, N03, O06
+COVERAGE: 36 of 36 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: CCC[C@H](CC)Oc1ccc(-c2ccccc2)cc1NC(=O)c1nnn(-c2cc(OC)ccc2OC)c1C
+    reasoning: The proposed analogue replaces the tert-butyl group with a phenyl group, potentially increasing the hydrophobic interaction with MET243 and PHE281.
+
+  PROPOSAL B
+    molecule: CCC[C@H](CC)Oc1ccc(-c2ccccc2)cc1NC(=O)c1nnn(-c2cc(OC)ccc2OC)c1C
+    reasoning: Replacing the tert-butyl with a phenyl gives up the methyls packing PHE281.CD1 at 3.39-3.59 A and LEU428.CD2 at 3.46 A, while the 2.77 A GLN285.NE2 hydrogen bond is retained.
+
+  PROPOSAL C
+    molecule: CCC[C@H](CC)Oc1ccc(C(C)(C)C)cc1NC(=O)c1nnn(-c2cc(OC)ccc2OC)c1C#N
+    reasoning: Replacing the aryl methyl near PHE281.CA at 3.79 Å with nitrile should redirect that substituent toward PHE429 while retaining the GLN285 hydrogen bond.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 2 of 12   pair_id pair_02   7KXD Z7G->Z7H
+================================================================================
+TARGET: P51449
+INPUT SMILES: COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1C(C)C
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C10   C  ILE397.CD1      A      3.84     - | hydrophobic contact
+C13   C  LEU324.CD1      A      3.91     - | hydrophobic contact
+C14   C  ILE400.CD1      A      3.64     - | hydrophobic contact
+C15   C  PHE377.O        A      3.28     - | polar/apolar packing
+C16   C  LEU324.CD1      A      3.58     - | hydrophobic contact
+C17   C  HIS479.CD2      A      3.81     - | hydrophobic contact
+C20   C  HIS479.CD2      A      3.56     - | hydrophobic contact
+C21   C  CYS393.SG       A      3.72     - | polar/apolar packing
+C22   C  HIS479.CG       A      3.61     - | hydrophobic contact
+C3    C  PHE388.CE1      A      3.79     - | hydrophobic contact
+C5    C  PHE388.CZ       A      3.66     - | hydrophobic contact
+C6    C  PHE378.CE1      A      3.94     - | hydrophobic contact
+C8    C  MET365.SD       A      3.77     - | polar/apolar packing
+C9    C  PHE378.CD1      A      3.62     - | hydrophobic contact
+CL1   Cl PHE401.CE1      A      3.87     - | hydrophobic contact
+CL2   Cl CYS320.O        A      3.60     - | polar/apolar packing
+O18   O  PHE377.O        A      3.68     - | polar/apolar packing
+O19   O  HIS479.CD2      A      3.35     - | polar/apolar packing
+O4    O  PHE388.CE1      A      3.84     - | polar/apolar packing
+         CYS320.SG              3.91     - | polar partner: polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C11, C12, C7
+COVERAGE: 22 of 22 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1OC
+    reasoning: Replacing isopropyl with methoxy should trade the methyl's 3.72 Å proximity to CYS393.SG for a polar group directed toward HIS479, while retaining the hydroxymethyl group's 3.35 Å proximity to HIS479.
+
+  PROPOSAL B
+    molecule: COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1C(C)C
+    reasoning: The change from COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1C(C)C to COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1C(C)C increases the hydrophobic contact with ILE397, LEU324, ILE400, PHE377, HIS479, CYS393, and PHE388, and maintains the polar/apolar packing with CYS320 and PHE388.
+
+  PROPOSAL C
+    molecule: COc1ccc(Oc2c(Cl)cc(CO)cc2Cl)cc1OC
+    reasoning: Replacing the isopropyl, whose methyls pack HIS479.CD2 at 3.56 A and CYS393.SG at 3.72 A, with a methoxy should give up that hydrophobic contact while the 3.60 A CYS320.O chlorine packing is retained.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 3 of 12   pair_id pair_03   13CW A1DFF->A1DFE
+================================================================================
+TARGET: P15374
+INPUT SMILES: Cc1cccc(NC(=O)c2cccc(NC(=O)CCl)c2)c1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C01   C  CYS95.SG        A      2.48     - | probable covalent bond to CYS95.SG (modelled at 2.48 A vs 1.81 A ideal -- disclosed as uncertain; NOT citable as a covalent bond)
+C02   C  CYS95.SG        A      3.02     - | polar/apolar packing -- unusually close (3.02 A vs 3.5 A vdW sum); treat the crystal model as uncertain
+C04   C  LEU168.O        A      3.44     - | polar/apolar packing
+C06   C  ARG186.NE       A      3.82     - | polar/apolar packing
+C07   C  ARG186.NE       A      3.74     - | polar/apolar packing
+C09   C  GLN89.NE2       A      3.96     - | polar/apolar packing
+C10   C  GLN89.CG        A      3.74     - | hydrophobic contact
+C11   C  GLN89.O         A      3.38     - | polar/apolar packing
+C12   C  GLU132.CB       B      3.44     - | hydrophobic contact
+C13   C  GLU132.CG       B      3.53     - | hydrophobic contact
+C14   C  THR90.O         A      3.46     - | polar/apolar packing
+C15   C  ILE91.O         A      3.69     - | polar/apolar packing
+C17   C  ARG186.NE       A      3.49     - | polar/apolar packing
+C18   C  VAL166.O        A      3.67     - | polar/apolar packing
+C19   C  LEU168.O        A      3.18     - | polar/apolar packing
+N03   N  LEU168.O        A      2.80   103 | H-bond, good geometry
+N08   N  GLN89.NE2       A      3.53    97 | polar contact, donor/acceptor INCOMPATIBLE (ligand both vs GLN donor): not a hydrogen bond
+O16   O  ARG186.NE       A      3.07   115 | H-bond, good geometry
+O20   O  GLN89.NE2       A      3.08   173 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C05
+COVERAGE: 20 of 21 input heavy atoms have a row (1 not modelled, 0 omitted as clashes)
+NOT MODELLED in this crystal (absent from the coordinates, so they appear in no row above): CL1
+SUSPECT RESIDUES in this crystal (each modelled implausibly close to two or more ligand atoms, so its position is unreliable): CYS95
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: Cc1cccc(NC(=O)c2cccc(NC(=O)CBr)c2)c1
+    reasoning: The change from chloro to bromo increases the steric bulk and may enhance the polar/apolar packing with CYS95 and LEU168, potentially improving binding affinity.
+
+  PROPOSAL B
+    molecule: CCC(=O)Nc1cccc(C(=O)Nc2cccc(C)c2)c1
+    reasoning: Replacing the chlorine with a methyl gives up the halogen's 3.44 A packing on GLU132.CB of the second chain, while the 2.80 A LEU168.O and 3.07 A ARG186.NE hydrogen bonds are retained.
+
+  PROPOSAL C
+    molecule: O=C(CCl)Nc1cccc(C(=O)Nc2cccc(Cl)c2)c1
+    reasoning: Replacing the aryl methyl near LEU168.O at 3.18 Å with chlorine should redirect that substituent toward ILE169 while retaining the amide hydrogen bond to LEU168.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 4 of 12   pair_id pair_04   7XEJ 9PV->9ZN
+================================================================================
+TARGET: O32164
+INPUT SMILES: Cc1ncc(COP(=O)(O)O)c(/C=N/[C@H](CS)C(=O)O)c1O
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  ALA28.O         A      3.46     - | polar/apolar packing
+CA    C  HIS121.NE2      A      3.92     - | polar/apolar packing
+CAA   C  HIS121.NE2      A      3.38     - | polar/apolar packing
+CAB   C  ASP198.OD2      A      3.37     - | polar/apolar packing
+CAD   C  ASP198.OD2      A      3.50     - | polar/apolar packing
+CAE   C  HIS121.CD2      A      3.43     - | hydrophobic contact
+CAF   C  HIS121.NE2      A      3.35     - | polar/apolar packing
+CAG   C  ASP198.OD2      A      3.56     - | polar/apolar packing
+CAI   C  HIS121.NE2      A      3.49     - | polar/apolar packing
+CAL   C  THR93.OG1       A      3.51     - | polar/apolar packing
+CB    C  ALA29.O         A      3.79     - | polar/apolar packing
+N     N  HIS121.NE2      A      3.25    87 | polar contact, geometry poor
+NAC   N  ASP198.OD2      A      2.55   126 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ASP acceptor): not a hydrogen bond -- unusually close (2.55 A vs 3.1 A vdW sum); treat the crystal model as uncertain
+O     O  ARG376.NH1      A      2.75     - | SALT BRIDGE to ARG376.NH1 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+OAH   O  LYS224.NZ       A      2.92   131 | H-bond, good geometry
+OAM   O  THR92.CB        A      3.61     - | polar/apolar packing
+         SER221.OG              3.73     - | polar partner: polar/apolar packing
+OAO   O  THR93.OG1       A      2.52   126 | H-bond, good geometry
+OAP   O  THR93.OG1       A      3.91     - | polar/apolar packing
+OAQ   O  SER221.OG       A      2.52   120 | H-bond, good geometry
+OXT   O  ARG376.NH2      A      2.86     - | SALT BRIDGE to ARG376.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+PAN   P  SER221.OG       A      3.52     - | polar/apolar packing
+SG    S  ALA29.O         A      3.36    90 | polar contact, geometry poor
+COVERAGE: 22 of 22 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: Cc1ncc(COP(=O)(O)O)c(/C=N/[C@H](CO)C(=O)O)c1O
+    reasoning: Replacing the thiol with a hydroxyl should redirect the side chain from its 3.36 Å proximity to ALA29.O toward ASP198, while retaining the carboxylate's 2.86 Å ARG376 salt bridge.
+
+  PROPOSAL B
+    molecule: Cc1ncc(COP(=O)(O)O)c(/C=N/[C@H](CS)C(N)=O)c1O
+    reasoning: The change of the ligand's carboxylic acid group to an amide group would remove the polar contact with THR92.CB and the polar/apolar packing with SER221.OG, but would maintain the hydrogen bond with LYS224.NZ and the salt bridge with ARG376.NH1.
+
+  PROPOSAL C
+    molecule: O=C(O)C(CS)=N/C=C/c1c(COP(=O)(O)O)nc(=O)[nH]c1O
+    reasoning: Replacing the pyridine methyl, which packs ALA28.O at 3.46 A, with a hydroxyl should trade apolar packing for a polar group at that edge, while the 2.75 A ARG376.NH1 salt bridge is retained.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 5 of 12   pair_id pair_05   8FAV LKY->XNR
+================================================================================
+TARGET: P51449
+INPUT SMILES: Cc1c(CN2CCN(C(=O)C3CCCC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  VAL376.CG2      A      3.66     - | hydrophobic contact
+C11   C  LEU391.CD1      A      3.81     - | hydrophobic contact
+C12   C  LEU391.CD1      A      3.86     - | hydrophobic contact
+C13   C  PHE486.CE2      A      3.77     - | hydrophobic contact
+C14   C  LEU483.CD2      A      3.94     - | hydrophobic contact
+C15   C  ILE397.CG1      A      3.95     - | hydrophobic contact
+C16   C  MET365.CE       A      3.97     - | hydrophobic contact
+C18   C  HIS323.CD2      A      3.93     - | hydrophobic contact
+C19   C  MET365.CE       A      3.88     - | hydrophobic contact
+C2    C  PHE377.O        A      3.60     - | polar/apolar packing
+C20   C  VAL376.CG1      A      3.54     - | hydrophobic contact
+C21   C  VAL376.CG1      A      3.46     - | hydrophobic contact
+C23   C  MET365.O        A      3.59     - | polar/apolar packing
+C24   C  PHE377.O        A      3.74     - | polar/apolar packing
+C26   C  ALA368.CB       A      3.45     - | hydrophobic contact
+C28   C  HIS323.CE1      A      3.62     - | hydrophobic contact
+C29   C  PHE377.O        A      3.16     - | polar/apolar packing
+C3    C  VAL376.CG2      A      3.68     - | hydrophobic contact
+C30   C  PHE377.CD2      A      3.61     - | hydrophobic contact
+C31   C  PHE377.CD2      A      3.71     - | hydrophobic contact
+C33   C  GLN286.CB       A      3.96     - | hydrophobic contact
+C35   C  ALA368.CB       A      3.49     - | hydrophobic contact
+C4    C  PHE401.CE1      A      3.70     - | hydrophobic contact
+C6    C  PHE388.CE1      A      3.68     - | hydrophobic contact
+C7    C  CYS320.SG       A      3.76     - | polar/apolar packing
+C9    C  HIS479.NE2      A      3.99     - | polar/apolar packing
+F22   F  SER404.OG       A      2.92     - | polar/apolar packing
+N25   N  PHE377.O        A      2.88   117 | H-bond, good geometry
+N34   N  LEU287.N        A      3.24   136 | H-bond, good geometry
+N5    N  PHE388.CZ       A      3.99     - | polar/apolar packing
+O10   O  HIS479.NE2      A      2.85   156 | H-bond, good geometry
+O27   O  ALA368.CB       A      3.56     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C32, N8
+COVERAGE: 34 of 34 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: Cc1c(CN2CCN(C(=O)C3CC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+    reasoning: Replacing the cyclopentyl with a cyclopropyl gives up the ring's 3.45 A packing on ALA368.CB and 3.49 A on ALA368.CB, while the amide's 2.88 A PHE377.O hydrogen bond is retained.
+
+  PROPOSAL B
+    molecule: Cc1c(CN2CCN(C(=O)CC3CC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+    reasoning: Replacing cyclopentanecarbonyl with cyclopropylacetyl should redistribute the ring near HIS323.CE1 at 3.62 Å toward HIS479 while retaining the amide's 2.85 Å HIS479 hydrogen bond.
+
+  PROPOSAL C
+    molecule: Cc1c(CN2CCN(C(=O)C3CCCCC3)[C@@H](C)C2)cc(F)cc1NC(=O)c1cccc(C#N)c1
+    reasoning: The proposed analogue replaces the cyclopentyl group with a cyclohexyl group, potentially increasing the hydrophobic contact with LEU391 and LEU483, and maintaining the existing interactions with the protein.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 6 of 12   pair_id pair_06   7T1H E5B->E66
+================================================================================
+TARGET: Q04430
+INPUT SMILES: CC(C)(C)c1ccc(CNc2nc3[nH]c(CN4CCOCC4)cc(=O)n3n2)cc1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C12   C  GLY228.O        A      3.18     - | polar/apolar packing
+C13   C  ILE227.O        A      3.49     - | polar/apolar packing
+C14   C  TRP331.CZ2      A      3.18     - | hydrophobic contact
+C16   C  ILE234.O        A      3.67     - | polar/apolar packing
+C18   C  SER177.O        B      2.99     - | polar/apolar packing
+C19   C  ARG173.NH2      B      3.47     - | polar/apolar packing
+C2    C  TRP331.CZ2      A      3.69     - | hydrophobic contact
+C20   C  ARG173.NH2      B      3.61     - | polar/apolar packing
+C21   C  ALA235.CB       A      3.79     - | hydrophobic contact
+C25   C  GLU105.OE2      B      3.33     - | polar/apolar packing
+C26   C  ILE219.CG2      A      3.95     - | hydrophobic contact
+C27   C  SER161.OG       B      3.51     - | polar/apolar packing
+C28   C  ARG173.NH2      B      3.72     - | polar/apolar packing
+C4    C  ARG173.NH2      B      3.76     - | polar/apolar packing
+C6    C  TRP331.CH2      A      3.10     - | hydrophobic contact
+C7    C  TRP331.CH2      A      3.11     - | hydrophobic contact
+N15   N  ARG173.NH2      B      3.15   141 | H-bond, good geometry
+N17   N  ILE234.O        A      3.19   136 | H-bond, good geometry
+N29   N  ILE234.O        A      3.51   156 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ILE acceptor): not a hydrogen bond
+N5    N  ARG173.NH1      B      3.13   111 | polar contact, donor/acceptor INCOMPATIBLE (ligand both vs ARG donor): not a hydrogen bond
+N8    N  PHE330.CE2      A      3.73     - | polar/apolar packing
+O11   O  ILE227.O        A      3.25    76 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ILE acceptor): not a hydrogen bond
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C22, C23, C24, C9, N3, O1
+COVERAGE: 29 of 29 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: CCC(C)(C)c1ccc(CNc2nc3[nH]c(CN4CCOCC4)cc(=O)n3n2)cc1
+    reasoning: The change from a methyl group to an ethyl group on the carbon adjacent to the nitrogen in the pyrimidine ring may increase hydrophobic interactions with TRP331 and ILE234, potentially enhancing binding affinity. SMILES: CC(C)(C)c1ccc(CNc2nc3[nH]c(CN4CCOCC4)cc(=O)n3n2)cc1 CCC(C)(C)c1ccc(CNc2nc3[nH]c(CN4CCOCC4)cc(=O)n3n2)cc1
+
+  PROPOSAL B
+    molecule: CC(C)(C)c1ccc(CNc2nc3[nH]c(CN4CCCC4)cc(=O)n3n2)cc1
+    reasoning: Replacing the morpholine with a pyrrolidine gives up the ether oxygen's 3.25 A polar contact with ILE227.O and the ring's 3.33 A packing on GLU105.OE2, while the ARG173.NH2 hydrogen bond at 3.15 A is retained.
+
+  PROPOSAL C
+    molecule: CN1CCN(Cc2cc(=O)n3nc(NCc4ccc(C(C)(C)C)cc4)nc3[nH]2)CC1
+    reasoning: Replacing morpholine with an N-methylpiperazine should redirect the ring near GLU105(B) at 3.33 Å toward chain A, while retaining the 3.15 Å ARG173(B) hydrogen bond.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 7 of 12   pair_id pair_07   5OIW 9WN->A0K
+================================================================================
+TARGET: K5BDL0
+INPUT SMILES: O=C(O)[C@@H](CO)O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C09   C  TYR375.OH       A      3.82     - | polar/apolar packing
+C1    C  TYR375.OH       A      3.01     - | polar/apolar packing
+C10   C  TYR88.OH        A      3.54     - | polar/apolar packing
+C12   C  TYR375.OH       A      3.41     - | polar/apolar packing
+C2    C  TYR375.OH       A      3.46     - | polar/apolar packing
+C3    C  GLY180.O        A      3.57     - | polar/apolar packing
+C4    C  ASP43.OD1       A      3.50     - | polar/apolar packing
+C5    C  TRP40.CD1       A      3.55     - | hydrophobic contact
+C6    C  ASP43.OD2       A      3.27     - | polar/apolar packing
+O1    O  TYR375.OH       A      3.15   107 | H-bond, good geometry
+O11   O  TRP40.NE1       A      2.89   119 | H-bond, good geometry
+O13   O  TYR375.OH       A      2.41   135 | H-bond, good geometry
+O14   O  TYR88.OH        A      2.62   134 | H-bond, good geometry
+O2    O  TYR375.OH       A      2.82   104 | H-bond, good geometry
+O3    O  GLY180.O        A      2.72   116 | H-bond, good geometry
+O4    O  ASP43.OD1       A      2.66   115 | H-bond, good geometry
+O5    O  TYR36.CZ        A      3.16     - | polar/apolar packing
+         TYR36.OH               3.44    79 | polar partner: polar contact, geometry poor
+O6    O  ASP43.OD2       A      2.68   102 | H-bond, good geometry
+COVERAGE: 18 of 18 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: COC(=O)[C@H](O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O)C(N)=O
+    reasoning: Replacing the hydroxyl that hydrogen-bonds ASP43.OD1 at 2.66 A with a methylamide should trade that donor for an amide carbonyl near ASP43, while the 2.41 A TYR375.OH hydrogen bond is retained.
+
+  PROPOSAL B
+    molecule: O=C(O)[C@@H](CO)O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O
+    reasoning: ��换C12为F，以增强与TYR375的疏水相互作用。
+
+  PROPOSAL C
+    molecule: C[C@H](O)[C@H](O[C@H]1O[C@H](CO)[C@@H](O)[C@H](O)[C@H]1O)C(=O)O
+    reasoning: Replacing the hydroxymethyl side chain with a methyl should give up its 2.72 Å GLY180 hydrogen bond and redirect the remaining hydroxyl toward TYR375.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 8 of 12   pair_id pair_08   6PGE OJM->OHJ
+================================================================================
+TARGET: P61964
+INPUT SMILES: CCOC(=O)CCc1nc(CO)c[nH]1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  SER175.O        A      3.19     - | polar/apolar packing
+C1    C  ALA47.CB        A      3.48     - | hydrophobic contact
+C2    C  LEU321.CD2      A      3.99     - | hydrophobic contact
+C4    C  ILE305.CG1      A      3.91     - | hydrophobic contact
+C6    C  SER91.O         A      3.63     - | polar/apolar packing
+C7    C  SER49.O         A      3.35     - | polar/apolar packing
+C8    C  CYS261.O        A      3.50     - | polar/apolar packing
+CA    C  PHE263.CZ       A      3.35     - | hydrophobic contact
+CB    C  PHE263.CZ       A      3.38     - | hydrophobic contact
+N     N  CYS261.O        A      2.68   118 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs CYS acceptor): not a hydrogen bond
+N9    N  SER91.O         A      2.77   124 | H-bond, good geometry
+O     O  SER175.O        A      2.64    99 | polar contact, geometry poor
+O3    O  SER49.CB        A      3.29     - | polar/apolar packing
+O5    O  ILE305.CD1      A      3.86     - | polar/apolar packing
+COVERAGE: 14 of 14 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: CCOC(=O)CCc1nc(C)c[nH]1
+    reasoning: Replacing the hydroxymethyl with a methyl gives up the hydroxyl's 2.64 A poor-geometry contact to SER175.O and the methylene's 3.19 A packing there, while the 2.77 A SER91.O hydrogen bond is retained.
+
+  PROPOSAL B
+    molecule: CCOC(=O)CCc1nc(COC)c[nH]1
+    reasoning: ��换为甲氧基，以增强与SER175的氢键作用。
+
+  PROPOSAL C
+    molecule: CCOC(=O)CCc1nc(C)c[nH]1
+    reasoning: Replacing the hydroxymethyl, whose oxygen packs SER175.O at 2.64 A, with a methyl should give up that polar contact and leave a hydrophobic methyl against SER175, while the 2.77 A SER91.O hydrogen bond is retained.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 9 of 12   pair_id pair_09   9QWC A1JA1->A1JA5
+================================================================================
+TARGET: P09958
+INPUT SMILES: CC(=O)NCC1CCN(Cc2cc(CN3CCC(C4CCN(C(=O)CN)CC4)CC3)cc(-c3cc(Cl)cc(Cl)c3)c2)CC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C02   C  MET226.CE       A      3.48     - | hydrophobic contact
+C03   C  MET226.CE       A      3.21     - | hydrophobic contact
+C04   C  TRP254.O        A      3.60     - | polar/apolar packing
+C06   C  TRP254.O        A      3.45     - | polar/apolar packing
+C08   C  GLU236.OE2      A      3.83     - | polar/apolar packing
+C09   C  GLY255.O        A      3.85     - | polar/apolar packing
+C10   C  GLY255.O        A      3.74     - | polar/apolar packing
+C21   C  ASP154.OD2      A      3.43     - | polar/apolar packing
+C24   C  TRP254.CD2      A      3.53     - | hydrophobic contact
+C26   C  GLY255.O        A      3.33     - | polar/apolar packing
+C27   C  GLY255.O        A      2.95     - | polar/apolar packing
+C28   C  GLY255.O        A      3.82     - | polar/apolar packing
+C29   C  GLU236.OE2      A      3.35     - | polar/apolar packing
+C30   C  TYR308.OH       A      3.41     - | polar/apolar packing
+C32   C  GLU236.OE2      A      3.06     - | polar/apolar packing
+C33   C  GLU236.OE2      A      3.35     - | polar/apolar packing
+C35   C  ASP233.N        A      3.96     - | polar/apolar packing
+C37   C  ALA267.CB       A      3.50     - | hydrophobic contact
+C38   C  ALA267.CB       A      3.89     - | hydrophobic contact
+C40   C  GLY265.O        A      3.61     - | polar/apolar packing
+C41   C  TYR308.OH       A      3.12     - | polar/apolar packing
+C42   C  GLU236.OE2      A      3.07     - | polar/apolar packing
+C43   C  GLU236.CD       A      3.71     - | hydrophobic contact
+CL01  Cl LEU240.CG       A      3.70     - | hydrophobic contact
+CL05  Cl LEU152.O        A      3.13     - | polar/apolar packing
+N22   N  ASP154.OD2      A      2.50     - | SALT BRIDGE to ASP154.OD2 (cationic ligand atom against anionic residue; charge pairing, so no angle criterion applies)
+N31   N  GLU236.OE2      A      2.75     - | SALT BRIDGE to GLU236.OE2 (cationic ligand atom against anionic residue; charge pairing, so no angle criterion applies)
+N36   N  ALA267.CB       A      3.83     - | polar/apolar packing
+O39   O  ASP233.CB       A      3.61     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C07, C11, C13, C14, C15, C16, C17, C18, C20, C25, C34, N12, N19, O23
+COVERAGE: 43 of 43 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: CC(=O)NCC1CCN(Cc2cc(CN3CCC(C4CCN(C(=O)CN)CC4)CC3)cc(-c3cc(Cl)cc(Cl)c3)c2)CC1
+    reasoning: The change of the amide carbonyl to a sulfonamide group increases the hydrogen bonding potential with ASP154 and GLU236, potentially enhancing binding affinity.
+
+  PROPOSAL B
+    molecule: Cc1cc(CN2CCC(C3CCN(C(=O)CN)CC3)CC2)cc(-c2cc(Cl)cc(Cl)c2)c1CN1CCC(N2CCNCC2)CC1
+    reasoning: Replacing the acetamide with a methylpiperazine gives up the amide oxygen's 3.61 A packing on ASP233.CB and the amide NH's 3.83 A approach to ALA267.CB, while the 2.50 A ASP154.OD2 salt bridge is retained.
+
+  PROPOSAL C
+    molecule: NC(=O)C1CCN(Cc2cc(CN3CCC(C4CCN(C(=O)N5CCCCC5)CC4)CC3)cc(-c3cc(Cl)cc(Cl)c3)c2)CC1
+    reasoning: Replacing the acetylglycine amide with a piperidine carboxamide should redirect the amide region near GLU236.OE2 at 3.06 Å toward TYR308 while retaining the 2.50 Å ASP154 salt bridge.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 10 of 12   pair_id pair_10   6UVF QHS->QHJ
+================================================================================
+TARGET: Q07817
+INPUT SMILES: Cc1ccc(CN(C(=O)N[C@@H](CS(=O)(=O)CC2CCCCC2)C(=O)O)C(=O)c2ccc(-c3ccccc3)cc2)cc1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C10   C  GLY138.N        A      3.67     - | polar/apolar packing
+C11   C  GLY138.CA       A      3.80     - | hydrophobic contact
+C12   C  TYR101.OH       A      3.34     - | polar/apolar packing
+C13   C  TYR101.CE2      A      3.76     - | hydrophobic contact
+C14   C  ARG100.NH1      A      3.72     - | polar/apolar packing
+C15   C  GLU96.OE1       A      3.73     - | polar/apolar packing
+C17   C  ALA93.O         A      3.42     - | polar/apolar packing
+C19   C  GLY138.CA       A      3.67     - | hydrophobic contact
+C21   C  TYR101.CZ       A      3.99     - | hydrophobic contact
+C22   C  TYR101.CE1      A      3.92     - | hydrophobic contact
+C23   C  PHE97.CE1       A      3.79     - | hydrophobic contact
+C24   C  PHE97.CE1       A      3.81     - | hydrophobic contact
+C25   C  ARG139.NH2      A      3.67     - | polar/apolar packing
+C26   C  LEU130.CD1      A      3.91     - | hydrophobic contact
+C27   C  ALA104.O        A      3.50     - | polar/apolar packing
+C28   C  PHE105.N        A      3.47     - | polar/apolar packing
+C29   C  PHE97.CE1       A      3.42     - | hydrophobic contact
+C3    C  ASN136.ND2      A      3.79     - | polar/apolar packing
+C30   C  PHE97.CE1       A      3.84     - | hydrophobic contact
+C31   C  ARG139.CG       A      3.55     - | hydrophobic contact
+C9    C  TYR195.CD1      A      3.95     - | hydrophobic contact
+O     O  ASN136.OD1      A      3.51   154 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ASN acceptor): not a hydrogen bond
+O2    O  ASN136.ND2      A      2.90   126 | H-bond, good geometry
+O3    O  ASN136.CB       A      3.90     - | polar/apolar packing
+O4    O  GLY138.N        A      3.05   130 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C, C1, C16, C18, C2, C20, C4, C5, C6, C7, C8, N, N1, O1, O5, S
+COVERAGE: 41 of 41 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: Cc1ccc(CN(C(=O)N[C@@H](CS(=O)(=O)CC2CCCCC2)C(=O)O)C(=O)c2ccc3ccccc3c2)cc1
+    reasoning: The proposed analogue replaces the benzophenone core with a naphthalene core, which may enhance hydrophobic interactions with PHE97 and TYR101, potentially improving binding affinity.
+
+  PROPOSAL B
+    molecule: O=C(NC(=O)c1ccc(-c2ccccc2)cc1)N[C@@H](CS(=O)(=O)CC1CCCCC1)C(=O)O
+    reasoning: Replacing the tolyl with a pyridine gives up the methyl's 3.95 A packing on TYR195.CD1 and should put a ring nitrogen where the tolyl carbon sat 3.79 A from ASN136.ND2.
+
+  PROPOSAL C
+    molecule: Cc1ccc(CN(C(=O)N[C@@H](CS(=O)(=O)C(C)C)C(=O)O)C(=O)c2ccc(-c3ccccc3)cc2)cc1
+    reasoning: Replacing cyclohexyl with isopropyl should reduce the ring's 3.50 Å proximity to ALA104.O and redirect the smaller substituent toward PHE105, while retaining the carboxylate's 3.05 Å GLY138 hydrogen bond.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 11 of 12   pair_id pair_11   7I9F A1B6G->A1B6H
+================================================================================
+TARGET: Q06187
+INPUT SMILES: COc1cccc(Br)c1[C@@H]1CCc2c(C(=O)O)coc2C1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+BR1   Br SER14.O         A      2.72     - | polar/apolar packing -- unusually close (2.72 A vs 3.4 A vdW sum); treat the crystal model as uncertain
+C1    C  LYS12.NZ        A      3.16     - | polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+C12   C  PRO110.O        A      3.93     - | polar/apolar packing
+C13   C  TYR106.OH       A      3.47     - | polar/apolar packing
+C14   C  LEU111.CD1      A      3.67     - | hydrophobic contact
+C15   C  TYR106.OH       A      3.14     - | polar/apolar packing
+C16   C  GLN15.CA        A      3.99     - | hydrophobic contact
+C2    C  LYS12.NZ        A      3.05     - | polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+C3    C  GLN15.N         A      3.81     - | polar/apolar packing
+C4    C  LYS12.NZ        A      3.56     - | polar/apolar packing [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+C5    C  LYS12.NZ        A      2.37     - | probable covalent bond to LYS12.NZ (modelled at 2.37 A vs 1.47 A ideal -- disclosed as uncertain; NOT citable as a covalent bond)
+C7    C  LYS12.NZ        A      2.45     - | polar/apolar packing -- unusually close (2.45 A vs 3.2 A vdW sum); treat the crystal model as uncertain
+C8    C  ARG13.O         A      3.41     - | polar/apolar packing
+O1    O  LYS12.NZ        A      2.57     - | SALT BRIDGE to LYS12.NZ (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies) [RESIDUE SUSPECT: 2 other atoms of this ligand are modelled implausibly close to LYS12, so its position in this crystal is unreliable even though THIS contact is a normal distance. Treat any claim about LYS12 with the same caution as an uncertain row.]
+O2    O  ARG28.NH2       A      2.71     - | SALT BRIDGE to ARG28.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+O3    O  GLN15.CB        A      3.16     - | polar/apolar packing
+         GLN15.OE1              3.39   112 | polar partner: polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs GLN acceptor): not a hydrogen bond
+O4    O  TYR39.OH        A      3.35    78 | polar contact, geometry poor
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C11, C9
+COVERAGE: 20 of 21 input heavy atoms have a row (0 not modelled, 1 omitted as clashes)
+OMITTED AS CLASHES (present in the crystal but overlapping a protein atom, so their rows are unreliable and absent above): C6 -- these ligand atoms are present in the crystal but overlap a protein atom (<2.2 A, no bond), so their rows are omitted as unreliable. The residue(s) they overlap are LYS12 -- a residue that clashes with one ligand atom is suspect for its OTHER contacts in this pair too, so treat every row naming LYS12 with caution.
+SUSPECT RESIDUES in this crystal (each modelled implausibly close to two or more ligand atoms, so its position is unreliable): LYS12
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: COc1cccc(Cl)c1[C@@H]1CCc2c(C(=O)O)coc2C1
+    reasoning: The change from bromine to chlorine in the proposed analogue would reduce steric hindrance and potentially improve binding affinity by allowing for a more favorable interaction with the surrounding residues, particularly SER14 and LYS12.
+
+  PROPOSAL B
+    molecule: COc1cccc(C)c1[C@@H]1CCc2c(C(=O)O)coc2C1
+    reasoning: Replacing the bromine with a methyl gives up the halogen's 2.72 A packing on SER14.O, leaving that edge of the ring unoccupied, while the carboxylate's 2.71 A ARG28.NH2 salt bridge is retained.
+
+  PROPOSAL C
+    molecule: Cc1cc(CO)ccc1[C@@H]1CCc2c(C(=O)O)coc2C1
+    reasoning: Replacing bromine with methyl and methoxy with hydroxyl should redirect the aryl substituent toward GLN15 while retaining the carboxylate's 2.71 Å ARG28 salt bridge.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why
+
+
+================================================================================
+PAIR 12 of 12   pair_id pair_12   6G9H ERW->EQZ
+================================================================================
+TARGET: P28482
+INPUT SMILES: CN(C(=O)CN1Cc2ccc(-c3nc(NC4CCOCC4)ncc3Cl)cc2C1=O)C(C)(C)C
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  ASP167.OD1      A      3.56     - | polar/apolar packing
+C10   C  VAL39.CG2       A      3.93     - | hydrophobic contact
+C14   C  LYS54.NZ        A      3.62     - | polar/apolar packing
+C18   C  MET108.O        A      3.77     - | polar/apolar packing
+C20   C  MET108.O        A      3.66     - | polar/apolar packing
+C21   C  MET108.O        A      3.49     - | polar/apolar packing
+C22   C  LYS114.NZ       A      3.55     - | polar/apolar packing
+C24   C  ASP111.OD2      A      3.46     - | polar/apolar packing
+C25   C  THR110.O        A      3.72     - | polar/apolar packing
+C27   C  ASP106.O        A      3.26     - | polar/apolar packing
+C28   C  LEU156.CD1      A      3.71     - | hydrophobic contact
+C3    C  LYS54.NZ        A      3.92     - | polar/apolar packing
+C31   C  GLU71.CD        A      3.38     - | hydrophobic contact
+C32   C  ILE56.CD1       A      3.47     - | hydrophobic contact
+C33   C  ARG67.CB        A      3.77     - | hydrophobic contact
+C5    C  ASP167.CG       A      3.57     - | hydrophobic contact
+C7    C  TYR36.CE1       A      3.83     - | hydrophobic contact
+C9    C  TYR36.OH        A      4.00     - | polar/apolar packing
+CL2   Cl GLN105.OE1      A      2.99     - | polar/apolar packing
+N17   N  LEU156.CD2      A      3.98     - | polar/apolar packing
+N19   N  MET108.O        A      2.87   123 | H-bond, good geometry
+N2    N  TYR36.CB        A      3.68     - | polar/apolar packing
+         ASP167.OD1             3.89     - | polar partner: polar/apolar packing
+N26   N  MET108.N        A      2.98   128 | H-bond, good geometry
+O15   O  LYS54.NZ        A      3.17   102 | H-bond, good geometry
+O23   O  LYS114.NZ       A      3.14   125 | H-bond, good geometry
+O4    O  LYS54.NZ        A      2.97   134 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C11, C12, C13, C16, C30, C8, N6
+COVERAGE: 33 of 33 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+THREE PROPOSALS from three different models. The letters are reshuffled for every pair; do not try
+to infer which model is which. One of the three is an UNTRAINED model, but not reliably the same
+letter, so judge each slot only against the table above.
+
+  PROPOSAL A
+    molecule: CC(C)(C)N(C(=O)CN1Cc2ccc(-c3nc(NC4CCOCC4)ncc3Cl)cc2C1=O)c1ccccc1
+    reasoning: The proposed analogue replaces the methyl group on the amide nitrogen with a phenyl group, potentially increasing hydrophobic interactions with LEU156 and ILE56, and maintaining the existing hydrogen bonds with MET108 and LYS114.
+
+  PROPOSAL B
+    molecule: CN(C(=O)CN1Cc2ccc(-c3nc(NC4CC4)ncc3Cl)cc2C1=O)C(C)(C)C
+    reasoning: Replacing the oxane with a cyclopropyl gives up the ether oxygen's 3.14 A hydrogen bond to LYS114.NZ and the ring's 3.38 A packing on GLU71.CD, while the 2.87 A MET108.O hydrogen bond is retained.
+
+  PROPOSAL C
+    molecule: CN(C(=O)CN1Cc2ccc(-c3nc(NC4CC4)ncc3Cl)cc2C1=O)C(C)(C)C
+    reasoning: Replacing the tetrahydropyran with a stereodefined cyclopropyl gives up the ring oxygen's 3.14 A hydrogen bond to LYS114.NZ and the ring carbons' 3.47 A packing on ILE56.CD1, while the 2.87 A MET108.O hydrogen bond is retained.
+
+--------------------------------------------------------------------------------
+For EACH of A, B, C score, in `slots`:
+
+  molecule_parses_and_is_an_analogue   A real molecule, and a single-step analogue of the input --
+                                       not a different scaffold, not the input handed back unchanged.
+  every_number_real                    Every distance cited is a real row of the table above.
+  attribution_correct                  Every cited distance is attached to the atom and residue
+                                       that own it. A real number on the wrong atom is FALSE.
+  edit_described_correctly             Does the reasoning describe the change that actually
+                                       separates the input from THAT slot's own molecule?
+  no_invented_chemistry                It asserts no contact, bond or interaction the table does
+                                       not support, and does not contradict the table's own typing.
+  publishable                          Would you be willing to see THIS slot printed in a paper,
+                                       as an accurate example of what this model produced?
+  one_line_why
+
+Then for the PAIR as a whole, in `pair_verdict`:
+
+  fair_illustration   Is this pair a fair, non-cherry-picked illustration of how these three models
+                      differ? False if the differences are trivial, or if the pair is unusually
+                      easy or unusually degenerate.
+  best_slot           A, B, C, or "none".
+  pair_why

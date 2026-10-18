@@ -39,10 +39,20 @@ ARMS = [('ChemDFM-14B base', SCRATCH + '/alltab/sft_runs/zeroshot_chemdfm_bench/
 
 # Three held-out pairs every ChemDFM arm answered, chosen to show the base model's three distinct
 # failure modes rather than three instances of one.
+# Chosen by blind audit, not by eye. Three medicinal-chemistry reviewers scored 12 candidate pairs
+# x 3 arms = 36 proposals with arm identity hidden (letters reshuffled per pair); these are the
+# only three pairs all three reviewers judged a fair illustration AND would publish, and all three
+# agreed on the best slot in each. The three pairs shown here previously -- 6PGE, 5OIW, 6G9H --
+# were rejected unanimously: 6PGE and 6G9H as degenerate (the two trained arms give the same
+# molecule with the same argument), and in 6G9H both trained arms additionally credit a retained
+# tert-butyl's contacts to the oxane ring they edited.
 SHOWCASE = [
-    ('6PGE OJM->OHJ', 'base answers in Chinese'),
-    ('5OIW 9WN->A0K', 'base hands back its own input'),
-    ('6G9H ERW->EQZ', 'base is fluent English but cites no distance'),
+    ('7KXD Z7G->Z7H',
+     'the untrained arm returns the input unchanged while announcing an edit'),
+    ('8FAV LKY->XNR',
+     'the untrained arm is the only accurate slot here -- both trained arms misattribute'),
+    ('7I9F A1B6G->A1B6H',
+     'a clean trained slot, against one that makes two edits and calls it one'),
 ]
 
 # Five g3 training rows. Picked for recognisable targets and a chair sentence that names a measured

@@ -708,6 +708,54 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### Blind audit of generated examples: all three published pairs rejected, 2026-10-19
+
+`panel_gen_exemplars/`, three reviewers, 12 pairs x 3 arms = 36 proposals, **arm identity hidden**
+(letters reshuffled per pair) so the untrained arm could not be marked down for being untrained.
+The three pairs then published in section 4 were in the pool, unflagged.
+
+| field | RA | RB | RC |
+|---|---|---|---|
+| molecule is an analogue | 28/36 | 28/36 | 28/36 |
+| every_number_real | **36/36** | **36/36** | **36/36** |
+| attribution_correct | 19/36 | 18/36 | 13/36 |
+| edit_described_correctly | 23/36 | 25/36 | 24/36 |
+| no_invented_chemistry | 24/36 | 25/36 | **7/36** |
+| publishable | **6/36** | **6/36** | **6/36** |
+
+**Zero fabricated numbers again, in 36 of 36 slots, from all three reviewers.** Combined with the
+same result on 18 training rows and the per-claim measurement (99.9-100% of cited distances are
+real), this is now established three independent ways: these models do not invent distances. They
+misown them -- 17 to 23 slots of 36 hang a real number on the wrong atom, overwhelmingly a contact
+of a group the edit RETAINED.
+
+**All three published pairs were rejected unanimously.** 6PGE and 6G9H are degenerate: the two
+trained arms return the same molecule with the same argument, so the pair separates one arm from
+two rather than three. 6G9H is worse than degenerate -- **both** trained slots credit a retained
+tert-butyl's contacts (C31/GLU71.CD 3.38, C32/ILE56.CD1 3.47) to the oxane ring they edited. That
+was the row previously described in the report as the trained arms citing specifics correctly.
+
+**Replaced with the unanimous publishable set**: 7KXD Z7G->Z7H (best slot g3), 8FAV LKY->XNR (best
+slot **base**), 7I9F A1B6G->A1B6H (best slot g3). Pairs 7XEJ and 7T1H had unanimous best slots but
+RC declined to publish either, so they were not used.
+
+**A result that cuts against the project's own story, kept because it is what the panel found.** In
+8FAV all three reviewers chose the **untrained** arm as the best slot, and it cites no distances at
+all while both trained arms misattribute. RB put it plainly: numeric specificity does not track
+correctness. The earlier framing -- that trained arms are penalised for being falsifiable -- is too
+tidy; sometimes they are simply wrong and the base model is simply right. Blinding is what let that
+surface.
+
+**One large reviewer divergence to note**: `no_invented_chemistry` splits 24/25 against RC's 7. RC
+applied a stricter standard, counting as invention any claim about an interaction the edit itself
+destroys or about an atom the table lists as uncontacted. The other two confined invention to
+claims with no table support at all. The convention needs pinning down before this field is quoted.
+
+**Process**: one reviewer died mid-run on the 64k output-token ceiling and was relaunched with
+instructions to work in groups of four pairs and write incrementally. Each reviewer now gets a
+private scratch directory after three agents reported clobbering each other's intermediate files
+in the shared session scratchpad.
+
 ### SmileyLlama base in-house panel: the arm emits its molecule twice and never explains, 2026-10-19
 
 `panel_smiley_base_inhouse/`, 48 items, three reviewers, 144 judgements.

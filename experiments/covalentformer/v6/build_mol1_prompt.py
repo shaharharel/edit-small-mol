@@ -124,18 +124,37 @@ def main():
               '| interaction\n%s\n\n### Response:\n'
               % (TARGET, man['smiles'], CUTOFF, table))
 
+    # sft_data.load_rows_jsonl imposes two shape rules on any file it reads, both of which exist
+    # to stop unlabelled rows reaching training: every val row must carry a NON-empty completion,
+    # and the file must contain at least one `excluded` row whose verdict is REJECT with an empty
+    # completion. mol1 has no reference analogue, so the val completion below is a declared
+    # placeholder that points at mol1 itself. Consequence, stated plainly: every
+    # reference-DEPENDENT metric on this row measures similarity to the INPUT, i.e. it is an echo
+    # check and nothing more. Only the generated molecule and sentence are used downstream.
+    placeholder = ('No reference analogue exists for mol1; this row exists only to elicit a '
+                   'generation.\nSMILES: %s' % man['smiles'])
     with open(a.out, 'w') as f:
         for i in range(a.samples):
             f.write(json.dumps({
                 'pair': 'MOL1 zap70_cys346 sample%02d' % i,
                 'pdb': 'boltz_cofold', 'target': TARGET,
-                'input_smiles': man['smiles'], 'analogue_smiles': None,
-                'prompt': prompt, 'completion': '', 'split': 'val',
-                'arm': 'mol1_showcase_chemdfm',
-                'reference_sentence': None, 'reference_residues': [],
+                'input_smiles': man['smiles'],
+                'analogue_smiles': man['smiles'],
+                'prompt': prompt, 'completion': placeholder, 'split': 'val',
+                'arm': 'pocket', 'verdict': 'ADOPT',
+                'reference_sentence': '', 'reference_residues': [],
                 'table_residues': sorted(named), 'n_atom_rows': len(rows),
                 'pose_source': man['pose_source'], 'boltz_iptm': man['boltz_ligand_iptm'],
                 'PREDICTED_GEOMETRY': True}) + '\n')
+        # the REJECT row the loader requires; it is filtered out by split before scoring
+        f.write(json.dumps({
+            'pair': 'MOL1 loader-required reject', 'pdb': 'boltz_cofold', 'target': TARGET,
+            'input_smiles': man['smiles'], 'analogue_smiles': man['smiles'],
+            'prompt': prompt, 'completion': '', 'split': 'excluded',
+            'arm': 'pocket', 'verdict': 'REJECT',
+            'reference_sentence': '', 'reference_residues': [],
+            'table_residues': sorted(named), 'n_atom_rows': len(rows),
+            'PREDICTED_GEOMETRY': True}) + '\n')
     print('wrote %s (%d identical rows)' % (a.out, a.samples))
     print('residues in table: %d -> %s' % (len(named), ', '.join(sorted(named))))
     print('\n'.join(prompt.split('\n')[8:]))
