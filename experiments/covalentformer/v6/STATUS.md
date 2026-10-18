@@ -188,7 +188,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | 0.161 | 0.793 | 0.750 | 0.104 | 10.6%¤∅ | 3.9%¤∅ | **11.6%** | **1.7%** | 8.4%◊ |
 | ether0-24B **base** | – | 0.225 | 0.847 | 0.678 | 0.884 | 1.000 | 0.247 | 12.7%¤∅ | 0.0%¤∅ | 19.2% | 2.8% | 8.4%◊‡‡ |
 | Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | 0.059 | 0.737 | 0.857 | 0.761 | 32.4%¤∅ | 6.5%¤∅ | 44.3% | 3.2% | 44.3%◊ |
-| SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | ❌ | ❌ | – | – | – |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | 30.6%¤∅ | 0.0%¤∅ | – | – | – |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.021 | 0.658 | **0.828** | 0.523 | **72.4%** | **22.9%** | TBD | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 0.032 | **0.683** | 0.818 | 0.482 | **95.8%**† | **29.9%**† | **92.9%** | **22.0%** | 60.5%¶ |
 | **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 0.004 | 0.644 | 0.767 | 0.462 | 89.2%¤ | 37.6%¤ | TBD | TBD | 49.7%¶ |
@@ -707,6 +707,46 @@ gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but acro
 within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
+
+### SmileyLlama base in-house panel: the arm emits its molecule twice and never explains, 2026-10-19
+
+`panel_smiley_base_inhouse/`, 48 items, three reviewers, 144 judgements.
+
+| field | pooled | RA | RB | RC |
+|---|---|---|---|---|
+| edit_identified_correctly | **0.0%** | 0 | 0 | 0 |
+| atom_attribution_ok | 100.0% (vacuous) | 48 | 48 | 48 |
+| invented_chemistry | 0.0% (vacuous) | 0 | 0 | 0 |
+| chemically_sensible_edit | **34.7%** | 18 | 17 | 15 |
+| would_show_a_chemist | **0.0%** | 0 | 0 | 0 |
+
+Coverage-adjusted onto all 262 generations (x 231/262): **sensible 30.6%, reasoning 0.0%**. Cells
+filled and marked `¤∅`.
+
+**All three reviewers independently verified that in 48 of 48 items
+`canonical(rationale) == canonical(proposed molecule)`.** The arm emits its molecule twice -- once
+as the SMILES, once where the explanation belongs. So it never cites a distance, a residue or a
+contact: attribution is 100% and invention 0% *vacuously*, exactly the artefact already flagged on
+ether0 base, and neither number may be read as skill. `reasoning` is 0.0% on a genuine 0/144, not
+a sampling floor.
+
+`chemically_sensible_edit` is the only field carrying signal, and it agrees with the automated
+metrics rather than contradicting them. The 94 failures across reviewers concentrate in scaffold
+replacement and multi-site scrambles, which is what scaffold retention 0.277 -- the lowest of any
+arm -- already said. All three found the same **4 exact echoes** (items 3, 14, 15, 21), consistent
+with its 0.069 echo rate.
+
+**A defect in `validity` this exposes.** Item 16 is a degenerate ~2,900-carbon alkane,
+C2940H5881NO5, MW 41,334, from a 203 Da input; item 36 answers monoethyl adipate with a 1,444 Da
+steroidal hexasaccharide. RDKit parses both, so `validity` counts them valid. This arm's 0.882
+validity is therefore inflated by outputs no chemist would call molecules: validity is a parse
+check, not a plausibility check, and nothing else in the table catches scale collapse.
+
+**Operational note.** All three reviewers independently reported that concurrent agents were
+overwriting intermediate files in the shared session scratchpad. Each noticed, moved to a private
+directory and re-derived its numbers from `panel.txt`, so no result is compromised -- but with nine
+reviewers running at once this could have corrupted a result silently instead of loudly. Future
+panels must give each reviewer its own scratch directory.
 
 ### Three chemists audited 18 g3 training rows. Three of the five published exemplars failed.
 
