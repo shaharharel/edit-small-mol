@@ -183,24 +183,24 @@ input table, and every changed site must be named.
 Benchmark = the g2 val split, copied verbatim into every training arm by `build_sft_arms.py`, so
 only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist panel.
 
-| arm | data | validity | uniq | novelty | TC→in | warhead | scaffold retention | grounded | selectivity | sensible | reasoning | sensible_codex | reasoning_codex | invented chem ↓ |
+| arm | data | validity | uniq | echo mol ↓ | TC→in | warhead | scaffold retention | grounded | selectivity | sensible | reasoning | sensible_codex | reasoning_codex | invented chem ↓ |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | – | 0.793 | 0.750 | 0.104 | 1.000 | 0.366 | 89.6%¤∅ | 33.3%¤∅ | **97.9%** | **14.6%** | 70.8%◊ |
-| ether0-24B **base** | – | 0.225 | 0.847 | – | 0.884 | 1.000 | 0.247 | – | – | 56.2%¤∅ | 0.0%¤∅ | 85.4% | 12.5% | 37.5%◊‡‡ |
-| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | – | 0.737 | 0.857 | 0.761 | 0.996 | 0.405 | 62.5%¤∅ | 12.5%¤∅ | 85.4% | 6.2% | 85.4%◊ |
-| SmileyLlama-8B **base** | – | 0.882 | 0.753 | – | 0.582 | 0.786 | 0.277 | – | – | ❌ | ❌ | – | – | – |
-| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.994 | 0.658 | **0.828** | 0.523 | 1.000 | 0.478 | **81.1%** | **25.6%** | TBD | TBD | TBD |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 1.000 | **0.683** | 0.818 | 0.482 | 1.000 | 0.477 | **100%**† | **31.2%**† | **97.0%** | **23.0%** | 63.2%¶ |
-| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 1.000 | 0.644 | 0.767 | 0.462 | 0.981 | 0.447 | 92.4%¤ | 38.9%¤ | TBD | TBD | 51.5%¶ |
-| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 1.000 | 0.658 | 0.818 | 0.455 | 0.969 | 0.469 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ | **42.0%**◊ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | **1.000** | 0.560 | 0.808 | 0.223 | 0.996 | **0.537** | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% | 76.6%¶ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | 0.615 | 0.496 | 0.997 | 0.465 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | 0.800 | **0.532** | **1.000** | 0.448 | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
-| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **0.857** | **0.561** | 0.952 | 0.379 | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
-| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | **1.000** | 0.639 | 0.724 | 0.487 | 0.972 | 0.445 | 93.1%¤ | 19.4%¤ | 95.3%◊ | 29.3%◊ | 45.6%◊ |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 1.000 | 0.594 | 0.632 | 0.322 | 1.000 | 0.463 | 75.0%§ | 4.2%§ | TBD | TBD | TBD |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 1.000 | 0.623 | 0.758 | 0.444 | 1.000 | 0.436 | 64.4% | 15.6% | TBD | TBD | TBD |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 1.000 | 0.588 | 0.700 | 0.332 | 0.996 | 0.481 | 56.2%§ | 4.2%§ | TBD | TBD | TBD |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | 0.161 | 0.793 | 0.750 | 0.104 | 1.000 | 0.366 | 89.6%¤∅ | 33.3%¤∅ | **97.9%** | **14.6%** | 70.8%◊ |
+| ether0-24B **base** | – | 0.225 | 0.847 | 0.678 | 0.884 | 1.000 | 0.247 | – | – | 56.2%¤∅ | 0.0%¤∅ | 85.4% | 12.5% | 37.5%◊‡‡ |
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | 0.059 | 0.737 | 0.857 | 0.761 | 0.996 | 0.405 | 62.5%¤∅ | 12.5%¤∅ | 85.4% | 6.2% | 85.4%◊ |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | – | – | ❌ | ❌ | – | – | – |
+| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.021 | 0.658 | **0.828** | 0.523 | 1.000 | 0.478 | **81.1%** | **25.6%** | TBD | TBD | TBD |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 0.032 | **0.683** | 0.818 | 0.482 | 1.000 | 0.477 | **100%**† | **31.2%**† | **97.0%** | **23.0%** | 63.2%¶ |
+| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 0.004 | 0.644 | 0.767 | 0.462 | 0.981 | 0.447 | 92.4%¤ | 38.9%¤ | TBD | TBD | 51.5%¶ |
+| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 0.000 | 0.658 | 0.818 | 0.455 | 0.969 | 0.469 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ | **42.0%**◊ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | 0.014 | 0.560 | 0.808 | 0.223 | 0.996 | **0.537** | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% | 76.6%¶ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | 0.009 | **0.682** | 0.615 | 0.496 | 0.997 | 0.465 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | 0.009 | **0.692** | 0.800 | **0.532** | **1.000** | 0.448 | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
+| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | 0.008 | 0.624 | **0.857** | **0.561** | 0.952 | 0.379 | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
+| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | 0.018 | 0.639 | 0.724 | 0.487 | 0.972 | 0.445 | 93.1%¤ | 19.4%¤ | 95.3%◊ | 29.3%◊ | 45.6%◊ |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 0.020 | 0.594 | 0.632 | 0.322 | 1.000 | 0.463 | 75.0%§ | 4.2%§ | TBD | TBD | TBD |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 0.064 | 0.623 | 0.758 | 0.444 | 1.000 | 0.436 | 64.4% | 15.6% | TBD | TBD | TBD |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 0.055 | 0.588 | 0.700 | 0.332 | 0.996 | 0.481 | 56.2%§ | 4.2%§ | TBD | TBD | TBD |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
 keep the Murcko scaffold only 38.9% of the time and the warhead 76% of the time, so TC→input and
@@ -707,6 +707,56 @@ gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but acro
 within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
+
+### Echo mol replaces novelty in the big table, 2026-10-19
+
+`novelty` is gone: it was blank for all four base arms by construction (measured against that
+arm's own training completions, of which an untrained arm has none) and read 1.000 for every
+trained arm, so it discriminated nothing. It also cannot do the job it looks like it does —
+novelty asks whether a molecule is absent from the training *targets*, so an arm that hands back
+its *input* every time scores ~1.000.
+
+`echo mol` is the fraction of an arm's VALID generations whose canonical SMILES equals the input
+ligand's. Computed two independent ways — the stored `echo` field on each generation row, and a
+fresh recomputation against `MODEL_INPUT.input_smiles` from the evidence file — which agree
+exactly on all 16 arms. Rows were matched to generation files by their validity fingerprint, each
+of the 16 matching uniquely.
+
+| arm | echo mol |
+|---|---|
+| **ether0-24B base** | **0.678** |
+| ChemDFM-14B base | 0.161 |
+| SmileyLlama-8B base | 0.069 |
+| SmileyLlama-8B g2 | 0.064 |
+| Llama-3.1-8B base | 0.059 |
+| SmileyLlama-8B g3 | 0.055 |
+| ChemDFM-14B g3 | 0.032 |
+| ChemDFM-14B g2 | 0.021 |
+| Llama-3.1-8B g3 | 0.020 |
+| ether0-24B schema B g3+g4 | 0.018 |
+| ether0-24B schema A g3 | 0.014 |
+| ether0-24B schema B g3 | 0.009 |
+| ether0-24B (no schema) g2 | 0.009 |
+| ether0-24B schema B g4 | 0.008 |
+| ChemDFM-14B g4 | 0.004 |
+| **ChemDFM-14B g3+g4** | **0.000** |
+
+Two readings. **ether0 base echoing 0.678 of its valid output explains its entire chemist-panel
+signature** — 100% attribution in both scorer pools (an echo cites no distances, so nothing can be
+attributed wrongly), 0% would-show, 12.5% edit-identified, and the 12/62/94 reviewer split on
+`sensible`. It was not scoring well on attribution; it was declining to make a claim.
+
+**Fine-tuning removes echoing almost entirely**: every trained arm sits in 0.000–0.064, and both
+ChemDFM arms trained on g4 reach 0.004 and 0.000.
+
+Low echo is necessary, not sufficient. SmileyLlama base echoes only 0.069 while naming a residue
+in 0 of 262 rows — different molecules, no explanation at all. This column cannot see that failure;
+`grounded` and the chemist columns are what catch it.
+
+A bug worth recording: a first pass at this reported 0.0% echo for every arm, because it compared
+against an `input_smiles` field that does not exist on generation rows — `None` on both sides,
+silently vacuous. Same failure class as the `'None'`-string truthiness bug. Always diff a new
+metric against an independently computed one before believing a uniform result.
 
 ### Base-arm in-house panel, 2026-10-19 — the cells exist, and they measure the convention
 
