@@ -200,7 +200,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | **ether0-24B schema B** | **g3** | 0.863 | **0.792** | **1.000** | **0.682** | **3.20** | 0.615 | 0.496 | 0.997 | 0.465 | **0.985** | 0.330 | 0.463 | 0.564 | 0.844 | 0.779 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
 | **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | **1.000** | **0.692** | **3.20** | 0.800 | **0.532** | **1.000** | 0.448 | 0.931 | **0.551** | 0.391 | 0.559 | **0.875** | **0.858** | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
 | **ether0-24B schema B** | **g4** | 0.905 | 0.772 | **1.000** | 0.624 | **3.27** | **0.857** | **0.561** | 0.952 | 0.379 | **1.000** | **0.693** | 0.593 | 0.519 | **0.909** | **0.963** | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
-| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | **1.000** | 0.639 | 3.34 | 0.724 | 0.487 | 0.972 | 0.445 | **1.000** | 0.378 | 0.552 | 0.564 | 0.889 | 0.874 | TBD | TBD | 95.3%◊ | 29.3%◊ | 45.6%◊ |
+| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | **1.000** | 0.639 | 3.34 | 0.724 | 0.487 | 0.972 | 0.445 | **1.000** | 0.378 | 0.552 | 0.564 | 0.889 | 0.874 | 93.1%¤ | 19.4%¤ | 95.3%◊ | 29.3%◊ | 45.6%◊ |
 | *reference (ceiling)* | – | 1.000 | 1.000 | – | **0.680** | 0 | **0.760** | **0.389** | 1.000 | 1.000 | 0.962 | 0.709 | **0.825** | **0.933** | **0.825** | **0.933** | – | – | – | – | – |
 | *trivial baseline* | – | – | – | – | 1.000 echo | – | 1.000 | 1.000 | – | **0.5625** | – | – | – | – | – | – | – | – | – | – | – |
 
@@ -676,6 +676,39 @@ confirms independently of the ChemDFM run:
 It also beats the ChemDFM g3+g4 arm on eval loss (0.5897 against 0.6045), the first time an ether0
 schema arm has led its ChemDFM counterpart on this corpus. That is a loss comparison across two
 different tokenizers and is **not** a quality claim; the chemist panels decide that.
+
+### ether0 g3+g4 chemist panels, 2026-10-18 — the first cross-pool calibration on identical molecules
+
+Both pools scored the SAME arm with the SAME single-slot instrument and the SAME undecidable-
+ownership convention, and the in-house 48 was drawn as a **strict subset** of the external 150
+(`--subset-of`, verified). So for the first time the two scales can be compared on identical
+molecules rather than on two different samples — last round's pools overlapped only 33/48 by
+accident, which is why that gap was uninterpretable.
+
+Restricting the external reviewers to the in-house 48:
+
+| field | external (same 48) | in-house (48) | gap |
+|---|---|---|---|
+| chemically_sensible_edit | 93.1% | 93.1% | **0.0** |
+| would_show_a_chemist | 22.2% | 19.4% | 2.8 |
+| invented_chemistry | 44.4% | 31.9% | 12.5 |
+| edit_identified_correctly | 39.6% | 50.7% | 11.1 |
+| atom_attribution_ok | 65.3% | 47.9% | 17.4 |
+
+**The two pools agree exactly on `sensible` and to within 3 points on `would_show`.** That is the
+instrument validating itself, and it retires the worry that the earlier external/in-house gaps were
+scorer bias: on the two headline fields, with convention and format held fixed, there is no bias to
+find. The scales are not interchangeable on the attribution fields, where the pools still differ by
+12-17 points — those remain convention-sensitive and should not be read across pools.
+
+**A batch effect worth not over-reading.** Within each in-house batch the three reviewers agree
+almost exactly (would_show: batch 1 = 33%/33%/33%, batch 2 = 4%/8%/4%), but the two batches differ
+sharply (would_show 33.3% vs 5.6%, edit 63.9% vs 37.5%, invented 15.3% vs 48.6%). The batches are
+random halves of a shuffled pool, so this is item difficulty, not calibration. Per-item majority
+gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but across five fields it is
+within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
+and the 150-item external number is the one to quote. It is also why the in-house panel is a
+calibration check and not the primary measurement.
 
 ### Base-model chemist panel, 2026-10-17 — fine-tuned ether0 is no better than untrained ChemDFM
 
