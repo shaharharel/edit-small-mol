@@ -708,6 +708,42 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### The chemist columns condition on success, and that makes base arms look far better than they are
+
+ChemDFM base reads 33.3% `reasoning` in-house — in the same band as trained arms, on a model with
+11.8% validity. That is not a surprising capability; it is a denominator.
+
+**The panels only score items where the arm produced a parseable molecule AND a sentence.** For
+ChemDFM base that is 31 of 262 pairs. The remaining 231 are not scored false — they are absent.
+So the cell reads "of the one-in-eight pairs it could handle at all, a third were presentable",
+and those 31 are plausibly the easiest pairs in the benchmark, since they are the ones it did not
+choke on. Multiplying by eligibility puts every arm on the same 262 pairs:
+
+| arm | eligible | reasoning (IH) | over all 262 |
+|---|---|---|---|
+| ChemDFM base | 31 (11.8%) | 33.3% | **3.9%** |
+| Llama base | 136 (51.9%) | 12.5% | 6.5% |
+| ether0 base | 59 (22.5%) | 0.0% | 0.0% |
+| ChemDFM g3 | 251 (95.8%) | 31.2% | 29.9% |
+| ChemDFM g4 | 253 (96.6%) | 38.9% | 37.6% |
+| ChemDFM g3+g4 | 255 (97.3%) | 47.8% | **46.5%** |
+| ether0 B g3 | 226 (86.3%) | 35.4% | 30.5% |
+| ether0 B g4 | 237 (90.5%) | 37.5% | 33.9% |
+| ether0 B g3+g4 | 224 (85.5%) | 19.4% | 16.6% |
+
+ChemDFM base moves from "comparable" to **12x worse** than the best arm. The headline reading is
+also sharper: **fine-tuning's main effect is coverage, 12% to 97%**, and the conditional quality
+rises with it rather than instead of it.
+
+Two secondary factors, both smaller. n=16 for this arm, with reviewers at 31/25/44%, so roughly
++/-12 points — the conditional rate is somewhere in 21-45%. And ChemDFM-14B is chemistry-pretrained,
+so when it does emit a parseable molecule the prose reads like competent medicinal chemistry, which
+`would_show_a_chemist` partly rewards.
+
+**Consequence for reading the table: `sensible`, `reasoning` and `invented chem` are not comparable
+across arms with different validity.** They are all conditional on success. Any cross-arm claim on
+those columns must either be between arms of similar eligibility, or be coverage-adjusted first.
+
 ### Echo mol replaces novelty in the big table, 2026-10-19
 
 `novelty` is gone: it was blank for all four base arms by construction (measured against that
