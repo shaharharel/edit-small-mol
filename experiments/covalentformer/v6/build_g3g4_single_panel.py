@@ -61,6 +61,8 @@ def main():
     ap.add_argument('--seed', type=int, default=41)
     ap.add_argument('--arm', default=None, help='arm name; with --gen, replaces the default arm')
     ap.add_argument('--gen', default=None, help='generations.jsonl for --arm')
+    ap.add_argument('--arms', nargs='+', default=None, metavar='NAME=PATH',
+                    help='several arms in one mixed package; overrides --arm/--gen')
     ap.add_argument('--subset-of', default=None,
                     help='a KEY json from a larger package: restrict the pool to the pairs it '
                          'holds, so this package is a strict subset of that one. The in-house '
@@ -70,7 +72,18 @@ def main():
     rng = random.Random(a.seed)
 
     models = dict(MODELS)
-    if a.gen:
+    if a.arms:
+        # several arms in ONE package, mixed and shuffled with arm identity held in the key only.
+        # This is how base_model_eval was built: single-slot scoring is absolute, so one reviewer
+        # pool applying one scale across all arms is strictly better than a package per arm --
+        # it removes between-panel drift, which has been the largest confound in this project.
+        models = {}
+        for spec in a.arms:
+            if '=' not in spec:
+                ap.error('--arms takes name=path, got %r' % spec)
+            k, v = spec.split('=', 1)
+            models[k] = v
+    elif a.gen:
         if not a.arm:
             ap.error('--gen requires --arm')
         models = {a.arm: a.gen}
