@@ -185,22 +185,22 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 
 | arm | data | validity | uniq | echo mol ↓ | TC→in | warhead | scaffold retention | grounded | selectivity | sensible | reasoning | sensible_codex | reasoning_codex | invented chem ↓ |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| ChemDFM-14B **base** | – | 0.118 | 0.871 | 0.161 | 0.793 | 0.750 | 0.104 | 1.000 | 0.366 | 89.6%¤∅ | 33.3%¤∅ | **97.9%** | **14.6%** | 70.8%◊ |
-| ether0-24B **base** | – | 0.225 | 0.847 | 0.678 | 0.884 | 1.000 | 0.247 | – | – | 56.2%¤∅ | 0.0%¤∅ | 85.4% | 12.5% | 37.5%◊‡‡ |
-| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | 0.059 | 0.737 | 0.857 | 0.761 | 0.996 | 0.405 | 62.5%¤∅ | 12.5%¤∅ | 85.4% | 6.2% | 85.4%◊ |
+| ChemDFM-14B **base** | – | 0.118 | 0.871 | 0.161 | 0.793 | 0.750 | 0.104 | 1.000 | 0.366 | 10.6%¤∅ | 3.9%¤∅ | **11.6%** | **1.7%** | 8.4%◊ |
+| ether0-24B **base** | – | 0.225 | 0.847 | 0.678 | 0.884 | 1.000 | 0.247 | – | – | 12.7%¤∅ | 0.0%¤∅ | 19.2% | 2.8% | 8.4%◊‡‡ |
+| Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | 0.059 | 0.737 | 0.857 | 0.761 | 0.996 | 0.405 | 32.4%¤∅ | 6.5%¤∅ | 44.3% | 3.2% | 44.3%◊ |
 | SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | – | – | ❌ | ❌ | – | – | – |
-| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.021 | 0.658 | **0.828** | 0.523 | 1.000 | 0.478 | **81.1%** | **25.6%** | TBD | TBD | TBD |
-| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 0.032 | **0.683** | 0.818 | 0.482 | 1.000 | 0.477 | **100%**† | **31.2%**† | **97.0%** | **23.0%** | 63.2%¶ |
-| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 0.004 | 0.644 | 0.767 | 0.462 | 0.981 | 0.447 | 92.4%¤ | 38.9%¤ | TBD | TBD | 51.5%¶ |
-| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 0.000 | 0.658 | 0.818 | 0.455 | 0.969 | 0.469 | 94.9%¤ | 47.8%¤ | 96.0%◊ | 38.1%◊ | **42.0%**◊ |
-| ether0-24B schema A | g3 | 0.828 | 0.770 | 0.014 | 0.560 | 0.808 | 0.223 | 0.996 | **0.537** | **91.7%**§ | **39.6%**§ | 89.7% | 15.8% | 76.6%¶ |
-| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | 0.009 | **0.682** | 0.615 | 0.496 | 0.997 | 0.465 | 85.4%§ | 35.4%§ | **98.6%** | 14.7% | 60.6%¶ |
-| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | 0.009 | **0.692** | 0.800 | **0.532** | **1.000** | 0.448 | 89.6%§ | 29.2%§ | 97.4% | 15.4% | 58.2%¶ |
-| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | 0.008 | 0.624 | **0.857** | **0.561** | 0.952 | 0.379 | 86.1%¤ | 37.5%¤ | TBD | TBD | 61.6%¶ |
-| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | 0.018 | 0.639 | 0.724 | 0.487 | 0.972 | 0.445 | 93.1%¤ | 19.4%¤ | 95.3%◊ | 29.3%◊ | 45.6%◊ |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 0.020 | 0.594 | 0.632 | 0.322 | 1.000 | 0.463 | 75.0%§ | 4.2%§ | TBD | TBD | TBD |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 0.064 | 0.623 | 0.758 | 0.444 | 1.000 | 0.436 | 64.4% | 15.6% | TBD | TBD | TBD |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 0.055 | 0.588 | 0.700 | 0.332 | 0.996 | 0.481 | 56.2%§ | 4.2%§ | TBD | TBD | TBD |
+| ChemDFM-14B | g2 | 0.893 | 0.752 | 0.021 | 0.658 | **0.828** | 0.523 | 1.000 | 0.478 | **72.4%** | **22.9%** | TBD | TBD | TBD |
+| **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 0.032 | **0.683** | 0.818 | 0.482 | 1.000 | 0.477 | **95.8%**† | **29.9%**† | **92.9%** | **22.0%** | 60.5%¶ |
+| **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 0.004 | 0.644 | 0.767 | 0.462 | 0.981 | 0.447 | 89.2%¤ | 37.6%¤ | TBD | TBD | 49.7%¶ |
+| **ChemDFM-14B** | **g3+g4** | **0.973** | 0.757 | 0.000 | 0.658 | 0.818 | 0.455 | 0.969 | 0.469 | 92.4%¤ | 46.5%¤ | 93.4%◊ | 37.1%◊ | **40.9%**◊ |
+| ether0-24B schema A | g3 | 0.828 | 0.770 | 0.014 | 0.560 | 0.808 | 0.223 | 0.996 | **0.537** | **76.0%**§ | **32.8%**§ | 74.3% | 13.1% | 63.4%¶ |
+| **ether0-24B schema B** | **g3** | 0.863 | **0.792** | 0.009 | **0.682** | 0.615 | 0.496 | 0.997 | 0.465 | 73.7%§ | 30.5%§ | **85.1%** | 12.7% | 52.3%¶ |
+| **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | 0.009 | **0.692** | 0.800 | **0.532** | **1.000** | 0.448 | 80.4%§ | 26.2%§ | 87.4% | 13.8% | 52.2%¶ |
+| **ether0-24B schema B** | **g4** | 0.905 | 0.772 | 0.008 | 0.624 | **0.857** | **0.561** | 0.952 | 0.379 | 77.9%¤ | 33.9%¤ | TBD | TBD | 55.7%¶ |
+| **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | 0.018 | 0.639 | 0.724 | 0.487 | 0.972 | 0.445 | 79.6%¤ | 16.6%¤ | 81.5%◊ | 25.1%◊ | 39.0%◊ |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 0.020 | 0.594 | 0.632 | 0.322 | 1.000 | 0.463 | 57.8%§ | 3.2%§ | TBD | TBD | TBD |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 0.064 | 0.623 | 0.758 | 0.444 | 1.000 | 0.436 | 61.5% | 14.9% | TBD | TBD | TBD |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 0.055 | 0.588 | 0.700 | 0.332 | 0.996 | 0.481 | 51.1%§ | 3.8%§ | TBD | TBD | TBD |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
 keep the Murcko scaffold only 38.9% of the time and the warhead 76% of the time, so TC→input and
@@ -707,6 +707,38 @@ gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but acro
 within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
+
+### Chemist columns coverage-adjusted in place, 2026-10-19
+
+Every column in the big table now shares one denominator: **all 262 generations**. The four
+chemist columns and `invented chem` were previously conditional on the items an arm actually
+answered; each is now multiplied by that arm's eligibility (molecule + sentence present, which
+equals its validity fraction for all 16 arms), and that cancels the conditional denominator:
+
+    (ok / eligible) x (eligible / 262) = ok / 262
+
+So a cell is a straight share of all 262 generations, on the same basis as validity — not a share
+of valid molecules. 63 cells in the report and 59 in STATUS.
+
+**The assumption this carries.** The chemist panels scored a *sample* of each arm's eligible items,
+not all of them — 16 of ChemDFM base's 31, 150 of ether0 g3+g4's 224. Scaling the sampled rate to
+all 262 therefore assumes the sampled items represent that arm's eligible set. For the large panels
+that is a mild assumption; for the three base arms at n=16 it is doing real work on top of the
++/-12 point sampling error already noted. The automated columns (validity, echo, scaffold
+retention, grounded) carry no such assumption — they are measured on all 262 directly.
+
+What it changes. ChemDFM base's `sensible` goes 89.6% -> 10.6% and its `reasoning` 33.3% -> 3.9%;
+the trained arms barely move (x0.86-0.97). The ranking among trained arms is unchanged, which is
+the point — the adjustment removes an artefact, it does not reshuffle the result.
+
+**One hazard, recorded because the column now invites a wrong reading: `invented chem` is scaled
+the same way, so a low value no longer separates a careful arm from a silent one.** ChemDFM base
+and ether0 base both land on 8.4% — not because they rarely invent chemistry but because they
+rarely emit anything. Conditional on answering, they were at 70.8% and 37.5%. Any claim about
+invention should quote the conditional rate alongside, or restrict to arms of similar eligibility.
+
+Unadjusted conditional rates remain recoverable: divide by the arm's validity, which is in the
+same row.
 
 ### The chemist columns condition on success, and that makes base arms look far better than they are
 
