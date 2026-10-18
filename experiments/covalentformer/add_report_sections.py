@@ -47,8 +47,15 @@ SHOWCASE = [
 
 # Five g3 training rows. Picked for recognisable targets and a chair sentence that names a measured
 # distance, which is what rung 3 is supposed to teach.
-G3_PICKS = ['8AI0 M79->O4I', '7B9Z T58->R3B', '6EAA J1V->J2D',
-            '6P6G LUP->O41', '9Q66 A1CQP->A1CQZ']
+# Chosen by unanimous verdict of three independent medicinal-chemistry reviewers auditing 18
+# candidates against their own contact tables (panel_g3_exemplars/, 2026-10-19). Each of these
+# cleared all five fields from all three reviewers. The three rows replaced -- 8AI0 M79->O4I,
+# 7B9Z T58->R3B and 9Q66 A1CQP->A1CQZ -- failed unanimously on edit_described_correctly: an
+# unflagged para-chlorine, a meta->para methoxy translocation in the macrocyclic tether, and a
+# silent one-carbon homologation hidden behind the word "aromatises". 9QDB is kept deliberately:
+# it is the only sentence in the panel that discloses its own stereocentre inversion.
+G3_PICKS = ['6EAA J1V->J2D', '6P6G LUP->O41', '8AV8 O4R->NQU',
+            '8P9L XA3->X9U', '9QDB A1I5Y->A1I53']
 
 ORANGE = (1.0, 0.718, 0.298)   # #FFB74C
 

@@ -708,6 +708,61 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### Three chemists audited 18 g3 training rows. Three of the five published exemplars failed.
+
+`panel_g3_exemplars/`, 2026-10-19. Three independent reviewers, 18 ADOPT-verdict g3 training rows,
+each audited against its own contact table. The five rows then shipped in report section 2 were in
+the pool, unflagged. Reviewers resolved atom ownership by rebuilding each ligand from the CCD
+mirror rather than guessing from atom names, and diffed every edit in RDKit.
+
+| field | RA | RB | RC | items flagged |
+|---|---|---|---|---|
+| every_number_real | 18 | 18 | 18 | none |
+| attribution_correct | 15 | 15 | 16 | 001, 007 unanimous (014 by RA+RB) |
+| edit_described_correctly | 12 | 12 | 12 | **001, 008, 011, 012, 014, 018 — unanimous** |
+| no_invented_chemistry | 15 | 15 | 16 | 004, 007 unanimous (008 by RA+RB) |
+| exemplar_quality | 9 | 9 | 9 | — |
+
+**The agreement is the striking part**: three reviewers working independently flagged the *same six*
+rows for edit description and converged to within one item everywhere else.
+
+**Findings about the training data itself, not just the exemplars:**
+
+- **Zero fabricated distances in 18 rows.** Every cited number is a real table row. The failure is
+  always ownership or edit description — the same split measured in model output.
+- **6 of 18 chair-ADOPT rows describe their edit incorrectly** (33%), including three silent
+  stereocentre inversions or relocations and a one-carbon homologation hidden behind "aromatises".
+- **2 of 18 cite a residue absent from the table** — VAL78 and GLU1339. GLU1339 is real but sits at
+  4.55-5.44 A, i.e. outside the 4.0 A cutoff, so the model's prompt never shows it.
+- **3 of 18 misattribute a real distance to a retained group** — the project's signature failure,
+  present in the labels the model learns from. If ~17% of g3 sentences teach that error, it is a
+  plausible mechanism for the 29.1% binding rate measured in g3's own output.
+- **item_008 spends its one predictive clause on the ANALOGUE's crystal** ("that covalent link is
+  absent in the analogue's crystal"). True per label-side data, unknowable at inference: it trains
+  the model to assert what it cannot see.
+
+**Exemplars swapped.** Kept 6EAA J1V->J2D and 6P6G LUP->O41 (unanimous pass). Removed 8AI0
+M79->O4I, 7B9Z T58->R3B and 9Q66 A1CQP->A1CQZ (unanimous fail on edit description). Added 8AV8
+O4R->NQU, 8P9L XA3->X9U and 9QDB A1I5Y->A1I53 from the unanimous-pass set of eight. 9QDB was
+chosen deliberately: it is the only sentence in the panel that discloses its own stereocentre
+inversion instead of hiding it.
+
+**Two process defects found, both mine:**
+
+1. The panel builder held the unblinded `IN_REPORT` list in the panel's own directory, and one
+   reviewer read it while hunting for an atom-name mapping. It disclosed this and had already
+   scored on chemistry alone, but the key belongs outside the reviewer-visible tree.
+2. A reviewer noticed the rendered tables are **inconsistent about the 4.0 A cutoff**: some rows
+   print contacts at 4.42-4.51 A while others collapse everything past 4.0 A into the
+   "NOTHING WITHIN 4.0 A" line. That inconsistency is in the training prompts, not the panel, so
+   some arms were trained on tables showing contacts the stated cutoff excludes. Worth a separate
+   look.
+
+**Open question this raises.** 18 rows is enough to show the defects exist, not to size them. The
+rates above (33% edit mis-description, 11% invented residue, 17% misattribution) come from 18 of
+2,326 g3 rows. A scaled audit would say whether the g4 and g3+g4 corpora are better or worse, and
+whether label quality explains the g3-vs-g4 binding gap (29.1% vs 59.4%).
+
 ### Does the model actually read the table? Extraction yes, binding no, 2026-10-19
 
 Measured over every cited distance in four trained arms, against each pair's own contact table,

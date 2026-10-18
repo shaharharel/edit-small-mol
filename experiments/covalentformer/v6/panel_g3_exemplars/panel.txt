@@ -1,0 +1,963 @@
+
+================================================================================
+ITEM 1 of 18   item_id item_001   pair 7Y07 IFX->I9P   PDB 7Y07
+================================================================================
+TARGET: P02879
+INPUT SMILES: Nc1nc2nc(C(=O)N[C@H](CO)Cc3ccccc3)cnc2c(=O)[nH]1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C2    C  GLY121.O        A      3.35     - | polar/apolar packing
+C4    C  ILE172.CG2      A      3.39     - | hydrophobic contact
+C4A   C  ILE172.CG2      A      3.60     - | hydrophobic contact
+C6    C  TYR123.CE2      A      3.66     - | hydrophobic contact
+C7    C  TYR123.CD2      A      3.57     - | hydrophobic contact
+C8A   C  TYR80.CE1       A      3.40     - | hydrophobic contact
+CAF   C  ASN209.CG       A      3.81     - | hydrophobic contact
+CAG   C  ASN209.O        A      3.42     - | polar/apolar packing
+CAH   C  ASN209.OD1      A      3.22     - | polar/apolar packing
+CAI   C  ASN209.O        A      3.13     - | polar/apolar packing
+CAL   C  ASN209.CA       A      3.82     - | hydrophobic contact
+CAR   C  TYR123.CD2      A      3.18     - | hydrophobic contact
+CAT   C  ASN209.O        A      3.61     - | polar/apolar packing
+N1    N  GLY121.O        A      2.74   105 | polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs GLY acceptor): not a hydrogen bond
+N2    N  VAL81.O         A      2.84   123 | H-bond, good geometry
+N3    N  VAL81.N         A      3.03   114 | polar contact, donor/acceptor INCOMPATIBLE (ligand both vs VAL donor): not a hydrogen bond
+N5    N  ARG180.NH1      A      3.11   112 | H-bond, good geometry
+N8    N  TYR123.N        A      3.66     - | polar/apolar packing
+NAP   N  TYR123.CD2      A      3.61     - | polar/apolar packing
+O4    O  ARG180.NH2      A      2.79   128 | H-bond, good geometry
+OAB   O  TYR123.N        A      2.76   138 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): CAE, CAK, CAY, OAD
+COVERAGE: 25 of 25 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  Nc1nc2nc(C(=O)N[C@H](Cc3ccc(O)cc3)C(=O)O)cnc2c(=O)[nH]1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  A two-site edit: hydroxylating the phenyl and oxidising the hydroxymethyl to a carboxylate should put anionic charge near ASN209, already 3.22 A from that side chain, while the ARG180 hydrogen bonds are retained.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 2 of 18   item_id item_002   pair 6EAA J1V->J2D   PDB 6EAA
+================================================================================
+TARGET: O96935
+INPUT SMILES: O=C(N[C@@H](C(=O)NO)c1ccc(-c2cc(F)c(F)c(F)c2)cc1)C1CCCCC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  ZN1101.ZN       A      2.80     - | near ZN metal -- unusually close (2.80 A vs 3.7 A vdW sum); treat the crystal model as uncertain unless a neighbouring atom coordinates the metal
+CA    C  ALA461.O        A      3.29     - | polar/apolar packing
+CAG   C  TYR575.CD1      A      3.47     - | hydrophobic contact
+CAH   C  VAL459.CG2      A      3.64     - | hydrophobic contact
+CAI   C  TYR580.OH       A      3.44     - | polar/apolar packing
+CAJ   C  ALA461.O        A      3.30     - | polar/apolar packing
+CAK   C  GLN317.NE2      A      3.62     - | polar/apolar packing
+CAL   C  TYR575.CE2      A      3.68     - | hydrophobic contact
+CAN   C  HIS496.CE1      A      3.71     - | hydrophobic contact
+CAO   C  ARG489.NH2      A      3.72     - | polar/apolar packing
+CAP   C  TYR580.CE1      A      3.64     - | hydrophobic contact
+CAQ   C  ARG489.NH2      A      3.51     - | polar/apolar packing
+CAU   C  GLY460.N        A      3.87     - | polar/apolar packing
+CAV   C  GLU319.O        A      3.34     - | polar/apolar packing
+CAW   C  GLU319.O        A      3.27     - | polar/apolar packing
+CAX   C  VAL459.CG2      A      3.80     - | hydrophobic contact
+CAY   C  MET1034.CE      A      3.84     - | hydrophobic contact
+CAZ   C  VAL459.CG2      A      3.53     - | hydrophobic contact
+CBA   C  GLU319.O        A      3.10     - | polar/apolar packing
+FAD   F  THR305.CG2      A      3.40     - | hydrophobic contact
+FAE   F  ALA320.N        A      3.45     - | polar/apolar packing
+FAF   F  GLU572.CG       A      3.25     - | hydrophobic contact
+N     N  TYR580.OH       A      3.69     - | polar/apolar packing
+NAR   N  ALA461.O        A      2.85   113 | H-bond, good geometry
+O     O  ZN1101.ZN       A      2.05     - | METAL COORDINATION to ZN
+         TYR580.OH              2.65   121 | polar partner: H-bond, good geometry
+OAB   O  GLY460.N        A      2.80   147 | H-bond, good geometry
+OAC   O  ZN1101.ZN       A      2.20     - | METAL COORDINATION to ZN
+         GLU497.OE1             2.51   107 | polar partner: H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): CAM, CBB
+COVERAGE: 29 of 29 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  O=C(N[C@@H](C(=O)NO)c1ccc(-c2cc(F)c(F)c(F)c2)cc1)C1CCOCC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  The cyclohexyl carbon being swapped for oxygen makes no contact within 4.0 A here, so the change should add polarity between the HIS496 and ARG489 faces while the 2.05 and 2.20 A zinc coordination holds.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 3 of 18   item_id item_003   pair 7ZLP JHR->JI0   PDB 7ZLP
+================================================================================
+TARGET: O14508
+INPUT SMILES: O=C(Cc1ccc(F)cc1)N[C@@H](Cc1ccc(OP(=O)(O)O)cc1)C(=O)NCc1ccc(F)cc1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C02   C  ASN94.ND2       A      3.90     - | polar/apolar packing
+C04   C  ASN94.ND2       A      3.77     - | polar/apolar packing
+C06   C  VAL55.CG2       A      3.39     - | hydrophobic contact
+C07   C  VAL55.CG2       A      3.50     - | hydrophobic contact
+C09   C  ASN94.ND2       A      3.56     - | polar/apolar packing
+C10   C  ASN94.ND2       A      3.42     - | polar/apolar packing
+C12   C  ASN94.O         A      3.39     - | polar/apolar packing
+C13   C  ASN94.O         A      3.78     - | polar/apolar packing
+C17   C  THR93.OG1       A      3.50     - | polar/apolar packing
+C18   C  THR93.CG2       A      3.84     - | hydrophobic contact
+C19   C  LEU95.CD2       A      3.67     - | hydrophobic contact
+C21   C  ILE110.CG1      A      3.72     - | hydrophobic contact
+C22   C  ILE110.CG1      A      3.42     - | hydrophobic contact
+C25   C  ASN94.O         A      3.99     - | polar/apolar packing
+C26   C  ASN94.O         A      3.62     - | polar/apolar packing
+C27   C  ARG96.NE        A      3.52     - | polar/apolar packing
+C28   C  ASN94.CB        A      3.75     - | hydrophobic contact
+C34   C  VAL55.CG2       A      3.98     - | hydrophobic contact
+F08   F  VAL55.O         A      3.33     - | polar/apolar packing
+F20   F  HIS149.O        A      2.93     - | polar/apolar packing
+N14   N  ASN94.O         A      3.20   102 | H-bond, good geometry
+O01   O  ASN94.N         A      2.93   169 | H-bond, good geometry
+O29   O  ARG73.NH2       A      3.03   123 | H-bond, good geometry
+O31   O  ARG96.NH2       A      2.91     - | SALT BRIDGE to ARG96.NH2 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+O32   O  ARG73.NH1       A      2.87     - | SALT BRIDGE to ARG73.NH1 (anionic ligand atom against cationic residue; charge pairing, so no angle criterion applies)
+O33   O  SER75.OG        A      2.71   119 | H-bond, good geometry
+P30   P  SER75.OG        A      3.69     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C03, C05, C15, C16, C24, C35, N11, O23
+COVERAGE: 35 of 35 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  CCc1cc(CNC(=O)[C@H](Cc2ccc(OP(=O)(O)O)cc2)NC(=O)Cc2ccc(F)cc2)ccc1F
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Growing an ethyl off the ring carbon packing THR93.CG2 at 3.84 A should extend apolar contact along that threonine, while the phosphate's 3.03 A ARG73.NH2 hydrogen bond is retained.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 4 of 18   item_id item_004   pair 9EUC A1H7F->A1H7D   PDB 9EUC
+================================================================================
+TARGET: Q13451
+INPUT SMILES: CCn1cc(COC(=O)[C@@H]2CCCCN2C(=O)[C@H](c2cc(OC)c(OC)c(OC)c2)C2CCCCC2)cn1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  TYR113.OH       A      3.17     - | polar/apolar packing
+CA    C  TYR113.OH       A      3.62     - | polar/apolar packing
+CAA   C  ASP68.OD2       A      3.42     - | polar/apolar packing
+CAE   C  TYR113.OH       A      3.42     - | polar/apolar packing
+CAG   C  ASP68.OD2       A      3.82     - | polar/apolar packing
+CAH   C  TYR113.OH       A      3.47     - | polar/apolar packing
+CAK   C  PHE130.CZ       A      3.58     - | hydrophobic contact
+CAL   C  LYS60.N         A      3.96     - | polar/apolar packing
+CAM   C  LYS66.O         A      3.84     - | polar/apolar packing
+CAN   C  ILE122.CD1      A      3.93     - | hydrophobic contact
+CAO   C  ASP68.CB        A      3.78     - | hydrophobic contact
+CAS   C  PHE77.CZ        A      3.69     - | hydrophobic contact
+CAT   C  TYR57.CZ        A      3.64     - | hydrophobic contact
+CAU   C  TYR57.OH        A      3.67     - | polar/apolar packing
+CAY   C  SER115.OG       B      3.23     - | polar/apolar packing
+CAZ   C  SER115.OG       B      3.25     - | polar/apolar packing
+CB    C  TRP90.CE2       A      3.55     - | hydrophobic contact
+CBA   C  SER115.OG       B      3.66     - | polar/apolar packing
+CBD   C  GLN85.O         A      3.28     - | polar/apolar packing
+CBE   C  GLN85.O         A      3.75     - | polar/apolar packing
+CBH   C  SER115.OG       B      3.79     - | polar/apolar packing
+CBJ   C  TYR57.OH        A      3.57     - | polar/apolar packing
+CBL   C  TYR113.OH       A      3.34     - | polar/apolar packing
+N     N  PHE130.CZ       A      3.85     - | polar/apolar packing
+         TYR113.OH              3.92     - | polar partner: polar/apolar packing
+NBB   N  PHE77.CZ        A      3.69     - | polar/apolar packing
+NBC   N  PHE77.CZ        A      3.79     - | polar/apolar packing
+         GLN85.O                3.89     - | polar partner: polar/apolar packing
+O     O  ILE87.N         A      3.19   145 | H-bond, good geometry
+OAP   O  TYR113.OH       A      2.78   115 | H-bond, good geometry
+OAX   O  TYR113.OH       A      2.75    99 | polar contact, geometry poor
+NOTHING WITHIN 4.0 A (listed, so the table is complete): CAB, CAC, CAD, CAF, CAJ, CBF, OBG, OBI, OBK
+COVERAGE: 38 of 38 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  CCCn1cc(COC(=O)[C@@H]2CCCCN2C(=O)[C@H](c2cc(OC)c(OC)c(OC)c2)C2CCCCC2)cn1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  The pyrazole N-ethyl terminus makes no contact within 4.0 A in this crystal, so extending it to propyl should reach toward PHE77 and VAL78 without disturbing the 2.78 A TYR113.OH hydrogen bond.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 5 of 18   item_id item_005   pair 6PD8 O9D->O9Y   PDB 6PD8
+================================================================================
+TARGET: Q9H7Z6
+INPUT SMILES: CCOc1cc(C)c(F)c(C(=O)NNS(=O)(=O)c2ccccc2)c1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C01   C  PHE600.O        A      3.41     - | polar/apolar packing
+C02   C  MET648.CA       A      4.00     - | hydrophobic contact
+C04   C  ILE649.N        A      3.60     - | polar/apolar packing
+C07   C  ILE647.CG2      A      3.85     - | hydrophobic contact
+C08   C  SER690.OG       A      3.48     - | polar/apolar packing
+C10   C  ILE649.CG1      A      3.71     - | hydrophobic contact
+C11   C  LEU686.CD2      A      3.44     - | hydrophobic contact
+C12   C  ARG655.N        A      3.67     - | polar/apolar packing
+C19   C  ARG660.CB       A      3.57     - | hydrophobic contact
+C20   C  ARG660.CB       A      3.49     - | hydrophobic contact
+C21   C  SER690.O        A      3.13     - | polar/apolar packing
+C22   C  SER693.OG       A      3.37     - | polar/apolar packing
+C23   C  SER693.OG       A      3.77     - | polar/apolar packing
+C24   C  ARG660.CB       A      3.85     - | hydrophobic contact
+F09   F  SER690.OG       A      2.93     - | polar/apolar packing
+N14   N  SER690.OG       A      3.23   116 | H-bond, good geometry
+N15   N  ARG655.CA       A      3.30     - | polar/apolar packing
+         ARG655.N               3.43   102 | polar partner: polar contact, donor/acceptor INCOMPATIBLE (ligand both vs ARG donor): not a hydrogen bond
+O03   O  ILE649.N        A      3.25   113 | H-bond, good geometry
+O13   O  ARG655.N        A      2.80   132 | H-bond, good geometry
+O17   O  GLY657.N        A      2.69   121 | H-bond, good geometry
+O18   O  ARG660.N        A      2.93   126 | H-bond, good geometry
+S16   S  GLY657.N        A      3.68     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C05, C06
+COVERAGE: 24 of 24 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  Cc1cc(-n2nccn2)cc(C(=O)NNS(=O)(=O)c2ccccc2)c1F
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Replacing the ethoxy with a triazole gives up the ether oxygen's 3.25 A hydrogen bond to ILE649.N and the ethyl's 3.41 A packing on PHE600.O, and the ring should present nitrogen acceptors at that amide.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 6 of 18   item_id item_006   pair 7K6X VZ1->VZD   PDB 7K6X
+================================================================================
+TARGET: P00918
+INPUT SMILES: Cc1cc(C)cc(NC(=O)NCCS(=O)(=O)Nc2ccc(S(N)(=O)=O)cc2)c1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C01   C  LEU198.CD2      A      3.77     - | hydrophobic contact
+C02   C  THR200.OG1      A      3.08     - | polar/apolar packing
+C03   C  THR200.OG1      A      3.14     - | polar/apolar packing
+C04   C  LEU198.CD2      A      3.75     - | hydrophobic contact
+C05   C  LEU198.CD2      A      3.73     - | hydrophobic contact
+C06   C  LEU198.CD2      A      3.74     - | hydrophobic contact
+C09   C  GLN92.NE2       A      3.14     - | polar/apolar packing
+C11   C  GLN92.NE2       A      3.78     - | polar/apolar packing
+C14   C  GLN67.OE1       A      3.61     - | polar/apolar packing
+C15   C  LEU91.CD1       A      3.39     - | hydrophobic contact
+C16   C  LEU91.CD1       A      3.30     - | hydrophobic contact
+C17   C  LEU91.CD1       A      3.96     - | hydrophobic contact
+C21   C  PHE70.O         A      3.26     - | polar/apolar packing
+N10   N  GLN92.NE2       A      2.78   123 | polar contact, donor/acceptor INCOMPATIBLE (ligand both vs GLN donor): not a hydrogen bond
+N13   N  GLN67.OE1       A      2.73   116 | H-bond, good geometry
+N28   N  ZN301.ZN        A      1.95     - | METAL COORDINATION to ZN
+         THR199.OG1             2.76   116 | polar partner: H-bond, good geometry
+O12   O  LEU91.CD2       A      3.44     - | polar/apolar packing
+O23   O  LEU141.CD1      A      3.53     - | polar/apolar packing
+O26   O  THR199.N        A      2.94   123 | H-bond, good geometry
+O27   O  ZN301.ZN        A      3.03     - | near ZN metal
+         HIS119.ND1             3.33   102 | polar partner: H-bond, good geometry
+S25   S  ZN301.ZN        A      3.05     - | near ZN metal
+         THR199.OG1             3.82     - | polar partner: polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C08, C18, C19, C20, N07, O24, S22
+COVERAGE: 28 of 28 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  NS(=O)(=O)c1ccc(NS(=O)(=O)CCNC(=O)Nc2ccc(F)cc2)cc1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Replacing the 3,5-dimethylphenyl with a para-fluorophenyl gives up the methyl packing PHE70.O at 3.26 A, leaving a smaller, more polar ring edge there, while the sulfonamide's 1.95 A zinc coordination is held.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 7 of 18   item_id item_007   pair 7FV5 ZKU->ZOU   PDB 7FV5
+================================================================================
+TARGET: Q8WWQ0
+INPUT SMILES: O=C(Nc1ccccn1)N1CCN(C(=O)c2ccco2)CC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  PRO1340.O       A      3.90     - | polar/apolar packing
+C10   C  TYR1350.CE2     A      3.34     - | hydrophobic contact
+C11   C  ILE1403.CG2     A      3.28     - | hydrophobic contact
+C12   C  ILE1403.CG2     A      3.38     - | hydrophobic contact
+C13   C  ILE1403.CG2     A      3.78     - | hydrophobic contact
+C14   C  THR1396.CA      A      3.72     - | hydrophobic contact
+C15   C  ILE1403.CD1     A      3.95     - | hydrophobic contact
+C2    C  PRO1340.O       A      3.81     - | polar/apolar packing
+C3    C  PRO1344.O       A      3.84     - | polar/apolar packing
+C7    C  PRO1340.O       A      2.94     - | polar/apolar packing
+C8    C  ILE1403.CG2     A      3.41     - | hydrophobic contact
+N1    N  PRO1340.O       A      3.05   120 | H-bond, good geometry
+N3    N  PRO1340.O       A      3.76     - | polar/apolar packing
+N4    N  ILE1403.CG2     A      3.60     - | polar/apolar packing
+O1    O  ASP1346.N       A      3.31   116 | H-bond, good geometry
+O2    O  SER1392.OG      A      3.07   138 | H-bond, good geometry
+O3    O  ILE1403.CD1     A      3.57     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C4, C5, C6, C9, N2
+COVERAGE: 22 of 22 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  COc1ccc(C)cc1NC(=O)N1CCN(C(=O)c2ccco2)CC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Swapping the aminopyridine for a methoxy-methylphenyl removes the ring nitrogen and adds substituents at the carbon packing PRO1340.O at 3.81 A, which should spread that ring edge toward GLU1339 and PRO1344.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 8 of 18   item_id item_008   pair 8AI0 M79->O4I   PDB 8AI0
+================================================================================
+TARGET: P03372
+INPUT SMILES: CC(C)(Nc1ccccc1)C(=O)N1CCC(CNC(=O)CCl)CC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C05   C  VAL595.OXT      B      3.69     - | polar/apolar packing
+C06   C  LYS122.NZ       A      3.77     - | polar/apolar packing
+C07   C  LYS122.CE       A      3.66     - | hydrophobic contact
+C08   C  PRO167.O        A      3.37     - | polar/apolar packing
+C09   C  VAL595.CG2      B      3.81     - | hydrophobic contact
+C12   C  ASN42.OD1       A      3.79     - | polar/apolar packing
+C13   C  ASN42.OD1       A      2.78     - | polar/apolar packing
+C14   C  ASN42.OD1       A      2.84     - | polar/apolar packing
+C17   C  ASN42.OD1       A      2.94     - | polar/apolar packing
+C19   C  ARG41.NH2       A      3.25     - | polar/apolar packing [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+C20   C  CYS38.SG        A      1.77     - | COVALENT BOND to CYS38.SG
+N18   N  ASN42.OD1       A      3.79     - | polar/apolar packing [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+O21   O  ARG41.NH2       A      2.89    96 | polar contact, geometry poor [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+O22   O  ILE219.CD1      A      3.90     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C01, C02, C04, C10, C15, C16, C23, N03, N11
+COVERAGE: 23 of 24 input heavy atoms have a row (1 not modelled, 0 omitted as clashes)
+NOT MODELLED in this crystal (absent from the coordinates, so they appear in no row above): CL1
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  CC(C)(Oc1ccc(Cl)cc1)C(=O)N1CCC(CNC(=O)CCl)CC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  The 1.77 A covalent bond from the chloroacetamide carbon to CYS38.SG anchors the input; with the anilino NH traded for an aryl ether, that covalent link is absent in the analogue's crystal.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 9 of 18   item_id item_009   pair 7VWH 82K->K55   PDB 7VWH
+================================================================================
+TARGET: Q03181
+INPUT SMILES: CCCCCCOc1ccc(C[C@H](CC)C(=O)O)cc1CNC(=O)c1ccc(C(F)(F)F)cc1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  TYR473.OH       A      3.30     - | polar/apolar packing
+C11   C  PHE327.CE1      A      3.76     - | hydrophobic contact
+C12   C  THR288.OG1      A      3.67     - | polar/apolar packing
+C13   C  THR288.OG1      A      3.63     - | polar/apolar packing
+C14   C  LEU339.CD2      A      3.74     - | hydrophobic contact
+C15   C  VAL341.CG1      A      3.58     - | hydrophobic contact
+C16   C  VAL341.CG1      A      3.45     - | hydrophobic contact
+C17   C  VAL341.CG1      A      3.92     - | hydrophobic contact
+C18   C  VAL281.CG1      A      3.66     - | hydrophobic contact
+C19   C  CYS285.SG       A      3.60     - | polar/apolar packing
+C2    C  THR289.OG1      A      3.42     - | polar/apolar packing
+C22   C  PHE368.CE2      A      3.51     - | hydrophobic contact
+C23   C  PHE368.CE2      A      3.61     - | hydrophobic contact
+C24   C  VAL334.CG2      A      3.73     - | hydrophobic contact
+C25   C  LEU330.CB       A      3.51     - | hydrophobic contact
+C26   C  LYS367.O        A      3.26     - | polar/apolar packing
+C3    C  CYS285.CB       A      3.88     - | hydrophobic contact
+C4    C  GLN286.CG       A      3.64     - | hydrophobic contact
+C5    C  HIS449.NE2      A      3.66     - | polar/apolar packing
+C6    C  PHE327.CE1      A      3.71     - | hydrophobic contact
+C8    C  LEU330.CD1      A      3.94     - | hydrophobic contact
+F30   F  VAL281.CG1      A      3.45     - | hydrophobic contact
+F31   F  ARG284.CD       A      3.41     - | hydrophobic contact
+F32   F  TRP264.CH2      A      3.39     - | hydrophobic contact
+N27   N  CYS285.SG       A      3.46   113 | polar contact, donor/acceptor INCOMPATIBLE (ligand both vs CYS donor): not a hydrogen bond
+O25   O  THR289.OG1      A      2.65   120 | H-bond, good geometry
+O26   O  TYR473.OH       A      2.48   120 | H-bond, good geometry
+O28   O  THR288.OG1      A      3.09   106 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C20, C21, C7, C9, O33
+COVERAGE: 34 of 34 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  CCCCOc1ccc(C[C@H](CC)C(=O)O)cc1CNC(=O)c1ccc(C(F)(F)F)cc1F
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Two-site edit: trimming the hexyloxy chain by two carbons gives up its 3.51 A LEU330.CB and 3.26 A LYS367.O packing, while the benzamide gains a fluorine beside the carbon sitting 3.60 A from CYS285.SG.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 10 of 18   item_id item_010   pair 6WYQ UFJ->UFS   PDB 6WYQ
+================================================================================
+TARGET: F8W4B7
+INPUT SMILES: O=C(CCCCCCC(=O)Nc1ccc(I)cc1)NO
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C02   C  ZN501.ZN        A      2.82     - | near ZN metal -- unusually close (2.82 A vs 3.7 A vdW sum); treat the crystal model as uncertain unless a neighbouring atom coordinates the metal
+C03   C  GLY201.O        A      3.51     - | polar/apolar packing
+C04   C  PHE202.CE2      A      3.56     - | hydrophobic contact
+C05   C  PHE202.CZ       A      3.77     - | hydrophobic contact
+C06   C  TRP261.CD2      A      3.80     - | hydrophobic contact
+C07   C  SER150.OG       A      3.41     - | polar/apolar packing
+C08   C  HIS263.ND1      B      3.70     - | polar/apolar packing
+C09   C  SER259.CA       B      3.77     - | hydrophobic contact
+C11   C  GLY258.O        B      3.63     - | polar/apolar packing
+C12   C  ASP257.O        B      3.75     - | polar/apolar packing
+C13   C  ASP257.O        B      2.97     - | polar/apolar packing
+C14   C  ASP257.O        B      3.16     - | polar/apolar packing
+C16   C  PRO83.CD        A      3.58     - | hydrophobic contact
+C17   C  SER259.CB       B      3.99     - | hydrophobic contact
+I15   I  ASP79.OD2       A      3.24     - | polar/apolar packing
+N10   N  GLY258.O        B      3.35    99 | polar contact, geometry poor
+N19   N  HIS193.NE2      A      2.67   131 | H-bond, good geometry
+O01   O  ZN501.ZN        A      2.27     - | METAL COORDINATION to ZN
+         TYR363.OH              2.76   105 | polar partner: H-bond, good geometry
+O18   O  SER259.CA       B      3.56     - | polar/apolar packing
+O20   O  ZN501.ZN        A      1.93     - | METAL COORDINATION to ZN
+         HIS192.NE2             2.59   101 | polar partner: H-bond, good geometry
+COVERAGE: 20 of 20 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  C#CCCCC(=O)Nc1ccc(C(=O)c2ccc(NC(=O)CCCCCCC(=O)NO)cc2)cc1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  The hydroxamate's 2.27 and 1.93 A zinc coordinations are held while the iodine sitting 3.24 A from ASP79.OD2 is replaced by a long benzophenone arm growing off the carbon near ASP257.O (3.16 A).
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 11 of 18   item_id item_011   pair 7B9Z T58->R3B   PDB 7B9Z
+================================================================================
+TARGET: Q13451
+INPUT SMILES: COc1ccc(CC[C@H]2OC(=O)[C@@H]3CCCCN3C(=O)[C@@H](C3CCCCC3)c3cc(OC)c(OC)c(c3)OC/C=C/COc3cccc2c3)cc1OC
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  TYR113.OH       A      3.09     - | polar/apolar packing
+CA    C  TYR113.OH       A      3.55     - | polar/apolar packing
+CAA   C  ASP68.OD2       A      3.42     - | polar/apolar packing
+CAB   C  LYS121.NZ       A      3.52     - | polar/apolar packing
+CAC   C  LYS121.CD       A      3.34     - | hydrophobic contact
+CAD   C  LYS121.CD       A      3.46     - | hydrophobic contact
+CAE   C  TYR113.OH       A      3.63     - | polar/apolar packing
+CAG   C  ASP68.OD2       A      3.62     - | polar/apolar packing
+CAI   C  TYR113.OH       A      3.46     - | polar/apolar packing
+CAL   C  PHE130.CZ       A      3.73     - | hydrophobic contact
+CAM   C  LYS60.C         A      3.83     - | hydrophobic contact
+CAN   C  LYS66.O         A      3.71     - | polar/apolar packing
+CAO   C  ILE122.CD1      A      3.88     - | hydrophobic contact
+CAP   C  ASP68.CB        A      3.86     - | hydrophobic contact
+CAS   C  TRP90.CZ2       A      3.66     - | hydrophobic contact
+CAT   C  TYR57.CZ        A      3.51     - | hydrophobic contact
+CAU   C  ASP68.OD2       A      3.57     - | polar/apolar packing
+CAY   C  TYR113.OH       A      3.57     - | polar/apolar packing
+CAZ   C  TYR113.OH       A      3.31     - | polar/apolar packing
+CB    C  TRP90.CE2       A      3.46     - | hydrophobic contact
+CBE   C  PHE77.CE1       A      3.68     - | hydrophobic contact
+CBF   C  PHE77.CZ        A      3.74     - | hydrophobic contact
+CBG   C  GLN85.O         A      3.50     - | polar/apolar packing
+CBH   C  GLN85.O         A      3.11     - | polar/apolar packing
+CBI   C  TYR113.CE1      A      3.70     - | hydrophobic contact
+CBJ   C  TYR113.CE1      A      3.59     - | hydrophobic contact
+CBK   C  TYR113.CE1      A      3.87     - | hydrophobic contact
+CBP   C  ARG73.NH1       A      3.73     - | polar/apolar packing
+CBR   C  TYR57.OH        A      3.33     - | polar/apolar packing
+CBS   C  PHE77.CE1       A      3.34     - | hydrophobic contact
+CBW   C  SER118.OG       A      3.48     - | polar/apolar packing
+CCA   C  VAL86.C         A      3.47     - | hydrophobic contact
+N     N  PHE130.CZ       A      3.83     - | polar/apolar packing
+         TYR113.OH              3.88     - | polar partner: polar/apolar packing
+O     O  ILE87.N         A      3.00   159 | H-bond, good geometry
+OAJ   O  TYR113.OH       A      2.67   120 | H-bond, good geometry
+OAW   O  TYR113.OH       A      3.05    99 | polar contact, geometry poor
+OBN   O  PHE77.CE1       A      3.23     - | polar/apolar packing
+OBO   O  LYS121.NZ       A      3.08    98 | polar contact, geometry poor
+OBT   O  LYS121.NZ       A      3.08    98 | polar contact, geometry poor
+OBV   O  LYS121.CD       A      3.60     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): CAF, CAH, CBA, CBB, CBC, CBD, CBL, CBM, CBQ, CBU, CBY, OBX, OBZ
+COVERAGE: 53 of 53 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  COc1ccc(CC[C@H]2OC(=O)[C@@H]3CCCCN3C(=O)[C@@H](C3CCCCC3)c3cc(OC)c(c(OC)c3)OCCCOc3cccc2c3)cc1OC
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Replacing the butenyl linker with a saturated propyl gives up its 3.73 A packing on ARG73.NH1 and should ease the 3.08 A poor polar contacts to LYS121.NZ; the 2.67 A TYR113.OH hydrogen bond holds.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 12 of 18   item_id item_012   pair 7IJ1 A1CJV->A1CKK   PDB 7IJ1
+================================================================================
+TARGET: P0DTD1
+INPUT SMILES: O=C(O)C[C@@H](NC(=O)c1ncnc2[nH]ccc12)c1ccc(O)cc1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  GLY130.CA       A      3.67     - | hydrophobic contact
+C10   C  PHE156.CD1      A      3.87     - | hydrophobic contact
+C11   C  GLY130.CA       A      3.61     - | hydrophobic contact
+C13   C  ASP157.CB       A      3.82     - | hydrophobic contact
+C14   C  ASP157.CB       A      3.35     - | hydrophobic contact
+C15   C  ASP157.CB       A      3.85     - | hydrophobic contact
+C16   C  GLY130.CA       A      3.36     - | hydrophobic contact
+C2    C  GLY130.CA       A      3.08     - | hydrophobic contact
+C3    C  GLY130.CA       A      3.31     - | hydrophobic contact
+C4    C  VAL49.CG2       A      3.47     - | hydrophobic contact
+C5    C  VAL49.CG2       A      3.19     - | hydrophobic contact
+C6    C  ALA154.O        A      3.29     - | polar/apolar packing
+C7    C  PHE156.CD1      A      3.53     - | hydrophobic contact
+C8    C  VAL49.CG2       A      3.21     - | hydrophobic contact
+C9    C  VAL49.CG2       A      3.58     - | hydrophobic contact
+N1    N  PHE156.CB       A      3.81     - | polar/apolar packing
+N2    N  PHE156.CB       A      3.46     - | polar/apolar packing
+         ALA154.O               3.53   165 | polar partner: polar contact, donor/acceptor INCOMPATIBLE (ligand acceptor vs ALA acceptor): not a hydrogen bond
+N3    N  ILE23.N         A      2.88   114 | H-bond, good geometry
+N4    N  ASP22.OD1       A      2.98   110 | H-bond, good geometry
+O1    O  ILE131.N        A      2.96   117 | H-bond, good geometry
+O2    O  VAL49.CG2       A      3.45     - | polar/apolar packing
+O3    O  ASP157.CG       A      2.98     - | polar/apolar packing
+         ASP157.OD1             3.10   121 | polar partner: H-bond, good geometry
+O4    O  VAL49.N         A      2.84   145 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C12
+COVERAGE: 24 of 24 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  O=C(O)C[C@H](NC(=O)c1nc(Cl)nc2[nH]ccc12)c1ccccc1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Deleting the phenol hydroxyl gives up its 3.10 A hydrogen bond to ASP157.OD1, leaving only ring-carbon packing against that aspartate; a chlorine is separately added on the pyrimidine.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 13 of 18   item_id item_013   pair 8P9L XA3->X9U   PDB 8P9L
+================================================================================
+TARGET: O60885
+INPUT SMILES: Cn1cc(-c2ccc(C(=O)Nc3cc(-c4ccccc4)ccc3N)nc2)c2cc[nH]c2c1=O
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C     C  ASN140.ND2      A      3.75     - | polar/apolar packing
+C1    C  ASN140.OD1      A      3.82     - | polar/apolar packing
+C11   C  TRP81.CZ3       A      3.52     - | hydrophobic contact
+C17   C  TRP81.CZ2       A      3.74     - | hydrophobic contact
+C18   C  TRP81.CZ2       A      3.61     - | hydrophobic contact
+C22   C  PRO82.CA        A      3.99     - | hydrophobic contact
+C23   C  PRO82.O         A      3.56     - | polar/apolar packing
+C24   C  PRO82.O         A      3.24     - | polar/apolar packing
+C25   C  VAL87.CG2       A      3.63     - | hydrophobic contact
+C4    C  ASN140.OD1      A      3.65     - | polar/apolar packing
+C5    C  ILE146.CD1      A      3.93     - | hydrophobic contact
+C6    C  LEU92.CD1       A      3.73     - | hydrophobic contact
+C7    C  LEU92.CD2       A      3.63     - | hydrophobic contact
+C8    C  LEU92.CD2       A      3.80     - | hydrophobic contact
+C9    C  TRP81.CZ3       A      3.86     - | hydrophobic contact
+N     N  ASN140.OD1      A      2.83   117 | H-bond, good geometry
+N1    N  LEU92.CD2       A      3.58     - | polar/apolar packing
+N2    N  TRP81.CZ3       A      3.58     - | polar/apolar packing
+N4    N  VAL87.CG2       A      3.73     - | polar/apolar packing
+         PRO82.O                3.96     - | polar partner: polar/apolar packing
+O     O  ASN140.ND2      A      2.87   128 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C12, C13, C14, C15, C16, C19, C2, C20, C21, C3, N3, O1
+COVERAGE: 33 of 33 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  Cn1cc(-c2ccc(C(=O)Nc3cc(-c4ccccc4)ccc3N)cc2)c2cc[nH]c2c1=O
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  The pyridine nitrogen sitting against LEU92.CD2 at 3.58 A becomes carbon, trading a polar atom for an apolar one at that leucine face while both ASN140 hydrogen bonds (2.83 and 2.87 A) are retained.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 14 of 18   item_id item_014   pair 5SF0 IIX->IQ9   PDB 5SF0
+================================================================================
+TARGET: Q9Y233
+INPUT SMILES: Cn1ncc(C(=O)N2CCC2)c1C(=O)Nc1cc(-c2ccccn2)[nH]n1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  PHE696.CZ       A      3.83     - | hydrophobic contact
+C12   C  MET713.CG       A      3.58     - | hydrophobic contact
+C14   C  PHE729.CZ       A      3.79     - | hydrophobic contact
+C16   C  TYR693.OH       A      3.54     - | polar/apolar packing
+C19   C  GLN726.OE1      A      3.69     - | polar/apolar packing
+C20   C  TYR693.OH       A      3.50     - | polar/apolar packing
+C21   C  GLY725.CA       A      3.62     - | hydrophobic contact
+C22   C  GLU721.O        A      3.73     - | polar/apolar packing
+C23   C  GLY725.CA       A      3.72     - | hydrophobic contact
+C24   C  HIS525.CE1      A      3.75     - | hydrophobic contact
+C4    C  PHE729.CZ       A      3.56     - | hydrophobic contact
+C5    C  PHE729.CZ       A      3.54     - | hydrophobic contact
+C6    C  PHE729.CD1      A      3.73     - | hydrophobic contact
+C7    C  TYR693.OH       A      3.09     - | polar/apolar packing
+C8    C  PHE729.CD1      A      3.49     - | hydrophobic contact
+N10   N  ILE692.CD1      A      3.81     - | polar/apolar packing
+N11   N  MET713.CE       A      3.10     - | polar/apolar packing
+         MET713.SD              3.74     - | polar partner: polar/apolar packing
+N13   N  PHE729.CD1      A      3.06     - | polar/apolar packing
+N15   N  PHE729.CD1      A      3.33     - | polar/apolar packing
+         MET713.SD              3.88     - | polar partner: polar/apolar packing
+N18   N  TYR693.OH       A      2.67   118 | H-bond, good geometry
+N2    N  PHE696.CZ       A      3.94     - | polar/apolar packing
+N9    N  PHE729.CE2      A      3.62     - | polar/apolar packing
+O17   O  GLN726.NE2      A      2.76   153 | H-bond, good geometry
+O3    O  PHE729.CE1      A      3.43     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C25, C26
+COVERAGE: 26 of 26 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  Cn1ncc(C(=O)N2CCC2)c1C(=O)Nc1ccn(C2CCCC2)n1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Losing the pyridine nitrogen gives up its 2.67 A hydrogen bond to TYR693.OH and relocates the ring carbons packing MET713.CG at 3.58 A, while the amide's 2.76 A GLN726.NE2 hydrogen bond is retained.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 15 of 18   item_id item_015   pair 8AV8 O4R->NQU   PDB 8AV8
+================================================================================
+TARGET: P03372
+INPUT SMILES: O=C(CCl)NCC1CCN(C(=O)C2(Oc3ccccc3)CCCC2)CC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  ILE168.CD1      A      3.53     - | hydrophobic contact [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+C10   C  VAL595.OXT      B      3.46     - | polar/apolar packing
+C11   C  PHE119.CE2      A      3.58     - | hydrophobic contact
+C12   C  LYS122.CE       A      3.62     - | hydrophobic contact
+C13   C  PRO167.O        A      3.28     - | polar/apolar packing
+C14   C  VAL595.CG2      B      3.85     - | hydrophobic contact
+C2    C  CYS38.SG        A      1.85     - | COVALENT BOND to CYS38.SG
+C3    C  CYS38.O         A      3.87     - | polar/apolar packing
+C5    C  ASN42.OD1       A      3.66     - | polar/apolar packing
+C6    C  ASN42.OD1       A      3.17     - | polar/apolar packing
+N1    N  ILE168.CD1      A      3.80     - | polar/apolar packing [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+O1    O  ARG41.NE        A      2.92   158 | H-bond, good geometry [nearest INDEPENDENT contact; CYS38 is excluded as the residue its covalent link already describes]
+O2    O  PRO167.CB       A      3.64     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C15, C16, C17, C18, C19, C20, C4, C7, C8, C9, N2, O3
+COVERAGE: 25 of 26 input heavy atoms have a row (1 not modelled, 0 omitted as clashes)
+NOT MODELLED in this crystal (absent from the coordinates, so they appear in no row above): CL1
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  O=C(CCl)NCC1CCN(C(=O)C2(Oc3ccc(Cl)cc3)CCCCC2)CC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Two-site edit: chlorinating the phenoxy ring at the carbon packing LYS122.CE at 3.62 A and expanding the cyclopentane to cyclohexane, while the 1.85 A CYS38.SG covalent bond and the 3.28 A PRO167.O packing are held.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 16 of 18   item_id item_016   pair 6P6G LUP->O41   PDB 6P6G
+================================================================================
+TARGET: Q9H7B4
+INPUT SMILES: O=C(NC1CCN(S(=O)(=O)CC2CCC(NCCCC(F)(F)F)CC2)CC1)c1cc(C2CC2)on1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C02   C  GLU294.CB       A      3.91     - | hydrophobic contact
+C07   C  ASP241.OD2      A      3.88     - | polar/apolar packing
+C10   C  ASP241.OD2      A      3.49     - | polar/apolar packing
+C11   C  VAL368.CG2      A      3.95     - | hydrophobic contact
+C13   C  VAL368.CG2      A      3.68     - | hydrophobic contact
+C18   C  CYS186.SG       A      3.73     - | polar/apolar packing
+C19   C  THR184.O        A      3.87     - | polar/apolar packing
+C20   C  TYR239.O        A      3.63     - | polar/apolar packing
+C21   C  TYR239.O        A      3.20     - | polar/apolar packing
+C24   C  TYR239.O        A      3.84     - | polar/apolar packing
+C26   C  PHE183.CD2      A      3.71     - | hydrophobic contact
+C27   C  SER182.O        A      3.34     - | polar/apolar packing
+C28   C  PHE183.CE2      A      3.62     - | hydrophobic contact
+C31   C  PHE183.CZ       A      3.98     - | hydrophobic contact
+C32   C  PHE183.CZ       A      3.34     - | hydrophobic contact
+C33   C  ASN181.O        A      3.25     - | polar/apolar packing
+C34   C  CYS186.SG       A      3.57     - | polar/apolar packing
+C35   C  GLU192.OE2      A      3.14     - | polar/apolar packing
+F01   F  GLU294.CB       A      3.26     - | hydrophobic contact
+F03   F  GLU294.CD       A      3.22     - | hydrophobic contact
+F04   F  LEU290.CD2      A      3.26     - | hydrophobic contact
+N08   N  ASP241.OD2      A      3.74     - | SALT BRIDGE to ASP241.OD2 (cationic ligand atom against anionic residue; charge pairing, so no angle criterion applies)
+N23   N  TYR239.O        A      3.16   111 | H-bond, good geometry
+N30   N  ILE237.CD1      A      3.75     - | polar/apolar packing
+O15   O  VAL368.CG2      A      3.83     - | polar/apolar packing
+O16   O  VAL368.CG2      A      3.60     - | polar/apolar packing
+O25   O  THR184.N        A      2.90   162 | H-bond, good geometry
+O29   O  TYR239.CD1      A      3.27     - | polar/apolar packing
+S14   S  VAL368.CG2      A      3.83     - | polar/apolar packing
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C05, C06, C09, C12, C22, N17
+COVERAGE: 35 of 35 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  CS(=O)(=O)N1CCC(NC(=O)c2cc(C3CC3)on2)CC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Truncating the arm to a methylsulfonyl gives up the amine's 3.74 A salt bridge to ASP241.OD2 and the trifluoromethyl sitting 3.26 A from GLU294.CB, while the amide's 2.90 A THR184.N hydrogen bond holds.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 17 of 18   item_id item_017   pair 9QDB A1I5Y->A1I53   PDB 9QDB
+================================================================================
+TARGET: Q13451
+INPUT SMILES: COc1cc2cc(OC)c1OCCCOC[C@@H](C)OC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  TYR113.OH       A      3.47     - | polar/apolar packing
+C13   C  TYR113.OH       A      3.91     - | polar/apolar packing
+C14   C  TYR113.OH       A      3.32     - | polar/apolar packing
+C15   C  TYR113.OH       A      3.24     - | polar/apolar packing
+C16   C  TYR113.OH       A      3.67     - | polar/apolar packing
+C17   C  TRP90.CE2       A      3.36     - | hydrophobic contact
+C18   C  TRP90.CH2       A      3.62     - | hydrophobic contact
+C19   C  TYR57.CZ        A      3.42     - | hydrophobic contact
+C20   C  TYR57.OH        A      3.56     - | polar/apolar packing
+C21   C  TYR113.OH       A      3.43     - | polar/apolar packing
+C22   C  ASP68.OD2       A      3.65     - | polar/apolar packing
+C23   C  ILE122.CD1      A      3.96     - | hydrophobic contact
+C24   C  PHE130.CE2      A      3.76     - | hydrophobic contact
+C25   C  LYS60.C         A      3.83     - | hydrophobic contact
+C26   C  LYS60.CA        A      3.81     - | hydrophobic contact
+C27   C  ILE122.CD1      A      3.71     - | hydrophobic contact
+C28   C  ASP68.CB        A      3.97     - | hydrophobic contact
+C3    C  TYR113.OH       A      3.53     - | polar/apolar packing
+C5    C  ASP68.OD2       A      3.56     - | polar/apolar packing
+C7    C  ASP68.OD1       A      3.92     - | polar/apolar packing
+N1    N  TYR113.OH       A      3.88     - | polar/apolar packing
+O5    O  TYR113.OH       A      3.26   106 | H-bond, good geometry
+O6    O  ILE87.N         A      2.97   157 | H-bond, good geometry
+O7    O  TYR113.OH       A      2.67   117 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C10, C11, C12, C2, C4, C6, C8, C9, O1, O2, O3, O4
+COVERAGE: 36 of 36 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  COc1cc2cc(OC)c1OCCOC[C@H](C)OC(=O)[C@@H]1CCCCN1C(=O)[C@H]2C1CCCCC1
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Shortening the macrocyclic tether by one carbon that makes no contact within 4.0 A here should tighten the ring, while TYR113.OH's 2.67 A and ILE87.N's 2.97 A hydrogen bonds are retained and one stereocentre inverts.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
+
+
+================================================================================
+ITEM 18 of 18   item_id item_018   pair 9Q66 A1CQP->A1CQZ   PDB 9Q66
+================================================================================
+TARGET: P48147
+INPUT SMILES: Cc1nn(CC2CCCCC2)c2ncc(C(=O)NCCC(=O)N3CCCC3)c(Cl)c12
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  GLY254.O        A      3.21     - | polar/apolar packing
+C10   C  ARG252.NH2      A      3.67     - | polar/apolar packing [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C11   C  ARG252.NH1      A      4.51     - | no contact within 4.0 A (nearest protein atom is 4.51 A away) [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C12   C  ARG252.NH1      A      4.47     - | no contact within 4.0 A (nearest protein atom is 4.47 A away) [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C13   C  PHE476.CD1      A      4.42     - | no contact within 4.0 A (nearest protein atom is 4.42 A away) [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C15   C  TYR473.OH       A      3.66     - | polar/apolar packing
+C17   C  TRP595.NE1      A      3.35     - | polar/apolar packing
+C18   C  SER554.OG       A      3.39     - | polar/apolar packing
+C19   C  TYR599.OH       A      3.74     - | polar/apolar packing
+C2    C  GLY254.O        A      3.69     - | polar/apolar packing [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C20   C  PHE476.CE2      A      3.59     - | hydrophobic contact
+C21   C  CYS255.SG       A      1.78     - | COVALENT BOND to CYS255.SG
+C22   C  ARG252.NH1      A      4.00     - | polar/apolar packing [nearest INDEPENDENT contact; CYS255 is excluded as the residue its covalent link already describes]
+C3    C  ARG252.NH2      A      3.45     - | polar/apolar packing
+C6    C  PHE173.O        A      3.80     - | polar/apolar packing
+C8    C  PHE173.CA       A      3.76     - | hydrophobic contact
+N1    N  ARG252.CG       A      3.68     - | polar/apolar packing
+         ARG252.NH2             3.94     - | polar partner: polar/apolar packing
+N2    N  ARG252.NH2      A      3.45   100 | H-bond, good geometry
+N3    N  ARG252.NH2      A      3.95     - | polar/apolar packing
+N4    N  CYS255.SG       A      3.94     - | polar/apolar packing
+N5    N  TRP595.NE1      A      3.79     - | polar/apolar packing
+O1    O  CYS255.CB       A      3.25     - | polar/apolar packing
+         CYS255.SG              3.46    65 | polar partner: polar contact, geometry poor
+O2    O  ARG643.NH1      A      2.88   161 | H-bond, good geometry
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C14, C16, C4, C5, C7, C9
+COVERAGE: 29 of 30 input heavy atoms have a row (1 not modelled, 0 omitted as clashes)
+NOT MODELLED in this crystal (absent from the coordinates, so they appear in no row above): CL1
+
+PROPOSED ANALOGUE (what the pair actually changed to):
+  Cc1nn(CCc2ccccc2)c2ncc(C(=O)NCC(=O)N3CCCC3)c(Cl)c12
+
+CHAIR SENTENCE -- this is the training target, the text the model is fine-tuned to emit:
+  Shortening the linker by one carbon moves the amide carbonyl that H-bonds ARG643.NH1 at 2.88 A, so that bond should loosen, while the 1.78 A CYS255.SG covalent bond is held; the cyclohexyl also aromatises.
+--------------------------------------------------------------------------------
+Audit the chair sentence against the contact table above. Score:
+
+  every_number_real          Every distance the sentence cites is a real row of that table.
+  attribution_correct        Every cited distance is attached to the atom/residue that owns it.
+  edit_described_correctly   Compare INPUT SMILES with the PROPOSED ANALOGUE. Does the sentence
+                             describe the change that actually separates them, with nothing
+                             silently extra?
+  no_invented_chemistry      It asserts no contact, bond or interaction the table does not support.
+  exemplar_quality           Would you put THIS row in a paper as an example of the training data?
+  one_line_why
