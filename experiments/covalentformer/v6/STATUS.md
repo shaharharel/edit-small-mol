@@ -708,6 +708,41 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### Does the model actually read the table? Extraction yes, binding no, 2026-10-19
+
+Measured over every cited distance in four trained arms, against each pair's own contact table,
+with a chance baseline (same number, a residue drawn at random from that same table):
+
+| arm | numbers cited | number is a real table row | (residue, distance) pairs | pair correct | chance |
+|---|---|---|---|---|---|
+| ChemDFM g3 | 754 | 99.9% | 481 | 29.1% | 11.0% |
+| ChemDFM g4 | 423 | 100.0% | 325 | **59.4%** | 13.2% |
+| ChemDFM g3+g4 | 510 | 100.0% | 382 | 49.7% | 10.7% |
+| ether0-B g3+g4 | 570 | 100.0% | 394 | 37.8% | 8.1% |
+
+**Extraction is solved.** Of 2,257 cited distances, essentially every one is a real measured value
+from that specific pair's table — one number in 754 for g3, zero for the rest. The model is reading
+the input, not confabulating numbers.
+
+**Binding is not.** Attaching the number to its owning residue runs 29-59%, i.e. **2.6x to 4.5x
+above chance** (8-13%). So there is real signal and it is nowhere near reliable: the model has
+learned where to look, not who owns what. This is the single mechanism behind every attribution
+result in the chemist panels, stated at the level of individual claims.
+
+Two consequences:
+
+- **`attrib 1b` must always be quoted with distances-per-sentence.** g3 cites 2.88 numbers per
+  sentence and binds 29.1% of them; g4 cites 1.61 and binds 59.4%. A terse arm scores better by
+  claiming less, so the rate alone ranks arms by verbosity as much as by skill.
+- **g4 is the best attributor of any arm measured**, which is the strongest evidence yet that the
+  g4 labelling pass improved grounding rather than only adding volume.
+
+Note on a wording trap this corrects: the base arms' advantage on `would_show_a_chemist` was
+earlier described as them "being penalised for being falsifiable". That is a defect in the metric,
+NOT a virtue of omitting distances. Citing a measured distance is strictly better behaviour; the
+base arms simply cannot be marked wrong because they never commit to anything — ChemDFM base
+hedges in 86.4% of sentences and cites a distance in 0.0%.
+
 ### Chemist columns coverage-adjusted in place, 2026-10-19
 
 Every column in the big table now shares one denominator: **all 262 generations**. The four
