@@ -176,9 +176,9 @@ def build_generation_block():
                 % svg(inp[pair], g),
                 '<td class="mol"><div class="lbl-hd">%s%s</div>%s</td>'
                 % (esc(name), badge, svg(g, inp[pair])),
-                '<td><div class="lbl-hd">%s &mdash; its own sentence</div>'
+                '<td><div class="lbl-hd">Model reasoning</div>'
                 '<div class="lbl-rsn">%s</div></td>'
-                % (esc(name), esc((r.get('gen_sentence') or '').strip() or '(no sentence)'))])
+                % esc((r.get('gen_sentence') or '').strip() or '(no sentence)')])
     lede = ('<h3>Held-out test pairs &mdash; the same three pairs, three ChemDFM arms</h3>'
             '<p class="lede">Three pairs from the 262-row held-out set that <b>all three</b> arms '
             'answered with a parseable molecule and a sentence &mdash; only 27 of 262 pairs clear '
