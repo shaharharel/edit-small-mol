@@ -20,6 +20,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 EV = '/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/v7_evidence.jsonl'
 SCR = ('/private/tmp/claude-501/-Users-shaharharel-Documents-github-edit-small-mol/'
        'a64ce54a-c2cc-42bc-bc54-bfe1ad41d081/scratchpad/alltab/sft_runs')
+# Default is the ChemDFM g3+g4 arm, unchanged, so the shipped chemdfm_g3g4_eval package stays
+# reproducible from this script at its original seed. --arm/--gen point it at another arm.
 MODELS = {'chemdfm_g3g4': '/private/tmp/claude-501/-Users-shaharharel-Documents-github-edit-small-mol/a64ce54a-c2cc-42bc-bc54-bfe1ad41d081/scratchpad/g3g4res/chemdfm/generations.jsonl'}
 import importlib.util as _il
 _s = _il.spec_from_file_location('_p5', os.path.join(HERE, 'build_selfconsist_panel_5arm.py'))
@@ -57,14 +59,36 @@ def main():
     ap.add_argument('--per-arm', type=int, default=16)
     ap.add_argument('--out', required=True)
     ap.add_argument('--seed', type=int, default=41)
+    ap.add_argument('--arm', default=None, help='arm name; with --gen, replaces the default arm')
+    ap.add_argument('--gen', default=None, help='generations.jsonl for --arm')
+    ap.add_argument('--subset-of', default=None,
+                    help='a KEY json from a larger package: restrict the pool to the pairs it '
+                         'holds, so this package is a strict subset of that one. The in-house '
+                         'panel uses this so any gap against the external pool is calibration '
+                         'on the SAME molecules and not a sampling difference.')
     a = ap.parse_args()
     rng = random.Random(a.seed)
 
+    models = dict(MODELS)
+    if a.gen:
+        if not a.arm:
+            ap.error('--gen requires --arm')
+        models = {a.arm: a.gen}
+    elif a.arm:
+        ap.error('--arm requires --gen')
+
+    keep = None
+    if a.subset_of:
+        keep = {v['pair'] for v in json.load(open(a.subset_of)).values()}
+        print('restricting pool to the %d pairs of %s' % (len(keep), a.subset_of))
+
     items = []
-    for name, path in MODELS.items():
+    for name, path in models.items():
         rows = [json.loads(l) for l in open(path)]
         el = [r for r in rows
               if smi(r) and Chem.MolFromSmiles(smi(r)) and (r.get('gen_sentence') or '').strip()]
+        if keep is not None:
+            el = [r for r in el if r['pair'] in keep]
         print('%-13s eligible %3d of %d' % (name, len(el), len(rows)))
         # Deduplicate on CONTENT, not on pair id. The same input ligand in the same PDB paired with
         # a different target ligand code is a different pair id but yields a byte-identical input
