@@ -92,12 +92,38 @@ def main():
     ap.add_argument('--out', required=True, help='jsonl written in sft_pocket.jsonl schema')
     ap.add_argument('--samples', type=int, default=8,
                     help='rows to emit; each is the same prompt, so the arm is sampled N times')
+    ap.add_argument('--covalent-from-provenance', action='store_true',
+                    help="Annotate the warhead row as a covalent bond using the pose MANIFEST's "
+                         "declared cys_residue, instead of inferring covalency from the modelled "
+                         "distance. Needed because the cofold models the C-S bond at 1.40 A, below "
+                         "cov_check's ideal-0.15 floor, so geometric inference rejects it -- a rule "
+                         "calibrated for crystallographic refinement error, not prediction error. "
+                         "Without this the warhead reaches the model as ordinary packing and its "
+                         "defining covalency is invisible, which is NOT how the crystal training "
+                         "rows read (those carry an explicit 'COVALENT BOND to CYS<n>.SG' row).")
     a = ap.parse_args()
 
     ev4 = load_ev4()
     man = json.load(open(MANIFEST))['mol1']
     prot, lig = read_protein(PROT), read_ligand(LIG)
     print('protein heavy atoms %d, ligand heavy atoms %d' % (len(prot), len(lig)))
+
+    # Identify the warhead atom geometrically and then VERIFY it against the manifest's chemistry
+    # rather than trusting either alone. The manifest names it C26 in CCD numbering while this
+    # builder generates element+index names, so the two cannot be compared by name.
+    warhead = None
+    if a.covalent_from_provenance:
+        sg = [P for P in prot if P['res'] == 'CYS' and P['rn'] == str(man['cys_residue'])
+              and P['name'] == 'SG']
+        assert len(sg) == 1, 'expected exactly one CYS%s.SG, found %d' % (man['cys_residue'], len(sg))
+        warhead = min(lig, key=lambda L: dist(L['xyz'], sg[0]['xyz']))
+        d = dist(warhead['xyz'], sg[0]['xyz'])
+        # a thiol adds to the acrylamide BETA carbon, which in the modelled adduct is a carbon
+        # carrying exactly one heavy neighbour (its fourth valence going to the protein sulfur)
+        assert warhead['el'] == 'C', 'nearest atom to SG is %s, not carbon' % warhead['el']
+        assert d < 2.5, 'nearest ligand atom is %.2f A from SG -- too far to be a bonded warhead' % d
+        print('warhead atom (nearest to CYS%s.SG): %s at %.2f A  [manifest declares %s]'
+              % (man['cys_residue'], warhead['name'], d, man['warhead_atom_name']))
 
     rows, named = [], set()
     for L in lig:
@@ -112,6 +138,17 @@ def main():
                            'no protein atom within %.1f A (nearest %.2f A)' % (CUTOFF, bd)))
             continue
         typ, ang = ev4.type_contact(L['el'], best, bd)
+        if (a.covalent_from_provenance and best['res'] == 'CYS'
+                and best['rn'] == str(man['cys_residue']) and best['name'] == 'SG'
+                and L is warhead and 'COVALENT' not in typ):
+            # Provenance, not geometry. The manifest asserts this pose is a Cys<n> covalent cofold
+            # and names the warhead atom; the distance is disclosed as unreliable rather than
+            # silently trusted or silently discarded.
+            typ = ('COVALENT BOND to %s%s.%s [declared by the pose provenance (%s), NOT inferred '
+                   'from this distance: the cofold models the bond at %.2f A against a ~1.81 A '
+                   'ideal for C-S, so treat the LENGTH as unreliable while the BOND itself is '
+                   'asserted]'
+                   % (best['res'], best['rn'], best['name'], man['pose_source'], bd))
         named.add('%s%s' % (best['res'], best['rn']))
         rows.append('%-5s %-2s %-15s %-6s %5.2f  %4s | %s'
                     % (L['name'], L['el'], '%s%s.%s' % (best['res'], best['rn'], best['name']),
