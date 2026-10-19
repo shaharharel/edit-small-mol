@@ -708,6 +708,69 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### mol1 A/B: annotating the covalent bond fixed three things and broke one, 2026-10-19
+
+The first mol1 panel found that none of the three arms mentioned CYS346 and that the base arm
+proposed methacrylamide, the reactivity-dead warhead. Root cause was ours: the cofold models the
+C-S bond at 1.40 A, below `cov_check`'s ideal-0.15 floor, so the warhead reached the model as
+ordinary packing. Re-running Boltz would not have helped -- the pose was ALREADY a Cys346 covalent
+cofold. Fix was `--covalent-from-provenance`: assert the bond from the manifest's declared
+`cys_residue`, disclose the length as unreliable, invent nothing.
+
+Re-ran base/g4/g3+g4 on the annotated prompt and re-panelled (`panel_mol1_cov/`, 3 reviewers,
+slots shuffled). **All 21 fields unanimous across all three reviewers** -- the tightest agreement of
+any panel here.
+
+| slot | arm | analogue | warhead | cites anchor | misuses 1.40 A | attribution | medchem | publishable |
+|---|---|---|---|---|---|---|---|---|
+| A | base | T | T | T | **F** | F | F | F |
+| B | g3+g4 | T | T | T | **T** | **T** | **T** | F |
+| C | g4 | T | T | T | **T** | F | F | F |
+
+best_slot = B from all three; any_slot_trustworthy = false from all three.
+
+**What the one prompt row bought:**
+
+- **Covalent anchor cited: 0 of 3 -> 3 of 3.** The collective miss is gone.
+- **Warhead preserved in all three**, verified by RDKit: intact unmethylated `C=CC(=O)N`, none
+  touched the C1 beta-carbon. The methacrylamide proposal disappeared.
+- **g3+g4's attribution became correct.** Before it misattributed ALA417.N 2.86 A (that is N4, a
+  retained imidazole nitrogen); now it cites LYS369.CG 3.67 A = C14, an isopropyl methyl, genuinely
+  the group it edits. The only correct attribution in the round.
+
+**What it broke, and it is my fix that broke it.** The row says "treat the LENGTH as unreliable
+while the BOND itself is asserted", and the prompt's standing instruction says uncertain contacts
+must not be cited as established. Both coherent arms quoted **"the 1.40 A CYS346 covalent anchor"**
+as fact. Only the base arm omitted it, and its compliance is vacuous -- it cites no distances at
+all. **So among usable outputs the caveat had a 0% success rate.** Splitting "bond asserted" from
+"length unreliable" is evidently harder for these models than noticing the bond, which is the same
+pattern the earlier panels found with SUSPECT-flagged rows.
+
+**What it did not touch**, as expected, because these are molecule-vs-claim defects rather than
+missing information:
+
+- **g4 still ships an undisclosed regioisomer**: `c3cncn3C` migrates the N-alkyl to the adjacent
+  ring nitrogen, capping N4 -- the acceptor 2.86 A from the ALA417 backbone NH, the tightest polar
+  contact in the table -- while the sentence claims a plain isopropyl->methyl. Found again by all
+  three reviewers independently, as in the first round.
+- **g4's argument is also backwards**: it seeks to reduce "the arm's proximity to LEU468.CD1 at
+  3.44 A", but 3.44 A to a leucine CD1 is a favourable hydrophobic contact, not a clash -- and that
+  row belongs to C12, a retained ring carbon.
+- **base misdescribes its own molecule**: it narrates an amide-carbonyl-to-methylene change absent
+  from its own SMILES (RDKit: two amides, unchanged), and silently deletes the imidazole making the
+  tightest polar contact.
+
+**Net:** the prompt defect is fixed and the remaining failure is the project's core finding, not a
+pipeline artefact. g3+g4 is, in two reviewers' words, four characters from printable -- strike the
+`1.40 A` clause and it passes.
+
+**Cheap follow-up worth doing:** the caveat is a long parenthetical sitting three words from a
+concrete number. Testing `COVALENT BOND to CYS346.SG [length not modelled reliably]` -- flag first,
+no figure at all -- would separate "cannot respect a flag" from "cannot resist an adjacent number".
+One-line change, one generation run.
+
+Report deliberately NOT updated; findings to be discussed first.
+
 ### mol1 chemist panel: no slot trustworthy, and two of my own claims were wrong, 2026-10-19
 
 `panel_mol1/`, three reviewers, one case, three slots shuffled, predicted-geometry caveats in the

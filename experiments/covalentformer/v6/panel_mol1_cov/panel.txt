@@ -1,0 +1,67 @@
+================================================================================
+ZAP70 / mol1 -- three proposals, COVALENT-ANNOTATED prompt
+================================================================================
+TARGET: P43403
+INPUT SMILES: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  CYS346.SG       A       1.40     - | COVALENT BOND to CYS346.SG [declared by the pose provenance (cys346_boltz_v2_2026-05-13), NOT inferred from this distance: the cofold models the bond at 1.40 A against a ~1.81 A ideal for C-S, so treat the LENGTH as unreliable while the BOND itself is asserted]
+C2    C  CYS346.SG       A       2.74     - | polar/apolar packing -- unusually close (2.74 A vs 3.5 A vdW sum); treat the crystal model as uncertain
+C3    C  PRO421.CG       A       3.60     - | hydrophobic contact
+O1    O  LYS424.NZ       A       3.02     - | polar contact, geometry unknown
+N1    N  PRO421.CD       A       3.40     - | polar/apolar packing
+C4    C  PRO421.CD       A       3.71     - | hydrophobic contact
+C5    C  GLY420.CA       A       3.71     - | hydrophobic contact
+C6    C  GLY420.CA       A       3.67     - | hydrophobic contact
+C7    C  GLY418.O        A       3.36     - | polar/apolar packing
+C8    C  ALA417.O        A       3.27     - | polar/apolar packing
+C9    C  LEU344.CD1      A       3.35     - | hydrophobic contact
+C10   C  LEU344.CD1      A       3.33     - | hydrophobic contact
+O2    O  LEU344.CD1      A       3.52     - | polar/apolar packing
+N2    N  ALA417.O        A       3.13     - | polar contact, geometry unknown
+C11   C  LEU468.CD1      A       3.56     - | hydrophobic contact
+C12   C  LEU468.CD1      A       3.44     - | hydrophobic contact
+N3    N  ALA367.CB       A       3.33     - | polar/apolar packing
+C13   C  MET414.SD       A       3.63     - | polar/apolar packing
+C14   C  LYS369.CG       A       3.67     - | hydrophobic contact
+C15   C  MET414.SD       A       3.53     - | polar/apolar packing
+C16   C  GLU415.O        A       3.12     - | polar/apolar packing
+N4    N  ALA417.N        A       2.86     - | polar contact, geometry unknown
+C17   C  GLY420.CA       A       3.82     - | hydrophobic contact
+C18   C  PRO421.CD       A       3.68     - | hydrophobic contact
+
+THREE PROPOSALS. Letters are shuffled; one model is UNTRAINED. Judge each only against the table.
+
+  PROPOSAL A
+    molecule as extracted: (none extracted by the parser)
+    reasoning: The proposed analogue replaces the amide carbonyl oxygen with a methylene group, potentially increasing hydrophobic interactions with PRO421 and LEU344, while maintaining the covalent bond to CYS346. SMILES: C=CC(=O)N1Cc2cccc(C(=O)NC3CN(C(C)C)C3)c2C1
+    (raw model output, for reference: The proposed analogue replaces the amide carbonyl oxygen with a methylene group, potentially increasing hydrophobic interactions with PRO421 and LEU344, while maintaining the covalent bond to CYS346. SMILES: C=CC(=O)N1Cc2cccc(C(=O)NC3CN(C(C)C)C3)c2C1<|im_end|>)
+
+  PROPOSAL B
+    molecule as extracted: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(Cc4ccccc4)cn3)c2C1
+    reasoning: Replacing isopropyl with benzyl should spread the substituent near LYS369.CG at 3.67 Å toward MET414 and GLU415 while retaining the acrylamide-derived 1.40 Å CYS346 covalent bond.
+    (raw model output, for reference: Replacing isopropyl with benzyl should spread the substituent near LYS369.CG at 3.67 Å toward MET414 and GLU415 while retaining the acrylamide-derived 1.40 Å CYS346 covalent bond.
+SMILES: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(Cc4ccccc4)cn3)c2C1<|im_end|>)
+
+  PROPOSAL C
+    molecule as extracted: C=CC(=O)N1Cc2cccc(C(=O)Nc3cncn3C)c2C1
+    reasoning: Replacing isopropyl with methyl should reduce the arm's proximity to LEU468.CD1, initially 3.44 Å, while retaining the 1.40 Å CYS346 covalent anchor.
+    (raw model output, for reference: Replacing isopropyl with methyl should reduce the arm's proximity to LEU468.CD1, initially 3.44 Å, while retaining the 1.40 Å CYS346 covalent anchor.
+SMILES: C=CC(=O)N1Cc2cccc(C(=O)Nc3cncn3C)c2C1<|im_end|>)
+
+--------------------------------------------------------------------------------
+CONTEXT YOU MUST FACTOR IN.
+
+mol1 is a designed covalent seed, not a crystallised ligand. The table is computed from a PREDICTED
+structure (Boltz-2 covalent cofold against ZAP70 Cys346, ligand ipTM 0.976), so every distance is
+predicted, not measured.
+
+The first row now carries an explicit covalent-bond annotation. Read its wording carefully: the
+bond is ASSERTED from the pose provenance, while the 1.40 A LENGTH is explicitly flagged
+unreliable (a real C-S bond is ~1.81 A). The prompt's own standing instruction is: "Where a contact
+is flagged uncertain, do not cite it as established."
+
+So in addition to the usual checks, judge: does the proposal quote the 1.40 A figure as though it
+were a reliable measurement? Citing the covalent BOND is correct and desirable. Citing its LENGTH
+as a fact is not, because the prompt flagged it.
