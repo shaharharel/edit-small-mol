@@ -708,6 +708,67 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### GRPO reward module: built, validated, and two self-inflicted defects caught, 2026-10-20
+
+`reward_verifiers.py`. Scores a generation from the prompt's own contact table plus the model's own
+output -- **no reference answer**, so the training pool is any pocket+ligand prompt rather than only
+labelled MMP pairs. That is the main argument for this direction: it is the one axis where we are
+not labour-limited.
+
+**Validation against arms whose metrics we already know, which is the whole point of doing it
+locally first:**
+
+| arm | gated to 0 | attribution | n_claims | total | known attrib 1b |
+|---|---|---|---|---|---|
+| ether0 base | **100%** | 0.000 | 0.00 | **0.000** | 1.000 <- exploit |
+| SmileyLlama base | **100%** | 0.000 | 0.00 | **0.000** | 1.000 <- exploit |
+| Llama base | 98% | 0.008 | 0.82 | 0.012 | - |
+| ether0-B g3 | 31% | 0.187 | 2.05 | 0.558 | 0.330 |
+| ChemDFM g3 | 25% | 0.179 | 2.05 | 0.581 | 0.290 |
+| ChemDFM g4 | 25% | 0.341 | 1.38 | 0.629 | 0.693 |
+| **ChemDFM g3+g4** | **19%** | 0.327 | 1.55 | **0.645** | 0.495 |
+
+Both silence exploits are dead. The ordering is sensible, trained arms are far clear of base arms,
+and **g3+g4 tops the composite where attrib 1b alone put g4 first** -- because g4's high ratio comes
+partly from citing less (1.38 claims/sentence against 1.55), which the coverage floor prices in.
+The composite also agrees with the chemist panels about which arm is best, which is useful
+independent corroboration.
+
+**Defect 1, caught by validation: the vacuous-default back door.** The coverage floor closed the
+obvious exploit, but several components return 1.0 when there is nothing to check -- an arm citing
+no distances has no wrong interaction type, no abused caveat -- so SmileyLlama base banked 0.324
+while scoring 0.000 on attribution and grounding. Fixed with two thresholds: a hard GATE at >=1
+claim kills genuine silence, a divisor FLOOR at 2 grades terseness without erasing it. A single hard
+gate at 2 zeroed 40% of ChemDFM g3 including correct single-claim sentences.
+
+**Defect 2, worse: the atom-name mapping was silently WRONG, not merely absent.** I assumed the
+contact table lists one row per input heavy atom in molecule order. Both halves are false: the table
+omits atoms with no contact within 4.0 A, and **the rows are sorted alphabetically** (`C`, `C1`,
+`C10`, `C11`...). So on the ~83% of rows where counts happened to coincide, the positional zip
+returned a confident wrong mapping instead of failing. Any `directional` number reported before
+this fix should be discarded.
+
+**`directional` is parked at weight 0 after three attempts.** Current measured state: the CCD-based
+mapping now succeeds on 408/408, but 324 (79%) match ambiguously -- making bonds generic is what let
+the match succeed and also erases the bond orders that would pin a unique correspondence. And even
+with mapping fixed the component fires on only 7.5-25.5% of rows, because direction parsing reads 37
+of 251 sentences as entirely neutral. It is the most targeted verifier in principle and unusable in
+practice until symmetry and direction parsing are both solved. Left computed and instrumented.
+
+**Deliberately at weight 0 as a tripwire**, not because they are broken: `banned_vocabulary` and
+`stereo_disclosure`. Train on attribution/grounding/consistency and watch these two. If they fall
+while the trained terms rise, the model is gaming the checker. Promoting them destroys the
+instrument.
+
+**Cost**: ~0.17 s per generation, dominated by MCS. Memoised on the canonical-SMILES pair, but the
+hit rate is only 96/408 on archived data where every row is a different pair; inside a GRPO group it
+helps only when samples collide. The real fix is a cheaper atom mapping, not caching.
+
+**Known risk before training**: gating rates of 19-31% on the best arms mean roughly a quarter of
+rollouts return zero reward. If all samples in a group gate to zero the advantage is zero and the
+step is wasted -- the "trivial group" problem ether0 hit. Mitigation is a curriculum that prefers
+prompts where the current policy sometimes succeeds.
+
 ### mol1 A/B: annotating the covalent bond fixed three things and broke one, 2026-10-19
 
 The first mol1 panel found that none of the three arms mentioned CYS346 and that the base arm

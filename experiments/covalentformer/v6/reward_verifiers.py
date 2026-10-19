@@ -75,7 +75,20 @@ METHACRYLAMIDE = Chem.MolFromSmarts('[CH2]=[C]([CH3])C(=O)[NX3]')
 WEIGHTS = {            # see design note 3 for the two zeros
     'attribution': 1.00,
     'interaction_type': 0.50,
-    'directional': 0.75,
+    # DISABLED, and parked rather than fixed. Three attempts; current state, measured:
+    #   * name->index mapping now succeeds on 408/408 molecules via the CCD graph, BUT 324 of those
+    #     (79%) match AMBIGUOUSLY. Making bonds generic -- which is what let the match succeed at
+    #     all -- also erases the bond-order information that would pin a unique correspondence, so
+    #     "take the first match" is arbitrary wherever the generic-bond graph has more automorphisms
+    #     than the real molecule.
+    #   * even with mapping fixed the component only FIRES on 7.5% (g3+g4) to 25.5% (g3) of rows,
+    #     because direction parsing reads 37 of 251 sentences as entirely neutral and the owner
+    #     lookup misses on many of the rest.
+    # It is the most targeted verifier available in principle -- "gives up" claims should cite atoms
+    # the edit changed, "retains" claims atoms it kept -- and it is not usable at any weight until
+    # both the symmetry and the direction parsing are solved. Left computed and instrumented so the
+    # coverage stays visible; reinstating it means fixing those two things, not tuning this number.
+    'directional': 0.00,
     'grounded': 0.50,
     'edit_self_consistency': 0.75,
     'uncertainty_respect': 0.50,
@@ -146,10 +159,26 @@ def mol(smi):
     return Chem.MolFromSmiles(smi) if smi else None
 
 
+_MCS_CACHE = {}
+_MCS_STATS = collections.Counter()
+
+
 def changed_conserved(inp, gen):
-    """Input atom indices the model's OWN edit touched, and those it kept. See design note 2."""
+    """Input atom indices the model's OWN edit touched, and those it kept. See design note 2.
+
+    Memoised on the canonical SMILES pair: MCS dominates the cost of this reward and GRPO rescores
+    the same prompt many times per step, so the same pair recurs constantly.
+    """
     if inp is None or gen is None:
         return None, None
+    try:
+        ck = (Chem.MolToSmiles(inp), Chem.MolToSmiles(gen))
+    except Exception:
+        ck = None
+    if ck is not None and ck in _MCS_CACHE:
+        _MCS_STATS['hit'] += 1
+        return _MCS_CACHE[ck]
+    _MCS_STATS['miss'] += 1
     try:
         res = rdFMCS.FindMCS([inp, gen], timeout=5, ringMatchesRingOnly=True,
                              atomCompare=rdFMCS.AtomCompare.CompareElements,
@@ -157,28 +186,114 @@ def changed_conserved(inp, gen):
         patt = Chem.MolFromSmarts(res.smartsString) if res and res.smartsString else None
         keep = set(inp.GetSubstructMatch(patt)) if patt else set()
     except Exception:
+        if ck is not None:
+            _MCS_CACHE[ck] = (None, None)
         return None, None
     allidx = set(range(inp.GetNumAtoms()))
-    return allidx - keep, keep
+    out = (allidx - keep, keep)
+    if ck is not None:
+        _MCS_CACHE[ck] = out
+    return out
 
 
-def atom_name_to_index(model_input, inp):
-    """Map table atom names onto input-molecule indices, positionally.
+CCD_PATH = ('/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/ccd_atoms.json')
+_CCD = None
+_MAP_STATS = collections.Counter()
 
-    The table lists one row per input heavy atom in molecule order, so position is the mapping. This
-    is exact for tables built by the v7 pipeline and is asserted by the caller on length.
+
+def _ccd():
+    global _CCD
+    if _CCD is None:
+        try:
+            _CCD = json.load(open(CCD_PATH))
+        except Exception:
+            _CCD = {}
+    return _CCD
+
+
+def atom_name_to_index(model_input, inp, ligand_code=None):
+    """Map contact-table atom NAMES onto input-molecule atom indices.
+
+    THE POSITIONAL VERSION OF THIS FUNCTION WAS WRONG AND SILENTLY SO. It assumed the table listed
+    one row per input heavy atom in molecule order. Two things are false about that:
+
+      * the table omits atoms with no contact within 4.0 A (they are named in a separate
+        "NOTHING WITHIN 4.0 A" line), so it is often SHORTER than the molecule -- 42 of 251 rows in
+        one arm; and
+      * the rows are sorted ALPHABETICALLY by atom name ('C', 'C1', 'C10', 'C11', ...), not in
+        molecule order.
+
+    The second defect is the dangerous one: whenever the counts happened to coincide the positional
+    zip returned a confident, wrong mapping rather than failing, so `directional` was not merely
+    vacuous on the rows it skipped -- it was wrong on many of the rows it scored.
+
+    The correct mapping needs the chemical-component definition, which names every atom. Build a
+    graph from the CCD entry, match it onto the input molecule, and read the correspondence off the
+    match. Returns None when that cannot be done, and records why in _MAP_STATS so the caller can
+    see how often the component is actually measurable.
     """
-    names = [a['atom'] for a in (model_input.get('atoms') or [])]
-    if inp is None or len(names) != inp.GetNumHeavyAtoms():
+    if inp is None:
+        _MAP_STATS['no_input'] += 1
         return None
-    heavy = [a.GetIdx() for a in inp.GetAtoms() if a.GetAtomicNum() > 1]
-    return dict(zip(names, heavy))
+    rows = model_input.get('atoms') or []
+    names = [a['atom'] for a in rows]
+    if not names:
+        _MAP_STATS['no_rows'] += 1
+        return None
+    entry = _ccd().get((ligand_code or '').upper()) if ligand_code else None
+    if not entry:
+        _MAP_STATS['no_ccd_entry'] += 1
+        return None
+    heavy = [(n, e) for n, e in entry['atoms'] if e.upper() != 'H']
+    idx = {n: i for i, (n, _) in enumerate(heavy)}
+    em = Chem.RWMol()
+    for _, e in heavy:
+        em.AddAtom(Chem.Atom(e.capitalize() if len(e) > 1 else e.upper()))
+    for b in entry.get('bonds') or []:
+        a1, a2 = b[0], b[1]
+        if a1 in idx and a2 in idx:
+            em.AddBond(idx[a1], idx[a2], Chem.BondType.SINGLE)
+    ccd_mol = em.GetMol()
+    try:
+        Chem.SanitizeMol(ccd_mol, Chem.SanitizeFlags.SANITIZE_SYMMRINGS
+                         | Chem.SanitizeFlags.SANITIZE_ADJUSTHS, catchErrors=True)
+    except Exception:
+        pass
+    # Match on the heavy-atom skeleton ONLY. The CCD entry carries bond orders we deliberately did
+    # not transcribe (every bond above is SINGLE), so a SMARTS derived from this graph can never
+    # match an aromatic ring -- which is why the first attempt failed on 408 of 408 molecules.
+    # AdjustQueryProperties with makeBondsGeneric turns every bond into "any bond", so the query is
+    # pure connectivity plus element, which is exactly the correspondence we need.
+    try:
+        qp = Chem.AdjustQueryParameters()
+        qp.makeBondsGeneric = True
+        qp.makeAtomsGeneric = False
+        qp.adjustDegree = False
+        qp.aromatizeIfPossible = False
+        q = Chem.AdjustQueryProperties(ccd_mol, qp)
+        matches = inp.GetSubstructMatches(q, uniquify=False, maxMatches=64,
+                                          useChirality=False) if q is not None else ()
+        # a symmetric ligand can match several ways; any one of them is a valid naming of
+        # equivalent atoms, so take the first, but record when it was ambiguous
+        if len(matches) > 1:
+            _MAP_STATS['ambiguous_symmetry'] += 1
+        match = matches[0] if matches else ()
+    except Exception:
+        match = ()
+    if not match or len(match) != len(heavy):
+        _MAP_STATS['ccd_match_failed'] += 1
+        return None
+    order = list(Chem.CanonicalRankAtoms(ccd_mol)) if False else list(range(len(heavy)))
+    name_by_pos = {i: n for n, i in idx.items()}
+    out = {name_by_pos[i]: match[i] for i in order if i < len(match)}
+    _MAP_STATS['ok'] += 1
+    return out
 
 
 # ----------------------------------------------------------------- components
 
 
-def score(model_input, sent, gen_smi, inp_smi):
+def score(model_input, sent, gen_smi, inp_smi, ligand_code=None):
     """-> dict of component scores in [0,1] (plus booleans), and the weighted total."""
     rows, by_res, nothing, suspect, typing = index_table(model_input)
     claims = parse_claims(sent)
@@ -246,10 +361,11 @@ def score(model_input, sent, gen_smi, inp_smi):
             tot += 1
             good += 'covalent' in t
     c['interaction_type'] = (good / tot) if tot else 1.0
+    c.setdefault('measured', {})['interaction_type'] = tot > 0
 
     # --- directional attribution (design note 2) -------------------
     chg, kept = changed_conserved(inp, gen)
-    name2idx = atom_name_to_index(model_input, inp)
+    name2idx = atom_name_to_index(model_input, inp, ligand_code)
     tot = good = 0
     if chg is not None and name2idx:
         owner = {}
@@ -266,6 +382,8 @@ def score(model_input, sent, gen_smi, inp_smi):
             tot += 1
             good += (i in chg) if x['dir'] == 'gives_up' else (i in kept)
     c['directional'] = (good / tot) if tot else 1.0
+    c.setdefault('measured', {})['directional'] = tot > 0
+    c['directional_n'] = tot
 
     # --- grounded: named residues exist, and none is contact-free ---
     named = {x['res'] for x in claims}
@@ -299,6 +417,7 @@ def score(model_input, sent, gen_smi, inp_smi):
                 r'uncertain|unreliable|not (established|citable)|may not', x['span'], re.I):
             bad += 1
     c['uncertainty_respect'] = 1.0 - (bad / len(numeric)) if numeric else 1.0
+    c.setdefault('measured', {})['uncertainty_respect'] = bool(numeric)
 
     # --- chemistry cleanliness --------------------------------------
     liab = []
@@ -332,6 +451,7 @@ def score(model_input, sent, gen_smi, inp_smi):
     c['components'] = {k: float(c.get(k, 0.0)) for k in WEIGHTS}
     c['total'] = sum(WEIGHTS[k] * c['components'][k] for k in WEIGHTS) / sum(WEIGHTS.values())
     c['n_claims'] = len(numeric)
+    c.setdefault('measured', {})
     return c
 
 
@@ -381,20 +501,34 @@ def main():
                 v = r.get(k)
                 if isinstance(v, str) and v.strip() and v.strip() != 'None':
                     g = v.strip(); break
-            s = score(mi, (r.get('gen_sentence') or '').strip(), g, mi.get('input_smiles'))
+            code = None
+            try:
+                code = r['pair'].split()[1].split('->')[0]
+            except Exception:
+                pass
+            s = score(mi, (r.get('gen_sentence') or '').strip(), g,
+                      mi.get('input_smiles'), ligand_code=code)
             n += 1
             gated += (s['total'] == 0.0)
             for k, v in s['components'].items():
                 agg[k].append(v)
+            for k, v in (s.get('measured') or {}).items():
+                agg['MEASURED_' + k].append(float(v))
+            if s.get('directional_n') is not None:
+                agg['directional_n'].append(s['directional_n'])
             agg['total'].append(s['total'])
             agg['n_claims'].append(s['n_claims'])
         name = os.path.basename(os.path.dirname(path)) or os.path.basename(path)
         print('\n%s   n=%d  gated-to-zero=%d (%.0f%%)' % (name, n, gated, 100.0*gated/max(n,1)))
-        for k in list(WEIGHTS) + ['n_claims', 'total']:
+        for k in list(WEIGHTS) + ['n_claims', 'directional_n', 'total',
+                                  'MEASURED_interaction_type', 'MEASURED_directional',
+                                  'MEASURED_uncertainty_respect']:
             v = agg[k]
             if v:
                 print('  %-24s %6.3f' % (k, sum(v)/len(v)))
         out[name] = {k: (sum(v)/len(v) if v else None) for k, v in agg.items()}
+    print('\nMCS cache: %d hits, %d misses' % (_MCS_STATS['hit'], _MCS_STATS['miss']))
+    print('name->index mapping: %s' % dict(_MAP_STATS))
     if a.json:
         json.dump(out, open(a.json, 'w'), indent=2)
         print('\nwrote %s' % a.json)
