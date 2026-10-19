@@ -188,7 +188,7 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | ChemDFM-14B **base** | – | 0.118 | 0.871 | 0.161 | 0.793 | 0.750 | 0.104 | 10.6%¤∅ | 3.9%¤∅ | **11.6%** | **1.7%** | 8.4%◊ |
 | ether0-24B **base** | – | 0.225 | 0.847 | 0.678 | 0.884 | 1.000 | 0.247 | 12.7%¤∅ | 0.0%¤∅ | 19.2% | 2.8% | 8.4%◊‡‡ |
 | Llama-3.1-8B-Inst **base** | – | 0.519 | 0.750 | 0.059 | 0.737 | 0.857 | 0.761 | 32.4%¤∅ | 6.5%¤∅ | 44.3% | 3.2% | 44.3%◊ |
-| SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | 30.6%¤∅ | 0.0%¤∅ | – | – | – |
+| SmileyLlama-8B **base** | – | 0.882 | 0.753 | 0.069 | 0.582 | 0.786 | 0.277 | 30.6%¤∅ | 0.0%¤∅ | 70.5%◊ | 0.0%◊‡‡ | 0.0%◊‡‡ |
 | ChemDFM-14B | g2 | 0.893 | 0.752 | 0.021 | 0.658 | **0.828** | 0.523 | **72.4%** | **22.9%** | TBD | TBD | TBD |
 | **ChemDFM-14B** | **g3** | **0.958** | 0.777 | 0.032 | **0.683** | 0.818 | 0.482 | **95.8%**† | **29.9%**† | **92.9%** | **22.0%** | 60.5%¶ |
 | **ChemDFM-14B** | **g4** | **0.966** | 0.751 | 0.004 | 0.644 | 0.767 | 0.462 | 89.2%¤ | 37.6%¤ | TBD | TBD | 49.7%¶ |
@@ -198,9 +198,9 @@ only the training set varies. ⏳ running · 🔜 queued · ❌ needs a chemist 
 | **ether0-24B (no schema)** | **g2** | 0.897 | 0.753 | 0.009 | **0.692** | 0.800 | **0.532** | 80.4%§ | 26.2%§ | 87.4% | 13.8% | 52.2%¶ |
 | **ether0-24B schema B** | **g4** | 0.905 | 0.772 | 0.008 | 0.624 | **0.857** | **0.561** | 77.9%¤ | 33.9%¤ | TBD | TBD | 55.7%¶ |
 | **ether0-24B schema B** | **g3+g4** | 0.855 | 0.768 | 0.018 | 0.639 | 0.724 | 0.487 | 79.6%¤ | 16.6%¤ | 81.5%◊ | 25.1%◊ | 39.0%◊ |
-| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 0.020 | 0.594 | 0.632 | 0.322 | 57.8%§ | 3.2%§ | TBD | TBD | TBD |
-| SmileyLlama-8B | g2 | 0.954 | 0.748 | 0.064 | 0.623 | 0.758 | 0.444 | 61.5% | 14.9% | TBD | TBD | TBD |
-| SmileyLlama-8B | g3 | 0.908 | 0.761 | 0.055 | 0.588 | 0.700 | 0.332 | 51.1%§ | 3.8%§ | TBD | TBD | TBD |
+| Llama-3.1-8B-Inst | g3 | 0.771 | 0.743 | 0.020 | 0.594 | 0.632 | 0.322 | 57.8%§ | 3.2%§ | 65.8%◊ | 9.1%◊ | 49.0%◊ |
+| SmileyLlama-8B | g2 | 0.954 | 0.748 | 0.064 | 0.623 | 0.758 | 0.444 | 61.5% | 14.9% | 86.5%◊ | 8.7%◊ | 57.5%◊ |
+| SmileyLlama-8B | g3 | 0.908 | 0.761 | 0.055 | 0.588 | 0.700 | 0.332 | 51.1%§ | 3.8%§ | 76.7%◊ | 8.7%◊ | 50.9%◊ |
 
 Reference values are the human labels' own scores — **not** 1.0 everywhere: the real analogues
 keep the Murcko scaffold only 38.9% of the time and the warhead 76% of the time, so TC→input and
@@ -707,6 +707,55 @@ gives 8/24 against 1/24, two-sided Fisher **p = 0.023** — suggestive, but acro
 within multiple-comparison noise. The honest reading is that **n=48 is unstable at this resolution**
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
+
+### Four-arm external panel, and a comparability verdict, 2026-10-19
+
+`four_arm_eval` returned complete: 72 files, 1,800 item judgements, 9,000 booleans, zero
+unparseable, zero unmapped item ids, **450 judgements per field per arm** (150 items x 3
+reviewers). Reviewer spread is <=4 points on every field of every arm -- the tightest agreement of
+any panel in this project.
+
+Coverage-adjusted onto all 262 generations:
+
+| arm | sensible_codex | reasoning_codex | invented chem |
+|---|---|---|---|
+| SmileyLlama base | 70.5% | **0.0%** vacuous | **0.0%** vacuous |
+| Llama-3.1 g3 | 65.8% | 9.1% | 49.0% |
+| SmileyLlama g2 | 86.5% | 8.7% | 57.5% |
+| SmileyLlama g3 | 76.7% | 8.7% | 50.9% |
+
+SmileyLlama base again scores 0.0% on reasoning and 0.0% on invention from an external pool that
+had never seen it, confirming the in-house result: it emits a SMILES where the rationale belongs,
+so both numbers are vacuous. The `‡‡` flag applies.
+
+## Denominators: uniform. Comparability: NOT across the ¤/◊ divide.
+
+Every chemist cell is now `count / 262`, the same basis as validity -- that part is fixed and
+checked. But comparing an in-house cell against its external twin does not survive measurement:
+
+| | in-house vs external |
+|---|---|
+| `reasoning`, trained arms | external is **lower by 8-24 points**, 7 of 9 arms (ChemDFM g4 -16.0, ether0 schema A -19.7, schema B g3 -17.8, schema B g4 **-24.2**) |
+| `sensible`, SmileyLlama arms | external is **higher by 25-40 points** (g2 +25.0, g3 +25.6, base **+39.9**) |
+
+Two distinct, diagnosable causes:
+
+1. **The in-house pool is systematically more generous on `would_show_a_chemist`.** The direction is
+   consistent across almost every trained arm, so it is a pool-level standard, not noise.
+2. **The pools disagree about whether a scaffold change can be a "sensible edit".** My in-house
+   reviewers scored SmileyLlama's scaffold swaps as not sensible -- consistent with its scaffold
+   retention of 0.277 -- and the external pool did not. That single convention moves SmileyLlama
+   base from 30.6% to 70.5%.
+
+**Rule for reading the table, which should be stated wherever it is published:** compare arms
+*within* one column, never a cell against its twin in the other column. And even within `_codex`,
+comparability holds only inside a package: the four arms above share one package and are directly
+comparable to each other; ChemDFM g3+g4 and ether0 g3+g4 each had their own 150-item package; the
+base arms came from a 48-item package; the ChemDFM/ether0 g3 arms came from the 165-case paired
+panel. Cross-package `_codex` comparisons carry the same drift as the ¤/◊ gap, just unmeasured.
+
+The honest summary is that the chemist axis supports **ordering arms within a package** and does
+not yet support a single number per arm that can be quoted against any other arm.
 
 ### Blind audit of generated examples: all three published pairs rejected, 2026-10-19
 
