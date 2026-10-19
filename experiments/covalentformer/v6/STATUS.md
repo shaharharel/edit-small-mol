@@ -708,6 +708,50 @@ within multiple-comparison noise. The honest reading is that **n=48 is unstable 
 and the 150-item external number is the one to quote. It is also why the in-house panel is a
 calibration check and not the primary measurement.
 
+### mol1 chemist panel: no slot trustworthy, and two of my own claims were wrong, 2026-10-19
+
+`panel_mol1/`, three reviewers, one case, three slots shuffled, predicted-geometry caveats in the
+packet. Consensus (T/F per reviewer, RA/RB/RC):
+
+| slot | arm | analogue | warhead kept | numbers real | attribution | medchem sound | publishable |
+|---|---|---|---|---|---|---|---|
+| A | g3+g4 | TTT | TTT | TTT | **FFF** | TTT | TFT |
+| B | g4 | TTT | TTT | TTT | **FFF** | FFF | FFF |
+| C | base | TTF | FFT | TTT | **FFF** | FFF | FFF |
+
+**best_slot = A from all three. any_slot_trustworthy = false from all three.** The only disagreement
+in 18 judgements is whether A is printable.
+
+**Two corrections to what I reported before the panel ran.**
+
+1. **I said g4 did isopropyl -> methyl. It did not.** All three reviewers, independently and with
+   RDKit, found the product is 1-methylimidazol-5-yl against mol1's 1-isopropylimidazol-4-yl: the
+   N-alkyl was RELOCATED as well as truncated, and is provably not the honest analogue
+   `...Nc3cn(C)cn3...`. The nitrogen it caps is **N4, which owns the 2.86 A contact to the ALA417
+   backbone NH** -- the strongest polar contact in the table. So it destroys the best acceptor in
+   the pocket while its sentence describes a benign truncation. I had taken the stated edit at face
+   value; checking the molecule against the claim is exactly the check the panel exists for.
+
+2. **I called the base model's methacrylamide "a reasonable warhead edit" spoiled only by
+   formatting. It is the reactivity-dead control.** alpha-methylation on the Michael acceptor carbon
+   substantially slows thiol addition -- close to the worst single change available to a covalent
+   programme. The formatting failure concealed a bad proposal rather than a good one.
+
+**A pipeline defect the panel surfaced.** Two reviewers independently noted that the base slot's
+warhead error is partly ours: because the Boltz pose models C-S at 1.40 A, `cov_check` never types
+it covalent, so **nothing in the prompt told the model the vinyl was a warhead**. The 1.40 A
+artefact did not merely mislabel a row cosmetically -- it withheld the one fact that would have
+prevented the edit. A's and B's errors are geometry-independent bookkeeping and would be wrong
+against a crystal too.
+
+**Collective miss:** none of the three proposals mentions CYS346, the residue the covalent
+programme is built on, despite the 1.40/2.74 A rows marking the reactive end unmistakably.
+
+**Consequence for the case study:** on a predicted pocket, with the warhead invisible to the prompt,
+the trained arms produce fluent, correctly-sourced numbers attached to the wrong atoms, and the one
+arm that keeps its attribution honest still mislabels an imidazole nitrogen as an amide. mol1 is a
+demonstration of the pipeline, not evidence about mol1.
+
 ### invented chem rebased onto the sentence denominator, 2026-10-19
 
 **The bug.** `invented chem` was coverage-adjusted by *eligibility* (a parseable molecule AND a

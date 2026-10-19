@@ -1,0 +1,62 @@
+================================================================================
+ZAP70 / mol1 -- three proposals from three models
+================================================================================
+TARGET: P43403
+INPUT SMILES: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  CYS346.SG       A       1.40     - | polar/apolar packing -- unusually close (1.40 A vs 3.5 A vdW sum); treat the crystal model as uncertain
+C2    C  CYS346.SG       A       2.74     - | polar/apolar packing -- unusually close (2.74 A vs 3.5 A vdW sum); treat the crystal model as uncertain
+C3    C  PRO421.CG       A       3.60     - | hydrophobic contact
+O1    O  LYS424.NZ       A       3.02     - | polar contact, geometry unknown
+N1    N  PRO421.CD       A       3.40     - | polar/apolar packing
+C4    C  PRO421.CD       A       3.71     - | hydrophobic contact
+C5    C  GLY420.CA       A       3.71     - | hydrophobic contact
+C6    C  GLY420.CA       A       3.67     - | hydrophobic contact
+C7    C  GLY418.O        A       3.36     - | polar/apolar packing
+C8    C  ALA417.O        A       3.27     - | polar/apolar packing
+C9    C  LEU344.CD1      A       3.35     - | hydrophobic contact
+C10   C  LEU344.CD1      A       3.33     - | hydrophobic contact
+O2    O  LEU344.CD1      A       3.52     - | polar/apolar packing
+N2    N  ALA417.O        A       3.13     - | polar contact, geometry unknown
+C11   C  LEU468.CD1      A       3.56     - | hydrophobic contact
+C12   C  LEU468.CD1      A       3.44     - | hydrophobic contact
+N3    N  ALA367.CB       A       3.33     - | polar/apolar packing
+C13   C  MET414.SD       A       3.63     - | polar/apolar packing
+C14   C  LYS369.CG       A       3.67     - | hydrophobic contact
+C15   C  MET414.SD       A       3.53     - | polar/apolar packing
+C16   C  GLU415.O        A       3.12     - | polar/apolar packing
+N4    N  ALA417.N        A       2.86     - | polar contact, geometry unknown
+C17   C  GLY420.CA       A       3.82     - | hydrophobic contact
+C18   C  PRO421.CD       A       3.68     - | hydrophobic contact
+
+THREE PROPOSALS. Letters are shuffled; one model is UNTRAINED. Judge each only against the table.
+
+  PROPOSAL A
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(Cc4ccccc4)cn3)c2C1
+    reasoning: Replacing isopropyl with benzyl should spread the substituent near LYS369.CG at 3.67 Å toward MET414 and GLU415 while retaining the amide's 2.86 Å ALA417.N polar contact.
+
+  PROPOSAL B
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cncn3C)c2C1
+    reasoning: Replacing isopropyl with methyl should reduce the arm's reach near LEU468.CD1 at 3.44 Å while retaining the acrylamide's 3.02 Å proximity to LYS424.
+
+  PROPOSAL C
+    molecule: (none extracted)
+    reasoning: The proposed analogue replaces the acrylamide group with a methacrylamide group, which may increase the hydrophobic contact with PRO421 and LEU344, potentially enhancing binding affinity. SMILES: C=C(C)C(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1
+
+--------------------------------------------------------------------------------
+IMPORTANT CONTEXT, because this table is not like a crystallographic one.
+
+mol1 is a designed covalent seed, not a crystallised ligand. The contact table above is computed
+from a PREDICTED structure (a Boltz-2 covalent cofold against ZAP70 Cys346, ligand ipTM 0.976), so
+every distance in it is predicted rather than measured. Two consequences you should factor in:
+
+  * The pose models the warhead carbon-to-CYS346.SG distance at 1.40 A, far below the ~1.81 A ideal
+    for a C-S bond. The pipeline therefore does NOT type it as a covalent bond; it appears as
+    'unusually close ... treat as uncertain'. So mol1's defining covalent warhead is not presented
+    to the model as a covalent bond.
+  * Ligand atom names are generated (element + index), not CCD names.
+
+Judge the proposals against the table AS GIVEN. Where a proposal's claim would be right against
+real geometry but wrong against this table, say so in one_line_why.
