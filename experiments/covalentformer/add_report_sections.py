@@ -39,18 +39,25 @@ ARMS = [('ChemDFM-14B base', SCRATCH + '/alltab/sft_runs/zeroshot_chemdfm_bench/
 
 # Three held-out pairs every ChemDFM arm answered, chosen to show the base model's three distinct
 # failure modes rather than three instances of one.
-# Chosen by blind audit, not by eye. Three medicinal-chemistry reviewers scored 12 candidate pairs
-# x 3 arms = 36 proposals with arm identity hidden (letters reshuffled per pair); these are the
-# only three pairs all three reviewers judged a fair illustration AND would publish, and all three
-# agreed on the best slot in each. The three pairs shown here previously -- 6PGE, 5OIW, 6G9H --
-# were rejected unanimously: 6PGE and 6G9H as degenerate (the two trained arms give the same
-# molecule with the same argument), and in 6G9H both trained arms additionally credit a retained
-# tert-butyl's contacts to the oxane ring they edited.
+# Section 4 is a SHOWCASE of what the method produces, not an evaluation -- every metric in the
+# report comes from the big table and the panels, never from these three rows. So choosing the
+# strongest examples here is legitimate, and the audit's job is narrower than it was: not "is this
+# a fair illustration" but "is this row actually CORRECT", so that nothing shown is quietly wrong.
+# All three slots below were audited for correctness by three medicinal-chemistry reviewers with
+# arm identity hidden.
+#
+# 8FAV was dropped at the user's instruction: all three reviewers judged its UNTRAINED slot the
+# best, which makes it an honest result but a poor showcase. It is kept in the record -- see
+# panel_gen_exemplars/ and the STATUS entry -- rather than deleted, because the finding that
+# numeric specificity does not track correctness stands regardless of what the figure shows.
+# 7XEJ replaces it: best slot g3+g4, judged publishable by 2 of 3 reviewers (RC declined on the
+# grounds that its slot A steers a cysteine side chain toward an unreachable ASP198), which is
+# disclosed in the lede rather than smoothed over.
 SHOWCASE = [
     ('7KXD Z7G->Z7H',
      'the untrained arm returns the input unchanged while announcing an edit'),
-    ('8FAV LKY->XNR',
-     'the untrained arm is the only accurate slot here -- both trained arms misattribute'),
+    ('7XEJ 9PV->9ZN',
+     'a trained arm proposing a clean single-point change on a measured contact'),
     ('7I9F A1B6G->A1B6H',
      'a clean trained slot, against one that makes two edits and calls it one'),
 ]
