@@ -75,7 +75,22 @@ METHACRYLAMIDE = Chem.MolFromSmarts('[CH2]=[C]([CH3])C(=O)[NX3]')
 WEIGHTS = {            # see design note 3 for the two zeros
     'attribution': 1.00,
     'interaction_type': 0.50,
-    # DISABLED, and parked rather than fixed. Three attempts; current state, measured:
+    # ABANDONED after three attempts, with a measured negative result rather than a hunch.
+    # QA against ground truth: three chemists scored ownership on 36 model generations
+    # (panel_gen_exemplars). The fixed component is measurable on 4 of those 36 slots (11%) and
+    # agrees with the chemist majority on 2 of 4 -- one false negative, one false positive. Coin
+    # flip on a ninth of cases.
+    # The two fixes themselves worked: transcribing real CCD bond orders made ordered matches
+    # possible (16 of 21 successful maps) and cut ambiguity from 79% to 67%, and bidirectional
+    # clause parsing recovered the 37 all-neutral sentences. Coverage still collapses because the
+    # check composes three lossy steps -- name->atom mapping, which group the prose means, and
+    # direction classification -- and the product is small.
+    # It also cannot work at all on designed molecules: mol1 has no CCD entry, so ownership
+    # verification is structurally unavailable for the case study we care most about.
+    # A reliable version almost certainly needs an LLM judge reasoning from the molecule to the
+    # sentence, which is what the chemists do, not a regex reading the sentence and trying to
+    # recover the molecule. That is a different and far more expensive design.
+    # Earlier notes, kept because they record what was tried:
     #   * name->index mapping now succeeds on 408/408 molecules via the CCD graph, BUT 324 of those
     #     (79%) match AMBIGUOUSLY. Making bonds generic -- which is what let the match succeed at
     #     all -- also erases the bond-order information that would pin a unique correspondence, so
@@ -127,6 +142,20 @@ def index_table(model_input):
     return rows, by_res, nothing, suspect, typing
 
 
+def _lastpos(rx, text):
+    """Proximity score of the LAST match in text before the token: closer => larger."""
+    last = None
+    for mm in rx.finditer(text):
+        last = mm
+    return -(len(text) - last.end()) if last else -10 ** 9
+
+
+def _firstpos(rx, text, _unused=0):
+    """Proximity score of the FIRST match after the token: closer => larger."""
+    mm = rx.search(text)
+    return -mm.start() if mm else -10 ** 9
+
+
 def parse_claims(sent):
     """Residue-anchored claims: (residue, distance|None, direction, span).
 
@@ -144,9 +173,19 @@ def parse_claims(sent):
         tail = s[m.end():m.end() + WINDOW]
         nm = NUM.search(tail)
         d = round(float(nm.group(1)), 2) if nm else None
-        head = s[max(0, m.start() - 120):m.start()]
-        direction = ('gives_up' if (GIVES_UP.search(head) and not RETAINS.search(head[-40:]))
-                     else 'retains' if RETAINS.search(head) else 'neutral')
+        # The house style puts the verb on EITHER side: "gives up the 3.14 A bond to LYS114" but
+        # also "while the 2.87 A MET108.O hydrogen bond is retained" and "... holds". Looking only
+        # backwards read 37 of 251 sentences as entirely neutral, which silently removed them from
+        # the directional check. Search the enclosing CLAUSE in both directions and take the nearer
+        # verb; clause boundaries keep a "gives up" in one half from colouring a "retains" in the
+        # other.
+        lo = max((s.rfind(d, 0, m.start()) for d in (';', ',', ' while ', ' and ')), default=-1)
+        hi = min((x for x in (s.find(d, m.end()) for d in (';', ',', ' while ', ' and '))
+                  if x != -1), default=len(s))
+        before, after = s[lo + 1:m.start()], s[m.end():hi]
+        gu = max(_lastpos(GIVES_UP, before), _firstpos(GIVES_UP, after, m.end() - hi))
+        rt = max(_lastpos(RETAINS, before), _firstpos(RETAINS, after, m.end() - hi))
+        direction = 'neutral' if gu == rt == -10 ** 9 else ('gives_up' if gu > rt else 'retains')
         span = s[max(0, m.start() - 60):m.end() + WINDOW]
         out.append({'res': res, 'd': d, 'dir': direction, 'span': span})
     return out
@@ -199,6 +238,7 @@ def changed_conserved(inp, gen):
 CCD_PATH = ('/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/ccd_atoms.json')
 _CCD = None
 _MAP_STATS = collections.Counter()
+_AMBIG = {}
 
 
 def _ccd():
@@ -246,13 +286,20 @@ def atom_name_to_index(model_input, inp, ligand_code=None):
         return None
     heavy = [(n, e) for n, e in entry['atoms'] if e.upper() != 'H']
     idx = {n: i for i, (n, _) in enumerate(heavy)}
+    # Transcribe the REAL bond orders. The first version made every bond SINGLE and then had to
+    # match with generic bonds to succeed at all, which erased the very information that pins a
+    # unique correspondence: 324 of 408 molecules matched ambiguously. The CCD gives Kekule orders
+    # (SING/DOUB/TRIP, no aromatic flag), which is enough.
+    BO = {'SING': Chem.BondType.SINGLE, 'DOUB': Chem.BondType.DOUBLE,
+          'TRIP': Chem.BondType.TRIPLE}
     em = Chem.RWMol()
     for _, e in heavy:
         em.AddAtom(Chem.Atom(e.capitalize() if len(e) > 1 else e.upper()))
     for b in entry.get('bonds') or []:
         a1, a2 = b[0], b[1]
         if a1 in idx and a2 in idx:
-            em.AddBond(idx[a1], idx[a2], Chem.BondType.SINGLE)
+            em.AddBond(idx[a1], idx[a2], BO.get(b[2] if len(b) > 2 else 'SING',
+                                                Chem.BondType.SINGLE))
     ccd_mol = em.GetMol()
     try:
         Chem.SanitizeMol(ccd_mol, Chem.SanitizeFlags.SANITIZE_SYMMRINGS
@@ -264,22 +311,44 @@ def atom_name_to_index(model_input, inp, ligand_code=None):
     # match an aromatic ring -- which is why the first attempt failed on 408 of 408 molecules.
     # AdjustQueryProperties with makeBondsGeneric turns every bond into "any bond", so the query is
     # pure connectivity plus element, which is exactly the correspondence we need.
+    # With real bond orders the CCD graph is Kekule while the input SMILES is usually aromatic, so
+    # compare after kekulising both. Fall back to generic bonds only if the ordered match fails, and
+    # record which path was taken so the QA can tell a clean match from a degenerate one.
+    matches = ()
     try:
+        probe = Chem.Mol(inp)
+        Chem.Kekulize(probe, clearAromaticFlags=True)
         qp = Chem.AdjustQueryParameters()
-        qp.makeBondsGeneric = True
+        qp.makeBondsGeneric = False
         qp.makeAtomsGeneric = False
         qp.adjustDegree = False
         qp.aromatizeIfPossible = False
         q = Chem.AdjustQueryProperties(ccd_mol, qp)
-        matches = inp.GetSubstructMatches(q, uniquify=False, maxMatches=64,
-                                          useChirality=False) if q is not None else ()
-        # a symmetric ligand can match several ways; any one of them is a valid naming of
-        # equivalent atoms, so take the first, but record when it was ambiguous
-        if len(matches) > 1:
-            _MAP_STATS['ambiguous_symmetry'] += 1
-        match = matches[0] if matches else ()
+        if q is not None:
+            matches = probe.GetSubstructMatches(q, uniquify=False, maxMatches=64,
+                                                useChirality=False)
+        if matches:
+            _MAP_STATS['ordered_match'] += 1
     except Exception:
-        match = ()
+        matches = ()
+    if not matches:
+        try:
+            qp = Chem.AdjustQueryParameters()
+            qp.makeBondsGeneric = True
+            qp.makeAtomsGeneric = False
+            qp.adjustDegree = False
+            qp.aromatizeIfPossible = False
+            q = Chem.AdjustQueryProperties(ccd_mol, qp)
+            matches = inp.GetSubstructMatches(q, uniquify=False, maxMatches=64,
+                                              useChirality=False) if q is not None else ()
+            if matches:
+                _MAP_STATS['generic_fallback'] += 1
+        except Exception:
+            matches = ()
+    if len(matches) > 1:
+        _MAP_STATS['ambiguous'] += 1
+    match = matches[0] if matches else ()
+    _AMBIG[(ligand_code or '').upper()] = len(matches)
     if not match or len(match) != len(heavy):
         _MAP_STATS['ccd_match_failed'] += 1
         return None

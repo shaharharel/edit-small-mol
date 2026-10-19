@@ -55,6 +55,7 @@ table.nums td+td,table.nums th+th{text-align:right;font-variant-numeric:tabular-
 tr.base td{color:var(--ink3)}
 tr.base td:first-child{color:var(--ink3);font-weight:400;padding-left:26px}
 tr.v4b td:first-child{padding-left:26px}
+.packet{white-space:pre-wrap;font-family:var(--mono);font-size:11px;line-height:1.45;background:var(--line2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;overflow-x:auto;margin:12px 0}
 .tbd{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink3);border:1px dashed var(--line);border-radius:3px;padding:1px 5px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink)}
 .pend{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
@@ -8596,7 +8597,232 @@ L 198.3 167.4
 </svg>
 </td><td><div class="lbl-hd">Model reasoning</div><div class="lbl-rsn">Replacing isopropyl with benzyl should spread the substituent near LYS369.CG at 3.67 Å toward MET414 and GLU415 while retaining the amide's 2.86 Å ALA417.N polar contact.</div><div class="lbl-meta">cites two real distances; <b>one correct, one misattributed</b> &mdash; LYS369.CG 3.67 &Aring; is genuinely an isopropyl methyl, but ALA417.N 2.86 &Aring; belongs to N4, a retained imidazole nitrogen, not "the amide"</div></td></tr></tbody></table></div>
 <p class="tnote">What the panel found, and it is worse than the automated row suggests. All three reviewers agree on every field except whether the g3+g4 slot is printable (2 of 3 say yes): <b>every cited distance is a real table row, and not one slot gets its attribution right.</b> Two findings needed RDKit to see. First, <b>the g4 slot is not the edit its sentence claims</b>: it describes isopropyl&rarr;methyl, but the product is 1-methylimidazol-5-yl against mol1&rsquo;s 1-isopropylimidazol-4-yl &mdash; the N-alkyl was <i>relocated</i>, not just truncated, and the nitrogen it caps is N4, the atom owning the strongest polar contact in the table (2.86 &Aring; to the ALA417 backbone NH). It silently destroys that acceptor while claiming to retain contacts. Second, the base slot proposes acrylamide&rarr;<b>methacrylamide</b>, the reactivity-dead control: &alpha;-methylation on the Michael acceptor carbon is close to the worst single change available to a covalent programme. <b>That one is partly our defect, not the model&rsquo;s</b> &mdash; because the pose models C&ndash;S at 1.40 &Aring;, the table never typed the bond as covalent, so nothing in the prompt told the model the vinyl was a warhead. The g3+g4 slot is the only one whose load-bearing number is genuinely owned by the group it edits (LYS369.CG 3.67 &Aring; is an isopropyl methyl); its single slip is calling imidazole N4 &ldquo;the amide&rdquo;, when the anilide NH owns ALA417.<b>O</b> at 3.13 &Aring;. One collective miss: <b>none of the three mentions CYS346</b>, the residue the whole covalent programme is built on.</p>
-<h2><span class="sn">5</span>The three training phases</h2>
+<div id="walkthrough-labelling"></div>
+<h2><span class="sn">5</span>How a reasoning label is made</h2>
+<p class="lede">Every training target in this project is one sentence written by a medicinal chemist
+about one matched molecular pair, then adjudicated by a chair. This section follows a single pair,
+<code>7BAA T5Z-&gt;T6N</code>, all the way through: the packet three reviewers saw, the three sentences they
+wrote, the chair's verdict and its stated reasoning, and the training row that came out. Nothing
+here is reconstructed &mdash; it is the actual text from the actual run.</p>
+
+<h3>1. What the reviewer is asked to do</h3>
+<p>One sentence, <b>maximum 35 words</b>, naming what the edit gives up and what it keeps, anchored
+on measured geometry. The instruction set carries <b>eleven hard rules</b>; the ones that do most of
+the work are: name only residues that appear on the <i>input</i> side of this pair's evidence; say
+&ldquo;hydrogen bond&rdquo; only where the typing supports it and &ldquo;covalent&rdquo; only where a
+covalent row supports it; never describe an atom as buried, enclosed or solvent-facing; make no
+claim about what the analogue's <i>new</i> atoms touch, because at inference the model has no
+analogue structure; claim no potency improvement, since there is no potency data; never build a
+claim on a contact whose typing contains <code>uncertain</code>; and <b>disclose a multi-site
+edit</b>, referring to groups rather than raw atom names.</p>
+
+<h3>2. The packet &mdash; exactly what three reviewers saw</h3>
+<p class="tnote">Reviewers see more than the model does: the model-input block below, plus
+label-side tables giving the analogue's own crystal contacts, which input contacts survived the
+edit, and where the edit sits. That asymmetry is the point &mdash; the label may be written from
+knowledge the model will not have at inference, which is why rule 1 forbids attributing a gain to
+anything but the analogue's crystal.</p>
+<pre class="packet">====================
+PAIR 7BAA T5Z-&gt;T6N   target P03372   tanimoto 0.609   analogue crystal 7BA9
+====================================================================================================
+
+--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COc1cc(OC(C)(C)C(=O)NCCS)ccc1Br
+ATOM TABLE COVERAGE: 19 of 19 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+BR    Br LYS122.CE       A      3.53     - | hydrophobic contact
+C     C  LEU218.CD2      A      3.76     - | hydrophobic contact
+C11   C  VAL46.CG2       A      4.88     - | no contact within 4.0 A (nearest protein atom is 4.88 A away) [INDEP, CYS42 excl]
+C12   C  VAL46.CG2       A      3.71     - | hydrophobic contact [INDEP, CYS42 excl]
+C5    C  VAL595.OXT      B      3.25     - | polar/apolar packing
+C6    C  VAL595.CG2      B      3.94     - | hydrophobic contact
+C7    C  PRO167.O        A      3.12     - | polar/apolar packing
+C8    C  ILE219.CD1      A      3.86     - | hydrophobic contact
+O1    O  PHE119.CE1      A      3.46     - | polar/apolar packing
+         VAL595.OXT             3.69     - | polar partner: polar/apolar packing
+S     S  CYS42.SG        A      2.11     - | COVALENT BOND to CYS42.SG
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C1, C10, C2, C3, C4, C9, N, O, O2
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    &lt;= 4.5 A -- close enough to touch; SOME are in the atom table, some are not CYS42, PRO167, VAL595(B)~, PHE119, LYS122, VAL46, ILE168, LEU218, SER45, ILE219, GLY171, LEU172
+    4.5 - 6.0 A                                          ARG41, LEU43, LYS49, ARG169, ASN38, LEU170
+    6.0 - 8.0 A                                          LEU222, ASP215, GLU39, ASN166, ASN175, ASP126, GLU14, VAL118, MET123, ALA173, LEU44, GLU40, LEU174, LYS214, SER216, GLU115, ALA47
+    (X) = on chain X, not the ligand's own chain A   ~ = chain terminus, so probably a crystal-packing neighbour rather than site
+
+--- LABEL_ONLY: for writing the label; the model never sees any of this ---
+
+EDIT: the analogue removes 2 heavy atoms from the input molecule (19 -&gt; 17)
+analogue SMILES: Cc1ccc(OC(C)(C)C(=O)NCCS)cc1
+
+*** MULTI-CHAIN POCKET -- THE LIGAND CONTACTS MORE THAN ONE PROTEIN CHAIN
+
+*** CHAIN TERMINUS CONTACT -- contacts a protein CHAIN TERMINUS (VAL595, via its terminal carboxylate OXT)
+
+
+numbering_consistent: True   room_contradicts_edit: False
+
+site_of_change -- which rows above the edit touches:
+   BR     CHANGED
+   C5     CHANGED
+   C6     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue)
+   O1     CHANGED
+
+conserved_interactions (4) -- see brief
+   input  analog   both face       input -&gt; analog   typing on each side
+   C      a:C9     LEU218.CD2       3.76 -&gt;  3.74   input: hydrophobic contact
+   C12    a:C12    VAL46.CG2        3.71 -&gt;  3.75   input: hydrophobic contact [INDEP, CYS42 excl]
+   C6     a:C5     VAL595.CG2       3.94 -&gt;  3.99   input: hydrophobic contact
+   S      a:S      CYS42.SG         2.11 -&gt;  2.25   input: COVALENT BOND to CYS42.SG
+
+analogue_contacts -- 13 of 17 analogue atoms: every atom whose contact CHANGED (NEW, MOVED, NOTCOMPARABLE) and every mapped atom whose contact moved to a different protein atom (status conserved, and the row says which).
+  Only atoms whose contact is unchanged AND already in conserved_interactions are omitted; they are listed at the end of the table. An ABSENCE HERE IS NOT A LOSS. Nearest protein atom only. See the brief's legend.
+  Names are prefixed a: because they are the ANALOGUE's namespace. a:C19 and the input table's C19 are DIFFERENT ATOMS unless input_atom says so.
+  17 of 17 analogue heavy atoms appear in the table -- complete, so an ATOM missing here is evidence. A RESIDUE missing here is NOT: each atom contributes only its nearest protein atom, so a real contact that is nobody's nearest neighbour appears nowhere in this column.
+
+   atom   el input_atom status         faces           chain  dist   ang interaction
+   a:C2   C  C2         conserved      -               -      4.55     - no contact within 4.0 A (nearest protein atom is 4.55 A away)
+   a:C3   C  C8         conserved      -               -      4.17     - no contact within 4.0 A (nearest protein atom is 4.17 A away)
+   a:C6   C  -          NEW            LYS122.CE       A      3.45     - hydrophobic contact
+   a:C8   C  C3         conserved      ILE219.CD1      A      3.63     - hydrophobic contact
+   a:C10  C  C10        conserved      -               -      5.91     - no contact within 4.0 A (nearest protein atom is 5.91 A away)
+   a:C11  C  C11        conserved      -               -      4.61     - no contact within 4.0 A (nearest protein atom is 4.61 A away)
+   a:N    N  N          conserved      -               -      4.78     - no contact within 4.0 A (nearest protein atom is 4.78 A away)
+   a:C    C  C9         conserved      VAL595.CG1      B      3.95     - hydrophobic contact
+   a:O    O  O          conserved      -               -      4.53     - no contact within 4.0 A (nearest protein atom is 4.53 A away)
+   a:C1   C  C1         conserved      -               -      5.03     - no contact within 4.0 A (nearest protein atom is 5.03 A away)
+   a:C4   C  C7         conserved      VAL595.OXT      B      3.81     - polar/apolar packing
+   a:C7   C  C4         conserved      PRO167.O        A      3.24     - polar/apolar packing
+   a:O1   O  O2         conserved      -               -      5.30     - no contact within 4.0 A (nearest protein atom is 5.30 A away)
+   (4 unchanged analogue atoms are in conserved_interactions, not repeated here: a:C9, a:C12, a:C5, a:S)
+
+====================================================================================================
+PAIR 7IJ1 A1CJV-&gt;A1CKJ   target P0DTD1   tanimoto 0.536   analogue crystal 7IJK</pre>
+
+<h3>3. The three sentences, written independently</h3>
+<div class="tw"><table class="lbl-t"><tbody><tr><td><b>reviewer A</b></td><td><div class="lbl-rsn">Replacing bromine near LYS122.CE at 3.53 Å and removing methoxy oxygen near PHE119.CE1 at 3.46 Å should trade those substituent proximities for methyl packing while retaining the thiol linkage.</div><div class="lbl-meta">basis cited: <code>Chemical comparison: input SMILES: COc1cc(OC(C)(C)C(=O)NCCS)ccc1Br; analogue SMILES: Cc1ccc(OC(C)(C)C(=O)NCCS)cc1. Site-of-change table: which rows above the edit touches: BR CHANGED C5 CHANGED C6 SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue) O1 CHANGED. INPUT ATOM</code></div></td></tr><tr><td><b>reviewer B</b></td><td><div class="lbl-rsn">The bromine near LYS122.CE at 3.53 Å is replaced by methyl, while methoxy removal should reduce proximity to PHE119; the 2.11 Å CYS42 covalent bond should remain.</div><div class="lbl-meta">basis cited: <code>INPUT ATOM TABLE (input measurements anchoring the sentence): BR    Br LYS122.CE       A      3.53     - | hydrophobic contact; C11   C  VAL46.CG2       A      4.88     - | no contact within 4.0 A (nearest protein atom is 4.88 A away) [INDEP, CYS42 excl]; C12   C  VAL46.CG2       A      3.71     - |</code></div></td></tr><tr><td><b>reviewer C</b></td><td><div class="lbl-rsn">Replacing the bromine near LYS122.CE at 3.53 Å with methyl and removing methoxy should simplify that aromatic face while retaining the thiol's covalent attachment to CYS42.</div><div class="lbl-meta">basis cited: <code>SMILES comparison: input SMILES: COc1cc(OC(C)(C)C(=O)NCCS)ccc1Br -&gt; analogue SMILES: Cc1ccc(OC(C)(C)C(=O)NCCS)cc1; site_of_change: which rows above the edit touches:; BR     CHANGED; C5     CHANGED; C6     SUBSTITUTION BOUNDARY (this atom is kept; its neighbour differs in the analogue); O1     CHANG</code></div></td></tr></tbody></table></div>
+<p class="tnote">All three converge on the same chemistry &mdash; bromine's 3.53 &Aring; packing on
+LYS122.CE traded for a carbon the analogue's crystal places 3.45 &Aring; from the same atom, with
+the CYS42 covalent bond holding. They differ in what they disclose: only reviewer A flags that
+<i>both</i> ring substituents change, which rule 11 requires.</p>
+
+<h3>4. The chair adjudicates</h3>
+<p>The chair sees the same evidence plus the three sentences, and returns exactly one of
+<code>ADOPT n</code>, <code>REWRITE</code> or <code>REJECT</code>. <b>REJECT is an expected
+outcome, not a failure</b> &mdash; a pair whose edited atoms sit in solvent touching nothing yields
+no design rationale, and the guidance is explicit that writing &ldquo;the new atoms touch nothing
+within 4.0 &Aring;&rdquo; is a rejection with extra words rather than a label.</p>
+<div class="tw"><table class="lbl-t"><tbody>
+<tr><td><b>verdict</b></td><td><code>ADOPT</code></td></tr>
+<tr><td><b>final sentence</b></td><td><div class="lbl-rsn">The bromine near LYS122.CE at 3.53 Å is replaced by methyl, while methoxy removal should reduce proximity to PHE119; the 2.11 Å CYS42 covalent bond should remain.</div></td></tr>
+<tr><td><b>chair's reasoning</b></td><td><div class="lbl-rsn">BR–LYS122 3.53 and S–CYS42 2.11 input rows plus conserved covalent join support B; methoxy O1–PHE119 is removed. VAL595 terminal chain B excluded.</div></td></tr>
+</tbody></table></div>
+
+<h3>5. What becomes the training row</h3>
+<p>The adopted sentence is the completion the model is fine-tuned to emit, given the model-input
+block from step 2 and nothing else. The analogue SMILES is appended on its own line.</p>
+<div class="tw"><table class="lbl-t"><tbody>
+<tr><td><b>corpus</b></td><td><code>sft_out_g4</code> &middot; labelling pass
+<code>g4_v2_input_anchored_envelope_pass2</code></td></tr>
+<tr><td><b>split / chair verdict</b></td><td><code>train</code> / <code>ADOPT</code></td></tr>
+<tr><td><b>analogue SMILES</b></td><td><code>Cc1ccc(OC(C)(C)C(=O)NCCS)cc1</code></td></tr>
+<tr><td><b>training target</b></td><td><div class="lbl-rsn">The bromine near LYS122.CE at 3.53 Å is replaced by methyl, while methoxy removal should reduce proximity to PHE119; the 2.11 Å CYS42 covalent bond should remain.</div></td></tr>
+</tbody></table></div>
+<p class="tnote">Scale: three independent reviewers plus one chair per pair. Across the g3 pass this
+produced 2,326 training rows from the pairs that survived adjudication. Two measured caveats on this
+process belong here rather than in a footnote. <b>A chair ADOPT is not a guarantee of correctness</b>:
+a three-chemist re-audit of 18 ADOPT rows found 6 that described their edit incorrectly and 2 that
+cited a residue absent from the table. And separately, <b>159 of the 2,326 rows (6.8%) contain a
+stereocentre inversion at constant centre count that the sentence never mentions</b> &mdash; when such
+an inversion occurs, the sentence misses it 89% of the time. Both numbers are reasons the labelling
+gate is being tightened, not reasons to discount the corpus, but a reader should know them.</p>
+
+<div id="walkthrough-encoding"></div>
+<h2><span class="sn">6</span>What the pocket encoding actually contains</h2>
+<p class="lede">The model is never given coordinates, a grid, a graph or a learned structural
+embedding. It is given <b>text</b>: the input ligand's SMILES, and one row per heavy atom describing
+that atom's measured relationship to the protein. Everything the model knows about the pocket is in
+the block below &mdash; the same pair as the previous section, quoted verbatim.</p>
+<pre class="packet">--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
+input SMILES: COc1cc(OC(C)(C)C(=O)NCCS)ccc1Br
+ATOM TABLE COVERAGE: 19 of 19 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
+
+atom  el faces           chain  dist   ang | interaction (never truncated)
+BR    Br LYS122.CE       A      3.53     - | hydrophobic contact
+C     C  LEU218.CD2      A      3.76     - | hydrophobic contact
+C11   C  VAL46.CG2       A      4.88     - | no contact within 4.0 A (nearest protein atom is 4.88 A away) [INDEP, CYS42 excl]
+C12   C  VAL46.CG2       A      3.71     - | hydrophobic contact [INDEP, CYS42 excl]
+C5    C  VAL595.OXT      B      3.25     - | polar/apolar packing
+C6    C  VAL595.CG2      B      3.94     - | hydrophobic contact
+C7    C  PRO167.O        A      3.12     - | polar/apolar packing
+C8    C  ILE219.CD1      A      3.86     - | hydrophobic contact
+O1    O  PHE119.CE1      A      3.46     - | polar/apolar packing
+         VAL595.OXT             3.69     - | polar partner: polar/apolar packing
+S     S  CYS42.SG        A      2.11     - | COVALENT BOND to CYS42.SG
+NOTHING WITHIN 4.0 A (listed, so the table is complete): C1, C10, C2, C3, C4, C9, N, O, O2
+
+pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom within 8.0 A of the input
+  ligand, whether or not it is any atom's nearest neighbour. A residue here is somewhere a group COULD
+  reach; it is NOT something the ligand touches. Distances are banded because an envelope distance is
+  not an interaction distance -- never cite one as a measured contact (rule 1b).
+    &lt;= 4.5 A -- close enough to touch; SOME are in the atom table, some are not CYS42, PRO167, VAL595(B)~, PHE119, LYS122, VAL46, ILE168, LEU218, SER45, ILE219, GLY171, LEU172
+    4.5 - 6.0 A                                          ARG41, LEU43, LYS49, ARG169, ASN38, LEU170
+    6.0 - 8.0 A                                          LEU222, ASP215, GLU39, ASN166, ASN175, ASP126, GLU14, VAL118, MET123, ALA173, LEU44, GLU40, LEU174, LYS214, SER216, GLU115, ALA47
+    (X) = on chain X, not the ligand's own chain A   ~ = chain terminus, so probably a crystal-packing neighbour rather than site</pre>
+
+<h3>Field by field</h3>
+<div class="tw"><table class="lbl-t"><thead><tr><th>field</th><th>what it is, and the trap in it</th>
+</tr></thead><tbody>
+<tr><td><code>ATOM TABLE COVERAGE</code></td><td>How many input heavy atoms got a row, and how many
+were dropped as unmodelled or as clashes. It exists so an incomplete table cannot be mistaken for a
+complete one.</td></tr>
+<tr><td><code>atom</code></td><td>The chemical-component (CCD) atom name, e.g. <code>BR</code>,
+<code>C12</code>, <code>S</code>. <b>Rows are sorted alphabetically, not in molecule order</b>, and
+the table omits atoms with no contact &mdash; so atom names cannot be mapped to molecule positions by
+counting. Recovering ownership needs the CCD definition; assuming positional correspondence produces
+confident wrong answers.</td></tr>
+<tr><td><code>faces</code></td><td>The single <i>nearest</i> protein atom, as
+<code>RES123.ATOM</code>, plus its chain. One row shows one neighbour, so a group with several
+contacts appears only through its own several atoms.</td></tr>
+<tr><td><code>dist</code></td><td>The measured distance in &Aring;ngstr&ouml;ms from the deposited
+crystal. This is the number models reproduce almost perfectly and attribute to the wrong atom about
+half the time.</td></tr>
+<tr><td><code>ang</code></td><td>Donor&ndash;H&ndash;acceptor angle where one is defined, otherwise
+<code>-</code>. Its absence is why many polar rows are typed as packing rather than as hydrogen
+bonds.</td></tr>
+<tr><td><code>interaction</code></td><td>The typing, never truncated:
+<code>hydrophobic contact</code>, <code>polar/apolar packing</code>, <code>H-bond, good geometry</code>,
+<code>SALT BRIDGE</code>, <code>METAL COORDINATION</code>, <code>COVALENT BOND to CYS42.SG</code>, or
+an explicit refusal such as <code>donor/acceptor INCOMPATIBLE &hellip; not a hydrogen bond</code>.
+Covalent calls are made against the ideal bond length for that element pair, not a flat cutoff, and
+backbone atoms are excluded as nucleophiles.</td></tr>
+<tr><td>second line under a row</td><td>A <code>polar partner</code>: a polar contact that is not the
+nearest atom overall, so a polar interaction is not hidden by a closer apolar one.</td></tr>
+<tr><td><code>NOTHING WITHIN 4.0 A</code></td><td>Named atoms with no contact at all. <b>This is
+positive information</b>: a claim about an atom listed here is invention, and the list is printed so
+that completeness is checkable.</td></tr>
+<tr><td><code>pocket envelope</code></td><td>Every residue with an atom within 8.0 &Aring;, banded
+rather than given exact distances, and labelled <b>REACHABLE SPACE, NOT CONTACTS</b>. A residue at
+7.5 &Aring; touches nothing; the banding exists so an envelope distance cannot be quoted as a measured
+contact.</td></tr>
+<tr><td>caveat tags</td><td>Per-row and per-pair flags: <code>[INDEP, CYS42 excl]</code> marks a
+nearest <i>independent</i> contact with the covalently bonded residue excluded;
+<code>uncertain</code> marks geometry the crystal does not support; suspect residues and water
+clashes are flagged. The rules forbid building a claim on anything flagged uncertain &mdash; an
+instruction the models routinely ignore.</td></tr>
+</tbody></table></div>
+<p class="tnote">Two consequences worth stating. First, <b>the encoding is lossless about what it
+reports and silent about everything else</b>: no coordinates, no second-nearest neighbour, no
+solvent-accessible surface, no electrostatics. A model cannot infer that two cited atoms are
+adjacent, which is part of why attribution is hard. Second, <b>every field above is machine-checkable
+against the model's output</b>, which is what makes a verifier-driven training signal possible: a
+cited number either is or is not a row of this table, and a claimed interaction type either does or
+does not match the typing.</p>
+
+<h2><span class="sn">7</span>The three training phases</h2>
 <p class="lede">Each rung presupposes the last. Rung 1 teaches what a covalent reaction <i>is</i>; rung 2 teaches how to edit a molecule without breaking it; rung 3 asks for the real job &mdash; given a pocket and a covalent hit, propose a better covalent analogue and say why. A fourth channel, the potency head, spans rungs 2 and 3 and is the only part that emits a number rather than text. Each phase below is followed by its evaluation on the held-out test set, against the untuned base model and against Claude.</p>
 <div class="phase"><div class="ph-h"><span class="ph-n">Phase 1</span>
 <span class="ph-t">Covalent chemistry</span>
@@ -8648,7 +8874,7 @@ scratch.</p></div>
 <h3>What the four channels contribute</h3>
 <div class="tw"><table class="nums"><thead><tr><th>phase</th><th>rows</th><th>share</th><th>unique</th><th>mean tok</th><th>tok share</th><th>held out</th></tr></thead><tbody><tr><td>rung 1 &middot; reaction chemistry</td><td>373,935</td><td>63.9%</td><td>373,935</td><td>53</td><td>26%</td><td>32,082</td></tr><tr><td>potency &middot; &Delta;pIC50 head</td><td>130,667</td><td>22.3%</td><td>130,667</td><td>207</td><td>36%</td><td>12,408</td></tr><tr><td>rung 2 &middot; analogue design</td><td>68,868</td><td>11.8%</td><td>68,868</td><td>161</td><td>15%</td><td>5,988</td></tr><tr><td>rung 3 &middot; covalent H2L</td><td>12,060</td><td>2.1%</td><td>3,015 &times;4</td><td>1495</td><td>24%</td><td>334</td></tr><tr><td><b>total</b></td><td><b>585,530</b></td><td><b>100%</b></td><td>&mdash;</td><td><b>130</b></td><td><b>100%</b></td><td><b>50,812</b></td></tr></tbody></table></div>
 <p class="tnote">Rung 3 is repeated 4&times; in the mix (3,015 unique &rarr; 12,060 rows) because it is the target task and three orders of magnitude rarer than rung 1. At 1,495 tokens a row it is 2.1% of the rows but 24% of the compute.</p>
-<h2><span class="sn">6</span>Generative evaluation &mdash; does it beat copying the hit?</h2>
+<h2><span class="sn">8</span>Generative evaluation &mdash; does it beat copying the hit?</h2>
 <p class="lede">86 held-out complexes, 20 samples each. This is the test v4 failed and the reason it could not be reported as a success: v4&rsquo;s best-of-20 analogue reached Tanimoto <b>0.378</b> to the real programme analogue while the hit it was handed already sat at <b>0.401</b> &mdash; it did worse than echoing its own input, and <b>0%</b> of its hits landed in the 0.55&ndash;1.0 similarity band.</p>
 <div class="tw"><table class="nums"><thead><tr><th>metric</th><th>v4 (withdrawn)</th><th>v4b</th></tr></thead><tbody><tr><td>best-of-20 Tc to the real analogue</td><td>0.378</td><td><b>0.556</b></td></tr><tr><td>the hit&rsquo;s own Tc to that analogue</td><td>0.401</td><td>0.495</td></tr><tr><td><b>beats copying the input</b></td><td><b>no</b></td><td><b>59.3% of rows</b></td></tr><tr><td>exact match @1 / @20</td><td>&mdash;</td><td>1.2% / 8.1%</td></tr><tr><td>SMILES validity</td><td>0.65% (base)</td><td>91.0%</td></tr><tr><td>non-trivial (&ne; input)</td><td>&mdash;</td><td>95.2%</td></tr><tr><td>mean unique of 20 samples</td><td>&mdash;</td><td>14.4</td></tr></tbody></table></div>
 <h3>Similarity profile &mdash; the flatness is what gave v4 away</h3>
@@ -8660,20 +8886,20 @@ scratch.</p></div>
 <div class="tw"><table class="nums"><thead><tr><th>metric</th><th>v4b</th></tr></thead><tbody><tr><td><b>exact match @20</b> &mdash; reproduced the compound the programme actually made</td><td><b>15.1%</b>  (17 of 106)</td></tr><tr><td>exact match @1</td><td>1.9%</td></tr><tr><td>mean unique of 20 samples</td><td>14.9 of 20</td></tr></tbody></table></div>
 <h4>Degeneracy checks, not quality measures</h4>
 <div class="tw"><table class="nums"><thead><tr><th>check</th><th>v4b</th></tr></thead><tbody><tr><td>non-trivial (&ne; input)</td><td>95.1%</td></tr><tr><td>SMILES validity</td><td>87.9%</td></tr><tr><td>best-of-20 Tc to the next programme compound</td><td>0.734</td></tr><tr><td>the hit&rsquo;s own Tc to that compound</td><td>0.713</td></tr></tbody></table></div>
-<h2><span class="sn">7</span>What was thrown away, and why</h2>
+<h2><span class="sn">9</span>What was thrown away, and why</h2>
 <p class="lede">Rung 3 is the task that matters and has the least data, which makes it the easiest place to accept bad rows. 31.7% of what the miner offered was rejected.</p>
 <div class="tw"><table class="nums"><thead><tr><th>gate</th><th>rows</th><th>what it catches</th></tr></thead><tbody><tr><td>rows offered by the covalent-programme miner</td><td>5,535</td><td>hit + analogue + co-crystal</td></tr><tr><td>LIGAND block disagreed with the Hit SMILES</td><td>-1,527</td><td>the geometry described a different molecule</td></tr><tr><td>disconnected SMILES (salts, fragments)</td><td>-150</td><td>multi-fragment hit or analogue</td></tr><tr><td>stereo-only difference</td><td>-61</td><td>winnable by copying the input</td></tr><tr><td>identical after canonicalisation</td><td>-17</td><td>no edit at all</td></tr><tr><td>duplicate pairs removed</td><td>-431</td><td>same (hit, analogue) twice</td></tr><tr><td><b>rung 3 train rows surviving</b></td><td>3,015</td><td><b>plus 334 held out</b></td></tr></tbody></table></div>
-<h2><span class="sn">8</span>How the held-out sets are built</h2>
+<h2><span class="sn">10</span>How the held-out sets are built</h2>
 <div class="tw"><table class="nums"><thead><tr><th>channel</th><th>split key</th><th>held out</th><th>why this key</th></tr></thead><tbody><tr><td>rung 1</td><td>input molecule</td><td>32,082</td><td>all four subtasks key off the same molecule, so a row-level split would let a test molecule reappear under another subtask</td></tr><tr><td>rung 2</td><td>deduplicated pair</td><td>5,988</td><td>4,385 duplicate pairs removed first, after a random split put 600 test pairs&rsquo; twins into training</td></tr><tr><td>rung 3</td><td>deduplicated pair</td><td>334</td><td>same construction; 431 duplicates removed</td></tr><tr><td>potency</td><td>hit group</td><td>12,408</td><td>within-hit Spearman is undefined if a hit&rsquo;s analogues straddle the split</td></tr></tbody></table></div>
-<h2><span class="sn">9</span>Training &mdash; setup and live dynamics</h2>
+<h2><span class="sn">11</span>Training &mdash; setup and live dynamics</h2>
 <div class="kv"><div>base model</div><div>Qwen2.5-7B, frozen, bf16</div><div>adapter</div><div>LoRA r=16, &alpha;=32, dropout 0.05 on q/k/v/o/gate/up/down &mdash; 196 adapters</div><div>potency head</div><div>Siamese MLP, 2,774,529 params, input 3&times;3584</div><div>head input</div><div>forward hook on the final Qwen2RMSNorm, verified against hidden_states[-1]</div><div>batch</div><div>bs 3 &times; accum 11 = 33 rows per optimizer step</div><div>schedule</div><div>1.00 epoch = 17,743 steps, pre-tokenised before step 0</div><div>validation</div><div>every 500 steps on 3,000 held-out rows, patience 4</div><div>insurance</div><div>checkpoint every 500 steps, numbered snapshot every 2,000, --auto-resume</div></div>
 <div class="tw"><table class="nums"><thead><tr><th>quantity</th><th>value</th><th>note</th></tr></thead><tbody><tr><td>step</td><td><span class="num">10,850 / 17,743</span></td><td>61% of epoch 1</td></tr><tr><td>validation LM loss</td><td><span class="num">0.1377</span></td><td>fell at 11 of 12 evaluations</td></tr><tr><td>validation potency MSE</td><td><span class="num">0.0656</span></td><td>down 50% from the first measurement</td></tr><tr><td>errors / NaN / OOM</td><td><span class="num">0 / 0 / 0</span></td><td>across 6,800 logged steps</td></tr><tr><td>watchdog relaunches</td><td><span class="num">0</span></td><td>every check has logged ok</td></tr><tr><td>throughput</td><td><span class="num">6.2 s/step</span></td><td>689 tok/s &mdash; see the compute note</td></tr><tr><td>remaining</td><td><span class="num">~12 h</span></td><td>for epoch 1 at the measured rate</td></tr></tbody></table></div>
 <h3>Validation curve &mdash; the first this project has had</h3>
 <div class="tw"><table class="nums"><thead><tr><th>step</th><th>LM loss</th><th>potency MSE</th><th>&Delta; LM</th></tr></thead><tbody><tr><td>4500</td><td><span class="num">0.2057</span></td><td>0.1324</td><td>&mdash;</td></tr><tr><td>5000</td><td><span class="num">0.1971</span></td><td>0.1226</td><td>-0.0086</td></tr><tr><td>5500</td><td><span class="num">0.1912</span></td><td>0.1248</td><td>-0.0059</td></tr><tr><td>6000</td><td><span class="num">0.1837</span></td><td>0.1286</td><td>-0.0075</td></tr><tr><td>6500</td><td><span class="num">0.1782</span></td><td>0.1107</td><td>-0.0055</td></tr><tr><td>7000</td><td><span class="num">0.1765</span></td><td>0.0983</td><td>-0.0017</td></tr><tr><td>7500</td><td><span class="num">0.1694</span></td><td>0.0921</td><td>-0.0071</td></tr><tr><td>8000</td><td><span class="num">0.1695</span></td><td>0.0894</td><td>+0.0001</td></tr><tr><td>8500</td><td><span class="num">0.1635</span></td><td>0.1033</td><td>-0.0060</td></tr><tr><td>9000</td><td><span class="num">0.1578</span></td><td>0.0799</td><td>-0.0057</td></tr><tr><td>9500</td><td><span class="num">0.1537</span></td><td>0.0865</td><td>-0.0041</td></tr><tr><td>10000</td><td><span class="num">0.1478</span></td><td>0.0732</td><td>-0.0059</td></tr></tbody></table></div>
-<h2><span class="sn">10</span>Compute note &mdash; the run is launch-bound</h2>
+<h2><span class="sn">12</span>Compute note &mdash; the run is launch-bound</h2>
 <p class="lede">Recorded because it is a configuration error rather than a hardware limit, and because it decides what the next run should do.</p>
 <div class="tw"><table class="nums"><thead><tr><th>quantity</th><th>measured</th><th>note</th></tr></thead><tbody><tr><td>throughput</td><td><span class="num">689 tok/s</span></td><td>the same trainer reached 3,437 tok/s on v4</td></tr><tr><td>GPU utilization</td><td><span class="num">48% mean, 0&ndash;81% swing</span></td><td>12 samples over 24 s</td></tr><tr><td>power</td><td><span class="num">~181 W of a 400 W cap</span></td><td>SM clock pinned at max</td></tr><tr><td>CPU</td><td><span class="num">load 1.01 of 12 cores</span></td><td>python at 103% of one core &mdash; not dataloader-bound</td></tr><tr><td>tokens per micro-batch</td><td><span class="num">~389</span></td><td>bs 3 &times; a 130-token corpus mean</td></tr><tr><td>effective compute</td><td><span class="num">42 of 312 TFLOPS</span></td><td>13.5% of A100 bf16 peak</td></tr><tr><td>fitted fixed cost</td><td><span class="num">0.479 s per micro-batch</span></td><td><b>77% of all wall-clock</b></td></tr><tr><td>micro-batches per epoch</td><td><span class="num">195,177</span></td><td>20,039 at a 4,096-token budget</td></tr></tbody></table></div>
-<h2><span class="sn">11</span>Generation sample &mdash; ZAP70, mol1</h2>
+<h2><span class="sn">13</span>Generation sample &mdash; ZAP70, mol1</h2>
 
 <h3>Rung 2 &mdash; ligand only</h3>
 <div class="tw"><table class="lbl-t"><thead><tr><th>mol1 (hit)</th><th>generated analogue</th></tr></thead><tbody><tr><td class="mol"><?xml version='1.0' encoding='iso-8859-1'?>

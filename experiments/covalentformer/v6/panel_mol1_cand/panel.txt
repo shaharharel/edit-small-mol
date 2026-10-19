@@ -1,0 +1,107 @@
+================================================================================
+ZAP70 / mol1 -- TEN CANDIDATE ANALOGUES, pick the ones a chemist would stand behind
+================================================================================
+TARGET: P43403
+INPUT SMILES: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)C)cn3)c2C1
+
+MEASURED POCKET CONTACTS of the input ligand, one row per heavy atom (nearest protein atom within 4.0 A):
+atom  el faces           chain  dist   ang | interaction
+C1    C  CYS346.SG       A       1.40     - | COVALENT BOND to CYS346.SG [declared by the pose provenance (cys346_boltz_v2_2026-05-13), NOT inferred from this distance: the cofold models the bond at 1.40 A against a ~1.81 A ideal for C-S, so treat the LENGTH as unreliable while the BOND itself is asserted]
+C2    C  CYS346.SG       A       2.74     - | polar/apolar packing -- unusually close (2.74 A vs 3.5 A vdW sum); treat the crystal model as uncertain
+C3    C  PRO421.CG       A       3.60     - | hydrophobic contact
+O1    O  LYS424.NZ       A       3.02     - | polar contact, geometry unknown
+N1    N  PRO421.CD       A       3.40     - | polar/apolar packing
+C4    C  PRO421.CD       A       3.71     - | hydrophobic contact
+C5    C  GLY420.CA       A       3.71     - | hydrophobic contact
+C6    C  GLY420.CA       A       3.67     - | hydrophobic contact
+C7    C  GLY418.O        A       3.36     - | polar/apolar packing
+C8    C  ALA417.O        A       3.27     - | polar/apolar packing
+C9    C  LEU344.CD1      A       3.35     - | hydrophobic contact
+C10   C  LEU344.CD1      A       3.33     - | hydrophobic contact
+O2    O  LEU344.CD1      A       3.52     - | polar/apolar packing
+N2    N  ALA417.O        A       3.13     - | polar contact, geometry unknown
+C11   C  LEU468.CD1      A       3.56     - | hydrophobic contact
+C12   C  LEU468.CD1      A       3.44     - | hydrophobic contact
+N3    N  ALA367.CB       A       3.33     - | polar/apolar packing
+C13   C  MET414.SD       A       3.63     - | polar/apolar packing
+C14   C  LYS369.CG       A       3.67     - | hydrophobic contact
+C15   C  MET414.SD       A       3.53     - | polar/apolar packing
+C16   C  GLU415.O        A       3.12     - | polar/apolar packing
+N4    N  ALA417.N        A       2.86     - | polar contact, geometry unknown
+C17   C  GLY420.CA       A       3.82     - | hydrophobic contact
+C18   C  PRO421.CD       A       3.68     - | hydrophobic contact
+
+TEN CANDIDATES, from two different fine-tuned models, order shuffled, model identity hidden.
+All were sampled (temperature 0.9) from the same prompt above and pre-filtered by an automated
+checker, so all ten already satisfy: molecule parses, is not the input unchanged, cites at least two
+distances, and every cited (residue, distance) is a real row of the table above.
+
+  CANDIDATE 01
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3c[nH]cn3)c2C1
+    reasoning: Replacing the isopropyl with a hydroxyl should trade its proximity to LYS369.CG at 3.67 Å and MET414.SD at 3.53 Å for a polar face toward LYS369.
+
+  CANDIDATE 02
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3c[nH]cn3)c2C1
+    reasoning: Replacing isopropyl near LEU468 at 3.44 Å with methyl should reduce that arm's local spread while retaining the 1.40 Å CYS346 covalent anchor and 3.02 Å LYS424 polar proximity.
+
+  CANDIDATE 03
+    molecule: C=CC(=O)N1Cc2c(C(=O)Nc3cn(C)cn3)cccc2C1CC(=O)OC
+    reasoning: Replacing isopropyl near ALA367.CB at 3.33 Å with methyl should reduce that local reach, while the accompanying methylene insertion in the opposite arm should redistribute the ring's proximity to LEU344.
+
+  CANDIDATE 04
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C[C@H](C)C(F)(F)F)cn3)c2C1
+    reasoning: Replacing isopropyl near ALA367 at 3.33 Å with chiral trifluoroethyl should redirect the methyl branch toward MET414 while retaining the CYS346 covalent anchor.
+
+  CANDIDATE 05
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(CCC(C)(C)O)cn3)c2C1
+    reasoning: Replacing isopropyl near LEU468 at 3.56 Å and LYS369 at 3.67 Å with a branched hydroxylated arm should redistribute that proximity while retaining the input’s 1.40 Å CYS346 covalent bond.
+
+  CANDIDATE 06
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3ccnc(C#N)n3)c2C1
+    reasoning: Deleting the isopropyl near LYS369.CG at 3.67 Å and adding nitrile should redirect the ring-nitrogen interaction from ALA417.N at 2.86 Å toward LYS369.
+
+  CANDIDATE 07
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3c[nH]cn3)c2C1
+    reasoning: Removing isopropyl near LYS369.CG at 3.67 Å and LEU468.CD1 at 3.44 Å should reduce that side's packing and redirect the imidazole amine toward ALA417.
+
+  CANDIDATE 08
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(Cc4ccc(Cl)cc4)cn3)c2C1
+    reasoning: Replacing the isopropyl that packs MET414.SD at 3.53 A and LYS369.CG at 3.67 A with a chlorobenzyl should flatten that contact over aromatic carbons while the 1.40 A CYS346.SG covalent bond is held.
+
+  CANDIDATE 09
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C4CCC4)cn3)c2C1
+    reasoning: Replacing isopropyl with cyclobutyl should reduce the methyl footprint near ALA417 at 3.27 Å while retaining the CYS346 covalent anchor, although the 1.40 Å distance itself is unreliable.
+
+  CANDIDATE 10
+    molecule: C=CC(=O)N1Cc2cccc(C(=O)Nc3cn(C(C)(C)CO)cn3)c2C1
+    reasoning: Replacing isopropyl with the branched hydroxymethyl group should redistribute proximity to LEU468 from the aliphatic edge at 3.44 Å toward the terminal hydroxyl, while retaining the 1.40 Å CYS346 covalent anchor.
+
+--------------------------------------------------------------------------------
+WHAT THE AUTOMATED FILTER COULD NOT CHECK, AND WHY YOU ARE HERE
+
+The filter verifies that a cited (residue, distance) pair EXISTS in the table. It does NOT verify
+(a) that the cited contact is OWNED by the group the edit actually touches, or (b) that the molecule
+matches what the sentence says it did. Both failures are known to occur in these models, so treat
+every candidate as suspect on exactly those two points.
+
+Atom names in the table are element + running index over heavy atoms in molecule order (C1, C2, ...,
+O1, N1, ...). Derive the mapping from the INPUT SMILES yourself -- a previous round found that doing
+this, rather than trusting the prose, was what settled most calls. Do not assume any grouping.
+
+Context: mol1 is a designed covalent seed, not a crystallised ligand. The table comes from a
+PREDICTED cofold, so every distance is predicted. The warhead row asserts a covalent bond to
+CYS346.SG from the pose provenance while flagging its 1.40 A length as unreliable; a real C-S bond
+is ~1.81 A. Citing the BOND is correct; asserting that LENGTH as measured fact is not.
+
+Score each candidate on:
+  molecule_is_sound_analogue   single-step, synthesisable, survives water, acrylamide Michael
+                               acceptor intact and NOT alpha-methylated (methacrylamide is far less
+                               thiol-reactive, so it fails this).
+  claim_matches_molecule       does the molecule do what the sentence says it does? Diff it in RDKit.
+  ownership_correct            is every cited contact owned by an atom the edit actually touched
+                               (for "gives up"/"removes" claims) or genuinely retained (for
+                               "retaining" claims)?
+  caveat_respected             does it avoid asserting the flagged 1.40 A length as fact?
+  would_stand_behind           would you put this candidate in front of a medicinal chemistry team
+                               as a real proposal for this programme?
+  one_line_why
