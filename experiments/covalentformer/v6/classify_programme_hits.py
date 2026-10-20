@@ -40,6 +40,14 @@ CHEMBL_OF = {'P52333': 'CHEMBL2148', 'P04626': 'CHEMBL1824', 'P43235': 'CHEMBL26
              'P28074': 'CHEMBL4662', 'P26664': 'CHEMBL4296325'}
 
 
+HEAVY = __import__('re').compile(r'(?:Cl|Br|[CNOSPFIcnops])')
+
+
+def move_size(key):
+    """Heavy atoms in a (removed, added) transformation."""
+    return sum(len(HEAVY.findall(x or '')) for x in key)
+
+
 def transform_key(a_smi, b_smi, Chem, rdFMCS):
     """(removed, added) canonical fragment SMILES for one a->b change, by MCS. None if unusable."""
     a, b = Chem.MolFromSmiles(a_smi or ''), Chem.MolFromSmiles(b_smi or '')
@@ -74,6 +82,12 @@ def main():
     ap.add_argument('--known', default=os.path.join(HERE, 'known_sar_hits_v2.json'),
                     help='only used to reuse the molecule-level pools if present')
     ap.add_argument('--near', type=float, default=0.85)
+    ap.add_argument('--min-move', type=int, default=5,
+                    help='minimum heavy atoms in removed+added fragments for a SAR_MOVE to count. '
+                         'Without a floor the match is meaningless: on v2, 50 of 77 matches were '
+                         '1-2 atom moves such as ">>C" or ">>Cl", and "add a methyl" is guaranteed '
+                         'to appear among 4,316 known JAK3 transformations. It says the move is '
+                         'common, not that the model reproduced real SAR.')
     ap.add_argument('--out', default=os.path.join(HERE, 'programme_hits_classified.json'))
     a = ap.parse_args()
     from rdkit import Chem, DataStructs, RDLogger
@@ -104,6 +118,10 @@ def main():
             if k:
                 known_tf[uni].add(k)
                 known_tf[uni].add((k[1], k[0]))      # the reverse move is equally real
+    cache = os.path.join(HERE, 'known_transforms_cache.json')
+    json.dump({u: sorted('%s>>%s' % k for k in v) for u, v in known_tf.items()},
+              open(cache, 'w'))
+    print('cached known transformations -> %s' % cache)
     print('target pools:')
     for uni in sorted(known_mol):
         print('  %-9s %6d pairs  %6d compounds  %6d distinct transformations'
@@ -133,7 +151,7 @@ def main():
                     kind, matched, score = 'KNOWN', kmol[cs], 1.0
                 else:
                     k = transform_key(pr['input_smiles'], cs, Chem, rdFMCS)
-                    if k and k in ktf:
+                    if k and k in ktf and move_size(k) >= a.min_move:
                         kind, matched, score = 'SAR_MOVE', '%s>>%s' % k, 1.0
                     else:
                         fp = gen.GetFingerprint(Chem.MolFromSmiles(cs))
