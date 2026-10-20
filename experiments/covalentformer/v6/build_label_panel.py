@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Blind, PAIRED chemist panel: the same pair labelled by g3 and by g4.
+"""Blind, PAIRED chemist panel: the same SAME-SERIES ANALOGUE PAIR labelled by g3 and by g4.
+
+Note on terminology: these are not matched molecular pairs. The corpus criterion is same
+paper/series + Tanimoto >= 0.50 + same protein; there is no fragmentation step and no
+single-transformation constraint, so a pair can differ at several sites at once.
 
 2,600 pairs carry a usable label from both generations and the sentences differ on 100% of them,
 so this is a true paired comparison -- same input, same contact table, same analogue, two
@@ -21,7 +25,9 @@ def usable(d):
             if v.get('verdict') in ('ADOPT', 'REWRITE') and (v.get('final') or '').strip()}
 
 
-def fmt_atoms(atoms, limit=22):
+def fmt_atoms(atoms, limit=400):   # NO truncation: reviewers flagged that hidden rows are
+                                   # exactly the N/O/S rows H-bond claims rest on, so a trimmed
+                                   # table forces unverifiable anchors to be scored as passing
     out = []
     for a in atoms[:limit]:
         bits = ['%-5s %-2s' % (a.get('atom', '?'), a.get('element', '?'))]
