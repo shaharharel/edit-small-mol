@@ -75,8 +75,28 @@ MARK = '<div id="gen-sample-chemdfm"></div>'
 #   8PT1  covalent clause correct, the HIS125 figure is not
 #   6IEZ, 7NSW  silently drop a third contact the edit also changes
 # Kept: 7R2L, the only one publishable as written, and 28LM, correct but purely descriptive.
+# The held-out candidates that survive independent chemist review, out of 262 generations.
+#
+#   262 generations -> 95 score a perfect 1.000 on the verifier -> 35 pass the CCD-rebuild
+#   ownership and reachability filter -> reviewed by three chemists in three shards ->
+#   2 show, 4 show_with_caveat, 29 do_not_show.
+#
+# The two SHOW candidates, 28LM and 7R2L, are the same two a separate reviewer picked from an
+# earlier set of ten, reached independently in different shards. The four caveated ones are
+# included because their cited rows were verified exact and correctly owned; their caveats are
+# recorded in heldout_publishable.json.
+#
+# Reviewers agree on the defect, and it is one clause, not a general weakness: the first clause,
+# the contact the edit gives up, is correctly owned and measured in 12 of 12 and 11 of 11 across
+# shards. Where a sentence adds a "redirect X toward RES" clause, it fails -- 8 of 8 in shard 1,
+# with the named residue 4.4 to 10.5 A from the nearest edited atom and 90 to 177 degrees off the
+# growth vector; shard 3 found destinations 9.3 and 12.8 A away. The model reads its input
+# correctly and then invents a destination, because the table carries no evidence about where new
+# atoms go and 36% of the gold sentences name one anyway -- written by labellers who could see the
+# analogue crystal, which the model never can.
 PICKS = [
-    '7R2L UX5->UPZ', '28LM A1JZS->A1JZB',
+    '28LM A1JZS->A1JZB', '7R2L UX5->UPZ',
+    '6PGE OJM->OHJ', '6X4B UMY->7AX', '7I9G A1B6H->A1B6F', '8QCN QB9->QBI',
 ]
 # The 14 candidates all three external chemists independently marked would_make_it, out of the 83
 # that cleared the automated funnel (itself drawn from 502 generations). Round 1 sent all 181 raw
