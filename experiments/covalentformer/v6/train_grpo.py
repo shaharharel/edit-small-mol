@@ -113,6 +113,35 @@ def load_prompts(data_dir, evidence_path, holdout_pairs):
     return out
 
 
+def load_eval_set(data_dir, evidence_path, holdout_pairs, n, seed=0):
+    """A FIXED held-out slice for checkpoint selection.
+
+    adapter_best cannot be chosen on training reward. With one prompt per step, a step's score is
+    8 rollouts on a single pocket, and single-prompt variance swamps any real difference -- the
+    first run duly saved 'best' at step 25 on 0.550, its worst block to that point, simply because
+    step 25 was the first step the save condition looked at. Selection needs the same prompts every
+    time, and prompts the policy is not training on.
+    """
+    ev = {}
+    for line in open(evidence_path):
+        r = json.loads(line)
+        ev[r['pair']] = r['MODEL_INPUT']
+    out = []
+    for line in open(os.path.join(HERE, data_dir, 'sft_pocket.jsonl')):
+        r = json.loads(line)
+        if r['split'] != 'val' or r['pair'] not in holdout_pairs:
+            continue
+        mi = ev.get(r['pair'])
+        if mi is None:
+            continue
+        out.append({'pair': r['pair'], 'prompt': r['prompt'], 'model_input': mi,
+                    'input_smiles': mi.get('input_smiles'),
+                    'ligand_code': _code(r['pair'])})
+    out.sort(key=lambda x: x['pair'])          # deterministic before sampling
+    random.Random(seed).shuffle(out)
+    return out[:n]
+
+
 def _code(pair):
     try:
         return pair.split()[1].split('->')[0]
@@ -331,8 +360,10 @@ def train(args, rw):
     prompts = load_prompts(args.data_dir, EVIDENCE, holdout)
     assert not [p for p in prompts if p['pair'] in holdout], 'benchmark leak'
     replay = load_replay(args.data_dir)
-    print('[grpo] %d prompts, %d replay rows, %d held-out pairs excluded'
-          % (len(prompts), len(replay), len(holdout)))
+    eval_set = load_eval_set(args.data_dir, EVIDENCE, holdout, args.eval_n, args.seed)
+    print('[grpo] %d prompts, %d replay rows, %d held-out pairs excluded, %d eval prompts'
+          % (len(prompts), len(replay), len(holdout), len(eval_set)))
+    assert not [e for e in eval_set if e['pair'] not in holdout], 'eval set must be held out'
 
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr)
     rng = random.Random(args.seed)
@@ -388,6 +419,34 @@ def train(args, rw):
             rewards.append(s['total'])
             scored.append(s)
         return gen, len(pids), rewards, scored, texts
+
+    def evaluate(items, rw):
+        """Mean reward over the fixed held-out prompts. Greedy, so the number is reproducible."""
+        model.gradient_checkpointing_disable()
+        model.config.use_cache = True
+        was_training = model.training
+        model.eval()
+        tot, gated = 0.0, 0
+        try:
+            for it in items:
+                pids = tok(it['prompt'], add_special_tokens=True)['input_ids']
+                ids = torch.tensor([pids], device=dev)
+                with torch.no_grad():
+                    g = model.generate(input_ids=ids, attention_mask=torch.ones_like(ids),
+                                       max_new_tokens=args.max_new, do_sample=False,
+                                       pad_token_id=pad, eos_token_id=eos)
+                sent, smi = _split_completion(tok.decode(g[0][len(pids):],
+                                                         skip_special_tokens=False))
+                sc = rw.score(it['model_input'], sent, smi, it['input_smiles'],
+                              ligand_code=it['ligand_code'])
+                tot += sc['total']
+                gated += 1 if sc['total'] == 0.0 else 0
+        finally:
+            model.config.use_cache = False
+            model.gradient_checkpointing_enable()
+            if was_training:
+                model.train()
+        return tot / max(len(items), 1), gated / max(len(items), 1)
 
     for step in range(1, args.steps + 1):
         t0 = time.time()
@@ -496,11 +555,21 @@ def train(args, rw):
                  rec['components'].get('attribution', 0), rec['components'].get('n_claims', 0),
                  rec['components'].get('banned_vocabulary', 0)))
 
-        if step % args.save_every == 0 and rec['reward_mean'] > best:
-            best = rec['reward_mean']
-            model.save_pretrained(os.path.join(args.out, 'adapter_best'))
-            json.dump(rec, open(os.path.join(args.out, 'adapter_best', 'step.json'), 'w'), indent=2)
-            print('[grpo] saved adapter_best at step %d (reward %.3f)' % (step, best))
+        if step % args.save_every == 0 and eval_set:
+            ev_mean, ev_gated = evaluate(eval_set, rw)
+            rec['holdout_reward'] = ev_mean
+            rec['holdout_gated'] = ev_gated
+            logf.write(json.dumps({'step': step, 'holdout_reward': ev_mean,
+                                   'holdout_gated': ev_gated}) + '\n')
+            logf.flush()
+            print('[grpo] step %3d  HOLDOUT reward %.3f  gated-to-zero %.0f%%  (n=%d)'
+                  % (step, ev_mean, 100 * ev_gated, len(eval_set)))
+            if ev_mean > best:
+                best = ev_mean
+                model.save_pretrained(os.path.join(args.out, 'adapter_best'))
+                json.dump({'step': step, 'holdout_reward': ev_mean},
+                          open(os.path.join(args.out, 'adapter_best', 'step.json'), 'w'), indent=2)
+                print('[grpo] saved adapter_best at step %d (holdout %.3f)' % (step, best))
 
     model.save_pretrained(os.path.join(args.out, 'adapter_final'))
     print('[grpo] done')
@@ -557,6 +626,8 @@ def main():
     ap.add_argument('--inner-epochs', dest='inner_epochs', type=int, default=1,
                     help='policy updates per rollout. >1 activates the clip and reuses rollouts.')
     ap.add_argument('--clip-eps', dest='clip_eps', type=float, default=0.2)
+    ap.add_argument('--eval-n', dest='eval_n', type=int, default=16,
+                    help='held-out prompts used to pick adapter_best (greedy, fixed set)')
     ap.add_argument('--dump-steps', dest='dump_steps', type=int, default=2,
                     help='write raw rollouts + reward components for the first N steps')
     ap.add_argument('--micro-batch', dest='micro_batch', type=int, default=1,
