@@ -427,6 +427,7 @@ def train(args, rw):
         was_training = model.training
         model.eval()
         tot, gated = 0.0, 0
+        fails = collections.Counter()
         try:
             for it in items:
                 pids = tok(it['prompt'], add_special_tokens=True)['input_ids']
@@ -441,26 +442,33 @@ def train(args, rw):
                               ligand_code=it['ligand_code'])
                 tot += sc['total']
                 gated += 1 if sc['total'] == 0.0 else 0
+                # WHICH gate fired, not just how many. A held-out score that falls from 0.921 to
+                # 0.693 while every training-side component holds steady is not diagnosable from
+                # the totals alone -- the question is whether the policy stopped parsing, started
+                # echoing the input, or stopped citing distances, and those have different causes.
+                for k, v in sc['gates'].items():
+                    if not v:
+                        fails[k] += 1
         finally:
             model.config.use_cache = False
             model.gradient_checkpointing_enable()
             if was_training:
                 model.train()
-        return tot / max(len(items), 1), gated / max(len(items), 1)
+        return tot / max(len(items), 1), gated / max(len(items), 1), dict(fails)
 
     # Step-0 baseline, BEFORE any update. A held-out score is meaningless without it: the first
     # run reported 0.789 at step 25 with nothing to compare it against, so it could not say whether
     # GRPO had helped, hurt, or done nothing. This is the same fixed prompts and the same greedy
     # decoding as every later eval, so the numbers are directly subtractable.
     if eval_set:
-        base_mean, base_gated = evaluate(eval_set, rw)
+        base_mean, base_gated, base_fails = evaluate(eval_set, rw)
         best = base_mean
         logf.write(json.dumps({'step': 0, 'holdout_reward': base_mean,
                                'holdout_gated': base_gated, 'baseline': True}) + '\n')
         logf.flush()
-        print('[grpo] step   0  HOLDOUT reward %.3f  gated-to-zero %.0f%%  (n=%d, PRE-GRPO '
-              'baseline; adapter_best must beat this)' % (base_mean, 100 * base_gated,
-                                                          len(eval_set)))
+        print('[grpo] step   0  HOLDOUT reward %.3f  gated-to-zero %.0f%% %s  (n=%d, '
+              'PRE-GRPO baseline; adapter_best must beat this)'
+              % (base_mean, 100 * base_gated, base_fails or '', len(eval_set)))
 
     for step in range(1, args.steps + 1):
         t0 = time.time()
@@ -570,14 +578,16 @@ def train(args, rw):
                  rec['components'].get('banned_vocabulary', 0)))
 
         if step % args.save_every == 0 and eval_set:
-            ev_mean, ev_gated = evaluate(eval_set, rw)
+            ev_mean, ev_gated, ev_fails = evaluate(eval_set, rw)
             rec['holdout_reward'] = ev_mean
             rec['holdout_gated'] = ev_gated
+            rec['holdout_gate_fails'] = ev_fails
             logf.write(json.dumps({'step': step, 'holdout_reward': ev_mean,
-                                   'holdout_gated': ev_gated}) + '\n')
+                                   'holdout_gated': ev_gated,
+                                   'holdout_gate_fails': ev_fails}) + '\n')
             logf.flush()
-            print('[grpo] step %3d  HOLDOUT reward %.3f  gated-to-zero %.0f%%  (n=%d)'
-                  % (step, ev_mean, 100 * ev_gated, len(eval_set)))
+            print('[grpo] step %3d  HOLDOUT reward %.3f  gated-to-zero %.0f%% %s  (n=%d)'
+                  % (step, ev_mean, 100 * ev_gated, ev_fails or '', len(eval_set)))
             if ev_mean > best:
                 best = ev_mean
                 model.save_pretrained(os.path.join(args.out, 'adapter_best'))
@@ -640,7 +650,7 @@ def main():
     ap.add_argument('--inner-epochs', dest='inner_epochs', type=int, default=1,
                     help='policy updates per rollout. >1 activates the clip and reuses rollouts.')
     ap.add_argument('--clip-eps', dest='clip_eps', type=float, default=0.2)
-    ap.add_argument('--eval-n', dest='eval_n', type=int, default=16,
+    ap.add_argument('--eval-n', dest='eval_n', type=int, default=32,
                     help='held-out prompts used to pick adapter_best (greedy, fixed set)')
     ap.add_argument('--dump-steps', dest='dump_steps', type=int, default=2,
                     help='write raw rollouts + reward components for the first N steps')
