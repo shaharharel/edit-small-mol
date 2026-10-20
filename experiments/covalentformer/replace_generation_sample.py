@@ -51,7 +51,7 @@ V6 = os.path.join(HERE, 'v6')
 EVIDENCE = os.path.join(ROOT, 'data/pdb_mirror/v7_evidence.jsonl')
 GENS = os.path.join(V6, 'g3g4_eval_results/chemdfm/generations.jsonl')
 MOL1_BATCHES = os.path.expanduser(
-    '~/Downloads/covalentformer_labelling_task/mol1_candidate_pick/batches')
+    '~/Downloads/covalentformer_labelling_task/mol1_round2/batches')
 MOL1_FINALS = os.path.expanduser(
     '~/Downloads/covalentformer_labelling_task/mol1_candidate_pick/finals/final_ranking.json')
 
@@ -78,7 +78,15 @@ MARK = '<div id="gen-sample-chemdfm"></div>'
 PICKS = [
     '7R2L UX5->UPZ', '28LM A1JZS->A1JZB',
 ]
-MOL1_PICKS = ['item_046', 'item_065', 'item_015']
+# The 14 candidates all three external chemists independently marked would_make_it, out of the 83
+# that cleared the automated funnel (itself drawn from 502 generations). Round 1 sent all 181 raw
+# candidates and returned 3; filtering first and asking only the question no rule can answer
+# returned 14. They collapse to 9 distinct molecules -- several of the 14 defend the same analogue
+# with different reasoning, which is kept because the reasoning is what is on display.
+MOL1_PICKS = [
+    'r2_009', 'r2_012', 'r2_035', 'r2_040', 'r2_042', 'r2_043', 'r2_046',
+    'r2_048', 'r2_053', 'r2_059', 'r2_065', 'r2_068', 'r2_074', 'r2_077',
+]
 
 
 def main():
@@ -116,8 +124,8 @@ def main():
     cand = {}
     for fn in sorted(os.listdir(MOL1_BATCHES)):
         txt = open(os.path.join(MOL1_BATCHES, fn)).read()
-        for m in re.finditer(r'(item_\d+)\s*\n\s*molecule:\s*(\S+)\s*\n\s*reasoning:\s*'
-                             r'(.+?)(?=\n\s*item_|\Z)', txt, re.S):
+        for m in re.finditer(r'(r2_\d+)\s*\n\s*molecule:\s*(\S+)\s*\n\s*reasoning:\s*'
+                             r'(.+?)(?=\n\s*r2_|\Z)', txt, re.S):
             cand[m.group(1)] = (m.group(2), ' '.join(m.group(3).split()))
     mol1_in = json.loads(open(os.path.join(V6, 'mol1_chemdfm/mol1_prompt_covalent.jsonl'))
                          .readline())['input_smiles']
