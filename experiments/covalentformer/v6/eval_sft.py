@@ -271,6 +271,10 @@ def main():
     ap.add_argument('--model', choices=sorted(MODELS), required=True)
     ap.add_argument('--arm', choices=['pocket', 'blind'], required=True)
     ap.add_argument('--adapter', default=None, help='omit for the zero-shot baseline')
+    ap.add_argument('--base-adapter', dest='base_adapter', default=None,
+                    help='adapter merged BEFORE --adapter. For a GRPO run trained with '
+                         '--kl-ref sft, pass the SFT adapter here and the GRPO checkpoint as '
+                         '--adapter, matching the stack it was trained in.')
     ap.add_argument('--split', default='val')
     ap.add_argument('--data-dir', default='sft_out')
     ap.add_argument('--out', required=True)
@@ -287,6 +291,16 @@ def main():
     model_path = MODELS[a.model]
     tok = build_tokenizer(model_path)
     model = load_model(model_path, CFG['bf16'], device_map='cuda')
+    # --base-adapter is merged FIRST, then --adapter is applied on top of the merged weights.
+    #
+    # A GRPO run launched with --kl-ref sft merges the SFT adapter into the base and trains a
+    # fresh LoRA over those merged weights (train_grpo.py, the args.kl_ref == 'sft' branch), so
+    # its checkpoint is only meaningful in that same stack. Loading it onto the raw base instead
+    # would evaluate GRPO-without-SFT -- a model that was never trained and never existed -- and
+    # would do so silently, reporting a plausible-looking number.
+    if a.base_adapter:
+        from peft import PeftModel
+        model = PeftModel.from_pretrained(model, a.base_adapter).merge_and_unload()
     if a.adapter:
         from peft import PeftModel
         model = PeftModel.from_pretrained(model, a.adapter).merge_and_unload()
@@ -298,7 +312,8 @@ def main():
     summary, recs = score(rows, generate(model, tok, rows, device))
     summary.update(out)
     summary.update({'model': a.model, 'model_path': model_path, 'arm': a.arm, 'split': a.split,
-                    'adapter': a.adapter, 'zero_shot': a.adapter is None, 'seed': a.seed,
+                    'adapter': a.adapter, 'base_adapter': a.base_adapter,
+                    'zero_shot': a.adapter is None, 'seed': a.seed,
                     'reference_ceiling': reference_ceiling(rows),
                     'val_is_model_selection_not_test': a.split == 'val'})
 
