@@ -235,7 +235,33 @@ def changed_conserved(inp, gen):
     return out
 
 
-CCD_PATH = ('/Users/shaharharel/Documents/github/edit-small-mol/data/pdb_mirror/ccd_atoms.json')
+# Resolve data relative to the repo, not to one laptop. The first version hardcoded an absolute
+# /Users path, which on any other machine silently returns no_ccd_entry for every molecule -- the
+# component appears to run while scoring nothing. COVF_DATA overrides for odd layouts.
+_HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _find_data():
+    """First existing of: COVF_DATA, a flat data/ beside this file, or the repo tree.
+
+    The training box keeps a FLAT copy of this directory (~/covf_v6/) rather than the repo's
+    experiments/covalentformer/v6/ path, so a single relative guess resolves to a directory that
+    does not exist and every lookup returns no_ccd_entry -- the component would appear to run while
+    scoring nothing, which is the failure this function exists to prevent.
+    """
+    env = os.environ.get('COVF_DATA')
+    cands = ([env] if env else []) + [
+        os.path.join(_HERE, 'data', 'pdb_mirror'),
+        os.path.abspath(os.path.join(_HERE, '..', '..', '..', 'data', 'pdb_mirror')),
+    ]
+    for c in cands:
+        if c and os.path.isdir(c):
+            return c
+    return cands[-1]
+
+
+DATA = _find_data()
+CCD_PATH = os.path.join(DATA, 'ccd_atoms.json')
 _CCD = None
 _MAP_STATS = collections.Counter()
 _AMBIG = {}
@@ -546,8 +572,7 @@ def main():
     ap = argparse.ArgumentParser(description='Score generations with the GRPO reward components.')
     ap.add_argument('generations', nargs='+')
     ap.add_argument('--evidence',
-                    default='/Users/shaharharel/Documents/github/edit-small-mol/'
-                            'data/pdb_mirror/v7_evidence.jsonl')
+                    default=os.path.join(DATA, 'v7_evidence.jsonl'))
     ap.add_argument('--json', default=None)
     a = ap.parse_args()
 
