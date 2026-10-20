@@ -160,14 +160,7 @@ def build_g3_training_block():
             '<td><div class="lbl-hd">chair sentence &mdash; the training target</div>'
             '<div class="lbl-rsn">%s</div>%s</td>'
             % (esc(r.get('reference_sentence')), meta)])
-    lede = ('<h3>Five rows of g3 training data</h3>'
-            '<p class="lede">These are <b>training</b> rows, not showcase rows &mdash; five of the '
-            '2,326 in <code>sft_out_g3</code>, drawn from the '
-            '<code>g3_v2_input_anchored_envelope</code> labelling pass. The third column is '
-            'literally the completion the model is fine-tuned to emit: one sentence, anchored on '
-            'the <i>input</i> crystal’s measured geometry, naming what the edit gives up and '
-            'what it keeps. Every row shown carries a chair verdict of <code>ADOPT</code>. Orange '
-            'marks the atoms that changed.</p>')
+    lede = '<h3>Five rows of g3 training data</h3>'
     return lede + lbl_table(('input (hit)', 'output (analogue)',
                              'chair sentence (training target)'), out)
 

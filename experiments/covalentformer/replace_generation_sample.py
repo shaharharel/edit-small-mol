@@ -108,14 +108,8 @@ def main():
             % (why, ars.esc(sent), ars.esc(g.get('target') or ''),
                len(mi.get('atoms') or []))])
 
-    lede = (
-        '<h3>Held-out pairs &mdash; ten candidates from ChemDFM-14B g3+g4</h3>'
-        '<p class="lede">Ten generations from the 262-pair held-out set, produced by the '
-        '<b>g3+g4</b> arm alone and decoded greedily. Each scores a perfect <b>1.000</b> on the '
-        'verifier &mdash; 95 of the 262 do &mdash; and each was then checked by hand on the two '
-        'things the verifier cannot see: that every cited distance is owned by an atom the edit '
-        'actually touches, and that the group the sentence names is the group the SMILES changes. '
-        'Ten distinct proteins, two of them covalent. Orange marks the atoms that differ.</p>')
+    lede = '<h3>Held-out pairs &mdash; ten candidates from ChemDFM-14B g3+g4</h3>'
+
     heldout = lede + ars.lbl_table(
         ('input (hit)', 'generated analogue', 'model reasoning'), rows)
 
@@ -144,14 +138,6 @@ def main():
             % (ars.esc(sent), ars.esc(why_of.get(iid, '')))])
     mol1 = (
         '<h3>ZAP70, mol1 &mdash; candidates and their reasoning</h3>'
-        '<p class="lede">mol1 is a designed covalent seed with <b>no crystal structure</b>: its '
-        'contact table comes from a Boltz-2 cofold against ZAP70 Cys346, so every distance is '
-        '<b>predicted</b>, and ZAP70 contributes <b>0 of the 7,069</b> rows in the corpus. '
-        '<b>181</b> candidates from ChemDFM-14B g3+g4 went to three external medicinal chemists '
-        'across 8 batches (543 slot judgements), then a finals round over the 30 they nominated. '
-        'The <b>three</b> below are those all three reviewers would put on a synthesis list &mdash; '
-        'two distinct structures, since two of them defend the same benzyl analogue with different '
-        'reasoning. The right-hand column is the reviewers&rsquo; own verdict, quoted.</p>'
         + ars.lbl_table(('mol1 (input)', 'proposed analogue',
                          'model reasoning &middot; chemists&rsquo; verdict'), mrows))
 
