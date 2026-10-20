@@ -58,6 +58,7 @@ import json
 import math
 import os
 import random
+import statistics
 import sys
 import time
 
@@ -474,6 +475,12 @@ def train(args, rw):
         t0 = time.time()
         batch = rng.sample(prompts, min(args.batch, len(prompts)))
         rews, comps, trivial, live = [], collections.defaultdict(list), 0, []
+        # Within-group reward spread, per group. A flat reward curve has two very different
+        # causes and the means cannot tell them apart: advantages that are large but cancel
+        # across steps, or advantages that are near zero because every sample in the group
+        # scored alike. group_advantages() only reports the boolean "useful", which was true
+        # for all 150 groups of v3 while the curve went nowhere -- so record the magnitude.
+        gstds = []
 
         # Pass 1 -- rollouts for the whole batch under no_grad, so the number of groups that
         # actually carry signal is known before anything is scaled and backpropagated.
@@ -490,6 +497,8 @@ def train(args, rw):
                 for k, v in s['components'].items():
                     comps[k].append(v)
                 comps['n_claims'].append(s['n_claims'])
+            if len(rewards) > 1:
+                gstds.append(statistics.pstdev(rewards))
             adv, useful = group_advantages(rewards)
             if not useful:
                 trivial += 1
@@ -512,6 +521,7 @@ def train(args, rw):
         # step and backpropagated immediately, so never more than --micro-batch sequences' worth of
         # graph is alive. Identical in expectation to one large backward; it merely fits.
         pol_sum, kl_sum, nrows = 0.0, 0.0, 0
+        clip_hits, clip_toks = 0, 0
         denom = len(live) * args.group
         for gen, plen, adv in live:
             mask = (gen != pad).long()
@@ -540,7 +550,15 @@ def train(args, rw):
                 pol_sum += float(pol.sum())
                 kl_sum += float(kl.sum())
                 nrows += g.shape[0]
-                del lp, lp_old, lpr, keep, ratio, surr, pol, kl, d, a
+                # How often the clip actually binds. At --inner-epochs 1 this must be 0.000: the
+                # ratio is identically 1 because lp and lp_old come from the same weights. Anything
+                # else there means the two passes disagree -- dropout left on, or a stale reference
+                # -- and the surrogate is not the objective it claims to be.
+                with torch.no_grad():
+                    out_of_band = ((ratio < 1 - args.clip_eps) | (ratio > 1 + args.clip_eps))
+                    clip_hits += int(((out_of_band) & (keep > 0)).sum())
+                    clip_toks += int((keep > 0).sum())
+                del lp, lp_old, lpr, keep, ratio, surr, pol, kl, d, a, out_of_band
 
         # SFT anchor, backpropagated on its own for the same memory reason
         sft_val = float('nan')
@@ -561,21 +579,28 @@ def train(args, rw):
         if args.lam > 0 and replay:
             loss_val += args.lam * sft_val
 
-        torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
+        # The pre-clip norm, which is what says whether the update was large and got cut down or
+        # was negligible to begin with. clip_grad_norm_ returns the norm it measured.
+        gnorm = float(torch.nn.utils.clip_grad_norm_(
+            [p for p in model.parameters() if p.requires_grad], 1.0))
         opt.step()
         opt.zero_grad(set_to_none=True)
 
         rec = {'step': step, 'loss': loss_val, 'reward_mean': sum(rews) / max(len(rews), 1),
                'trivial_groups': trivial, 'groups': len(batch), 'sft_loss': sft_val,
                'secs': round(time.time() - t0, 1),
+               'group_reward_std': (sum(gstds) / len(gstds)) if gstds else 0.0,
+               'kl': kl_sum / max(nrows, 1),
+               'clip_frac': clip_hits / max(clip_toks, 1),
+               'grad_norm': gnorm,
                'components': {k: sum(v) / len(v) for k, v in comps.items()}}
         logf.write(json.dumps(rec) + '\n')
         logf.flush()
-        print('[grpo] step %3d  reward %.3f  trivial %d/%d  sft %.3f  %.0fs  '
-              'attrib %.3f n_claims %.2f banned %.3f'
-              % (step, rec['reward_mean'], trivial, len(batch), sft_val, rec['secs'],
-                 rec['components'].get('attribution', 0), rec['components'].get('n_claims', 0),
-                 rec['components'].get('banned_vocabulary', 0)))
+        print('[grpo] step %3d  reward %.3f  gstd %.3f  kl %.4f  gnorm %.3f  clip %.3f  '
+              'trivial %d/%d  sft %.3f  %.0fs  attrib %.3f n_claims %.2f'
+              % (step, rec['reward_mean'], rec['group_reward_std'], rec['kl'], gnorm,
+                 rec['clip_frac'], trivial, len(batch), sft_val, rec['secs'],
+                 rec['components'].get('attribution', 0), rec['components'].get('n_claims', 0)))
 
         if step % args.save_every == 0 and eval_set:
             ev_mean, ev_gated, ev_fails = evaluate(eval_set, rw)
