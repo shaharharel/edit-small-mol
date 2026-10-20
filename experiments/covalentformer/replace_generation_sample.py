@@ -154,8 +154,7 @@ def main():
 
     lede = '<h3>Held-out pairs, candidates from ChemDFM-14B g3+g4</h3>'
 
-    heldout = lede + ars.lbl_table(
-        ('input (hit)', 'generated analogue', 'model reasoning'), rows)
+    heldout = ''          # removed from the report; see the PICKS note above
 
     # ---- mol1 rows, selected by the external panel ----------------------------------
     cand = {}
