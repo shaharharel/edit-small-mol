@@ -52,6 +52,57 @@ MIN_CLAIMS_GATE = 1   # below this the reward is 0: nothing was asserted, so not
 MIN_CLAIMS = 2        # divisor floor; full credit needs >= 2 claims. See design note 1.
 MAX_CLAIMS = 5         # beyond the reference band, extra claims stop earning credit
 
+# --------------------------------------------------------------- reward profile
+#
+# 'v1' is the reward every number in STATUS.md, covalentformer_report.html and the chemist panels
+# was computed with. It does not change. 'v2' exists because v1 is a poor OPTIMISATION target even
+# though it is a serviceable measuring stick, and GRPO exposed that:
+#
+#   GRPO v3 ran 150 steps and moved total reward by -0.002. Decomposing the 150-step component
+#   trace: PCA on the six weighted components puts 72.9% of all variance on PC1, with near-uniform
+#   loadings, and the effective dimensionality is 1.81 of 6. The cause is the gate block below --
+#   ANY failed gate sets ALL components to 0.0 simultaneously, so the components move together and
+#   the reward is mostly a pass/fail indicator. Since SFT already passes ~88% of the time there is
+#   very little variance left for group-relative advantages to work with.
+#
+#   The one axis that is genuinely free is claim count, and it is gameable: n_claims rose over
+#   training (r=+0.32 with step) while interaction_type fell (r=-0.20), because MIN_CLAIMS=2 halves
+#   attribution on any single-claim sentence and so pays for padding. Net reward change: zero.
+#
+# v2 makes four changes, each targeting one of those findings:
+#
+#   1. Gates split into BLOCKING and GRADED. A blocking gate failure means the output cannot be
+#      scored at all (it does not parse, there is no sentence, it asserts nothing, or the molecule
+#      is the input unchanged so there is no edit to describe) and still returns 0. A graded gate
+#      failure is a real defect in an otherwise scoreable output, and now multiplies the total
+#      instead of erasing every component. This is what breaks the PC1 collapse.
+#   2. MIN_CLAIMS floor drops 2 -> 1, removing the padding incentive. It also stops halving 39% of
+#      chemist-ADOPTED gold (2,680 of 6,865 single-claim sentences), which was never intended.
+#   3. Reweighted onto the components that carry independent information. attribution,
+#      interaction_type and edit_self_consistency are the least mutually correlated (0.45-0.60) and
+#      are the three the chemist rubric actually asks about. grounded, uncertainty_respect and
+#      chemistry_clean correlate 0.67-0.91 with each other, so they share one low weight between
+#      them rather than three middling ones.
+#   4. single_step loosens from 6 to 10 heavy atoms. At 6 it zeroed 453 of 6,865 chemist-ADOPTED
+#      gold pairs (6.6%) -- real chemists make bigger single-step edits than that -- and it is a
+#      graded gate in v2, so exceeding even 10 costs rather than erases.
+#
+# Everything v2 changes is a weighting or a gate policy; no verifier logic differs, so the two
+# profiles score the same parse of the same sentence and remain directly comparable.
+PROFILE = os.environ.get('REWARD_PROFILE', 'v1')
+assert PROFILE in ('v1', 'v2'), 'REWARD_PROFILE must be v1 or v2, got %r' % PROFILE
+
+# A failed gate here means the output genuinely cannot be scored, so the total is 0 in both
+# profiles. 'not_echo' belongs here: if the molecule is the input, no edit happened and every
+# sentence describing one is false, which is not a matter of degree.
+BLOCKING_GATES = ('parses', 'has_sentence', 'not_echo')
+# v2 only: a defect in an otherwise scoreable output. The value multiplies the total.
+GRADED_GATES = {'single_step': 0.40, 'within_word_budget': 0.70}
+SINGLE_STEP_MAX = 6 if PROFILE == 'v1' else 10
+
+if PROFILE == 'v2':
+    MIN_CLAIMS = 1
+
 GIVES_UP = re.compile(r'gives? up|loses?|losing|removes?|removing|deletes?|deleting|'
                       r'trades? away|forfeits?|sacrific|abolish|destroy', re.I)
 RETAINS = re.compile(r'retain|retains|retaining|holds?|held|keeps?|keeping|preserv|'
@@ -111,6 +162,28 @@ WEIGHTS = {            # see design note 3 for the two zeros
     'banned_vocabulary': 0.00,
     'stereo_disclosure': 0.00,
 }
+
+# v2 concentrates weight on the three components that carry independent information, measured on
+# v3's 150-step trace: attribution/interaction_type correlate 0.46 and edit_self_consistency/
+# chemistry_clean 0.45, while grounded/uncertainty_respect correlate 0.91 and grounded/
+# chemistry_clean 0.88. Three near-copies of one signal at 0.50 each outvoted attribution at 1.00;
+# now they share 0.50 between them. The zero-weighted instruments stay zero-weighted -- promoting
+# them would destroy their value as an un-gamed tripwire, which is the whole point of the note in
+# the v1 block above.
+WEIGHTS_V2 = {
+    'attribution': 1.00,
+    'interaction_type': 0.75,
+    'edit_self_consistency': 0.75,
+    'grounded': 0.25,
+    'chemistry_clean': 0.25,
+    'uncertainty_respect': 0.00,   # 0.91 correlated with grounded; keeping both double-counts
+    'directional': 0.00,
+    'banned_vocabulary': 0.00,
+    'stereo_disclosure': 0.00,
+}
+
+if PROFILE == 'v2':
+    WEIGHTS = WEIGHTS_V2
 
 
 # ----------------------------------------------------------------- table
@@ -446,14 +519,28 @@ def score(model_input, sent, gen_smi, inp_smi, ligand_code=None):
         'has_sentence': bool((sent or '').strip()),
         'within_word_budget': len((sent or '').split()) <= 35,
         'single_step': (gen is not None and inp is not None
-                        and abs(gen.GetNumHeavyAtoms() - inp.GetNumHeavyAtoms()) <= 6),
+                        and abs(gen.GetNumHeavyAtoms() - inp.GetNumHeavyAtoms())
+                        <= SINGLE_STEP_MAX),
     }
     c['gates'] = gates
-    if not all(gates.values()):
+    # v1: any failed gate zeroes everything. v2: only a blocking failure does, and the graded
+    # failures are collected into a multiplier applied to the total at the end -- so a long-winded
+    # or two-step proposal still earns for the parts of its reasoning that are right, and the nine
+    # components stop moving as one. See the reward-profile note at the top of this file.
+    blocking = [k for k in BLOCKING_GATES if not gates.get(k, True)]
+    if PROFILE == 'v1':
+        blocking = [k for k, v in gates.items() if not v]
+    if blocking:
         c['components'] = {k: 0.0 for k in WEIGHTS}
         c['total'] = 0.0
         c['n_claims'] = len(claims)
+        c['blocked_by'] = blocking
         return c
+    gate_mult = 1.0
+    for k, pen in GRADED_GATES.items():
+        if not gates.get(k, True):
+            gate_mult *= pen
+    c['gate_multiplier'] = gate_mult
 
     numeric = [x for x in claims if x['d'] is not None]
     tbl_pairs = {(r['res'], r['d']) for r in rows}
@@ -588,6 +675,10 @@ def score(model_input, sent, gen_smi, inp_smi, ligand_code=None):
 
     c['components'] = {k: float(c.get(k, 0.0)) for k in WEIGHTS}
     c['total'] = sum(WEIGHTS[k] * c['components'][k] for k in WEIGHTS) / sum(WEIGHTS.values())
+    # v2's graded gates land here rather than on the components, so the component breakdown stays
+    # readable as "how good was the reasoning" independently of "did it trip a gate". gate_mult is
+    # 1.0 under v1 and under a clean v2 generation.
+    c['total'] *= c.get('gate_multiplier', 1.0)
     c['n_claims'] = len(numeric)
     c.setdefault('measured', {})
     return c

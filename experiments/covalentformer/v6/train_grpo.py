@@ -366,12 +366,26 @@ def train(args, rw):
           % (len(prompts), len(replay), len(holdout), len(eval_set)))
     assert not [e for e in eval_set if e['pair'] not in holdout], 'eval set must be held out'
 
+
     opt = torch.optim.AdamW([p for p in model.parameters() if p.requires_grad], lr=args.lr)
     rng = random.Random(args.seed)
     os.makedirs(args.out, exist_ok=True)
     logf = open(os.path.join(args.out, 'grpo_log.jsonl'), 'a')
     dumpf = open(os.path.join(args.out, 'rollouts.jsonl'), 'a')
     best = -1.0
+
+    # Which reward this run optimised, in the run's own log. The profile is an environment variable
+    # (REWARD_PROFILE) rather than a flag, which makes it exactly the sort of thing that goes
+    # unrecorded and leaves two runs' curves incomparable for reasons nobody can reconstruct.
+    active = {k: v for k, v in sorted(rw.WEIGHTS.items()) if v}
+    print('[grpo] reward profile %s  MIN_CLAIMS=%d  single_step<=%d  weights %s'
+          % (rw.PROFILE, rw.MIN_CLAIMS, rw.SINGLE_STEP_MAX,
+             ' '.join('%s=%.2f' % kv for kv in active.items())))
+    logf.write(json.dumps({'step': -1, 'reward_profile': rw.PROFILE,
+                           'min_claims': rw.MIN_CLAIMS,
+                           'single_step_max': rw.SINGLE_STEP_MAX,
+                           'weights': active, 'args': vars(args)}) + '\n')
+    logf.flush()
 
     def seq_logprobs(ids, mask, prompt_len, use_ref=False):
         """Per-token log-probs over COMPLETION tokens, for ONE micro-batch of rows.
