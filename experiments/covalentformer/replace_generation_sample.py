@@ -60,18 +60,9 @@ MARK = '<div id="gen-sample-chemdfm"></div>'
 # Ten held-out generations, all scoring 1.000, all ownership- and group-naming-verified by hand.
 # Ordered to open on the strongest reasoning and to keep each protein distinct.
 PICKS = [
-    ('7NP6 UK8->UKB', 'gives up one carboxylic-acid oxygen&rsquo;s hydrogen bond and keeps the '
-                      'other &mdash; which is what acid&rarr;amide does'),
-    ('28LM A1JZS->A1JZB', 'phenol&rarr;fluorine, a donor deleted rather than moved'),
-    ('6PG6 OH7->OH1', 'names the hydroxymethyl&rsquo;s own oxygen as the donor it removes'),
-    ('6IEZ A50->9ML', 'one edit, two hydrogen bonds surrendered, both on the removed arm'),
-    ('7R2L UX5->UPZ', 'cites a contact the table types donor/acceptor INCOMPATIBLE and declines '
-                      'to call it a hydrogen bond'),
-    ('7NSW HC4->DHC', 'an addition, not a replacement: p-coumaric&rarr;caffeic acid'),
-    ('8SVS WU2->WU6', 'aryl methyl&rarr;chlorine'),
-    ('6UVF QHS->QHJ', 'cyclohexyl&rarr;isopropyl, a steric reduction on a packing contact'),
-    ('8U6G VVE->VU8', 'keeps a 1.48 &Aring; covalent bond to a LYSINE, not a cysteine'),
-    ('8PT1 E2A->D2I', 'benzyl&rarr;pyridylmethyl with the 1.78 &Aring; CYS161 bond held'),
+    '7NP6 UK8->UKB', '28LM A1JZS->A1JZB', '6PG6 OH7->OH1', '6IEZ A50->9ML',
+    '7R2L UX5->UPZ', '7NSW HC4->DHC', '8SVS WU2->WU6', '6UVF QHS->QHJ',
+    '8U6G VVE->VU8', '8PT1 E2A->D2I',
 ]
 MOL1_PICKS = ['item_046', 'item_065', 'item_015']
 
@@ -91,22 +82,16 @@ def main():
 
     # ---- held-out rows -------------------------------------------------------------
     rows = []
-    for pair, why in PICKS:
+    for pair in PICKS:
         g = gens[pair]
         mi = ev[pair]
         inp = mi.get('input_smiles')
         out = ars.gen_smiles(g)
         sent = (g.get('gen_sentence') or '').strip()
         rows.append([
-            '<td class="mol"><div class="lbl-hd">input &mdash; <code>%s</code></div>%s</td>'
-            % (ars.esc(pair.split()[0]), ars.svg(inp, out)),
-            '<td class="mol"><div class="lbl-hd">proposed analogue</div>%s</td>'
-            % ars.svg(out, inp),
-            '<td><div class="lbl-hd">%s</div><div class="lbl-rsn">%s</div>'
-            '<div class="lbl-meta">%s &middot; %s atom rows &middot; verifier score '
-            '<b>1.000</b></div></td>'
-            % (why, ars.esc(sent), ars.esc(g.get('target') or ''),
-               len(mi.get('atoms') or []))])
+            '<td class="mol">%s</td>' % ars.svg(inp, out),
+            '<td class="mol">%s</td>' % ars.svg(out, inp),
+            '<td><div class="lbl-rsn">%s</div></td>' % ars.esc(sent)])
 
     lede = '<h3>Held-out pairs &mdash; ten candidates from ChemDFM-14B g3+g4</h3>'
 
@@ -120,26 +105,20 @@ def main():
         for m in re.finditer(r'(item_\d+)\s*\n\s*molecule:\s*(\S+)\s*\n\s*reasoning:\s*'
                              r'(.+?)(?=\n\s*item_|\Z)', txt, re.S):
             cand[m.group(1)] = (m.group(2), ' '.join(m.group(3).split()))
-    why_of = {r['item_id']: r['one_line_why']
-              for r in json.load(open(MOL1_FINALS))['ranking']}
     mol1_in = json.loads(open(os.path.join(V6, 'mol1_chemdfm/mol1_prompt_covalent.jsonl'))
                          .readline())['input_smiles']
     mrows = []
     for iid in MOL1_PICKS:
         smi, sent = cand[iid]
         mrows.append([
-            '<td class="mol"><div class="lbl-hd">mol1 &mdash; the designed seed</div>%s</td>'
-            % ars.svg(mol1_in, smi),
-            '<td class="mol"><div class="lbl-hd">proposed analogue</div>%s</td>'
-            % ars.svg(smi, mol1_in),
-            '<td><div class="lbl-hd">model reasoning</div><div class="lbl-rsn">%s</div>'
-            '<div class="lbl-hd" style="margin-top:.5em">chemists&rsquo; verdict</div>'
-            '<div class="lbl-rsn">%s</div></td>'
-            % (ars.esc(sent), ars.esc(why_of.get(iid, '')))])
+            '<td class="mol">%s</td>' % ars.svg(mol1_in, smi),
+            '<td class="mol">%s</td>' % ars.svg(smi, mol1_in),
+            '<td><div class="lbl-rsn">%s</div></td>' % ars.esc(sent)])
+
     mol1 = (
         '<h3>ZAP70, mol1 &mdash; candidates and their reasoning</h3>'
         + ars.lbl_table(('mol1 (input)', 'proposed analogue',
-                         'model reasoning &middot; chemists&rsquo; verdict'), mrows))
+                         'model reasoning'), mrows))
 
     # ---- splice: replace everything from the marker to the old ZAP70 h3 --------------
     i = s.index(MARK) + len(MARK)
