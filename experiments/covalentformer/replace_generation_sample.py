@@ -83,9 +83,26 @@ PICKS = [
 # candidates and returned 3; filtering first and asking only the question no rule can answer
 # returned 14. They collapse to 9 distinct molecules -- several of the 14 defend the same analogue
 # with different reasoning, which is kept because the reasoning is what is on display.
+# The candidates whose REASONING an independent chemist judged truthful (7/14), plus r2_012 kept
+# at the user's instruction. The full 14 were all endorsed would_make_it by three external
+# chemists, but that panel scored the molecule and the claim-molecule match, not whether the
+# sentence was sound: an independent review returned reasoning_reasonable on 7 of 14 and
+# reasoning_helpful on 1 of 14. This section is titled "candidates and their reasoning", so
+# shipping a sentence a chemist calls untruthful repeats the error that cost the held-out block
+# eight of its ten rows.
+#
+# Dropped for false reasoning: r2_035 (calls cyclopropyl a flexible ring), r2_043 and r2_059
+# (assert a benzyl edge reaching both LYS369 and MET414, geometry a cofold cannot deliver),
+# r2_053 (aims a non-donor amide at a backbone carbonyl), r2_068 (the only mechanistically
+# interesting sentence, but it guarantees the very hydrogen bond its own N-arylation puts at
+# risk), r2_077 (claims redirection toward GLY420, which sits in the acrylamide-isoindoline
+# region, nowhere near the imidazole vector).
+#
+# r2_012 is kept although the reviewer rejected it: 1-methylcyclopropyl on an imidazole nitrogen
+# is not a one-step installation, which is a synthesis-feasibility objection rather than a claim
+# about the structural evidence.
 MOL1_PICKS = [
-    'r2_009', 'r2_012', 'r2_035', 'r2_040', 'r2_042', 'r2_043', 'r2_046',
-    'r2_048', 'r2_053', 'r2_059', 'r2_065', 'r2_068', 'r2_074', 'r2_077',
+    'r2_009', 'r2_012', 'r2_040', 'r2_042', 'r2_046', 'r2_048', 'r2_065', 'r2_074',
 ]
 
 
