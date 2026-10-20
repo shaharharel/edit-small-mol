@@ -121,8 +121,22 @@ PICKS = [
 # r2_012 is kept although the reviewer rejected it: 1-methylcyclopropyl on an imidazole nitrogen
 # is not a one-step installation, which is a synthesis-feasibility objection rather than a claim
 # about the structural evidence.
+# The five mol1 candidates whose REASONING survives attribution checking, from a final review of
+# the sixteen rows this section carried. The reviewer rebuilt every crystal ligand from its CCD
+# atom/bond block, confirmed each reproduces input_smiles, and recomputed all 152 quoted distances
+# from deposited coordinates to within 0.06 A -- the tables are clean and every defect was in the
+# prose. Of the sixteen, 11 molecules and only 2 sentences passed its strict bar.
+#
+# These five pass the bar actually wanted here: the cited numbers sit on the right atoms. rep_09
+# and rep_14 passed outright; the other three were failed only for an unsupported INFERENCE, that
+# a 3.67 A LYS369.CG contact at the van der Waals optimum is worth reducing. That is a weak
+# interpretation of correctly cited facts, not a misattribution, and it is kept deliberately.
+#
+# Dropped from this block: the two duplicates of kept molecules, one proposal whose stated
+# mechanism contradicts its own edit (claiming relief while installing a larger group), and the
+# eight covalent-programme rows, every one of which misattributes a contact by 4.9 A or more.
 MOL1_PICKS = [
-    'r2_009', 'r2_012', 'r2_040', 'r2_042', 'r2_046', 'r2_048', 'r2_065', 'r2_074',
+    'r2_009', 'r2_040', 'r2_046', 'r2_048', 'r2_065',
 ]
 
 

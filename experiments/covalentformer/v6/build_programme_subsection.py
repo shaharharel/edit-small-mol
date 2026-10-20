@@ -46,6 +46,15 @@ def main():
     ap.add_argument('--endorsed', default=os.path.join(HERE, 'programme_chemist_endorsed.json'))
     ap.add_argument('--classified', default=os.path.join(HERE, 'programme_hits_classified.json'))
     ap.add_argument('--report', default=REPORT)
+    ap.add_argument('--only', nargs='*', default=None,
+                    help='restrict to these chemist-endorsed ids. The block is cut to one row '
+                         '(prog_003) after a final review: of its eight sentences, prog_003 is the '
+                         'only one whose misattribution is marginal -- the cited 3.79 A ASP61.OD1 '
+                         'contact sits on a retained ring methylene while the methyl actually '
+                         'deleted is 4.92 A from the same oxygen. The other seven misattribute by '
+                         '6 to 10 A, name residues that are a different amino acid, or are '
+                         'geometrically impossible. Kept as a placeholder for tomorrow rather '
+                         'than as a verified result.')
     a = ap.parse_args()
     sys.path.insert(0, os.path.dirname(REPORT))
     import add_report_sections as ars
@@ -56,7 +65,7 @@ def main():
     rows, seen = [], set()
 
     # molecule- and transformation-level hits, if the classifier has run
-    if os.path.exists(a.classified):
+    if os.path.exists(a.classified) and not a.only:
         for h in json.load(open(a.classified)):
             # two producers write this file with different key names: classify_programme_hits.py
             # uses matched/score, the earlier score_against_known_sar.py used
@@ -85,6 +94,8 @@ def main():
     # chemist-endorsed candidates
     if os.path.exists(a.endorsed):
         for iid, c in sorted(json.load(open(a.endorsed)).items()):
+            if a.only and iid not in a.only:
+                continue
             k = (c['key']['pair'], c['prop'])
             if k in seen:
                 continue
