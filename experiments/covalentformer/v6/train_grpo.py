@@ -448,6 +448,20 @@ def train(args, rw):
                 model.train()
         return tot / max(len(items), 1), gated / max(len(items), 1)
 
+    # Step-0 baseline, BEFORE any update. A held-out score is meaningless without it: the first
+    # run reported 0.789 at step 25 with nothing to compare it against, so it could not say whether
+    # GRPO had helped, hurt, or done nothing. This is the same fixed prompts and the same greedy
+    # decoding as every later eval, so the numbers are directly subtractable.
+    if eval_set:
+        base_mean, base_gated = evaluate(eval_set, rw)
+        best = base_mean
+        logf.write(json.dumps({'step': 0, 'holdout_reward': base_mean,
+                               'holdout_gated': base_gated, 'baseline': True}) + '\n')
+        logf.flush()
+        print('[grpo] step   0  HOLDOUT reward %.3f  gated-to-zero %.0f%%  (n=%d, PRE-GRPO '
+              'baseline; adapter_best must beat this)' % (base_mean, 100 * base_gated,
+                                                          len(eval_set)))
+
     for step in range(1, args.steps + 1):
         t0 = time.time()
         batch = rng.sample(prompts, min(args.batch, len(prompts)))
