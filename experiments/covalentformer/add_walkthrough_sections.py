@@ -149,11 +149,6 @@ def build_labelling_section(sn):
 %s
 
 <h3>2. The packet &mdash; exactly what three reviewers saw</h3>
-<p class="tnote">Reviewers see more than the model does: the model-input block below, plus
-label-side tables giving the analogue's own crystal contacts, which input contacts survived the
-edit, and where the edit sits. That asymmetry is the point &mdash; the label may be written from
-knowledge the model will not have at inference, which is why rule 1 forbids attributing a gain to
-anything but the analogue's crystal.</p>
 <pre class="packet">%s</pre>
 
 <h3>3. The three sentences, written independently</h3>
@@ -206,60 +201,8 @@ def build_encoding_section(sn):
     mi = model_input_only(packet)
     return """%s
 <h2><span class="sn">%d</span>What the pocket encoding actually contains</h2>
-<p class="lede">The model is never given coordinates, a grid, a graph or a learned structural
-embedding. It is given <b>text</b>: the input ligand's SMILES, and one row per heavy atom describing
-that atom's measured relationship to the protein. Everything the model knows about the pocket is in
-the block below &mdash; the same pair as the previous section, quoted verbatim.</p>
 <pre class="packet">%s</pre>
 
-<h3>Field by field</h3>
-<div class="tw"><table class="lbl-t"><thead><tr><th>field</th><th>what it is, and the trap in it</th>
-</tr></thead><tbody>
-<tr><td><code>ATOM TABLE COVERAGE</code></td><td>How many input heavy atoms got a row, and how many
-were dropped as unmodelled or as clashes. It exists so an incomplete table cannot be mistaken for a
-complete one.</td></tr>
-<tr><td><code>atom</code></td><td>The chemical-component (CCD) atom name, e.g. <code>BR</code>,
-<code>C12</code>, <code>S</code>. <b>Rows are sorted alphabetically, not in molecule order</b>, and
-the table omits atoms with no contact &mdash; so atom names cannot be mapped to molecule positions by
-counting. Recovering ownership needs the CCD definition; assuming positional correspondence produces
-confident wrong answers.</td></tr>
-<tr><td><code>faces</code></td><td>The single <i>nearest</i> protein atom, as
-<code>RES123.ATOM</code>, plus its chain. One row shows one neighbour, so a group with several
-contacts appears only through its own several atoms.</td></tr>
-<tr><td><code>dist</code></td><td>The measured distance in &Aring;ngstr&ouml;ms from the deposited
-crystal. This is the number models reproduce almost perfectly and attribute to the wrong atom about
-half the time.</td></tr>
-<tr><td><code>ang</code></td><td>Donor&ndash;H&ndash;acceptor angle where one is defined, otherwise
-<code>-</code>. Its absence is why many polar rows are typed as packing rather than as hydrogen
-bonds.</td></tr>
-<tr><td><code>interaction</code></td><td>The typing, never truncated:
-<code>hydrophobic contact</code>, <code>polar/apolar packing</code>, <code>H-bond, good geometry</code>,
-<code>SALT BRIDGE</code>, <code>METAL COORDINATION</code>, <code>COVALENT BOND to CYS42.SG</code>, or
-an explicit refusal such as <code>donor/acceptor INCOMPATIBLE &hellip; not a hydrogen bond</code>.
-Covalent calls are made against the ideal bond length for that element pair, not a flat cutoff, and
-backbone atoms are excluded as nucleophiles.</td></tr>
-<tr><td>second line under a row</td><td>A <code>polar partner</code>: a polar contact that is not the
-nearest atom overall, so a polar interaction is not hidden by a closer apolar one.</td></tr>
-<tr><td><code>NOTHING WITHIN 4.0 A</code></td><td>Named atoms with no contact at all. <b>This is
-positive information</b>: a claim about an atom listed here is invention, and the list is printed so
-that completeness is checkable.</td></tr>
-<tr><td><code>pocket envelope</code></td><td>Every residue with an atom within 8.0 &Aring;, banded
-rather than given exact distances, and labelled <b>REACHABLE SPACE, NOT CONTACTS</b>. A residue at
-7.5 &Aring; touches nothing; the banding exists so an envelope distance cannot be quoted as a measured
-contact.</td></tr>
-<tr><td>caveat tags</td><td>Per-row and per-pair flags: <code>[INDEP, CYS42 excl]</code> marks a
-nearest <i>independent</i> contact with the covalently bonded residue excluded;
-<code>uncertain</code> marks geometry the crystal does not support; suspect residues and water
-clashes are flagged. The rules forbid building a claim on anything flagged uncertain &mdash; an
-instruction the models routinely ignore.</td></tr>
-</tbody></table></div>
-<p class="tnote">Two consequences worth stating. First, <b>the encoding is lossless about what it
-reports and silent about everything else</b>: no coordinates, no second-nearest neighbour, no
-solvent-accessible surface, no electrostatics. A model cannot infer that two cited atoms are
-adjacent, which is part of why attribution is hard. Second, <b>every field above is machine-checkable
-against the model's output</b>, which is what makes a verifier-driven training signal possible: a
-cited number either is or is not a row of this table, and a claimed interaction type either does or
-does not match the typing.</p>
 """ % (MARK_ENC, sn, esc(mi))
 
 

@@ -8614,11 +8614,6 @@ L 198.3 167.4
 <div class="rules"><div class="rule"><span class="rule-n">1.</span><div class="rule-b"><p><b>Name only residues that appear in the INPUT side of this pair's evidence</b> &mdash; the input atom table's <code>faces</code>, its <code>polar partner:</code> continuation line, or the input column of a <code>conserved_interactions</code> row. A residue that appears <i>only</i> in <code>analogue_contacts</code> may not be named, however informative it looks.</p><p>This reverses the previous rule, which let you name an analogue-only residue if you attributed it ("the analogue's crystal shows…"). The attribution was supposed to keep it honest and did the opposite: at inference the model has no analogue structure, so every attributed claim was a claim the model can only fabricate. Measured on the first 2,000 labels, 24% named at least one residue absent from the input side &mdash; and 100% of those mentions trace to the analogue's contact table, with 0% invented. The labellers were right and the instruction was wrong.</p><p><b>The POCKET ENVELOPE counts as input-side evidence for naming.</b> It lists every residue with an atom within 8 Å of the input ligand, not merely each atom's nearest neighbour, so a residue you could not previously name is nameable if it appears there. Measured on 2,000 labels, the envelope recovers 94.7% of the residue mentions this rule would otherwise forbid. Where a residue appears in neither the atom table nor the envelope, say what the edit does without naming an unknowable partner: "extends toward the face lined by the residues above" is worth more than a confident name the model cannot learn.</p></div></div><div class="rule"><span class="rule-n">1b.</span><div class="rule-b"><p><b>Never cite a measured analogue distance, and never cite an envelope band.</b> Every number in your sentence must be a value you can point at in the input side of the evidence. The envelope's bands are not such values -- they say a residue is reachable, not that anything is measured at that range -- so no number may come from there. A difference you computed from two input numbers is fine ("0.2 Å tighter"); an analogue measurement is not, even with attribution. This is the rule that most of the existing corpus breaks &mdash; 92% of the first 2,000 usable labels cite at least one &mdash; so it is the one to be most deliberate about.</p></div></div><div class="rule"><span class="rule-n">2.</span><div class="rule-b"><p>Say "hydrogen bond" only where the typing supports it &mdash; in a <b>site-of-change</b> atom's <code>interaction</code> or its <code>polar partner:</code> line, <b>in a <code>conserved_interactions</code> row</b> (those are not site atoms by definition, so gating on the site alone would reject every retained-contact sentence, including the worked example above), <b>in ANY input atom's row</b> (a salt bridge or H-bond that the edit <i>changes</i> is often on an atom that is neither a site atom nor conserved &mdash; 46% of all salt bridges were in that position, which made the most important consequence of some edits unsayable), <b>or in an <code>analogue_contacts</code> row when you attribute the claim to the analogue's crystal</b>, exactly as rule 1 allows. <code>polar contact, geometry poor</code> is not a hydrogen bond. Say "salt bridge" / "ion pair" only where one of those fields says <code>SALT BRIDGE</code> &mdash; but a salt bridge needs no good angle, so do not reject one for poor geometry.</p></div></div><div class="rule"><span class="rule-n">3.</span><div class="rule-b"><p>Say "covalent" only where a site atom, <b>a <code>conserved_interactions</code> row, any input atom's row, or an attributed <code>analogue_contacts</code> row</b> has a <code>COVALENT BOND</code>; the same four sources apply to <code>METAL COORDINATION</code>. (Rules 1 and 2 were widened and this one was not, which made a non-covalent &rarr; covalent conversion &mdash; the biggest change an edit can make &mdash; writable only as a bare distance that reads like a clash.) <code>near MN metal</code> is not coordination, and <code>probable covalent bond</code> is not a covalent bond &mdash; it is an adduct the crystal models too long. If <code>covalency_mismatch</code> is present, read it: the bond's <b>absence</b> on one side may be the single most important thing to say about the pair.</p></div></div><div class="rule"><span class="rule-n">4.</span><div class="rule-b"><p><b>Never</b> write buried, enclosed, solvent-facing, exposed or "contacts nothing" as a description of an atom's environment. The <code>reading</code> field this rule used to permit is gone from the packet, and it was wrong anyway: a chemist panel found "solvent-facing" false for 40% of the site atoms it was written about, because an atom with a measured contact is not solvent-facing. If an atom's row says <code>no contact within 4.0 Å</code> you may say it makes no contact <b>in this crystal</b> &mdash; that is a measurement, and a solvent-directed edit is a real medicinal-chemistry decision. What you may not do is infer burial or exposure from anything else.</p></div></div><div class="rule"><span class="rule-n">5.</span><div class="rule-b"><p>Make no claim about what the analogue's NEW atoms touch &mdash; the model gets no analogue structure, so anchor the sentence at the input's atoms. You may name what the analogue gained from <code>analogue_contacts</code>, but attribute it to the analogue's crystal, not to a prediction. <b>You MAY say an interaction is retained or held</b> when it appears in <code>conserved_interactions</code>: that is the same input atom facing the same protein atom in both crystals, measured on both sides rather than inferred. "The warhead's Cys38 bond is held while the edit decorates the far end" is a permitted and usually a better sentence than one that describes the edit in isolation.</p></div></div><div class="rule"><span class="rule-n">6.</span><div class="rule-b"><p>Do NOT claim the analogue is better, more potent, or improved &mdash; we have no potency data.</p></div></div><div class="rule"><span class="rule-n">7.</span><div class="rule-b"><p>If <code>room_contradicts_edit</code> is true, do not write that there is no room: the analogue demonstrably adds atoms there, and the probe measured enclosure around an already-bonded atom instead.</p></div></div><div class="rule"><span class="rule-n">8.</span><div class="rule-b"><p>Max 35 words.</p></div></div><div class="rule"><span class="rule-n">9.</span><div class="rule-b"><p><b>(a)</b> Never build a claim on a contact whose <code>interaction</code> text contains <code>uncertain</code> &mdash; neither its distance nor the residue's name. It is a refinement artifact, not a measurement, and omitting the number does not rescue the claim. A residue that also appears in a non-uncertain contact may be named from that row; other contacts in the same pair are fine. This applies to a <code>conserved_interactions</code> row whose <b>analogue</b> side is flagged even when its input side reads clean: "conserved" means the two atoms are in contact in both crystals, not that both measurements are sound. <b>(b)</b> A row typed <code>polar/apolar packing</code> or <code>hydrophobic contact</code> is proximity, not chemistry. You may say the group sits <i>near</i> or <i>against</i> that residue; you may <b>not</b> say it reaches, pairs with, engages, contacts or hydrogen-bonds to it. Upgrading packing into an interaction is how a 3.72 Å van der Waals row became "reaches ARG404.NH2" in one pair of a protein where the same residue was correctly refused in another.</p></div></div><div class="rule"><span class="rule-n">10.</span><div class="rule-b"><p><b>Never let a sentence's only content be a geometry or typing flip.</b> <code>H-bond, good geometry</code> begins at a heavy-atom angle of exactly 100°, and a large share of rows sit within a few degrees of that cut &mdash; inside the error between two different crystals. So "the hydrogen bond becomes a polar contact" can be a 2° difference in a model with no placed hydrogens, not a change the edit caused. On 42% of retyped <code>conserved_interactions</code> rows the <b>distance moves the opposite way</b> to the retyping, and those rows now carry <code>[ANGLE-ONLY: …]</code>. A typing flip may be mentioned alongside a real change; it may never be the whole sentence. All five chemists on the review panel marked such a sentence WRONG &mdash; it was the panel's only unanimous WRONG.</p></div></div><div class="rule"><span class="rule-n">11.</span><div class="rule-b"><p><b>Disclose a multi-site edit</b> and <b>refer to groups, not raw atom names.</b> "the pyrimidine N3" beats "N03", which is a name only this deposition uses.</p></div></div></div>
 
 <h3>2. The packet &mdash; exactly what three reviewers saw</h3>
-<p class="tnote">Reviewers see more than the model does: the model-input block below, plus
-label-side tables giving the analogue's own crystal contacts, which input contacts survived the
-edit, and where the edit sits. That asymmetry is the point &mdash; the label may be written from
-knowledge the model will not have at inference, which is why rule 1 forbids attributing a gain to
-anything but the analogue's crystal.</p>
 <pre class="packet">====================
 PAIR 7BAA T5Z-&gt;T6N   target P03372   tanimoto 0.609   analogue crystal 7BA9
 ====================================================================================================
@@ -8739,10 +8734,6 @@ gate is being tightened, not reasons to discount the corpus, but a reader should
 
 <div id="walkthrough-encoding"></div>
 <h2><span class="sn">6</span>What the pocket encoding actually contains</h2>
-<p class="lede">The model is never given coordinates, a grid, a graph or a learned structural
-embedding. It is given <b>text</b>: the input ligand's SMILES, and one row per heavy atom describing
-that atom's measured relationship to the protein. Everything the model knows about the pocket is in
-the block below &mdash; the same pair as the previous section, quoted verbatim.</p>
 <pre class="packet">--- MODEL_INPUT: everything the model gets at inference (input molecule + its own pocket) ---
 input SMILES: COc1cc(OC(C)(C)C(=O)NCCS)ccc1Br
 ATOM TABLE COVERAGE: 19 of 19 input heavy atoms have a row (0 not modelled, 0 omitted as clashes)
@@ -8770,54 +8761,6 @@ pocket envelope -- REACHABLE SPACE, NOT CONTACTS. Every residue with an atom wit
     6.0 - 8.0 A                                          LEU222, ASP215, GLU39, ASN166, ASN175, ASP126, GLU14, VAL118, MET123, ALA173, LEU44, GLU40, LEU174, LYS214, SER216, GLU115, ALA47
     (X) = on chain X, not the ligand's own chain A   ~ = chain terminus, so probably a crystal-packing neighbour rather than site</pre>
 
-<h3>Field by field</h3>
-<div class="tw"><table class="lbl-t"><thead><tr><th>field</th><th>what it is, and the trap in it</th>
-</tr></thead><tbody>
-<tr><td><code>ATOM TABLE COVERAGE</code></td><td>How many input heavy atoms got a row, and how many
-were dropped as unmodelled or as clashes. It exists so an incomplete table cannot be mistaken for a
-complete one.</td></tr>
-<tr><td><code>atom</code></td><td>The chemical-component (CCD) atom name, e.g. <code>BR</code>,
-<code>C12</code>, <code>S</code>. <b>Rows are sorted alphabetically, not in molecule order</b>, and
-the table omits atoms with no contact &mdash; so atom names cannot be mapped to molecule positions by
-counting. Recovering ownership needs the CCD definition; assuming positional correspondence produces
-confident wrong answers.</td></tr>
-<tr><td><code>faces</code></td><td>The single <i>nearest</i> protein atom, as
-<code>RES123.ATOM</code>, plus its chain. One row shows one neighbour, so a group with several
-contacts appears only through its own several atoms.</td></tr>
-<tr><td><code>dist</code></td><td>The measured distance in &Aring;ngstr&ouml;ms from the deposited
-crystal. This is the number models reproduce almost perfectly and attribute to the wrong atom about
-half the time.</td></tr>
-<tr><td><code>ang</code></td><td>Donor&ndash;H&ndash;acceptor angle where one is defined, otherwise
-<code>-</code>. Its absence is why many polar rows are typed as packing rather than as hydrogen
-bonds.</td></tr>
-<tr><td><code>interaction</code></td><td>The typing, never truncated:
-<code>hydrophobic contact</code>, <code>polar/apolar packing</code>, <code>H-bond, good geometry</code>,
-<code>SALT BRIDGE</code>, <code>METAL COORDINATION</code>, <code>COVALENT BOND to CYS42.SG</code>, or
-an explicit refusal such as <code>donor/acceptor INCOMPATIBLE &hellip; not a hydrogen bond</code>.
-Covalent calls are made against the ideal bond length for that element pair, not a flat cutoff, and
-backbone atoms are excluded as nucleophiles.</td></tr>
-<tr><td>second line under a row</td><td>A <code>polar partner</code>: a polar contact that is not the
-nearest atom overall, so a polar interaction is not hidden by a closer apolar one.</td></tr>
-<tr><td><code>NOTHING WITHIN 4.0 A</code></td><td>Named atoms with no contact at all. <b>This is
-positive information</b>: a claim about an atom listed here is invention, and the list is printed so
-that completeness is checkable.</td></tr>
-<tr><td><code>pocket envelope</code></td><td>Every residue with an atom within 8.0 &Aring;, banded
-rather than given exact distances, and labelled <b>REACHABLE SPACE, NOT CONTACTS</b>. A residue at
-7.5 &Aring; touches nothing; the banding exists so an envelope distance cannot be quoted as a measured
-contact.</td></tr>
-<tr><td>caveat tags</td><td>Per-row and per-pair flags: <code>[INDEP, CYS42 excl]</code> marks a
-nearest <i>independent</i> contact with the covalently bonded residue excluded;
-<code>uncertain</code> marks geometry the crystal does not support; suspect residues and water
-clashes are flagged. The rules forbid building a claim on anything flagged uncertain &mdash; an
-instruction the models routinely ignore.</td></tr>
-</tbody></table></div>
-<p class="tnote">Two consequences worth stating. First, <b>the encoding is lossless about what it
-reports and silent about everything else</b>: no coordinates, no second-nearest neighbour, no
-solvent-accessible surface, no electrostatics. A model cannot infer that two cited atoms are
-adjacent, which is part of why attribution is hard. Second, <b>every field above is machine-checkable
-against the model's output</b>, which is what makes a verifier-driven training signal possible: a
-cited number either is or is not a row of this table, and a claimed interaction type either does or
-does not match the typing.</p>
 
 <h2><span class="sn">7</span>The three training phases</h2>
 <p class="lede">Each rung presupposes the last. Rung 1 teaches what a covalent reaction <i>is</i>; rung 2 teaches how to edit a molecule without breaking it; rung 3 asks for the real job &mdash; given a pocket and a covalent hit, propose a better covalent analogue and say why. A fourth channel, the potency head, spans rungs 2 and 3 and is the only part that emits a number rather than text. Each phase below is followed by its evaluation on the held-out test set, against the untuned base model and against Claude.</p>
