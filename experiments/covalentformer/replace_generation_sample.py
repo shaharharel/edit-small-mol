@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""Replace section 4's generation sample: one arm's best candidates, not a three-arm comparison.
+
+WHY
+---
+The section showed three held-out pairs answered by ChemDFM base / g3 / g3+g4 side by side. The
+model comparison belongs in the results table and the panels, which is where every number in this
+report already comes from; repeating it here spent the showcase on the base model's failure modes
+instead of on what the method produces. This shows TEN candidates from ChemDFM-14B g3+g4 alone,
+and then mol1.
+
+WHAT WAS CHECKED, AND BY WHOM
+-----------------------------
+The ten held-out rows: each is a generation scoring a perfect 1.000 on the verifier (95 of 262 do),
+then checked by hand on two things the verifier cannot see --
+
+  * OWNERSHIP: every cited (residue, distance) was resolved back to the table ATOM that owns it,
+    and that atom confirmed to belong to the group the edit touches. This is the dominant failure
+    mode: an external panel on 150 held-out generations put atom_attribution_ok at 70%, and on
+    mol1 at 29%.
+  * GROUP NAMING: the atoms removed and added were recomputed by MCS and compared against the
+    group the sentence names, because "isobutyl" for an isopropyl and "diethylamino" for a
+    2-(diethylamino)ethyl arm both occurred in candidates that scored 1.000.
+
+Five candidates that scored 1.000 were REJECTED by that check and are not shown: 7I9G (calls a
+methoxy oxygen a hydrogen-bond donor -- a methyl ether has no H to donate), 9FLB (claims the
+pyrazole nitrogen's bond is retained while the edit replaces the pyrazole), 6XON ("isobutyl" for
+an isopropyl), 6YK3 (removes the amino AND the carboxyl, sentence describes only part), 8BGZ
+(addition is real but the new hydroxyl could not be confirmed on the cited carbon).
+
+The mol1 rows are not my selection at all. 181 mol1 candidates went to three external medicinal
+chemists in 8 batches -- 543 slot judgements -- then a finals round over the 30 nominated. Three
+were endorsed `would_make_it` by all three reviewers, and those three are what appear here, with
+the reviewers' own words. Their verdict is quoted rather than paraphrased, including that these are
+probes and not predicted potency gains.
+
+My own screening is not presented as equivalent to theirs: of three mol1 candidates I judged clean,
+the chemists rejected two -- one asserting the unreliable 1.40 A bond length I had wrongly recorded
+as absent, one naming its own substituent incorrectly. The ten held-out rows have not yet had a
+panel, and the lede says so.
+"""
+import json
+import os
+import re
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
+REPORT = os.path.join(HERE, 'covalentformer_report.html')
+V6 = os.path.join(HERE, 'v6')
+EVIDENCE = os.path.join(ROOT, 'data/pdb_mirror/v7_evidence.jsonl')
+GENS = os.path.join(V6, 'g3g4_eval_results/chemdfm/generations.jsonl')
+MOL1_BATCHES = os.path.expanduser(
+    '~/Downloads/covalentformer_labelling_task/mol1_candidate_pick/batches')
+MOL1_FINALS = os.path.expanduser(
+    '~/Downloads/covalentformer_labelling_task/mol1_candidate_pick/finals/final_ranking.json')
+
+MARK = '<div id="gen-sample-chemdfm"></div>'
+
+# Ten held-out generations, all scoring 1.000, all ownership- and group-naming-verified by hand.
+# Ordered to open on the strongest reasoning and to keep each protein distinct.
+PICKS = [
+    ('7NP6 UK8->UKB', 'gives up one carboxylic-acid oxygen&rsquo;s hydrogen bond and keeps the '
+                      'other &mdash; which is what acid&rarr;amide does'),
+    ('28LM A1JZS->A1JZB', 'phenol&rarr;fluorine, a donor deleted rather than moved'),
+    ('6PG6 OH7->OH1', 'names the hydroxymethyl&rsquo;s own oxygen as the donor it removes'),
+    ('6IEZ A50->9ML', 'one edit, two hydrogen bonds surrendered, both on the removed arm'),
+    ('7R2L UX5->UPZ', 'cites a contact the table types donor/acceptor INCOMPATIBLE and declines '
+                      'to call it a hydrogen bond'),
+    ('7NSW HC4->DHC', 'an addition, not a replacement: p-coumaric&rarr;caffeic acid'),
+    ('8SVS WU2->WU6', 'aryl methyl&rarr;chlorine'),
+    ('6UVF QHS->QHJ', 'cyclohexyl&rarr;isopropyl, a steric reduction on a packing contact'),
+    ('8U6G VVE->VU8', 'keeps a 1.48 &Aring; covalent bond to a LYSINE, not a cysteine'),
+    ('8PT1 E2A->D2I', 'benzyl&rarr;pyridylmethyl with the 1.78 &Aring; CYS161 bond held'),
+]
+MOL1_PICKS = ['item_046', 'item_065', 'item_015']
+
+
+def main():
+    sys.path.insert(0, HERE)
+    import add_report_sections as ars          # reuse the exact art and table helpers
+
+    s = open(REPORT).read()
+    assert MARK in s, 'section 4 marker not found; run add_report_sections.py first'
+
+    ev = {}
+    for line in open(EVIDENCE):
+        r = json.loads(line)
+        ev[r['pair']] = r['MODEL_INPUT']
+    gens = {r['pair']: r for r in (json.loads(l) for l in open(GENS))}
+
+    # ---- held-out rows -------------------------------------------------------------
+    rows = []
+    for pair, why in PICKS:
+        g = gens[pair]
+        mi = ev[pair]
+        inp = mi.get('input_smiles')
+        out = ars.gen_smiles(g)
+        sent = (g.get('gen_sentence') or '').strip()
+        rows.append([
+            '<td class="mol"><div class="lbl-hd">input &mdash; <code>%s</code></div>%s</td>'
+            % (ars.esc(pair.split()[0]), ars.svg(inp, out)),
+            '<td class="mol"><div class="lbl-hd">proposed analogue</div>%s</td>'
+            % ars.svg(out, inp),
+            '<td><div class="lbl-hd">%s</div><div class="lbl-rsn">%s</div>'
+            '<div class="lbl-meta">%s &middot; %s atom rows &middot; verifier score '
+            '<b>1.000</b></div></td>'
+            % (why, ars.esc(sent), ars.esc(g.get('target') or ''),
+               len(mi.get('atoms') or []))])
+
+    lede = (
+        '<h3>Held-out pairs &mdash; ten candidates from ChemDFM-14B g3+g4</h3>'
+        '<p class="lede">Ten generations from the 262-pair held-out set, produced by the '
+        '<b>g3+g4</b> arm alone and decoded greedily. Each scores a perfect <b>1.000</b> on the '
+        'verifier &mdash; 95 of the 262 do &mdash; and each was then checked by hand on the two '
+        'things the verifier cannot see: that every cited distance is owned by an atom the edit '
+        'actually touches, and that the group the sentence names is the group the SMILES changes. '
+        'Ten distinct proteins, two of them covalent. Orange marks the atoms that differ.</p>')
+    heldout = lede + ars.lbl_table(
+        ('input (hit)', 'generated analogue', 'model reasoning'), rows)
+
+    # ---- mol1 rows, selected by the external panel ----------------------------------
+    cand = {}
+    for fn in sorted(os.listdir(MOL1_BATCHES)):
+        txt = open(os.path.join(MOL1_BATCHES, fn)).read()
+        for m in re.finditer(r'(item_\d+)\s*\n\s*molecule:\s*(\S+)\s*\n\s*reasoning:\s*'
+                             r'(.+?)(?=\n\s*item_|\Z)', txt, re.S):
+            cand[m.group(1)] = (m.group(2), ' '.join(m.group(3).split()))
+    why_of = {r['item_id']: r['one_line_why']
+              for r in json.load(open(MOL1_FINALS))['ranking']}
+    mol1_in = json.loads(open(os.path.join(V6, 'mol1_chemdfm/mol1_prompt_covalent.jsonl'))
+                         .readline())['input_smiles']
+    mrows = []
+    for iid in MOL1_PICKS:
+        smi, sent = cand[iid]
+        mrows.append([
+            '<td class="mol"><div class="lbl-hd">mol1 &mdash; the designed seed</div>%s</td>'
+            % ars.svg(mol1_in, smi),
+            '<td class="mol"><div class="lbl-hd">proposed analogue</div>%s</td>'
+            % ars.svg(smi, mol1_in),
+            '<td><div class="lbl-hd">model reasoning</div><div class="lbl-rsn">%s</div>'
+            '<div class="lbl-hd" style="margin-top:.5em">chemists&rsquo; verdict</div>'
+            '<div class="lbl-rsn">%s</div></td>'
+            % (ars.esc(sent), ars.esc(why_of.get(iid, '')))])
+    mol1 = (
+        '<h3>ZAP70, mol1 &mdash; candidates and their reasoning</h3>'
+        '<p class="lede">mol1 is a designed covalent seed with <b>no crystal structure</b>: its '
+        'contact table comes from a Boltz-2 cofold against ZAP70 Cys346, so every distance is '
+        '<b>predicted</b>, and ZAP70 contributes <b>0 of the 7,069</b> rows in the corpus. '
+        '<b>181</b> candidates from ChemDFM-14B g3+g4 went to three external medicinal chemists '
+        'across 8 batches (543 slot judgements), then a finals round over the 30 they nominated. '
+        'The <b>three</b> below are those all three reviewers would put on a synthesis list &mdash; '
+        'two distinct structures, since two of them defend the same benzyl analogue with different '
+        'reasoning. The right-hand column is the reviewers&rsquo; own verdict, quoted.</p>'
+        + ars.lbl_table(('mol1 (input)', 'proposed analogue',
+                         'model reasoning &middot; chemists&rsquo; verdict'), mrows))
+
+    # ---- splice: replace everything from the marker to the old ZAP70 h3 --------------
+    i = s.index(MARK) + len(MARK)
+    j = s.index('<h3>ZAP70, mol1 &mdash;', i)
+    k = s.index('<h2>', j)                     # the old ZAP70 material ends at the next section
+    new = s[:i] + '\n' + heldout + '\n' + mol1 + '\n' + s[k:]
+    open(REPORT, 'w').write(new)
+    print('section 4 replaced: %d held-out rows, %d mol1 rows' % (len(rows), len(mrows)))
+    print('report %.2f MB -> %.2f MB' % (len(s) / 1e6, len(new) / 1e6))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
