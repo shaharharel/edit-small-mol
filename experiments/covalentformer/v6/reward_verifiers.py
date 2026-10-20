@@ -159,35 +159,62 @@ def _firstpos(rx, text, _unused=0):
 def parse_claims(sent):
     """Residue-anchored claims: (residue, distance|None, direction, span).
 
-    A claim is a residue token plus the first distance within WINDOW characters after it. Direction
-    comes from the nearest preceding give-up/retain verb in the same clause. This is the same
-    heuristic `table_extra.attrib` uses, kept identical on purpose so the reward and the reported
-    metric cannot drift apart.
+    Each distance literal is assigned to the NEAREST residue token within WINDOW characters, on
+    either side. Direction comes from the nearest give-up/retain verb in the same clause.
+
+    The first version searched only FORWARD from each residue, which matches "LYS114 at 3.14 A" but
+    not the equally standard "while the 2.82 A GLY601.O hydrogen bond holds". Audited against 6,865
+    chemist-adopted gold sentences, it attached just 63.9% of the distances actually written: 13.5%
+    of gold sentences registered no numeric claim at all and would have scored a hard zero, and
+    64.9% fell under the MIN_CLAIMS divisor floor while being entirely correct. As a reward that is
+    worse than merely noisy -- the cheapest way to raise it is to put distances after residue names,
+    so it pays for word order rather than for correct chemistry, and it caps the score of the house
+    style the SFT model was trained to produce.
+
+    Nearest-token assignment also fixes a quieter error: with a forward-only window, one residue
+    swallowed the distance belonging to the NEXT residue in the sentence, which produced a confident
+    (residue, distance) pair that the chemist never claimed.
     """
     out = []
     s = sent or ''
-    for m in RES_TOK.finditer(s.upper()):
+    up = s.upper()
+    residues = []
+    for m in RES_TOK.finditer(up):
         if m.group(1) not in AA:
             continue
-        res = '%s%s' % (m.group(1), m.group(2))
-        tail = s[m.end():m.end() + WINDOW]
-        nm = NUM.search(tail)
-        d = round(float(nm.group(1)), 2) if nm else None
-        # The house style puts the verb on EITHER side: "gives up the 3.14 A bond to LYS114" but
-        # also "while the 2.87 A MET108.O hydrogen bond is retained" and "... holds". Looking only
-        # backwards read 37 of 251 sentences as entirely neutral, which silently removed them from
-        # the directional check. Search the enclosing CLAUSE in both directions and take the nearer
-        # verb; clause boundaries keep a "gives up" in one half from colouring a "retains" in the
-        # other.
-        lo = max((s.rfind(d, 0, m.start()) for d in (';', ',', ' while ', ' and ')), default=-1)
-        hi = min((x for x in (s.find(d, m.end()) for d in (';', ',', ' while ', ' and '))
-                  if x != -1), default=len(s))
-        before, after = s[lo + 1:m.start()], s[m.end():hi]
-        gu = max(_lastpos(GIVES_UP, before), _firstpos(GIVES_UP, after, m.end() - hi))
-        rt = max(_lastpos(RETAINS, before), _firstpos(RETAINS, after, m.end() - hi))
-        direction = 'neutral' if gu == rt == -10 ** 9 else ('gives_up' if gu > rt else 'retains')
-        span = s[max(0, m.start() - 60):m.end() + WINDOW]
-        out.append({'res': res, 'd': d, 'dir': direction, 'span': span})
+        residues.append(('%s%s' % (m.group(1), m.group(2)), m.start(), m.end()))
+    if not residues:
+        return out
+
+    # "makes no contact within 4.0 A" states the search threshold, not a contact. Attaching it to
+    # the nearest residue invents a claim the sentence does not make -- and the gold sentences that
+    # use this phrasing would then be penalised for a distance that is correctly absent from the
+    # table.
+    lits = [(mm.start(), round(float(mm.group(1)), 2)) for mm in NUM.finditer(s)
+            if 'WITHIN' not in up[max(0, mm.start() - 14):mm.start()]]
+
+    taken = {}
+    for pos, d in lits:
+        best, bestdist = None, None
+        for i, (res, rs, re_) in enumerate(residues):
+            gap = rs - pos if pos < rs else pos - re_
+            if gap <= WINDOW and (bestdist is None or gap < bestdist):
+                best, bestdist = i, gap
+        if best is not None:
+            taken.setdefault(best, []).append(d)
+
+    for i, (res, rs, re_) in enumerate(residues):
+        ds = taken.get(i) or [None]
+        for d in ds:
+            lo = max((s.rfind(x, 0, rs) for x in (';', ',', ' while ', ' and ')), default=-1)
+            hi = min((x for x in (s.find(x, re_) for x in (';', ',', ' while ', ' and '))
+                      if x != -1), default=len(s))
+            before, after = s[lo + 1:rs], s[re_:hi]
+            gu = max(_lastpos(GIVES_UP, before), _firstpos(GIVES_UP, after, re_ - hi))
+            rt = max(_lastpos(RETAINS, before), _firstpos(RETAINS, after, re_ - hi))
+            direction = 'neutral' if gu == rt == -10 ** 9 else ('gives_up' if gu > rt else 'retains')
+            out.append({'res': res, 'd': d, 'dir': direction,
+                        'span': s[max(0, rs - 60):re_ + WINDOW]})
     return out
 
 

@@ -316,6 +316,13 @@ def train(args, rw):
         model = PeftModel.from_pretrained(base, args.adapter, is_trainable=True)
         print('[grpo] KL reference = pretrained base; training the SFT adapter itself')
     model.train()
+    # Activations for a 14B model over ~3k-token pocket prompts are the second-largest consumer
+    # after the rollout cache; recompute them instead of storing them. use_cache must go off for
+    # training forwards, so generation passes use_cache=True explicitly.
+    model.gradient_checkpointing_enable()
+    if hasattr(model, 'enable_input_require_grads'):
+        model.enable_input_require_grads()
+    model.config.use_cache = False
 
     pad = tok.pad_token_id if tok.pad_token_id is not None else PAD_ID
     eos = tok.eos_token_id if tok.eos_token_id is not None else EOS_ID
@@ -331,13 +338,20 @@ def train(args, rw):
     rng = random.Random(args.seed)
     os.makedirs(args.out, exist_ok=True)
     logf = open(os.path.join(args.out, 'grpo_log.jsonl'), 'a')
+    dumpf = open(os.path.join(args.out, 'rollouts.jsonl'), 'a')
     best = -1.0
 
     def seq_logprobs(ids, mask, prompt_len, use_ref=False):
-        """Sum of per-token log-probs over COMPLETION tokens only."""
+        """Per-token log-probs over COMPLETION tokens, for ONE micro-batch of rows.
+
+        Callers must keep the micro-batch small. The first version of this loop passed the whole
+        group of G sequences through in a single forward and died with CUDA OOM on a 40 GB A100:
+        logits are [rows, tokens, 152k vocab], and log_softmax over an fp32 copy of that is ~7 GB
+        for four 3k-token sequences before a single gradient exists.
+        """
         ctx = model.disable_adapter() if use_ref else _null()
         with ctx:
-            out = model(input_ids=ids, attention_mask=mask)
+            out = model(input_ids=ids, attention_mask=mask, use_cache=False)
         logits = out.logits[:, :-1]
         tgt = ids[:, 1:]
         lp = torch.log_softmax(logits.float(), dim=-1).gather(-1, tgt.unsqueeze(-1)).squeeze(-1)
@@ -346,64 +360,108 @@ def train(args, rw):
         keep &= (tgt != pad)
         return lp, keep
 
-    for step in range(1, args.steps + 1):
-        t0 = time.time()
-        batch = rng.sample(prompts, min(args.batch, len(prompts)))
-        pol_terms, kls, rews, comps, trivial = [], [], [], collections.defaultdict(list), 0
-
-        for item in batch:
-            pids = tok(item['prompt'], add_special_tokens=True)['input_ids']
-            ids = torch.tensor([pids], device=dev)
+    def rollout(item):
+        """Sample G completions and score them. No gradients -- the data-collection half."""
+        pids = tok(item['prompt'], add_special_tokens=True)['input_ids']
+        ids = torch.tensor([pids], device=dev)
+        # Gradient checkpointing has to come OFF for sampling: with it on, transformers force-
+        # disables the KV cache ('use_cache=True is incompatible with gradient checkpointing'), so
+        # every new token re-runs the whole ~3k-token prompt. It goes back on for the backward half.
+        model.gradient_checkpointing_disable()
+        model.config.use_cache = True
+        try:
             with torch.no_grad():
                 gen = model.generate(input_ids=ids, attention_mask=torch.ones_like(ids),
                                      max_new_tokens=args.max_new, do_sample=True,
                                      temperature=args.temperature, top_p=args.top_p,
                                      num_return_sequences=args.group,
                                      pad_token_id=pad, eos_token_id=eos)
-            texts = [tok.decode(g[len(pids):], skip_special_tokens=False) for g in gen]
-            rewards = []
-            for t in texts:
-                sent, smi = _split_completion(t)
-                s = rw.score(item['model_input'], sent, smi, item['input_smiles'],
-                             ligand_code=item['ligand_code'])
-                rewards.append(s['total'])
+        finally:
+            model.config.use_cache = False
+            model.gradient_checkpointing_enable()
+        texts = [tok.decode(g[len(pids):], skip_special_tokens=False) for g in gen]
+        rewards, scored = [], []
+        for t in texts:
+            sent, smi = _split_completion(t)
+            s = rw.score(item['model_input'], sent, smi, item['input_smiles'],
+                         ligand_code=item['ligand_code'])
+            rewards.append(s['total'])
+            scored.append(s)
+        return gen, len(pids), rewards, scored, texts
+
+    for step in range(1, args.steps + 1):
+        t0 = time.time()
+        batch = rng.sample(prompts, min(args.batch, len(prompts)))
+        rews, comps, trivial, live = [], collections.defaultdict(list), 0, []
+
+        # Pass 1 -- rollouts for the whole batch under no_grad, so the number of groups that
+        # actually carry signal is known before anything is scaled and backpropagated.
+        for item in batch:
+            gen, plen, rewards, scored, texts = rollout(item)
+            rews += rewards
+            if step <= args.dump_steps:
+                for t, sc, rwd in zip(texts, scored, rewards):
+                    dumpf.write(json.dumps({'step': step, 'pair': item['pair'], 'reward': rwd,
+                                            'components': sc['components'],
+                                            'n_claims': sc['n_claims'], 'text': t}) + '\n')
+                dumpf.flush()
+            for s in scored:
                 for k, v in s['components'].items():
                     comps[k].append(v)
                 comps['n_claims'].append(s['n_claims'])
-            rews += rewards
             adv, useful = group_advantages(rewards)
             if not useful:
                 trivial += 1
                 continue
+            live.append((gen, plen, adv))
 
-            mask = (gen != pad).long()
-            with torch.no_grad():
-                lp_old, keep = seq_logprobs(gen, mask, len(pids), use_ref=False)
-                lpr, _ = seq_logprobs(gen, mask, len(pids), use_ref=True)
-            lp, keep = seq_logprobs(gen, mask, len(pids), use_ref=False)
-            a = torch.tensor(adv, device=dev, dtype=lp.dtype).unsqueeze(1)
-            ntok = keep.sum(1).clamp(min=1)
-            # Clipped surrogate, as in the GRPO formulation. At --inner-epochs 1 the ratio is
-            # exactly 1 and the clip is a mathematical no-op (which is also TRL's GRPOTrainer
-            # default), so this is identical to a group-baselined policy gradient there. It is
-            # present because rollouts are the expensive part -- 8 samples from a 14B model -- so
-            # reusing each one for several epochs is attractive, and then the clip does real work.
-            ratio = (lp - lp_old).clamp(-20, 20).exp()
-            unclipped = ratio * a
-            clipped = ratio.clamp(1 - args.clip_eps, 1 + args.clip_eps) * a
-            surr = torch.minimum(unclipped, clipped)
-            pol_terms.append(-((surr * keep).sum(1) / ntok).mean())
-            # k3 KL estimator: unbiased and non-negative, unlike the plain log-ratio
-            d = (lpr - lp).clamp(-20, 20)
-            kls.append((((d.exp() - d - 1) * keep).sum(1) / ntok).mean())
-
-        if not pol_terms:
-            print('[grpo] step %d: every group trivial, skipping' % step)
+        if not live:
+            # Not a silent skip: a group is trivial because all G samples scored IDENTICALLY, and
+            # which score that was is the whole diagnosis -- all-zero means the completions are not
+            # being parsed or rewarded at all, all-one means the task is too easy to learn from.
+            print('[grpo] step %3d: every group trivial, rewards %s  (nothing to learn, skipping)'
+                  % (step, ['%.3f' % r for r in rews[:args.group]]))
+            logf.write(json.dumps({'step': step, 'trivial_groups': len(batch),
+                                   'groups': len(batch), 'rewards': rews,
+                                   'reward_mean': sum(rews) / max(len(rews), 1)}) + '\n')
+            logf.flush()
             continue
 
-        loss = torch.stack(pol_terms).mean() + args.beta * torch.stack(kls).mean()
+        # Pass 2 -- gradients, in micro-batches. Each micro-batch is scaled by its share of the
+        # step and backpropagated immediately, so never more than --micro-batch sequences' worth of
+        # graph is alive. Identical in expectation to one large backward; it merely fits.
+        pol_sum, kl_sum, nrows = 0.0, 0.0, 0
+        denom = len(live) * args.group
+        for gen, plen, adv in live:
+            mask = (gen != pad).long()
+            for i in range(0, gen.shape[0], args.micro_batch):
+                sl = slice(i, min(i + args.micro_batch, gen.shape[0]))
+                g, m = gen[sl], mask[sl]
+                with torch.no_grad():
+                    lp_old, _ = seq_logprobs(g, m, plen, use_ref=False)
+                    lpr, _ = seq_logprobs(g, m, plen, use_ref=True)
+                lp, keep = seq_logprobs(g, m, plen, use_ref=False)
+                a = torch.tensor(adv[sl], device=dev, dtype=lp.dtype).unsqueeze(1)
+                ntok = keep.sum(1).clamp(min=1)
+                # Clipped surrogate, as in the GRPO formulation. At --inner-epochs 1 the ratio is
+                # exactly 1 and the clip is a mathematical no-op (also TRL GRPOTrainer's default),
+                # so this reduces to a group-baselined policy gradient there. It is present because
+                # rollouts are the expensive part -- G samples from a 14B model -- so reusing each
+                # one over several epochs is attractive, and then the clip does real work.
+                ratio = (lp - lp_old).clamp(-20, 20).exp()
+                surr = torch.minimum(ratio * a,
+                                     ratio.clamp(1 - args.clip_eps, 1 + args.clip_eps) * a)
+                pol = -((surr * keep).sum(1) / ntok)
+                # k3 KL estimator: unbiased and non-negative, unlike the plain log-ratio
+                d = (lpr - lp).clamp(-20, 20)
+                kl = ((d.exp() - d - 1) * keep).sum(1) / ntok
+                ((pol + args.beta * kl).sum() / denom).backward()
+                pol_sum += float(pol.sum())
+                kl_sum += float(kl.sum())
+                nrows += g.shape[0]
+                del lp, lp_old, lpr, keep, ratio, surr, pol, kl, d, a
 
-        # SFT anchor
+        # SFT anchor, backpropagated on its own for the same memory reason
         sft_val = float('nan')
         if args.lam > 0 and replay:
             pr, co = rng.choice(replay)
@@ -412,16 +470,21 @@ def train(args, rw):
             full = torch.tensor([pi + ci], device=dev)
             lab = full.clone()
             lab[:, :len(pi)] = -100
-            sft = model(input_ids=full, attention_mask=torch.ones_like(full), labels=lab).loss
+            sft = model(input_ids=full, attention_mask=torch.ones_like(full), labels=lab,
+                        use_cache=False).loss
             sft_val = float(sft)
-            loss = loss + args.lam * sft
+            (args.lam * sft).backward()
+            del sft
 
-        loss.backward()
+        loss_val = (pol_sum + args.beta * kl_sum) / max(nrows, 1)
+        if args.lam > 0 and replay:
+            loss_val += args.lam * sft_val
+
         torch.nn.utils.clip_grad_norm_([p for p in model.parameters() if p.requires_grad], 1.0)
         opt.step()
         opt.zero_grad(set_to_none=True)
 
-        rec = {'step': step, 'loss': float(loss), 'reward_mean': sum(rews) / max(len(rews), 1),
+        rec = {'step': step, 'loss': loss_val, 'reward_mean': sum(rews) / max(len(rews), 1),
                'trivial_groups': trivial, 'groups': len(batch), 'sft_loss': sft_val,
                'secs': round(time.time() - t0, 1),
                'components': {k: sum(v) / len(v) for k, v in comps.items()}}
@@ -455,7 +518,13 @@ class _null:
 def _split_completion(text):
     """-> (sentence, smiles). Mirrors the eval parser: SMILES on its own line after the sentence."""
     import re
-    t = text.replace('<|im_end|>', '').replace('</s>', '')
+    # Strip EVERY special token, not a hand-picked two. generate() pads each completion in a group
+    # up to the longest one with the pad token (<|endoftext|> for this tokenizer), and the SMILES
+    # regex is anchored at end-of-line, so a padded tail made the line unmatchable: smi came back
+    # None, the 'parses' gate failed and the reward hard-zeroed. Every rollout that was not the
+    # longest in its group scored 0.000 regardless of content -- a gradient toward padding, and the
+    # reason entire groups looked 'trivial'.
+    t = re.sub(r'<\|[^|>]*\|>', '', text).replace('</s>', '')
     m = re.search(r'^\s*SMILES:\s*(\S+)\s*$', t, re.M)
     smi = m.group(1) if m else None
     sent = t[:m.start()].strip() if m else t.strip()
@@ -488,6 +557,10 @@ def main():
     ap.add_argument('--inner-epochs', dest='inner_epochs', type=int, default=1,
                     help='policy updates per rollout. >1 activates the clip and reuses rollouts.')
     ap.add_argument('--clip-eps', dest='clip_eps', type=float, default=0.2)
+    ap.add_argument('--dump-steps', dest='dump_steps', type=int, default=2,
+                    help='write raw rollouts + reward components for the first N steps')
+    ap.add_argument('--micro-batch', dest='micro_batch', type=int, default=1,
+                    help='sequences per gradient forward; raise only if memory allows')
     ap.add_argument('--lora-r', dest='lora_r', type=int, default=16)
     ap.add_argument('--lora-targets', dest='lora_targets',
                     default='q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj')
