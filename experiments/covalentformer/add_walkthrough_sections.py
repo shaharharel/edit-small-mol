@@ -35,6 +35,46 @@ def esc(s):
     return html.escape(str(s), quote=False)
 
 
+def reviewer_rules():
+    """The reviewer rule list, rendered from v6/REVIEWER.md rather than retyped.
+
+    The report used to carry a hand-written summary of "the ones that do most of the work", which
+    is a second source of truth for the instruction set and drifts from it silently. Reading the
+    brief means the rules shown here are the rules the labellers were actually given, and a change
+    to the brief shows up in the report on the next build.
+    """
+    md = open(os.path.join(V6, 'REVIEWER.md')).read()
+    # the numbered block, from rule 1 up to the horizontal rule before the caveat legend
+    m = re.search(r'\n(1\. \*\*Name only residues.*?)\n---\n', md, re.S)
+    assert m, 'could not locate the numbered rule block in REVIEWER.md'
+    block = m.group(1)
+    # split on a line that starts a new rule: "1." "1b." "10." etc at column 0
+    parts = re.split(r'\n(?=\d+b?\.\s)', '\n' + block)
+    out = []
+    for raw in parts:
+        raw = raw.strip()
+        if not raw:
+            continue
+        num = re.match(r'(\d+b?)\.\s*', raw)
+        body = raw[num.end():] if num else raw
+        paras = [re.sub(r'\s+', ' ', x).strip() for x in re.split(r'\n\s*\n', body)]
+        rendered = ''.join('<p>%s</p>' % inline_md(x) for x in paras if x)
+        # Explicit number text rather than <ol>: the list runs 1, 1b, 2 ... 11, and <li value=>
+        # takes an integer only, so a browser would silently renumber it 1-12 and lose "1b".
+        out.append('<div class="rule"><span class="rule-n">%s.</span><div class="rule-b">%s</div>'
+                   '</div>' % (esc(num.group(1) if num else '?'), rendered))
+    return '<div class="rules">%s</div>' % ''.join(out)
+
+
+def inline_md(t):
+    """Markdown inline spans -> HTML, on text that is escaped first."""
+    t = esc(t)
+    t = re.sub(r'`([^`]+)`', r'<code>\1</code>', t)
+    t = re.sub(r'\*\*([^*]+)\*\*', r'<b>\1</b>', t)
+    t = re.sub(r'(?<!\*)\*([^*]+)\*(?!\*)', r'<i>\1</i>', t)
+    return t.replace('\u2014', '&mdash;').replace('\u2192', '&rarr;')
+
+
 def packet_block(path, pair):
     """The packet text for one pair, verbatim, up to the next pair banner."""
     txt = open(path).read()
@@ -94,22 +134,19 @@ def build_labelling_section(sn):
 
     return """%s
 <h2><span class="sn">%d</span>How a reasoning label is made</h2>
-<p class="lede">Every training target in this project is one sentence written by a medicinal chemist
-about one matched molecular pair, then adjudicated by a chair. This section follows a single pair,
-<code>%s</code>, all the way through: the packet three reviewers saw, the three sentences they
-wrote, the chair's verdict and its stated reasoning, and the training row that came out. Nothing
-here is reconstructed &mdash; it is the actual text from the actual run.</p>
-
 <h3>1. What the reviewer is asked to do</h3>
-<p>One sentence, <b>maximum 35 words</b>, naming what the edit gives up and what it keeps, anchored
-on measured geometry. The instruction set carries <b>eleven hard rules</b>; the ones that do most of
-the work are: name only residues that appear on the <i>input</i> side of this pair's evidence; say
-&ldquo;hydrogen bond&rdquo; only where the typing supports it and &ldquo;covalent&rdquo; only where a
-covalent row supports it; never describe an atom as buried, enclosed or solvent-facing; make no
-claim about what the analogue's <i>new</i> atoms touch, because at inference the model has no
-analogue structure; claim no potency improvement, since there is no potency data; never build a
-claim on a contact whose typing contains <code>uncertain</code>; and <b>disclose a multi-site
-edit</b>, referring to groups rather than raw atom names.</p>
+<style>
+.rules{margin:.6em 0}
+.rules .rule{display:flex;gap:.7em;align-items:baseline;margin:.55em 0}
+.rules .rule-n{flex:0 0 2.2em;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;
+  color:#555}
+.rules .rule-b{flex:1 1 auto;min-width:0}
+.rules .rule-b p{margin:0 0 .4em 0}
+.rules .rule-b p:last-child{margin-bottom:0}
+@media (prefers-color-scheme:dark){.rules .rule-n{color:#9aa0a6}}
+</style>
+
+%s
 
 <h3>2. The packet &mdash; exactly what three reviewers saw</h3>
 <p class="tnote">Reviewers see more than the model does: the model-input block below, plus
@@ -156,7 +193,7 @@ cited a residue absent from the table. And separately, <b>159 of the 2,326 rows 
 stereocentre inversion at constant centre count that the sentence never mentions</b> &mdash; when such
 an inversion occurs, the sentence misses it 89%% of the time. Both numbers are reasons the labelling
 gate is being tightened, not reasons to discount the corpus, but a reader should know them.</p>
-""" % (MARK_LABEL, sn, esc(PAIR), esc(packet), rev_rows,
+""" % (MARK_LABEL, sn, reviewer_rules(), esc(packet), rev_rows,
        esc(chair.get('verdict') or ''), esc(chair.get('final') or ''),
        esc(chair.get('why') or ''), esc(corpus),
        esc(row.get('label_generation') or '?'), esc(row['split']),

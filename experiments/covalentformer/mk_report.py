@@ -783,7 +783,9 @@ this rung teaches what a covalent reaction <i>is</i>, so the rungs above it can 
     A("""<div class="phase"><div class="ph-h"><span class="ph-n">Phase 2</span>
 <span class="ph-t">Analogue design &middot; hit-to-lead</span>
 <span class="ph-m">68,868 rows &middot; 11.8%</span></div>
-<p>Matched molecular pairs over covalent ligands. Given a hit, propose a close analogue that
+<p>Same-series analogue pairs over covalent ligands &mdash; same paper and series, Tanimoto
+&ge; 0.50, same protein; there is no fragmentation step, so these are not matched molecular pairs.
+Given a hit, propose a close analogue that
 <b>keeps the warhead and the binding scaffold</b> &mdash; the two constraints that make an edit a
 medicinal-chemistry move rather than an arbitrary new molecule. The label names the transform before
 giving the SMILES, which turns open-ended generation into a decision that can be scored. Still no
