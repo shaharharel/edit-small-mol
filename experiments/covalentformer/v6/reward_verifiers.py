@@ -190,18 +190,34 @@ def parse_claims(sent):
     # the nearest residue invents a claim the sentence does not make -- and the gold sentences that
     # use this phrasing would then be penalised for a distance that is correctly absent from the
     # table.
-    lits = [(mm.start(), round(float(mm.group(1)), 2)) for mm in NUM.finditer(s)
+    lits = [(mm.start(), mm.end(), round(float(mm.group(1)), 2)) for mm in NUM.finditer(s)
             if 'WITHIN' not in up[max(0, mm.start() - 14):mm.start()]]
 
     taken = {}
-    for pos, d in lits:
-        best, bestdist = None, None
+    prev = None                     # (index of literal's residue, literal end) for conjunctions
+    for pos, end, d in lits:
+        # "packs LYS575.CG at 3.86 and 3.88 A" -- the second literal belongs to the SAME residue as
+        # the first. Measured on gold, nearest-token alone handed it to whatever residue came next
+        # in the sentence, inventing a contact the chemist never claimed.
+        if prev is not None and not re.search(r'[A-Z]{3}\d', up[prev[1]:pos]) \
+                and re.fullmatch(r'\s*(?:A|Å)?\s*(?:and|,|or|/)\s*', s[prev[1]:pos] or ' '):
+            taken.setdefault(prev[0], []).append(d)
+            prev = (prev[0], end)
+            continue
+        best, bestgap = None, None
         for i, (res, rs, re_) in enumerate(residues):
-            gap = rs - pos if pos < rs else pos - re_
-            if gap <= WINDOW and (bestdist is None or gap < bestdist):
-                best, bestdist = i, gap
+            # Measure from the LITERAL'S NEAR EDGE on both sides. Comparing a forward gap taken
+            # from the literal's start against a backward gap taken from its end biased every
+            # choice by the width of the number itself, which is how "the 2.44 A SER289 and 2.54 A
+            # GLU308" credited 2.54 to SER289.
+            gap = (rs - end) if end <= rs else (pos - re_)
+            if gap <= WINDOW and (bestgap is None or gap < bestgap):
+                best, bestgap = i, gap
         if best is not None:
             taken.setdefault(best, []).append(d)
+            prev = (best, end)
+        else:
+            prev = None
 
     for i, (res, rs, re_) in enumerate(residues):
         ds = taken.get(i) or [None]
