@@ -59,10 +59,24 @@ MARK = '<div id="gen-sample-chemdfm"></div>'
 
 # Ten held-out generations, all scoring 1.000, all ownership- and group-naming-verified by hand.
 # Ordered to open on the strongest reasoning and to keep each protein distinct.
+# Reduced from ten to two by independent chemist review (heldout10_chemist_review.json).
+# The ten were chosen by a hand check that verified each cited (residue, distance) was a real table
+# row and then matched ELEMENTS -- an "O" row satisfied any oxygen claim. That is far too weak. The
+# reviewer instead rebuilt each ligand from its CCD atom/bond definition, confirmed the rebuild
+# reproduces input_smiles exactly for all ten, and recomputed every cited distance from the
+# deposited coordinates. Eight of the ten cite a contact owned by an atom the edit does not touch,
+# by margins up to 14 A:
+#   6UVF  cites ALA104/PHE105, 14.3 and 13.4 A from the edit
+#   8U6G  TYR318 7.6 A from the nitrile, PRO236 10.1 A; and its "covalent anchor" has no covale
+#         record in the deposition at all -- our cov_check inferred it from distance
+#   6PG6  the 2.73 A CYS261.N bond is the acetamide carbonyl's, not the hydroxymethyl's
+#   8SVS  PHE281 3.42 A is an aryl carbon's, not the replaced methyl's
+#   7NP6  both rows are on the edited group but their roles are inverted
+#   8PT1  covalent clause correct, the HIS125 figure is not
+#   6IEZ, 7NSW  silently drop a third contact the edit also changes
+# Kept: 7R2L, the only one publishable as written, and 28LM, correct but purely descriptive.
 PICKS = [
-    '7NP6 UK8->UKB', '28LM A1JZS->A1JZB', '6PG6 OH7->OH1', '6IEZ A50->9ML',
-    '7R2L UX5->UPZ', '7NSW HC4->DHC', '8SVS WU2->WU6', '6UVF QHS->QHJ',
-    '8U6G VVE->VU8', '8PT1 E2A->D2I',
+    '7R2L UX5->UPZ', '28LM A1JZS->A1JZB',
 ]
 MOL1_PICKS = ['item_046', 'item_065', 'item_015']
 
@@ -93,7 +107,7 @@ def main():
             '<td class="mol">%s</td>' % ars.svg(out, inp),
             '<td><div class="lbl-rsn">%s</div></td>' % ars.esc(sent)])
 
-    lede = '<h3>Held-out pairs &mdash; ten candidates from ChemDFM-14B g3+g4</h3>'
+    lede = '<h3>Held-out pairs, candidates from ChemDFM-14B g3+g4</h3>'
 
     heldout = lede + ars.lbl_table(
         ('input (hit)', 'generated analogue', 'model reasoning'), rows)
@@ -116,13 +130,17 @@ def main():
             '<td><div class="lbl-rsn">%s</div></td>' % ars.esc(sent)])
 
     mol1 = (
-        '<h3>ZAP70, mol1 &mdash; candidates and their reasoning</h3>'
+        '<h3>ZAP70, mol1, candidates and their reasoning</h3>'
         + ars.lbl_table(('mol1 (input)', 'proposed analogue',
                          'model reasoning'), mrows))
 
     # ---- splice: replace everything from the marker to the old ZAP70 h3 --------------
     i = s.index(MARK) + len(MARK)
-    j = s.index('<h3>ZAP70, mol1 &mdash;', i)
+    # anchor on the stable part of the heading: the em dash was later removed report-wide, which
+    # broke an anchor written against '<h3>ZAP70, mol1 &mdash;'
+    m = re.search(r'<h3>ZAP70, mol1[^<]*</h3>', s[i:])
+    assert m, 'mol1 h3 not found after the marker'
+    j = i + m.start()
     k = s.index('<h2>', j)                     # the old ZAP70 material ends at the next section
     new = s[:i] + '\n' + heldout + '\n' + mol1 + '\n' + s[k:]
     open(REPORT, 'w').write(new)

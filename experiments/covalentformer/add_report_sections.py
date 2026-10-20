@@ -146,20 +146,13 @@ def build_g3_training_block():
     out = []
     for p in G3_PICKS:
         r = rows[p]
-        meta = ('<div class="lbl-meta">PDB %s &middot; %s &middot; pair <code>%s</code> &middot; '
-                '%s atom rows &middot; %s table residues &middot; chair verdict '
-                '<code>%s</code></div>'
-                % (esc(r.get('pdb')), esc(r.get('target')), esc(r['pair']),
-                   esc(r.get('n_atom_rows')), len(r.get('table_residues') or []),
-                   esc(r.get('verdict'))))
         out.append([
             '<td class="mol"><div class="lbl-hd">input</div>%s</td>'
             % svg(r['input_smiles'], r['analogue_smiles']),
             '<td class="mol"><div class="lbl-hd">analogue</div>%s</td>'
             % svg(r['analogue_smiles'], r['input_smiles']),
-            '<td><div class="lbl-hd">chair sentence &mdash; the training target</div>'
-            '<div class="lbl-rsn">%s</div>%s</td>'
-            % (esc(r.get('reference_sentence')), meta)])
+            '<td><div class="lbl-rsn">%s</div></td>'
+            % esc(r.get('reference_sentence'))])
     lede = '<h3>Five rows of g3 training data</h3>'
     return lede + lbl_table(('input (hit)', 'output (analogue)',
                              'chair sentence (training target)'), out)
