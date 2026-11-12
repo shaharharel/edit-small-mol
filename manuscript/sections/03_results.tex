@@ -1,0 +1,251 @@
+\section{Results}
+
+\subsection{Does the stated intent decide the molecule?}
+\label{sec:intent}
+
+All arms answer the same \m{400} prompts from the molecule-level holdout, and the only thing that
+differs between them is the sentence handed to $M$. Every comparison is paired on the prompt.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{llrrrrr}
+\toprule
+arm & sentence given to $M$ & validity & uniq. & TC$\rightarrow$input & TC$\rightarrow$ref. (med.) & paired $\Delta$ vs mismatch \\
+\midrule
+reference (dictated) & agent-written, analogue in view & 0.963 & 0.626 & 0.677 & \textbf{0.918} (1.000) & $+0.379$, $p=5\!\times\!10^{-50}$ \\
+$R\!\rightarrow\!M$ & $R$'s own generated intent & 0.965 & 0.238 & 0.746 & 0.570 (0.579) & $+0.033$, $p=0.014$ \\
+mismatch & another pair's sentence & 0.915 & 0.937 & 0.718 & 0.537 (0.554) & --- (the control) \\
+none & nothing & 1.000 & 0.235 & \textbf{1.000} & 0.684 (0.672) & $+0.147$, $p=5\!\times\!10^{-40}$ \\
+\bottomrule
+\end{tabular}
+\caption{Intent conditioning on the molecule-level holdout, $n=400$ prompts per arm, PocketPair-21k.
+Heavy-atom $\Delta$ MAE is \m{0.374} (oracle), \m{2.622} ($R\!\rightarrow\!M$) and \m{3.907}
+(mismatch): under its own sentence the model moves about one heavy atom, under a foreign one it
+drifts almost four. Validation-selection caveat applies.}
+\label{tab:arms}
+\end{table}
+
+Three readings, in descending order of how much we would stake on them.
+
+\textbf{A correct intent is worth $+0.379$ Tanimoto over a wrong one} (paired,
+$p=5\times10^{-50}$), and the reference-intent median of \m{1.000} means that in more than half of
+held-out cases the model returns the exact molecule that was made. This arm measures
+\emph{transcription fidelity} and not design: the reference sentences were written by an agent with
+the analogue in view, and they name a group that actually changed in \m{86.1\%} of rows (correctly
+naming \m{2.09} of the \m{2.71} groups that change per pair). There is no oracle in this corpus. \textbf{A wrong intent is worse than
+no intent}: the mismatched arm sits \m{0.147} below the no-intent arm ($p=5\times10^{-40}$) and its
+validity falls from \m{100\%} to \m{91.5\%}. A model that merely decorated its output with a
+rationale would be indifferent to which rationale it was handed; this one is not.
+
+\textbf{The no-intent arm is a diagnostic, not a baseline.} With no sentence the model returns the
+input unchanged in \m{100\%} of rows (TC$\rightarrow$input \m{1.000}), so its \m{0.684} is the
+input's own similarity to the reference and all of its property deltas are exactly zero. This is an
+artefact of pair training rather than a safety property --- trained on pairs with mostly small
+edits, $p(y\mid x)$ with no instruction peaks at $y=x$, and the model learned \emph{copy, then
+perturb where told}. It is nonetheless informative: zero intent, zero edit, which is direct evidence
+that the sentence is the sole driver of structural change. The engineering consequence is that the
+system has no sentence-free fallback mode.
+
+\textbf{The reason model, not the molecule model, is the bottleneck.} $R\!\rightarrow\!M$ reaches
+\m{0.570}: it clears the mismatched control only by \m{0.033} ($p=0.014$) and retains
+$(0.570-0.537)/(0.918-0.537)=\m{8.7\%}$ of the oracle-over-mismatch gap. Its intents are also
+repetitive (uniqueness \m{0.238} against oracle's \m{0.626}). In an earlier replication on the
+crystal corpus the same ordering held with a smaller spread --- oracle \m{0.698}, $R\!\rightarrow\!M$
+\m{0.518}, mismatch \m{0.503}, $+0.180$ at $p=3\times10^{-27}$, and invented-residue rates of
+\m{0.0\%} (chemists), \m{13.1\%} ($R$), \m{27.1\%} ($R\!\rightarrow\!M$) and \m{55.7\%} (mismatch).
+Two corpora, two splits, one ordering --- and two further points of arithmetic a reader will do
+for us if we do not. First, $R\!\rightarrow\!M$ at \m{0.570} sits \emph{below} the no-intent arm at
+\m{0.684}. That comparison is not meaningful, because the no-intent arm attains its figure by
+returning the input unchanged, but it must be stated rather than left to be discovered. Second, the
+two corpora report $R$ differently --- groundedness \m{0.869} and invented chemistry \m{13.1\%} with
+residue specificity \m{0.421} on the crystal corpus, against groundedness \m{1.000} and specificity
+\m{0.214} on the potency corpus. These are different corpora, different pockets and different
+reference sentences, not two readings of one system: the crystal corpus has chemist-written
+reference sentences to compare against, which is why its specificity is higher and its groundedness
+lower. We report them side by side and never pool them. We therefore present the factorisation as a measured
+\emph{upper bound} and as a product claim --- a chemist who can write the hypothesis gets the
+structures today --- and not as an end-to-end gain. A direct comparison of the factorised pipeline
+against a jointly trained model on one corpus and one split is \TBD{2}{joint vs.\ factorised};
+hypothesis: the joint model matches $R\!\rightarrow\!M$ on molecular metrics and loses on every
+rationale metric, because nothing in its objective makes the molecule depend on the reason.
+
+\subsubsection{Beyond similarity: does a property-directed intent move that property?}
+
+Tanimoto to a known answer cannot tell a chemist whether a stated goal was achieved. We therefore
+classify each row by what its intent \emph{targets}, read from the sentence text rather than from the
+assay, and compare the signed change (generated minus input) across arms on exactly those rows.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{llrrrrl}
+\toprule
+the intent targets & property & rows & oracle & $R\!\rightarrow\!M$ & mismatch & verdict \\
+\midrule
+polarity $\uparrow$ & TPSA & 259 & $+3.62$ & $+4.84$ & $-0.12$ & moves as asked \\
+lipophilicity $\downarrow$ & cLogP & 146 & $-0.63$ & $-0.36$ & $-0.16$ & moves as asked \\
+size $\downarrow$ & MW & 75 & $-31.25$ & $+0.82$ & $-3.28$ & moves as asked (oracle only) \\
+size $\uparrow$ & MW & 88 & $-1.98$ & $-2.66$ & $-10.54$ & flat \\
+rigidity $\downarrow$ & rot.\ bonds & 37 & $+0.72$ & $-0.03$ & $+0.06$ & wrong direction \\
+basicity $\downarrow$ & basic N & 31 & $-0.03$ & $-0.03$ & $+0.10$ & flat \\
+\bottomrule
+\end{tabular}
+\caption{Property response, 349 paired rows. The no-intent arm is exactly $0.00$ in every cell
+because it echoes the input, which is why it is omitted here. Bucket labels are read from the
+conditioning sentence and are therefore partly circular with it; the informative comparison is
+across arms within a row, not across rows.}
+\label{tab:props}
+\end{table}
+
+Three of six buckets move in the stated direction and are flat or reversed under a mismatched
+intent. Two fail outright. Steerability is real but uneven, and it is strongest exactly where a
+single functional-group swap suffices --- adding polarity, shedding lipophilicity, trimming mass ---
+and absent where the edit would have to be planned over several atoms. Confidence intervals and the
+full bucket counts are \TBD{5}{property CIs}; hypothesis: the two failing buckets stay failing.
+
+\subsection{What the pocket governs}
+\label{sec:pocket}
+
+The same corpus and the same held-out prompts, with one difference: whether the per-atom contact
+table was present during training and generation.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+ & groundedness & residue specificity & validity & TC$\rightarrow$reference \\
+\midrule
+contact table shown & \textbf{1.000} & \textbf{0.388} & 0.985 & 0.679 \\
+contact table withheld & 0.432 & 0.121 & 1.000 & \textbf{0.680} \\
+\bottomrule
+\end{tabular}
+\caption{Pocket ablation, $n=200$ held-out prompts per arm, PocketPair-21k.}
+\label{tab:pocket}
+\end{table}
+
+The contact table decides \textbf{what the sentence may cite} --- groundedness \m{1.000} against
+\m{0.432}, residue specificity \m{0.388} against \m{0.121} --- and it does \textbf{not} decide the
+molecule: \m{0.679} with the table, \m{0.680} without it. Two further results point the same way. A
+deliberately \emph{wrong} pocket, swapped in at cohort scale, costs \m{0.013} Tanimoto against the
+true-analogue noise floor. And adding van der Waals distance annotations to the prompt changed
+nothing measurable.
+
+We report this as the central result rather than as a limitation, and we are explicit about what it
+does and does not license. It does not license ``pocket-aware generation''. It does license
+\emph{grounded attribution}: a target-specific, structurally checkable hypothesis attached to every
+proposal, which is what a project team consumes when it has to defend a synthesis list.
+
+Two caveats cut in opposite directions and both belong here. Against us: groundedness is close to
+definitional, because the table sits in the prompt, so one arm can copy residue names and the other
+must invent them; \m{1.000} versus \m{0.432} partly measures copying from context, and the only
+non-trivial figure, residue specificity \m{0.388}, is low. A pocket-\emph{shuffled} control would
+still score \m{1.000} by construction and is reported as such. In our favour: whole-molecule
+Tanimoto is a poor instrument for this question. A single-edit analogue lives at
+TC$\rightarrow$input \m{0.68}--\m{0.75}, where Tanimoto has almost no dynamic range, so
+``the pocket did not move the molecule'' is partly a statement about the measurement. The
+discriminating experiment is whether the edit lands on the atoms the table flags --- site-of-change
+against cited-residue agreement --- and it is \TBD{12}{site-of-change vs.\ cited residue};
+hypothesis: agreement exceeds a distance-sorted baseline but by less than the groundedness gap
+suggests. Until that number exists, the negative result stands unmitigated.
+
+\paragraph{A mechanism, and a fix.} The omission is specific and it is ours. Fields that describe
+\emph{where a group could go} --- open room at an atom, slot shape, exit vectors --- are computed by
+our structure layer and then deliberately excluded from the model's input, because they were
+computed only at the edit site and therefore leaked it: the exit-vector field alone identified the
+edit site in \m{93\%} of rows. The model is consequently handed a description of the current pose and
+nothing about available space. A sentence can be grounded in that; a molecule cannot be derived from
+it. Computing the same fields at \emph{every} heavy atom carries no site information and is
+leakage-safe, and it is the one change we expect to make the pocket touch the molecule
+\TBD{15}{room fields at every atom}; hypothesis: TC$\rightarrow$reference is unchanged but
+site-of-change agreement improves.
+
+\subsection{Generated molecules with a stated reason, and what finetuning buys}
+\label{sec:gen}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{llrrrrr}
+\toprule
+model & training data & validity & uniq. & TC$\rightarrow$input & sensible & sound reasoning \\
+\midrule
+ChemDFM-14B & none (base) & 0.118 & 0.871 & 0.793 & 10.6\% & 3.9\% \\
+ether0-24B & none (base) & 0.225 & 0.847 & 0.884 & 12.7\% & 0.0\% \\
+Llama-3.1-8B-Instruct & none (base) & 0.519 & 0.750 & 0.737 & 32.4\% & 6.5\% \\
+SmileyLlama-8B & none (base) & 0.882 & 0.753 & 0.582 & 30.6\% & 0.0\% \\
+\midrule
+ChemDFM-14B & g2 (1{,}485) & 0.893 & 0.752 & 0.658 & 72.4\% & 22.9\% \\
+ChemDFM-14B & g3 (2{,}326) & 0.958 & 0.777 & 0.683 & 95.8\% & 29.9\% \\
+ChemDFM-14B & g4 (5{,}366) & 0.966 & 0.751 & 0.644 & 89.2\% & 37.6\% \\
+ChemDFM-14B & PocketPair-9k (7{,}692) & \textbf{0.973} & 0.757 & 0.658 & 92.4\% & \textbf{46.5\%} \\
+ChemDFM-14B & PocketPair-21k & 0.985 & \textbf{0.173} & 0.795 & \TBD{1}{} & \TBD{1}{} \\
+\midrule
+ether0-24B & PocketPair-9k & 0.855 & 0.768 & 0.639 & 79.6\% & 16.6\% \\
+Llama-3.1-8B-Instruct & g3 & 0.771 & 0.743 & 0.594 & 57.8\% & 3.2\% \\
+SmileyLlama-8B & g3 & 0.908 & 0.761 & 0.588 & 51.1\% & 3.8\% \\
+DESRO-8B & PocketPair-14k & 0.954 & 0.756 & 0.662 & 90.0\% & 33.3\% \\
+\bottomrule
+\end{tabular}
+\caption{Direct joint training. Panel columns come from one model-labeller panel under a fixed
+rubric and seed; they are not comparable with panel figures elsewhere in this paper. Bases differ in
+scale, so the only clean contrast is each base against itself.}
+\label{tab:main}
+\end{table}
+
+Two trends and one cost. Validity \textbf{saturates} --- \m{0.893}, \m{0.958}, \m{0.966}, \m{0.973}
+across a five-fold increase in data --- while sound reasoning \textbf{keeps climbing} ---
+\m{22.9\%}, \m{29.9\%}, \m{37.6\%}, \m{46.5\%} --- and invented chemistry falls from \m{67.7\%} at
+base to \m{42.0\%}. The chemistry is a plumbing problem solved early; the reasoning is the thing
+data buys, and it had not plateaued when we stopped. The cost is diversity: the potency-trained
+model's uniqueness collapses to \m{0.173}, about seventeen distinct ideas per hundred requests, and
+$R$'s intents sit at \m{0.238}. On that evidence the system is a renderer of hypotheses, not a source
+of them, and we say so rather than reporting uniqueness as a success.
+
+Three numbers in this table will not carry a claim and we flag them here. \m{46.5\%} sound reasoning
+and \m{42.0\%} invented chemistry are not ``usable'' by any standard a chemist would accept. The
+panel columns rest on model labellers whose drift exceeds these differences. And every row is a
+single run; seeded replicates with intervals are \TBD{16}{seed replication}.
+
+\subsection{Agent-written versus literature-extracted reasoning}
+\label{sec:agentic}
+
+The intents supervising the crystal and potency corpora were written by an agent with the analogue
+in view; the literature intents were written by the authors of the paper. We hold three results
+about the former and none yet about the latter. On a cohort round of \m{613} candidates over five
+targets, model labellers rated \m{0.61} on ``would make'' but only \m{0.08} on ``explanation
+sound'': the molecules were acceptable and the reasons were not. An ownership audit scored \m{2/6}
+where a panel scored \m{6/6}. And the field labelled ``specific'' in the agent's intent schema
+turned out to measure the template rather than the content ($p=1.000$ on usefulness). Taken
+together these say that agent-written reasoning is a weak teacher, which is the motivation for the
+literature corpus rather than an aside.
+
+What the literature corpus delivers is \TBD{1}{chemist panel on $R$'s intents} and
+\TBD{2}{literature-trained $M$/$R$/$R\!\rightarrow\!M$}; hypotheses: $R$ trained on extracted
+intents scores at parity with the agent-trained $R$ on groundedness and above it on usefulness,
+while molecular metrics move little, because groundedness is already saturated by the contact table
+and usefulness is the dimension the agent labels never had.
+
+\subsection{Retrospective hit-to-lead}
+\label{sec:retro}
+
+With a publication-date cutoff and held-out series, the system proposes and justifies analogues of a
+known binder and is scored on recovery of the compounds subsequently reported, on agreement with the
+authors' own stated intent, and on potency improvement among analogues that were in fact measured,
+against both a pocket-blind and a plain enumeration baseline. This experiment is
+\TBD{3}{publication-date retrospective} and is gated on the complexes now being folded; it is also
+our contamination control, since the base models were pretrained on literature and on ChEMBL that
+plausibly include these pairs. Hypothesis: $R\!\rightarrow\!M$ beats the pocket-blind baseline on
+intent agreement and lands between enumeration and oracle on recovery.
+
+One caveat carries over from an earlier split study and must be read before any recovery number:
+$R$ is the bottleneck by $\m{18.6\times}$, splitting costs roughly $\m{2\times}$ regardless, and the
+figures of \m{0.188}/\m{0.703} from that study were \emph{recovery-near}, not exact recovery.
+
+\subsection{A worked covalent programme: ZAP70}
+\label{sec:zap70}
+
+On one real covalent programme --- ZAP70, Cys346, \m{280} measured molecules --- a predictor over the
+same structural features reaches absolute MAE \m{0.489} and Spearman \m{0.792} with docking into
+4K2R plus pretraining, where docking and pretraining contribute additively, against an honestly
+rebuilt baseline of MAE \m{0.723}. Earlier versions of the same pipeline reached \m{0.555} and
+\m{0.554} (Spearman \m{0.726}). We note two things about this section rather than burying them. It
+is a regression model, not $R$/$M$, and therefore evidence about the structural features rather than
+about the factorisation. And a previously circulated figure of \m{0.469} for this target came from
+one-leg pair leakage worth \m{0.163} MAE: it is withdrawn, it appears nowhere in this paper, and the
+honest number is \m{0.723} for the baseline and \m{0.489} for the best model. At \m{280} molecules
+every more complex architecture we tried made things worse, which is the most directly actionable
+finding we have for programme-scale data: add structure, not parameters.

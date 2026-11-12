@@ -1,0 +1,103 @@
+\section{Discussion}
+
+\subsection{What we think this shows}
+
+A design intent written in words is a usable interface between a chemist and a generative model. The
+evidence is the gap between a correct intent and a wrong one: $+0.379$ Tanimoto to the molecule
+chemists actually made, paired, $p=5\times10^{-50}$, with a wrong intent costing both accuracy and
+validity relative to no intent at all. That is instruction-following rather than decoration, and it
+means the division of labour a project team would actually want --- the chemist states the
+hypothesis, the model renders the structures --- is available now, because the oracle arm \emph{is}
+that condition.
+
+The pocket's role turned out to be narrower than the premise we started from, and more interesting
+than a null. A per-atom contact table determines what a model's explanation may cite and barely
+touches what it builds. For the purpose of enumerating analogues this is a negative result. For the
+purpose that actually blocks a programme --- choosing five analogues and defending the choice on
+Thursday --- an auditable, target-specific hypothesis per proposal is the deliverable, and the table
+is what makes it auditable. We think the honest frame is \emph{grounded attribution}, and we think
+the mechanism behind the missing structural effect is identified rather than mysterious: the model is
+told where the ligand currently sits and nothing about where a group could go.
+
+\subsection{Leakage, and the part of our headline we do not yet own}
+\label{sec:leakage}
+
+The strongest number in this paper is also its most fragile, and we would rather decompose it than
+defend it. The oracle intents for the crystal and potency corpora were written by an agent that had
+the product molecule in view. A sentence written under that condition can name the transformation
+itself, in which case $M$ is paraphrasing a specification rather than reasoning from a hypothesis,
+and part of \m{0.919} is leakage rather than design. Three facts sharpen the concern. The oracle arm
+sits at TC$\rightarrow$input \m{0.677} with heavy-atom $\Delta$ MAE \m{0.374}: roughly one heavy atom
+moves, with the relevant residue named in the prompt, which is close to multiple choice with the
+answer supplied. The mismatched control is confounded in the same direction, because a foreign
+sentence is not merely uninformative but also off-pocket, and its \m{55.7\%} invented-residue rate is
+evidence of exactly that. And a median TC$\rightarrow$reference of \m{1.000} means we \emph{reproduce}
+compounds that already exist in the literature and plausibly in the patent estate: recovery is not
+novelty, and we never claim improvement over a measured compound anywhere in this paper.
+
+The decomposition needs no new training and no new structures: re-run $M$ with (i) oracle sentences
+whose chemical content is redacted but whose pocket hypothesis is kept, and (ii) a \emph{same-pocket}
+counterfactual intent in place of the foreign-pair sentence, and report the residual
+\TBD{17}{leakage decomposition}. Hypothesis: the residual is well under \m{0.919} and well above
+mismatch, and that residual --- faithful rendering of a stated intent --- is the claim that survives.
+An enumeration control that scores all single-heavy-atom edits of the input by the same sentence, and
+reports recovery by edit size, bounds the same thing from the other side
+\TBD{11}{enumeration baseline}.
+
+\subsection{Limitations}
+
+Our strongest conditioning result may be partly a leak, as set out above, and the mismatch control is
+imperfect for the same reason. The pocket result is narrow: withholding the contact table changes
+what the prose may cite (\m{1.000} vs.\ \m{0.432}) but not the molecule (\m{0.679} vs.\ \m{0.680}), a
+wrong pocket costs \m{0.013} Tanimoto, distance annotations changed nothing, and a pocket-shuffled
+control would score \m{1.000} by construction; we therefore claim grounded attribution and not
+pocket-aware generation. The deployable pipeline recovers only \m{8.7\%} of the oracle-over-mismatch
+gap and $R$'s intents are repetitive (uniqueness \m{0.238}); the potency-trained model's uniqueness
+falls to \m{0.173}. The no-intent arm is not a neutral baseline, since the model echoes its input in
+\m{100\%} of those rows. Steerability is uneven and two of six property buckets move the wrong way.
+
+Our literature supervision is SAR pairs, not matched molecular pairs, and \m{60.7\%} of extracted
+rationales restate an outcome rather than state an instruction, so part of what we learn is post-hoc
+narration --- the same failure we measured at explanation-sound \m{0.08} in agent-written labels.
+Stereochemistry is invisible to our site-of-change machinery, so stereo-only pairs are unscored.
+Where no crystal structure exists the contact table is a single-sample cofold: a hypothesis about
+which residues line the ligand, not a distance measurement, and never a source of covalent geometry.
+Most quality judgements come from model labellers whose panel-to-panel drift exceeds the differences
+we measure; our chemist panel is pending and will be small; no comparison crosses panels. All results
+are single-run unless an interval is given. Our base models were pretrained on literature and ChEMBL
+that may contain our test pairs, which the date-cutoff retrospective controls only partially.
+
+Three things a chemist will ask for and will not find here. There is no synthetic-accessibility or
+retrosynthesis triage anywhere \TBD{9}{SA and retro triage}, which for a tool proposing compounds to
+make is a real gap rather than a refinement. There is no ADMET profile: TPSA, cLogP and molecular
+weight are three dials, and hit-to-lead is a multiparameter problem. And there is no novelty check
+against prior art for the molecules we generate that are not the reference
+\TBD{10}{prior-art novelty}. No molecule in this paper has been synthesised or assayed.
+
+Finally, on our own record: a claim from an earlier system in this programme failed to reproduce
+after publication and is treated as unproven, and the ZAP70 figure of \m{0.469} is withdrawn. We
+name both because a reader has no other way to know.
+
+\subsection{Reproducibility, ethics and dual use}
+
+We release DOIs, ChEMBL compound keys and text offsets rather than paper text, with quotations at
+fair-use length only, and no artefact carrying a publisher watermark; the text-and-data-mining basis
+and licensed access are stated. ChEMBL is used under CC-BY-SA with the release version pinned and
+derived tables shared alike; all PDB identifiers are listed, and crystal pairs carry no potency. For
+agent supervision we release the labeller model, version and date, the extraction brief verbatim, and
+the labels themselves, because labellers drift and the recipe alone does not reproduce them. For
+model-as-judge we release judge, prompt, temperature and seeds, and state that panel numbers are not
+comparable across panels. Splits, LoRA configuration, seeds, GPU-hours and the cofolding cost are
+reported. On dual use: this is a generator of bioactive and covalent molecules; we state our output
+screening, exclude toxin and select-agent targets, and note that every molecule here is an
+unsynthesised, unassayed prediction. Human panel recruitment, compensation, consent and the
+IRB-exemption determination are reported with the panel.
+
+\subsection{Next}
+
+In order of expected value: the leakage decomposition and the same-pocket counterfactual, because
+they determine what our headline means; the joint-versus-factorised comparison, because it is the
+thesis of the paper and is currently untested; room and exit-vector fields computed at every heavy
+atom, because that is the one input change we expect to make the pocket touch the molecule; training
+$R$ on the instruction subset of the literature corpus; and a blinded chemist panel over
+oracle, $R\!\rightarrow\!M$ and mismatch arms with at least two chemists and reported agreement.

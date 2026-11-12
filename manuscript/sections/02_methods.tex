@@ -1,0 +1,190 @@
+\section{Methods}
+
+\subsection{Task, and why the unit of structure is a complex}
+
+The model receives a hit molecule $x$ and a structured description $c$ of that molecule's
+environment in its target, and emits an intent sentence $z$ and an analogue $y$. Critically, $c$ is
+\emph{ligand-specific}: one block per ligand heavy atom, sixteen fields giving the nearest protein
+atom and its distance, a typed interaction with hydrogen-bond angle, a second polar partner, water
+counts and nearest water, a lining description, an open fraction and a burial reading (full field
+list in the SI). A target-level pocket is therefore \emph{not} sufficient input: knowing the protein
+buys nothing for a ligand whose pose we have never computed. The unit of work is the pair (molecule, target) --- a
+complex --- and the cost of the structural conditioning is one structure per molecule, not one per
+target. This single fact drives the dataset economics reported below.
+
+Where a crystal structure of the complex exists we use it. Where it does not --- which is the case
+for essentially every molecule in the literature corpus --- we cofold the complex with
+Boltz~\citep{wohlwend2024boltz1,passaro2025boltz2} at one diffusion sample and derive the table from
+the returned structure. This bounds what may be claimed from it, and we state the bound rather than
+hoping a referee misses it:
+
+\begin{quote}
+Where no crystal structure exists, the complex is a single-sample cofold. Its contact table is a
+hypothesis about which residues line the ligand, not a measurement of distances. No distance taken
+from a cofolded table is quoted as evidence in this paper, and covalent geometry is never read from
+a cofold, because an unconstrained cofold forms no bonds and a warhead lands wherever the sampler
+puts it.
+\end{quote}
+
+\paragraph{Covalent typing.} A covalent bond is asserted only where the table types the row
+\texttt{COVALENT BOND}, requiring the modelled heavy-atom separation to lie within 0.35\,\AA\ of the
+ideal length for that element pair (1.81\,\AA\ for C--S; the SARS-CoV-2 main protease complex
+7JQ2 measures exactly 1.81\,\AA\ at CYS145 and is our calibration case). Separations of
+2.16--2.71\,\AA\ are typed and disclosed as \emph{probable} and are never cited as a bond; anything
+beyond 2.71\,\AA\ is a non-bonded contact however a sentence describes it. This matters because an
+audit of an earlier generation of our own labels found that \m{26\textrm{--}40\%} of clauses calling
+a residue a ``covalent anchor'' were in fact citing a 2.7--3.8\,\AA\ non-bonded contact --- a
+failure of the text layer, not of the structure layer, which had typed those rows correctly all
+along. Every clause matching \texttt{covalent|bond|anchor|warhead|adduct} is now gated on a
+\texttt{COVALENT BOND} row in that pair's own table, and the gate runs irrespective of whether the
+sentence quotes a distance.
+
+\subsection{Corpora}
+
+\begin{table}[H]\centering\small
+\begin{tabular}{llll}
+\toprule
+corpus & what it is & scale & intent written by \\
+\midrule
+PocketPair-9k/10k/14k & PDB-derived analogue pairs with pockets & 7{,}692 / 9{,}453 / 12{,}392 rows & an agent, from the pair \\
+PocketPair-21k & ChEMBL within-assay pairs, cofolded, with $\Delta$potency & 3{,}992 complexes & an agent, from the pair \\
+PocketPair-Literature & design intents quoted from paper text & 1{,}622 papers, 17{,}601 pairs & the paper's authors \\
+\bottomrule
+\end{tabular}
+\caption{The three supervision regimes. The distinction in the last column is the one that matters
+for interpreting our strongest result, and we return to it in \S\ref{sec:leakage}.}
+\end{table}
+
+\paragraph{Literature extraction.} For each paper we extract design \emph{episodes}: a reference
+compound, one or more analogues, what changed, the stated reason, a verbatim evidence quote, the
+endpoint in the paper's own words, and the direction of the outcome. Molecules are not recovered by
+substructure search --- which finds the authors' actual pair only \m{32\%} of the time --- but by
+ChEMBL's own curation under the paper's compound labels. A potency $\Delta$ is computed only between
+two molecules measured in the \emph{same assay} of that paper. Under the final brief (v5.3), on all
+\m{1{,}622} papers, the endpoint is stated in \m{100\%} of records, the reference source in
+\m{100\%}, a rationale in \m{100\%} and an evidence quote in \m{100\%}; extraction-meta leakage is
+\m{0.00\%}; repeated boilerplate in \texttt{what\_changed} is \m{0.0\%}; and edits spanning multiple
+sites fell from \m{44.8\%} to \m{5.5\%} between brief versions.
+
+\paragraph{Corpus defects, stated here rather than in a footnote.} These are SAR pairs, not matched
+molecular pairs: the gate is a similarity threshold plus a same-assay potency delta, and the
+extracted transformation field is descriptive only. A 100-paper QA round found molecules contradicted
+by the text in \m{3.3\%} of records and reasons honest in \m{90\%} --- but \m{60.7\%} of those
+reasons \emph{restate an outcome} rather than state an instruction, so only \m{39.3\%} of the corpus
+is the supervision we actually want. Training on outcome restatements teaches post-hoc narration,
+which is precisely the failure an independent cohort round measured at explanation-sound \m{0.08}.
+We therefore report the instruction subset separately \TBD{13}{instruction-subset training};
+hypothesis: the instruction subset trains a more useful $R$ at equal token count. Separately,
+explained edits carry \emph{small} potency deltas, so selecting pairs by $|\Delta|$ systematically
+discards them --- intent mining has to precede pair selection, not follow it.
+
+\paragraph{Complex coverage.} The \m{17{,}601} literature pairs require \m{6{,}590} distinct
+complexes across \m{658} targets, of which \m{27} were already held. \m{552} targets have a
+sequence in ChEMBL and \m{106} do not, placing \m{1{,}995} complexes and \m{4{,}967} pairs out of
+reach without another sequence source. \m{369} complexes exceed our \m{1{,}187}-residue cofold cap
+and are recorded in a separate file rather than dropped --- an earlier run lost an entire major
+target family to exactly this cap, silently. The remaining \m{4{,}199} complexes are queued in
+descending order of pairs unlocked, so a partial run is the most valuable slice rather than a random
+one: the first \m{1{,}000} complexes unlock \m{43.2\%} of the needed pairs and the first \m{3{,}000}
+unlock \m{58.6\%}.
+
+\subsection{Models: generated reasoning, extracted reasoning, and direct training}
+
+Three training regimes are compared, and the paper's framing depends on keeping them distinct.
+
+\emph{Direct LLM training} is the baseline: one adapter, one sequence, rationale and SMILES emitted
+together, with nothing in the objective forcing the molecule to depend on the rationale and no handle
+to intervene on under a mismatched-intent test. \emph{Generated reasoning} is our $R$, a separate
+adapter emitting the intent from the complex alone and supplying $M$ at inference.
+\emph{Extracted reasoning} is $R$'s supervision drawn from the literature rather than from the
+agent-written intents of the crystal and potency corpora --- a difference that is not cosmetic, since
+an agent writing an intent for a pair has the product molecule in view, whereas a paper's author
+wrote the hypothesis without knowing what the reader would later be told. We treat agent-written intents as a \emph{weak upper bound} on supervision
+quality and literature intents as the target, and the comparison between them is a result
+(\S\ref{sec:agentic}), not a design choice.
+
+\paragraph{Bases and finetuning.} The primary base is ChemDFM-v2.0-14B~\citep{zhao2024chemdfm};
+ether0-24B~\citep{narayanan2025ether0}, Llama-3.1-8B-Instruct~\citep{dubey2024llama3},
+SmileyLlama-8B~\citep{cavanagh2024smileyllama} and DESRO-8B~\citep{liu2026desro} are comparators.
+Because these differ in scale (8B to 24B), cross-base rows are confounded with capacity and the only
+clean contrast is each base against \emph{itself}, with and without our adapter. All arms use LoRA
+($r{=}16$, $\alpha{=}32$, dropout 0.05, all seven projections; lr $10^{-4}$ cosine, batch 1 $\times$
+accumulation 8, bf16) with one shared configuration across every cell of an ablation, and a single
+fixed instruction format for every model rather than per-model chat templates, so that template is
+never confounded with checkpoint; the blind arm substitutes ``No pocket structure is provided.'' for
+the table. Loss is masked to the response --- the prompt runs a median of roughly 960 tokens against
+roughly 100 for the answer --- and the length limit acts as a refusal threshold rather than a
+truncation, because truncating would delete contact-table rows from precisely the arm the pocket
+ablation is meant to favour.
+
+\paragraph{Leakage controls.} For $M$, any SMILES line inside the provided reason is stripped and
+the removal is asserted per row; the analogue SMILES, the analogue's PDB identifier and
+analogue-only residue tokens are asserted absent from every prompt. Special-token identifiers are
+pinned per vocabulary and re-verified at load.
+
+\paragraph{Checkpoint selection, and the resulting caveat.} Training runs to at most 10 epochs with
+early stopping on validation loss, patience 2, and the best checkpoint retained. Consequently, and
+stated verbatim in every validation caption:
+
+\begin{quote}
+Because both the stopping epoch and the retained checkpoint were selected on the validation split,
+every validation number reported here is a model-selection score, not a held-out test score, and is
+optimistically biased by an unknown amount.
+\end{quote}
+
+\subsection{Splits}
+
+Our held-out claims rest on a \textbf{molecule-level} holdout: neither the input nor the reference
+analogue appears anywhere in training. On the 21k corpus this leaves \m{1{,}469} rows
+(\m{553} on targets never seen in training, \m{916} on trained targets with new molecules), from
+which \m{400} prompts per arm are drawn so that all arms answer identical inputs. Unseen-\emph{target}
+holdout is infeasible here: target space repeats heavily across papers, so demanding unseen targets
+leaves roughly \m{21} of them and the variance would be dominated by which handful of proteins
+landed in the holdout. \TBD{14}{split reconciliation}: the corpus builder inherits a target-level
+val fraction (32 val targets) while the holdout above is molecule-level; Methods must state one
+authoritative sentence for the split the model was \emph{trained} under and the holdout it was
+\emph{scored} on. We do not use random pair splits at all: sibling pairs off one complex share the
+pocket, the numbering and a near-identical table, so a random split places them on both sides and
+measures memorisation --- in a sibling project on the same pair machinery, \m{71\%} of a random
+split's test pairs were exact duplicates of training pairs.
+
+\subsection{Evaluation}
+
+\paragraph{Molecular metrics.} \emph{Validity} is a SMILES extracted and parsed, over all rows, so
+a model emitting no molecule scores 0 rather than NaN; it is a gate, not a result.
+\emph{Uniqueness} is distinct canonical SMILES over valid ones, and functions here as a
+collapse detector --- note that in our arms it \emph{anti}-correlates with quality, the mismatched
+arm having both the highest uniqueness (\m{0.937}) and the worst molecules. \emph{TC$\rightarrow$input}
+(ECFP4, 2048 bits) is a window check, not a quality score: reference analogues sit near \m{0.68},
+which is a band and not a maximum, and \m{1.000} means the input was echoed.
+\emph{TC$\rightarrow$reference} is the only metric whose ground truth is a real human design
+decision, and it is necessary but not sufficient --- it penalises a different \emph{valid} analogue
+--- so it is used only in paired contrasts between arms answering the same input.
+\emph{Heavy-atom $\Delta$ MAE} catches the right-size/wrong-edit failure that Tanimoto hides.
+
+\paragraph{The groundedness ladder.} ``Groundedness'' as commonly reported means only that a cited
+residue exists in that pair's own table. That is rung L0 of a ladder, and the paper reports the
+ladder rather than the headline: L0 existence; L1 residue and distance co-occurring in one row;
+L2 interaction type matching the row's typing; L3 the covalent gate above; L4 \emph{site adjacency},
+the cited residue contacting at least one atom of the changed set; L5 directional ownership, claims
+about what is given up mapping to changed atoms; L6 \emph{atom ownership}, the row's atom name
+mapped through the chemical-component graph to a specific input index inside the changed set. No
+claim in this paper headlines a rung below L4. Each rung is reported as a pair --- pass rate
+\emph{and} measurable fraction --- because the mapping fails on some pairs, and an earlier panel
+scoring 6/6 against a rigorous 2/6 was partly a coverage gap rather than a disagreement.
+Stereochemistry-only pairs are unscorable at L4 and are reported as unscored, never as failed.
+\emph{Invented chemistry} --- a sentence asserting a contact absent from that pair's table --- is the
+one rationale metric that needs no panel, and it is monotone across our arms.
+
+\paragraph{Residue specificity, not selectivity.} The overlap between the residues a sentence names
+and those the reference sentence names is reported as \emph{residue specificity}. We previously
+called it selectivity, which invites the reading ``off-target selectivity'' and the demand for a
+kinase panel; it is nothing of the kind. It is printed beside its zero-parameter baseline --- name
+the nearest table residue --- because an arm at that baseline is no better than a distance sort.
+
+\paragraph{Panels, and what they cannot do.} Sentence quality is scored both by model labellers
+under a fixed rubric and by chemists. Panel-to-panel drift exceeds the between-arm differences we
+measure, so every panel number is reported with its seeded controls read first, no comparison is
+ever made across panels, and panel figures are never pooled with programmatic ones. We report
+\emph{pooled multi-target $R^2$ nowhere}: between-target potency offsets inflate it even when
+within-target ranking is random. Per-target averaged statistics with $n$ per target only.

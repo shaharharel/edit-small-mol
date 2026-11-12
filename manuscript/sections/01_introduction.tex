@@ -1,0 +1,85 @@
+\section{Introduction}
+
+Hit-to-lead optimisation turns an initial binder into a lead through rounds of closely related
+analogues. The enumeration is not the hard part: a matched-pair tool will hand a project team
+thousands of analogues of any hit~\citep{wawer2014whatnext}. The hard part is choosing the five to
+make this month and defending the choice, and chemists make that choice by reading the complex ---
+a donor left unsatisfied, a subpocket left empty, a carbon pressed against a polar rim. Each
+modification is a hypothesis about the pocket, and the measured outcome of the previous round is
+what informs the next.
+
+Two literatures address parts of this and meet nowhere in the middle. Pocket-conditioned generative
+models place atoms inside a measured binding site and are, by construction, interaction-aware;
+some predict contacts or pharmacophores explicitly~\citep{peng2022pocket2mol,guan2023targetdiff,
+schneuing2024diffsbdd,feng2024lingo3dmol,jiang2024pocketflow}. None of them says \emph{why}. On the
+other side, chemistry language models now propose and justify modifications in natural language,
+increasingly with explicit reasoning traces trained from outcome
+data~\citep{zhao2024chemdfm,narayanan2025ether0,cavanagh2024smileyllama,liu2026desro,liu2026drugr,
+wen2026logos}, and recent work does put pockets and even required residue contacts into an LLM
+prompt~\citep{macdougall2026spatial}. What is still missing is the thing a project team actually
+consumes: a stated design hypothesis whose claims can be \emph{checked}, one by one, against the
+structure the model was shown.
+
+That check is the contribution of this paper. We condition on a per-atom contact table --- for this
+ligand, in this pocket, which residue atom sits how far from which ligand atom, with interaction
+typing --- and we treat the design intent as a first-class output that is evaluated separately from
+the molecule. Because the intent is a sentence that names residues, every clause it asserts can be
+matched against the rows of the table the model received, and a sentence that invents a contact can
+be caught automatically and counted.
+
+Making the intent evaluable also makes it \emph{replaceable}. We factorise
+$p(y,z\mid x,c)=p_R(z\mid x,c)\,p_M(y\mid x,c,z)$, with $x$ the hit, $c$ its contact table, $z$ the
+intent and $y$ the analogue, and train $R$ and $M$ as separate adapters with separate losses. The
+factorisation is the chain rule, so it costs nothing in expressiveness; what it buys is that $z$
+becomes a bottleneck the molecule is routed through rather than a decoration emitted beside it. We
+can then intervene on $z$ alone --- substituting the reference intent, a sentence written for
+a different pair, or no sentence at all --- and read off how much of the molecule the sentence
+decides. Prior reason-then-molecule systems generate the rationale and the structure inside one
+model and one trace~\citep{liu2026desron,liu2026drugr,wen2026logos}, so the reason cannot be swapped
+and this measurement is unavailable; earlier work factorised \emph{substructure}-to-molecule rather
+than sentence-to-molecule~\citep{jin2020rationale}.
+
+Our supervision is also different in kind. Reasoning traces in recent molecular-optimisation work
+are manufactured from the outcome: derived by analysing which fragment groups improved a measured
+or computed property~\citep{liu2026desro,liu2026drugr}. We instead mine the sentence the authors
+themselves wrote --- the hypothesis as stated in the paper, before the assay result was known to the
+reader --- from \m{1{,}622} medicinal-chemistry papers, paired with the two compounds the paper
+labels and with their potency difference measured \emph{in the same assay} of that same paper. To
+our knowledge no prior work extracts the stated design rationale of a medicinal-chemistry
+modification from paper text; the existing literature-mining work extracts reactions, procedures and
+entities~\citep{chemminer2024,materials2025ie}. We also report, in the same breath, that only
+\m{39.3\%} of what we extract states an instruction rather than restating an outcome, which puts the
+majority of our own corpus in the same category as the methods we are distinguishing ourselves from.
+
+\paragraph{What we find, including what we did not want to find.}
+\begin{enumerate}\itemsep2pt
+\item \textbf{An intent sentence behaves like an executable specification.} Given the reference
+intent, $M$ reproduces the analogue made at \m{0.919} mean Tanimoto, median \m{1.000}, on a
+molecule-level holdout; against a sentence belonging to another pair, \m{0.541} ($+0.379$ paired,
+$p=5\times10^{-50}$). A \emph{wrong} sentence is worse than no sentence (\m{0.147} below,
+$p=5\times10^{-40}$) and costs validity (\m{100\%}$\rightarrow$\m{91.5\%}). The model follows the
+instruction; it does not merely decorate.
+\item \textbf{The no-intent arm is not a baseline.} With no sentence, $M$ returns the input
+unchanged in \m{100\%} of rows. Every property delta is exactly zero and its Tanimoto to the
+reference is the \emph{input's} own similarity. We report it as a diagnostic --- zero intent, zero
+edit --- and use the mismatched arm as the honest control.
+\item \textbf{The pocket governs the prose, not the molecule.} Withholding the contact table takes
+groundedness from \m{1.000} to \m{0.432} and residue specificity from \m{0.388} to \m{0.121}, and
+leaves similarity to the reference untouched (\m{0.679} vs.\ \m{0.680}). A deliberately wrong pocket
+costs \m{0.013} Tanimoto at cohort scale. We therefore claim \emph{grounded attribution}, not
+pocket-aware generation, and we identify the likely mechanism: the fields that would describe
+\emph{where a group could go} --- open room, slot shape, exit vectors --- are computable but are
+excluded from the model's input because, computed only at the edit site, they leaked it.
+\item \textbf{The reason model is the bottleneck.} $R\!\rightarrow\!M$ reaches \m{0.570}, retaining
+\m{8.7\%} of the oracle-over-mismatch gap, and $R$'s intents are repetitive (uniqueness \m{0.238}).
+The factorisation is validated as an upper bound and as a product claim --- a chemist can type the
+intent today --- not as an end-to-end gain.
+\item \textbf{Property-directed intents move the property, unevenly.} Polarity ($+3.62$ TPSA,
+$n=259$), lipophilicity ($-0.63$ cLogP, $n=146$) and size-down ($-31.2$\,Da, $n=75$) move as asked
+and are flat or reversed under a mismatched intent; size-up is flat and rigidity moves the wrong
+way.
+\end{enumerate}
+
+We also publish the corpus defects, the metrics we refuse to report, and two numbers from this
+programme that were withdrawn after failing to reproduce. The cheapest credibility in a paper of
+this kind is naming your own retractions.

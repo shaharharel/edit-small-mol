@@ -1,0 +1,68 @@
+\section{Placeholder register}
+
+Every \texttt{[TBD-$n$]} in the body appears here with the experiment that supplies it and the
+result we expect. The register exists so that an experiment which fails costs a placeholder and a
+revert, not a rewrite --- and so that no number enters the paper without a stated prior.
+
+\begin{table}[H]\centering\small
+\begin{tabular}{p{0.5cm}p{4.6cm}p{4.2cm}p{5.2cm}}
+\toprule
+id & what is missing & supplied by & hypothesis \\
+\midrule
+1 & blinded chemist panel on $R$'s intents, and the panel columns of the 21k row &
+$\geq$100 items over oracle / $R\!\rightarrow\!M$ / mismatch, $\geq$2 chemists, agreement reported &
+$R$ at parity with the paper ceiling on groundedness, below it on usefulness \\
+2 & $M$, $R$, $R\!\rightarrow\!M$ trained on the literature triplets; joint vs.\ factorised on one
+corpus and split & training once the cofolds land &
+literature-trained $R$ improves intent usefulness; molecular metrics move little; the joint model
+matches on molecules and loses on rationale \\
+3 & publication-date retrospective recovery & literature corpus + cofolds; doubles as the
+contamination control & $R\!\rightarrow\!M$ beats a pocket-blind baseline on intent agreement, lands
+between enumeration and oracle on recovery \\
+4 & intent identifiability: $k=3$ contrasting intents on one input, blind molecule$\rightarrow$intent
+matching & automated diagonal-dominance version first & diagonal dominance significant but well
+under 1.0 \\
+5 & property buckets with counts and intervals & rerun with per-arm CIs & size-up and rigidity stay
+wrong-signed \\
+6 & contact-table stability under sampling & re-run a random subset at $\geq$5 diffusion samples;
+report residue-set Jaccard, median and p90 $|\Delta d|$, and the fraction of interaction-type labels
+that flip; calibrate on the 27 crystal-held complexes & residue sets stable, distances not;
+conclusions unchanged \\
+9 & synthetic accessibility and retrosynthesis triage & SA + retro hit-rate on $\sim$100 generated
+molecules, chemist-triaged & a usable majority, with a measurable tail that is not makeable \\
+10 & novelty of generated non-reference molecules against prior art & date-cutoff prior-art check &
+a substantial fraction are known compounds; recovery $\neq$ novelty \\
+11 & enumeration control & score all single-heavy-atom edits of the input by the same sentence;
+report set size and recovery by edit size (0--1 / 2--3 / 4+) & oracle recovery concentrates in the
+0--1 bucket \\
+12 & site-of-change vs.\ cited-residue agreement & MCS changed-set against the cited rows &
+agreement above a distance-sorted baseline, below what the groundedness gap suggests \\
+13 & training on the instruction subset of the literature corpus & split the corpus by the
+instruction/outcome label and train both & the instruction subset trains a more useful $R$ at equal
+token count \\
+14 & split reconciliation: target-level val fraction in the corpus builder vs.\ the molecule-level
+holdout; 32 vs.\ 21 targets & one authoritative pass over the builder and the scorer & no leakage,
+but the sentence in Methods must state both \\
+15 & room, slot shape and exit vectors computed at \emph{every} heavy atom rather than at the edit
+site & recompute the table; leakage-safe by construction & TC$\rightarrow$reference unchanged;
+site-of-change agreement improves \\
+16 & seeded replicates with intervals on the main table, the pocket ablation and the four intent arms
+& $\geq$3 seeds & orderings hold; several single-run differences do not \\
+17 & leakage decomposition of the oracle arm & re-run $M$ on (i) oracle sentences with chemical
+content redacted and the pocket hypothesis kept, (ii) a same-pocket counterfactual intent in place
+of the foreign-pair sentence & the residual sits well under 0.919 and well above mismatch; that
+residual is the claim \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Contributor memos}
+
+The draft was assembled from five independent expert memos, kept in the repository under
+\texttt{manuscript/reviews/}: machine learning (formal setup, training, splits, ablation table,
+metric definitions), medicinal chemistry (which results change practice, results ordering, figures,
+what a chemist will find missing), literature and differentiation (reference list with verification
+status, verdict on each novelty claim, closest prior art, sentences we must not write), area chair
+(advance meta-review, claim/evidence audit, required experiments, page budget), and structural
+chemistry (adequacy of the contact table, cofold claims, covalent typing, the groundedness ladder).
+Disagreements that remain open are recorded in the register above rather than resolved in prose.

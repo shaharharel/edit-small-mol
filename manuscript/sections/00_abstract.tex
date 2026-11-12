@@ -1,0 +1,27 @@
+\begin{abstract}
+Medicinal chemists optimise a hit by acting on an opportunity in the binding pocket, and every
+analogue they make encodes a design hypothesis: an unsatisfied donor to reach, an empty lipophilic
+shelf to fill, a clash to relieve. We ask whether a language model can be taught that hypothesis
+and then act on it. We factorise hit-to-lead design into a \emph{reason} model $R$ (complex
+$\rightarrow$ design intent, in words) and a \emph{molecule} model $M$ (complex $+$ intent
+$\rightarrow$ analogue), each a separate adapter over a chemistry LLM, both conditioned on a
+per-atom contact table for that specific ligand in that specific pocket. Training uses
+crystal-derived analogue pairs with agent-written intents, within-assay ChEMBL pairs carrying
+measured potency deltas, and design intents mined from the text of \m{1{,}622} published SAR papers
+(\m{17{,}601} pairs; \m{39.3\%} of extracted rationales state an instruction rather than restate an
+outcome). Finetuning lifts a chemistry LLM from \m{0.118} to \m{0.973} SMILES validity and from
+\m{3.9\%} to \m{46.5\%} sound reasoning under a fixed model-labeller panel. On a molecule-level
+holdout, the reference intent recovers the analogue actually made at \m{0.919} mean
+Tanimoto (median \m{1.000}) against \m{0.541} under an intent belonging to a different pair
+($+0.379$ paired, $p=5\times10^{-50}$) --- though those reference intents were written with the
+analogue in view and name a group that actually changed in \m{86.1\%} of rows, so that arm bounds
+transcription fidelity rather than design. The deployable $R\!\rightarrow\!M$ pipeline reaches
+\m{0.570} --- it retains only \m{8.7\%} of that gap, so the reason model, not the molecule model,
+is the bottleneck. Withholding the contact table collapses what the explanation may cite
+(groundedness \m{1.000} to \m{0.432}, residue specificity \m{0.388} to \m{0.121}) and leaves the
+molecule essentially unchanged (\m{0.679} vs.\ \m{0.680}); a deliberately wrong pocket costs
+\m{0.013} Tanimoto. The pocket governs what the model may claim, not yet what it makes, and we
+report that asymmetry as the central result rather than as a limitation. On a publication-date
+retrospective $R\!\rightarrow\!M$ recovers \TBD{3}{retrospective recovery}, and a blinded chemist
+panel rates $R$'s intents at \TBD{1}{chemist panel}.
+\end{abstract}

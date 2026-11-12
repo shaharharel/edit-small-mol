@@ -74,8 +74,9 @@ import torch
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 from sft_data import load_rows_jsonl, residue_tokens   # noqa: E402
+import train_sft                                       # noqa: E402
 from train_sft import (CFG, EOS_ID, MODELS, PAD_ID, AlpacaSFT,  # noqa: E402
-                       build_tokenizer, load_model)
+                       build_tokenizer, load_model, set_special_ids)
 
 _SMILES_CHARS = re.compile(r'^[A-Za-z0-9@+\-\[\]()=#$%/\\.*]+$')
 
@@ -175,13 +176,56 @@ def response_loss(model, ds, device):
 @torch.no_grad()
 def generate(model, tok, rows, device, max_new=256):
     outs = []
-    for r in rows:
+    # PROGRESS, BECAUSE SILENCE AND A HANG LOOK IDENTICAL. Generation is unbatched and nothing
+    # is written until scoring finishes, so a 400-row run on a 14B model is ~90 minutes of no
+    # output at all. One such run died at ~95 minutes on a preemptible box and left no way to
+    # tell how far it had got or whether it had stalled. The line is flushed and partial
+    # completions are kept in `outs`, so a later failure is at least bounded.
+    import time as _t
+    t0 = _t.time()
+    for i, r in enumerate(rows):
         ids = torch.tensor([tok(r['prompt'], add_special_tokens=True)['input_ids']], device=device)
         gen = model.generate(input_ids=ids, attention_mask=torch.ones_like(ids),
                              max_new_tokens=max_new, do_sample=False,
                              pad_token_id=PAD_ID, eos_token_id=EOS_ID)
         outs.append(tok.decode(gen[0][ids.shape[1]:], skip_special_tokens=True))
+        if (i + 1) % 10 == 0 or i + 1 == len(rows):
+            el = _t.time() - t0
+            print('[gen] %d/%d  %.1fs/item  elapsed %.1f min  eta %.1f min'
+                  % (i + 1, len(rows), el / (i + 1), el / 60,
+                     (len(rows) - i - 1) * el / (i + 1) / 60), flush=True)
     return outs
+
+
+# contact-table residues for one row, whatever the corpus calls them.
+# THE BUG THIS REPLACES. score() read `table_residues` only. The ChEMBL potency corpus keeps
+# its residues under `cited_residues` and its contact table inside the prompt text, so the
+# lookup came back empty and -- because the naming counter was gated on it -- the summary
+# reported `sentences_naming_a_residue: 0.0` for runs whose completions named a residue 190
+# times out of 200. Naming and grounding are different questions: a sentence can be counted as
+# naming a residue with no table in sight; only grounding needs something to check against.
+def row_table_residues(r):
+    # Order matters. `table_residues` is explicit eval metadata and is trusted first. Next comes
+    # the prompt's own "MEASURED POCKET CONTACTS" block, because that is literally what the model
+    # was shown. `cited_residues` is LAST and is a fallback only: on the ChEMBL potency corpus it
+    # holds the residues the REFERENCE sentence cites (as dicts: {residue, atom, dist_A}), i.e. a
+    # small subset of the table, so grounding a generation against it would score a correct
+    # citation of any other contact as a hallucination.
+    v = r.get('table_residues')
+    if v:
+        return residue_tokens(' '.join(v)) if not isinstance(v, str) else set(v)
+    p = r.get('prompt') or ''
+    if 'POCKET CONTACTS' in p:
+        got = residue_tokens(p.split('POCKET CONTACTS', 1)[1])
+        if got:
+            return got
+    cited = r.get('cited_residues') or []
+    out = set()
+    for c in cited:
+        name = c.get('residue') if isinstance(c, dict) else c
+        if name:
+            out |= residue_tokens(str(name))
+    return out
 
 
 def score(rows, completions):
@@ -194,16 +238,24 @@ def score(rows, completions):
         smi, method = extract_smiles(text)
         methods[method] = methods.get(method, 0) + 1
         cs, ci = canon(smi), canon(r['input_smiles'])
-        tbl = set(r['table_residues'])
+        # A CORPUS WITHOUT A CONTACT TABLE IS NOT A SCORING ERROR. The crystal-pair corpora
+        # carry `table_residues` (the pocket contacts a residue claim can be checked against);
+        # the ChEMBL potency corpora do not, and the hard lookup threw KeyError after 30
+        # minutes of generation had already been produced and then discarded. Missing means
+        # "no table to check against": residue grounding is reported as None for those rows
+        # rather than silently counted as ungrounded, which would read as invention.
+        tbl = row_table_residues(r)
+        has_tbl = bool(tbl)
         named = residue_tokens(sent)
         h = sum(1 for n in named if n in tbl)
         if named:
-            n_named += 1
+            n_named += 1          # NAMING does not depend on having a table to check against
+        if named and has_tbl:
             g_hit += h
             g_tot += len(named)
             g_macro.append(h / len(named))
             n_fully += (h == len(named))
-        recs.append({'pair': r['pair'], 'target': r['target'], 'split': r['split'],
+        recs.append({'pair': r['pair'], 'target': r['target'], 'split': r.get('split'),
                      'completion': text, 'gen_sentence': sent,
                      'gen_smiles': smi, 'extraction_method': method,
                      'gen_smiles_canonical': cs,
@@ -211,12 +263,13 @@ def score(rows, completions):
                      'valid': cs is not None,
                      'echo': bool(cs and ci and cs == ci),
                      'named_residues': sorted(named),
-                     'grounded_residues': sorted(n for n in named if n in tbl),
-                     'ungrounded_residues': sorted(n for n in named if n not in tbl),
-                     'groundedness': (h / len(named)) if named else None,
-                     'reference_sentence': r['reference_sentence'],
-                     'reference_smiles': r['analogue_smiles'],
-                     'reference_residues': r['reference_residues'],
+                     'grounded_residues': sorted(n for n in named if n in tbl) if has_tbl else None,
+                     'ungrounded_residues': (sorted(n for n in named if n not in tbl)
+                                             if has_tbl else None),
+                     'groundedness': (h / len(named)) if (named and has_tbl) else None,
+                     'reference_sentence': r.get('reference_sentence'),
+                     'reference_smiles': r.get('analogue_smiles'),
+                     'reference_residues': r.get('reference_residues'),
                      'n_table_residues': len(tbl)})
     n = len(recs)
     n_extracted = sum(1 for x in recs if x['gen_smiles'])
@@ -251,7 +304,11 @@ def score(rows, completions):
 def reference_ceiling(rows):
     macro, hit, tot, full, named_n = [], 0, 0, 0, 0
     for r in rows:
-        tbl, named = set(r['table_residues']), set(r['reference_residues'])
+        # same tolerance as score(): a corpus with no contact table has no ceiling to compute
+        tbl = set(r.get('table_residues') or ())
+        named = set(r.get('reference_residues') or ())
+        if not tbl:
+            continue
         if not named:
             continue
         named_n += 1
@@ -280,6 +337,18 @@ def main():
     ap.add_argument('--out', required=True)
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--seed', type=int, default=0, help='recorded only; generation is greedy')
+    ap.add_argument('--no-merge', dest='no_merge', action='store_true',
+                    help='keep --adapter active instead of merging it into the base weights. '
+                         'Matches how the adapter behaved during training; avoids the bf16 '
+                         'rounding that merge_and_unload() applies to W + BA.')
+    ap.add_argument('--max-length', dest='max_length', type=int, default=None,
+                    help='token ceiling for the teacher-forced response_loss pass. Defaults to '
+                         "train_sft CFG['max_length'] (2304), which was measured on the g1 corpus "
+                         '(max 2128) and is stale for later ones: g3+g4 reaches 2413 on val and '
+                         '2563 on train. The ceiling REFUSES rather than truncates, so an eval '
+                         'over a longer corpus dies on it. Raising it here does not touch the '
+                         'training threshold, and costs nothing at eval: the collator pads to '
+                         "each batch's own longest sequence, not to this number.")
     a = ap.parse_args()
 
     os.makedirs(a.out, exist_ok=True)
@@ -289,7 +358,11 @@ def main():
         rows = rows[:a.limit]
 
     model_path = MODELS[a.model]
-    tok = build_tokenizer(model_path)
+    # Switch to this model's vocabulary, then re-read the ids: `from train_sft import PAD_ID`
+    # bound the Llama values at import time and would not see the change.
+    set_special_ids(a.model)
+    globals()['PAD_ID'], globals()['EOS_ID'] = train_sft.PAD_ID, train_sft.EOS_ID
+    tok = build_tokenizer(model_path, a.model)
     model = load_model(model_path, CFG['bf16'], device_map='cuda')
     # --base-adapter is merged FIRST, then --adapter is applied on top of the merged weights.
     #
@@ -303,16 +376,24 @@ def main():
         model = PeftModel.from_pretrained(model, a.base_adapter).merge_and_unload()
     if a.adapter:
         from peft import PeftModel
-        model = PeftModel.from_pretrained(model, a.adapter).merge_and_unload()
+        model = PeftModel.from_pretrained(model, a.adapter)
+        # merge_and_unload() folds BA into W and rounds the sum to the base dtype. In bf16 that is
+        # ~8 mantissa bits, so a small LoRA update can be partly rounded away -- and training never
+        # sees that rounding, because it keeps the adapter active and computes W.x + BA.x. On v4's
+        # checkpoint the two differ by 0.080 of reward over the same 32 prompts. --no-merge keeps
+        # the adapter active, matching how the weights were trained and evaluated in-loop.
+        if not a.no_merge:
+            model = model.merge_and_unload()
     model.eval()
     model.config.use_cache = True
     device = next(model.parameters()).device
 
-    out = response_loss(model, AlpacaSFT(rows, tok, CFG['max_length']), device)
+    max_len = a.max_length or CFG['max_length']
+    out = response_loss(model, AlpacaSFT(rows, tok, max_len), device)
     summary, recs = score(rows, generate(model, tok, rows, device))
     summary.update(out)
     summary.update({'model': a.model, 'model_path': model_path, 'arm': a.arm, 'split': a.split,
-                    'adapter': a.adapter, 'base_adapter': a.base_adapter,
+                    'adapter': a.adapter, 'base_adapter': a.base_adapter, 'max_length': max_len, 'no_merge': a.no_merge,
                     'zero_shot': a.adapter is None, 'seed': a.seed,
                     'reference_ceiling': reference_ceiling(rows),
                     'val_is_model_selection_not_test': a.split == 'val'})
@@ -325,11 +406,14 @@ def main():
     print('\n' + '=' * 95)
     for r in recs[:5]:
         print('PAIR %s   target %s' % (r['pair'], r['target']))
-        print('  GEN : %s' % r['gen_sentence'][:320])
+        print('  GEN : %s' % (r['gen_sentence'] or '')[:320])
         print('  GEN SMILES: %s  [%s]  valid=%s echo=%s' % (r['gen_smiles'],
                                                             r['extraction_method'],
                                                             r['valid'], r['echo']))
-        print('  REF : %s' % r['reference_sentence'][:320])
+        # the potency corpora carry no reference sentence: this dump is a courtesy, and it
+        # threw TypeError AFTER eval_summary.json was written, so the step reported FAIL on a
+        # run whose results were complete.
+        print('  REF : %s' % (r.get('reference_sentence') or '')[:320])
         print('  REF SMILES: %s' % r['reference_smiles'])
         print('  grounded %s  ungrounded %s' % (r['grounded_residues'], r['ungrounded_residues']))
         print('-' * 95)

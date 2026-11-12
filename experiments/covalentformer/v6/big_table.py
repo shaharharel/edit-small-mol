@@ -80,9 +80,14 @@ def residues(text):
             if m.group(0)[:3].upper() in AA}
 
 
-def metrics(gen_path, train_path=None):
+def metrics(gen_path, train_path=None, bench_path=None):
+    # THE BENCH MUST FOLLOW THE GENERATION SET. This was a module-level constant, which is
+    # right while every arm is scored on one benchmark and silently wrong the moment two
+    # test sets are compared -- every row whose pair is absent from the hardcoded bench is
+    # skipped, so an arm evaluated on the other corpus would score on a handful of
+    # accidental pair-id collisions.
     bench = {}
-    for line in open(BENCH):
+    for line in open(bench_path or BENCH):
         r = json.loads(line)
         if r['split'] == 'val':
             bench[r['pair']] = r
@@ -124,10 +129,22 @@ def metrics(gen_path, train_path=None):
                     wh_kept += 1
         named = residues(r.get('gen_sentence'))
         if named:
-            tbl = set(b['table_residues'])
+            # the ChEMBL potency corpus holds its contacts in the PROMPT, not in a
+            # `table_residues` field -- the hard lookup made every cell on that corpus fail
+            # outright. Same fallback as eval_sft.py: parse the block the model was shown.
+            tbl = set(b.get('table_residues') or ())
+            if not tbl and 'POCKET CONTACTS' in (b.get('prompt') or ''):
+                tbl = residues(b['prompt'].split('POCKET CONTACTS', 1)[1])
             g_hit += sum(1 for x in named if x in tbl)
             g_tot += len(named)
-            ref = set(b['reference_residues'])
+            # selectivity needs the chemists' own cited residues; the potency corpus stores
+            # them under `cited_residues` as {residue, atom, dist_A} dicts and has no
+            # `reference_residues` at all, so the hard lookup killed the whole cell
+            ref = b.get('reference_residues')
+            if ref is None:
+                ref = [c.get('residue') if isinstance(c, dict) else c
+                       for c in (b.get('cited_residues') or [])]
+            ref = {str(x).upper() for x in (ref or []) if x}
             if ref:
                 sel.append(len(named & ref) / len(ref))
     uniq = len(set(canons)) / valid if valid else None

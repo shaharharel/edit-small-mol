@@ -1,0 +1,48 @@
+\section{Related work}
+
+\paragraph{Pocket-conditioned generation.} Structure-based generative models place atoms in a
+measured site and several are explicitly interaction-aware: Pocket2Mol~\citep{peng2022pocket2mol},
+TargetDiff~\citep{guan2023targetdiff}, DiffSBDD~\citep{schneuing2024diffsbdd},
+DrugFlow~\citep{schneuing2025drugflow}, ResGen~\citep{resgen2023}, PocketFlow~\citep{jiang2024pocketflow}
+and Lingo3DMol~\citep{feng2024lingo3dmol}, the last predicting non-covalent interaction sites
+directly. They do not state a design hypothesis in words, and their evaluation rests on
+distributional and docking-derived scores whose adequacy has been
+criticised~\citep{cieplinski2023dockwell,harris2023posecheck,buttenschoen2024posebusters}. Recent
+work does prompt an LLM with pockets and required residue contacts~\citep{macdougall2026spatial}, so
+we do not claim that reasoning LLMs cannot see a pocket; we claim that no prior system reports
+whether its stated reasons are checkable against the ligand's own contact table.
+
+\paragraph{Reasoning over molecular optimisation.} Chemistry LLMs and reasoning models now justify
+modifications in natural language~\citep{zhao2024chemdfm,narayanan2025ether0,cavanagh2024smileyllama,
+fang2023molinstructions,zhang2024chemllm}. Closest to us, DESRO~\citep{liu2026desro} recovers
+reasoning steps from outcome data, DrugR~\citep{liu2026drugr} builds rationales backwards from
+computed ADMET outcomes, and Logos~\citep{wen2026logos} emits a reason block then a SMILES. All
+three generate reason and molecule inside one model and one trace, so the reason cannot be
+substituted and the intervention we rely on is unavailable; none conditions on pocket structure.
+MolecularCanvas~\citep{dong2026molecularcanvas} separates an LLM plan from an RDKit executor but is
+an interactive tool without held-out oracle or mismatch measurements. Earlier work factorised
+rationale-to-molecule where the rationale is a \emph{substructure} rather than a
+sentence~\citep{jin2020rationale}. Our contribution against this group is the separation into two
+independently trained models with a natural-language interface, the structural grounding of that
+interface, and the control arms that quantify it.
+
+\paragraph{Instruction-faithfulness controls.} Pocket-shuffled controls are standard in
+structure-based design, and UTGDiff~\citep{utgdiff2024} argues that distributional metrics cannot
+detect cross-matched instruction/molecule pairs. Our three-arm decomposition adds the finding that a
+mismatched instruction falls \emph{below} the no-instruction arm, and that the no-instruction arm is
+degenerate because it echoes the input.
+
+\paragraph{Lead optimisation from measured pairs.} Delta and pairwise models exploit analogue pairs
+directly~\citep{fralish2023deepdelta,feng2024actfound}, matched molecular series have long been used
+to pick the next compound~\citep{wawer2014whatnext}, and REINVENT~4~\citep{loeffler2024reinvent4}
+provides the analogue-generation baseline at matched budget. These supply molecules and potency
+estimates, not hypotheses.
+
+\paragraph{Literature mining.} LLM extraction from chemistry papers targets reactions, procedures
+and entities~\citep{chemminer2024,materials2025ie}. We are not aware of prior work extracting the
+stated design rationale of a medicinal-chemistry modification from paper text.
+
+\paragraph{Cofolding as design input.} We take contact tables from cofolded complexes where no
+crystal structure exists~\citep{wohlwend2024boltz1,passaro2025boltz2,abramson2024af3,chai2024chai1},
+and we adopt the caveats from prospective cofolding
+evaluations~\citep{cofold_prospective_2025} rather than treating a predicted pose as a measurement.

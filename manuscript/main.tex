@@ -1,0 +1,44 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+\IfFileExists{natbib.sty}{\usepackage[numbers,sort&compress]{natbib}}{%
+  \providecommand{\citep}[1]{[#1]}\providecommand{\citet}[1]{[#1]}%
+  \providecommand{\cite}[1]{[#1]}}
+
+% A placeholder that is impossible to overlook in a draft, and impossible to typeset by accident
+% in a submission: every one of these has a line in PLACEHOLDERS.md saying which experiment
+% supplies it and what we expect it to show.
+\newcommand{\TBD}[2]{\textcolor{red}{\textbf{[TBD-#1: #2]}}}
+% A number that is measured. Used so a reader (and a co-author) can see at a glance which figures
+% in a sentence are evidence and which are prose.
+\newcommand{\m}[1]{#1}
+
+\title{\textbf{Design Intent as an Evaluable Output:\\
+Pocket-Grounded Hit-to-Lead Optimisation with Language Models}}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+
+\input{sections/00_abstract.tex}
+\input{sections/01_introduction.tex}
+\input{sections/02_methods.tex}
+\input{sections/03_results.tex}
+\input{sections/03b_related.tex}
+\input{sections/04_discussion.tex}
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\appendix
+\input{sections/05_appendix.tex}
+
+\end{document}

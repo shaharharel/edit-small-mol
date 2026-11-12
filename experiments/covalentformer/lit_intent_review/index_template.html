@@ -1,0 +1,491 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Design intent review</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* ---------------------------------------------------------------------------
+   LAYOUT CONTRACT: one case fills the viewport exactly, and the page never
+   scrolls. Structures are the only elastic track, because they are the thing
+   being judged -- in the first version they got 39% of the width, native
+   230x180, pinned top-left, while ~190px of permanent chrome went to text read
+   once. Reading order top to bottom is CLAIM -> STRUCTURES -> JUDGEMENT.
+   --------------------------------------------------------------------------- */
+:root{
+  --bg:#f6f7f9; --panel:#fff; --fg:#13171c; --mut:#5d6b7a; --line:#e2e6eb;
+  --ok:#157f3b; --ok-bg:#eaf6ee; --no:#b42318; --no-bg:#fdeeec;
+  --uns:#8a6d12; --uns-bg:#fdf6e3; --acc:#f59f35; --focus:#2563eb;
+  --r:14px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.18);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:var(--bg);color:var(--fg);
+  font:16px/1.6 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+#app{height:100dvh;max-width:1340px;margin:0 auto;display:grid;
+  grid-template-rows:auto minmax(140px,max-content) minmax(300px,1fr) minmax(112px,max-content) auto;
+  gap:10px;padding:12px 18px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);min-height:0;
+  box-shadow:var(--shadow)}
+
+/* ---------- header: one line, plus the strip that answers "how far am I" ---------- */
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:0 2px}
+h1{font-size:17px;margin:0;font-weight:700;letter-spacing:-.01em}
+#pace{font-size:14px;color:var(--mut);font-variant-numeric:tabular-nums}
+#who{border:1.5px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;font-size:16px;
+  font-weight:600;width:210px;background:var(--panel);color:var(--fg);box-shadow:var(--shadow)}
+#who::placeholder{font-weight:400;color:var(--mut)}
+#who:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+#strip{display:flex;gap:2px;height:7px;width:100%;margin:0}
+#strip i{flex:1;background:var(--line);border-radius:1px;transition:background .18s;cursor:pointer}
+#strip i.ap{background:var(--ok)} #strip i.rj{background:var(--no)}
+#strip i.un{background:var(--uns)} #strip i.pd{background:var(--no);opacity:.45}
+#strip i.cur{outline:1.5px solid var(--fg);outline-offset:1px;border-radius:0}
+
+/* ---------- upper: the claim being judged ---------- */
+#claim{display:flex;flex-direction:column;justify-content:center;padding:20px 28px;overflow:auto}
+.lbl{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin-bottom:10px;font-weight:600}
+#reason{font-size:clamp(18px,1.55vw,24px);line-height:1.45;max-width:66ch;margin:0 auto;
+  text-align:center;letter-spacing:-.011em;font-weight:450;text-wrap:pretty}
+#claim.long #reason{font-size:clamp(16px,1.25vw,19px);line-height:1.5;max-width:78ch}
+#claimmeta{font-size:13px;color:var(--mut);text-align:center;margin-top:14px}
+#quote{display:none;max-width:78ch;margin:14px auto 0;padding:12px 16px;font-size:14px;border-left:3px solid var(--acc);
+  background:#fffaf1;border-radius:0 6px 6px 0;font-size:12.5px;color:#4a4132;text-align:left}
+
+/* ---------- middle: the structures, centre stage ---------- */
+#mols{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:10px 16px;min-height:0}
+.molbox{display:flex;flex-direction:row;align-items:center;gap:10px;min-height:0;height:100%;min-width:0}
+.molwrap{flex:1;min-width:0;min-height:0;height:100%;display:flex;flex-direction:column;align-items:center}
+.molcap{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);margin-bottom:4px;font-weight:600}
+.molcap b{color:var(--fg);letter-spacing:0;text-transform:none;font-size:15px;font-weight:700}
+/* the SVGs are fixed-size RDKit output WITH a viewBox and no background rect, so they scale
+   cleanly on width/height alone; the white plate is unconditional because the bonds are black */
+.plate{flex:1;min-height:0;width:100%;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:4px}
+.plate svg{width:100%;height:100%;max-height:100%;display:block}
+#arrow{display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--mut)}
+#arrow .ar{font-size:34px;line-height:1;opacity:.5}
+#arrow .dh{font-size:12px;font-variant-numeric:tabular-nums}
+.molids{font-family:var(--mono);font-size:11.5px;color:var(--mut);margin-top:4px;font-variant-numeric:tabular-nums}
+
+table.props{border-collapse:collapse;font-size:11.5px;font-family:var(--mono);color:var(--mut);width:auto}
+table.props.side{flex:0 0 auto;align-self:center}
+table.props td{padding:1px 7px 1px 0;white-space:nowrap}
+table.props td.k{color:var(--mut);opacity:.75}
+table.props td.v{color:var(--fg);text-align:right}
+table.props td.d{text-align:right;font-size:10.5px;opacity:.85}
+table.props td.d.up{color:var(--no)} table.props td.d.dn{color:var(--ok)}
+
+/* ---------- lower: the judgement ---------- */
+#judge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:11px 18px}
+#question{font-size:13.5px;color:var(--mut);text-align:center}
+#question b{color:var(--fg)}
+#btns{display:flex;gap:9px;align-items:stretch;flex-wrap:wrap;justify-content:center}
+.btn{border:1.5px solid var(--line);background:var(--panel);color:var(--fg);border-radius:11px;
+  padding:12px 30px;font:inherit;font-size:17px;font-weight:650;cursor:pointer;display:flex;align-items:center;gap:10px;
+  box-shadow:var(--shadow);transition:transform .08s,background .12s,border-color .12s,box-shadow .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.btn kbd{font:inherit;font-size:11px;font-weight:700;opacity:.6;border:1px solid currentColor;border-radius:3px;padding:0 4px}
+.btn.app[aria-pressed=true]{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.rej[aria-pressed=true]{background:var(--no);border-color:var(--no);color:#fff}
+.btn.uns[aria-pressed=true]{background:var(--uns);border-color:var(--uns);color:#fff}
+.btn.app:hover{border-color:var(--ok)} .btn.rej:hover{border-color:var(--no)} .btn.uns:hover{border-color:var(--uns)}
+#cmt{width:min(780px,100%);border:1.5px solid var(--line);border-radius:9px;padding:7px 12px;font:inherit;font-size:14.5px;
+  height:34px;min-height:34px;max-height:112px;resize:vertical;overflow-y:hidden;line-height:1.35;
+  background:var(--panel);color:var(--fg)}
+#cmt:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+#cmtnote{font-size:11px;color:var(--no);display:none}
+
+/* the reveal: the one moment of feedback in the loop, so it gets room and motion */
+#reveal{display:none;align-items:baseline;gap:16px;justify-content:center;flex-wrap:wrap;
+  animation:rise .22s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#reveal .big{font-family:var(--mono);font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+#reveal .big.up{color:var(--ok)} #reveal .big.dn{color:var(--no)}
+#reveal .sub{font-size:13.5px;color:var(--mut);font-variant-numeric:tabular-nums}
+#nextbar{font-size:13.5px;color:var(--mut)}
+
+/* ---------- footer ---------- */
+footer{display:flex;align-items:center;gap:14px;font-size:13px;color:var(--mut);padding:0 2px;flex-wrap:wrap}
+.nav{border:1px solid var(--line);background:var(--panel);color:var(--fg);border-radius:9px;padding:7px 14px;font:inherit;font-size:13px;cursor:pointer;box-shadow:var(--shadow)}
+.nav[disabled]{opacity:.35;cursor:default}
+#status{margin-left:auto;font-variant-numeric:tabular-nums}
+#status.bad{color:var(--no);font-weight:650}
+kbd.legend{font:inherit;font-size:10.5px;border:1px solid var(--line);border-radius:3px;padding:0 3px;margin:0 1px}
+
+/* ---------- interstitial + keys overlay ---------- */
+#gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:20}
+#gate .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:38px 40px;
+  box-shadow:var(--shadow);width:min(430px,92vw);display:flex;flex-direction:column;gap:12px}
+#gate input{border:1.5px solid var(--line);border-radius:10px;padding:13px 15px;font:inherit;font-size:16px;
+  background:var(--panel);color:var(--fg);width:100%}
+#gate input:focus-visible{outline:2px solid var(--focus);outline-offset:1px;border-color:var(--focus)}
+#gerr{font-size:13.5px;color:var(--no);min-height:19px;font-weight:600}
+#signed{font-size:13px;color:var(--mut)}
+#signed b{color:var(--fg);font-weight:600}
+#inter,#keys{position:fixed;inset:0;background:rgba(246,247,249,.97);display:none;align-items:center;justify-content:center;z-index:9}
+#inter .box,#keys .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 38px;max-width:620px;text-align:center}
+#inter h2{margin:0 0 10px;font-size:21px}
+#inter .stats{font-size:13px;color:var(--mut);margin-bottom:6px;font-variant-numeric:tabular-nums}
+#inter .spark{display:flex;gap:3px;justify-content:center;height:30px;align-items:flex-end;margin:14px 0}
+#inter .spark i{width:9px;border-radius:2px;background:var(--line)}
+#keys table{font-size:13px;border-collapse:collapse;text-align:left;margin:0 auto}
+#keys td{padding:3px 12px 3px 0}
+#keys td:first-child{font-weight:700;white-space:nowrap}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#101317; --panel:#191d23; --fg:#e9ecef; --mut:#9aa6b2; --line:#2a313a;
+  --ok:#3fb96a; --ok-bg:#15291c; --no:#f0685c; --no-bg:#2a1816; --uns:#d9b04a; --acc:#f0a44a; --focus:#7aa2ff}
+  /* .plate stays WHITE on purpose: RDKit draws black bonds on a transparent background, so a
+     dark plate renders the molecule as a smudge -- the defect this replaces. */
+  :root:not([data-theme=light]) #quote{background:#241f17;color:#e2d7c4}
+  :root:not([data-theme=light]) .plate{background:#f2f5f8}
+  :root:not([data-theme=light]) #inter,:root:not([data-theme=light]) #keys{background:rgba(16,19,23,.97)}
+}
+</style>
+
+<div id="app">
+  <header>
+    <h1>Design intent review</h1>
+    <span id="signed"></span>
+    <span id="pace"></span>
+    <span id="status">loading&hellip;</span>
+    <div id="strip" role="list" aria-label="progress"></div>
+  </header>
+
+  <section class="panel" id="claim">
+    <div class="lbl" id="claimlbl">the stated design reason</div>
+    <div id="reason"></div>
+    <div id="claimmeta"></div>
+    <div id="quote"></div>
+  </section>
+
+  <section class="panel" id="mols">
+    <div class="molbox">
+      <table class="props side" id="pa"></table>
+      <div class="molwrap"><div class="molcap">before</div><div class="plate" id="plate_a"></div></div>
+    </div>
+    <div id="arrow"><div class="ar">&rarr;</div></div>
+    <div class="molbox">
+      <div class="molwrap"><div class="molcap">after</div><div class="plate" id="plate_b"></div></div>
+      <table class="props side" id="pb"></table>
+    </div>
+  </section>
+
+  <section class="panel" id="judge">
+    <div id="question"></div>
+    <div id="btns">
+      <button class="btn app" id="bapp">Approve</button>
+      <button class="btn rej" id="brej">Reject</button>
+      <button class="btn uns" id="buns">Not sure</button>
+    </div>
+    <textarea id="cmt" placeholder="comment (optional &mdash; required for Not sure)"></textarea>
+    <div id="cmtnote">Not sure needs one line saying what is missing.</div>
+
+  </section>
+
+  <footer>
+    <button class="nav" id="prev">&larr; previous</button>
+    <button class="nav" id="next">skip &rarr;</button>
+    <span id="signedout"></span>
+  </footer>
+</div>
+
+<div id="gate"><div class="box">
+  <h2 style="margin:0 0 6px;font-size:23px">Design intent review</h2>
+  <p style="margin:0 0 20px;color:var(--mut);font-size:14.5px;line-height:1.55;max-width:46ch">
+    100 molecule pairs from the medicinal-chemistry literature, each with the reason the paper
+    gives for the change. You decide whether that reason is a sound account of that change.
+    About 25&nbsp;minutes; your place is kept if you stop.</p>
+  <input type="email" id="gmail" placeholder="email" autocomplete="username" spellcheck="false">
+  <input type="password" id="gpass" placeholder="password" autocomplete="current-password">
+  <button class="btn" id="gbtn" style="width:100%;justify-content:center;margin-top:4px">Sign in</button>
+  <div id="gerr"></div>
+</div></div>
+<div id="inter"><div class="box" id="interbox"></div></div>
+<div id="keys"><div class="box" id="keysbox"></div></div>
+
+<script>
+/* ===========================================================================
+   STATE. `mine` mirrors verdicts per reviewer so a reload does not lose the
+   place. It is a MIRROR, never the record: the record is the JSONL the server
+   appends. A verdict is written here with pending:true BEFORE the POST (so a
+   crash mid-flight is not silent) and cleared on success -- and everything
+   that counts progress ignores pending entries, because the earlier version
+   counted a failed save as reviewed, skipped it on resume and rendered it
+   green, which hid the hole instead of showing it.
+   =========================================================================== */
+const LS = 'lit_intent_review_v2';
+let TOKEN = null;
+const lsKey = w => LS + '::' + (w || '').toLowerCase().trim();
+let items = [], mine = {}, cur = 0, shownAt = 0, dwells = [], outbox = [];
+let verdict = null, revealed = false, armed = true, lastSubmit = 0, setStart = 0;
+
+const $ = id => document.getElementById(id);
+const esc = s => (s == null ? '' : String(s)).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const whoNow = () => { try { return localStorage.getItem(LS + '_who') || ''; } catch (e) { return ''; } };
+const recorded = x => mine[x.id] && !mine[x.id].pending;
+
+function loadMine() {
+  try { mine = JSON.parse(localStorage.getItem(lsKey(whoNow())) || '{}'); } catch (e) { mine = {}; }
+}
+function saveMine() {
+  try { localStorage.setItem(lsKey(whoNow()), JSON.stringify(mine)); } catch (e) {}
+}
+
+/* ---------- progress strip: built once, one cell mutated per submit ---------- */
+function buildStrip() {
+  const s = $('strip');
+  s.innerHTML = '';
+  items.forEach((x, i) => {
+    const c = document.createElement('i');
+    c.dataset.i = i;
+    s.appendChild(c);
+  });
+  s.onclick = e => { if (e.target.dataset.i) show(+e.target.dataset.i); };
+  items.forEach((x, i) => paintCell(i));
+}
+function paintCell(i) {
+  const c = $('strip').children[i];
+  if (!c) return;
+  const r = mine[items[i].id];
+  c.className = !r ? '' : (r.pending ? 'pd' : {approve:'ap', reject:'rj', unsure:'un'}[r.verdict] || '');
+  if (i === cur) c.classList.add('cur');
+}
+function repaintStrip() { items.forEach((x, i) => paintCell(i)); }
+
+function pace() {
+  const done = items.filter(recorded).length;
+  const left = items.length - done;
+  let txt = (cur + 1) + ' of ' + items.length + ' · ' + done + ' recorded · ' + left + ' left';
+  if (dwells.length >= 3) {
+    const m = [...dwells].slice(-10).sort((a, b) => a - b);
+    const med = m[Math.floor(m.length / 2)];
+    const mins = Math.round(left * med / 60000 / 5) * 5;
+    txt += ' · ~' + (mins < 5 ? '<5' : mins) + ' min at your pace';
+  }
+  $('pace').textContent = txt;
+}
+
+/* ---------- rendering one case ---------- */
+function show(i) {
+  cur = Math.max(0, Math.min(items.length - 1, i));
+  const x = items[cur];
+  verdict = null; revealed = false;
+  $('reason').textContent = x.reason || '';
+  $('claim').classList.toggle('long', (x.reason || '').length > 200);
+  // the paper line lives next to the buttons, where the judgement is made, and appears once
+  $('claimmeta').innerHTML = '';
+  $('question').innerHTML = esc((x.title || '').slice(0, 150)) + ' &middot; ' +
+    esc(x.journal || '') + ' ' + esc(x.year || '') +
+    (x.doi ? ' &middot; <a href="https://doi.org/' + esc(x.doi) + '" target="_blank" ' +
+             'rel="noopener">doi</a>' : '') +
+    ' &middot; target <code>' + esc(x.target) + '</code>';
+  $('quote').style.display = 'none';
+  $('quote').innerHTML = '&ldquo;' + esc(x.quote) + '&rdquo;<div style="margin-top:5px;opacity:.7">section ' +
+    esc(x.section) + '</div>';
+
+  $('plate_a').innerHTML = x.svg_a; $('plate_b').innerHTML = x.svg_b;
+  renderProps('pa', x.props_a, null);
+  renderProps('pb', x.props_b, x.props_a);
+
+  ['bapp','brej','buns'].forEach(b => $(b).setAttribute('aria-pressed', 'false'));
+  const prior = mine[x.id];
+  $('cmt').value = prior && !prior.pending ? (prior.comment || '') : '';
+  $('cmt').style.height = '34px';
+  $('cmtnote').style.display = 'none';
+  ['bapp','brej','buns'].forEach(b => $(b).disabled = false);
+  if (prior && !prior.pending) {
+    verdict = prior.verdict;
+  }
+  $('prev').disabled = cur === 0;
+  $('next').disabled = cur >= items.length - 1;
+  shownAt = performance.now();
+  repaintStrip(); pace();
+}
+
+function renderProps(id, p, ref) {
+  if (!p) { $(id).innerHTML = ''; return; }
+  const DELTA = {MW: 1, cLogP: 1, TPSA: 1};
+  $(id).innerHTML = Object.keys(p).map(k => {
+    let d = '';
+    if (ref && DELTA[k] && typeof p[k] === 'number' && typeof ref[k] === 'number') {
+      const v = p[k] - ref[k];
+      if (Math.abs(v) >= 0.05) {
+        d = '<td class="d ' + (v > 0 ? 'up' : 'dn') + '">' + (v > 0 ? '+' : '') +
+            (k === 'cLogP' ? v.toFixed(2) : v.toFixed(0)) + '</td>';
+      }
+    }
+    return '<tr><td class="k">' + k + '</td><td class="v">' + p[k] + '</td>' +
+           (d || '<td class="d"></td>') + '</tr>';
+  }).join('');
+}
+
+/* ---------- saving ---------- */
+// ONE CLICK IS THE WHOLE INTERACTION: record, then move on. The two-step select-then-submit
+// cost a second click on every one of 100 cards and bought nothing -- the record is append-only,
+// so a change of mind is just another click on a card the reviewer navigates back to.
+function setVerdict(v) {
+  verdict = v;
+  if (v === 'unsure' && !$('cmt').value.trim()) {
+    $('cmtnote').style.display = 'block'; $('cmt').focus(); return;
+  }
+  ['bapp','brej','buns'].forEach(b => $(b).disabled = true);
+  submit();
+}
+
+function submit() {
+  const who = whoNow();
+  if (!who || !TOKEN) { fail('SIGNED OUT — reload and sign in; nothing was saved'); return; }
+  if (!verdict) { fail('pick Approve, Reject or Not sure first'); return; }
+  const comment = $('cmt').value.trim();
+  if (verdict === 'unsure' && !comment) { $('cmtnote').style.display = 'block'; $('cmt').focus(); return; }
+  const x = items[cur];
+  const prior = mine[x.id];
+  const rec = {
+    id: x.id, verdict, comment, reviewer: who, ts: new Date().toISOString(),
+    dwell_ms: Math.round(performance.now() - shownAt),
+    set_index: Math.floor(cur / 20) + 1,
+    // a correction made AFTER the potency was revealed is a different datum from a first-pass
+    // verdict, and the scorer must be able to separate them rather than mix anchored
+    // judgements into the headline rate
+    after_reveal: !!(prior && !prior.pending),
+    supersedes: prior && !prior.pending ? prior.ts : null,
+    pending: true,
+  };
+  mine[x.id] = rec; saveMine(); paintCell(cur);
+  $('status').textContent = 'saving…'; $('status').classList.remove('bad');
+  post(rec);
+}
+
+function post(rec) {
+  const body = Object.assign({}, rec); delete body.pending;
+  body.email = rec.reviewer; body.token = TOKEN;
+  fetch('save', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)})
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => {
+      if (mine[rec.id] && mine[rec.id].ts === rec.ts) { delete mine[rec.id].pending; saveMine(); }
+      paintCell(items.findIndex(x => x.id === rec.id));
+      $('status').textContent = j.n + ' of ' + items.length + ' recorded';
+      $('status').classList.remove('bad');
+      dwells.push(rec.dwell_ms);
+      if (rec.id === items[cur].id) advance();
+      pace();
+    })
+    .catch(err => {
+      outbox.push(rec);
+      fail('NOT SAVED (' + err.message + ') — ' + outbox.length + ' queued, retrying');
+      paintCell(items.findIndex(x => x.id === rec.id));
+    });
+}
+function fail(msg) { $('status').textContent = msg; $('status').classList.add('bad'); }
+setInterval(() => {               // retry the outbox rather than losing a verdict to a blip
+  if (!outbox.length) return;
+  const rec = outbox.shift();
+  post(rec);
+}, 15000);
+
+function advance() {
+  const nxt = items.findIndex((x, i) => i > cur && !recorded(x));
+  const target = nxt < 0 ? cur + 1 : nxt;
+  if (target >= items.length) { interstitial(true); return; }
+  if (Math.floor(target / 20) !== Math.floor(cur / 20)) { interstitial(false, target); return; }
+  show(target);
+}
+
+function undo() {
+  const x = items[cur];
+  if (!mine[x.id]) return;
+  delete mine[x.id]; saveMine(); paintCell(cur);
+  verdict = null; revealed = false;
+  ['bapp','brej','buns'].forEach(b => $(b).setAttribute('aria-pressed', 'false'));
+  $('reveal').style.display = 'none'; $('nextbar').textContent = '';
+  $('status').textContent = 'verdict withdrawn locally — submit again to correct the record';
+}
+
+/* ---------- interstitial every 20, so 100 feels finite ---------- */
+function interstitial(done, target) {
+  const n = items.filter(recorded).length;
+  const setN = Math.ceil((target == null ? items.length : target) / 20);
+  const secs = dwells.slice(-20);
+  const med = secs.length ? [...secs].sort((a, b) => a - b)[Math.floor(secs.length / 2)] / 1000 : 0;
+  const mins = setStart ? ((performance.now() - setStart) / 60000) : 0;
+  const spark = items.slice(Math.max(0, (target == null ? items.length : target) - 20),
+                            (target == null ? items.length : target)).map(x => {
+    const r = mine[x.id]; const d = Math.abs((x.after_submit || {}).delta || 0);
+    const h = Math.min(28, 4 + d * 9);
+    const col = !r ? 'var(--line)' : {approve:'var(--ok)', reject:'var(--no)', unsure:'var(--uns)'}[r.verdict];
+    return '<i style="height:' + h + 'px;background:' + col + '"></i>';
+  }).join('');
+  $('interbox').innerHTML =
+    '<h2>' + (done ? 'All ' + items.length + ' done' : 'Set ' + setN + ' of ' + Math.ceil(items.length / 20) + ' done') + '</h2>' +
+    '<div class="stats">' + n + ' recorded · ' + (mins ? mins.toFixed(1) + ' min' : '') +
+      (med ? ' · median ' + med.toFixed(0) + ' s each' : '') + '</div>' +
+    '<div class="spark">' + spark + '</div>' +
+    '<div class="stats">bar height is the size of the potency change, colour is your verdict</div>' +
+    (done ? '' : '<p><button class="btn" id="go">next set</button></p>');
+  $('inter').style.display = 'flex';
+  const go = () => { $('inter').style.display = 'none'; setStart = performance.now(); if (target != null) show(target); };
+  if ($('go')) $('go').onclick = go;
+  $('inter').dataset.go = done ? '' : '1';
+  window._go = go;
+}
+
+/* ---------- keyboard ---------- */
+
+/* ---------- boot ---------- */
+$('cmt').addEventListener('input', e => {
+  // one line by default; expands with the text and never past max-height
+  e.target.style.height = '34px';
+  e.target.style.height = Math.min(e.target.scrollHeight, 112) + 'px';
+});
+$('bapp').onclick = () => setVerdict('approve');
+$('brej').onclick = () => setVerdict('reject');
+$('buns').onclick = () => setVerdict('unsure');
+$('prev').onclick = () => show(cur - 1);
+$('next').onclick = () => show(cur + 1);
+
+function boot() {
+fetch('items.json').then(r => r.json()).then(j => {
+  items = j;
+  loadMine();
+  buildStrip();
+  const firstTodo = items.findIndex(x => !recorded(x));
+  $('status').textContent = items.length + ' pairs loaded';
+  setStart = performance.now();
+  show(firstTodo < 0 ? 0 : firstTodo);
+  try {
+    if (!localStorage.getItem(LS + '_seen_keys')) { keysPanel(); localStorage.setItem(LS + '_seen_keys', '1'); }
+  } catch (e) {}
+}).catch(() => fail('could not load items.json'));
+}
+
+function signIn() {
+  const email = ($('gmail').value || '').trim().toLowerCase();
+  const password = $('gpass').value || '';
+  $('gerr').textContent = '';
+  fetch('auth', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                 body: JSON.stringify({email, password})})
+    .then(r => r.json().then(j => ({ok: r.ok, j})))
+    .then(({ok, j}) => {
+      if (!ok) { $('gerr').textContent = j.error || 'sign-in failed'; return; }
+      TOKEN = j.token;
+      try { localStorage.setItem(LS + '_who', j.email); } catch (e) {}
+      $('signed').innerHTML = 'signed in as <b>' + esc(j.email) + '</b>';
+      $('gate').style.display = 'none';
+      boot();
+    })
+    .catch(() => { $('gerr').textContent = 'the server is unreachable'; });
+}
+$('gbtn').onclick = signIn;
+['gmail', 'gpass'].forEach(id => $(id).addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); signIn(); }
+}));
+// a remembered address is a convenience, never a session: the token is what authorises a
+// verdict and it only exists after a password check against the server
+try { const w = localStorage.getItem(LS + '_who'); if (w) $('gmail').value = w; } catch (e) {}
+$('gmail').focus();
+$('keys').onclick = e => { if (e.target.id === 'keys') $('keys').style.display = 'none'; };
+</script>
