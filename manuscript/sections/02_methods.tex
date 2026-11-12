@@ -93,8 +93,15 @@ unlock \m{58.6\%}.
 Three training regimes are compared, and the paper's framing depends on keeping them distinct.
 
 \emph{Direct LLM training} is the baseline: one adapter, one sequence, rationale and SMILES emitted
-together, with nothing in the objective forcing the molecule to depend on the rationale and no handle
-to intervene on under a mismatched-intent test. \emph{Generated reasoning} is our $R$, a separate
+together. It is important to be exact about what that does and does not imply, because the obvious
+claim is wrong. The training target is \texttt{<intent sentence>$\backslash$nSMILES: <smiles>}, so
+decoding is autoregressive through the sentence and the SMILES tokens are \emph{literally}
+conditioned on the emitted reason: the joint model already factorises in token order, and the reason
+is a genuine intermediate rather than a decoration. What the joint arrangement lacks is not the
+dependence but the \emph{separation} --- one set of weights and one loss for both factors --- and it
+is not even true that the intent cannot be intervened on, since prefilling the response with a
+sentence of our own and resuming at \texttt{SMILES:} is the same mechanism the model applies to
+itself. We use exactly that to measure steerability (\S\ref{sec:intent}). \emph{Generated reasoning} is our $R$, a separate
 adapter emitting the intent from the complex alone and supplying $M$ at inference.
 \emph{Extracted reasoning} is $R$'s supervision drawn from the literature rather than from the
 agent-written intents of the crystal and potency corpora --- a difference that is not cosmetic, since

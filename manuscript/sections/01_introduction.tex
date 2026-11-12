@@ -30,8 +30,12 @@ be caught automatically and counted.
 Making the intent evaluable also makes it \emph{replaceable}. We factorise
 $p(y,z\mid x,c)=p_R(z\mid x,c)\,p_M(y\mid x,c,z)$, with $x$ the hit, $c$ its contact table, $z$ the
 intent and $y$ the analogue, and train $R$ and $M$ as separate adapters with separate losses. The
-factorisation is the chain rule, so it costs nothing in expressiveness; what it buys is that $z$
-becomes a bottleneck the molecule is routed through rather than a decoration emitted beside it. We
+factorisation is the chain rule, so it costs nothing in expressiveness; what it buys is separate
+supervision and separately trained weights for the two factors. It does not buy the bottleneck
+itself: a jointly trained model that emits the sentence before the SMILES is already routing the
+molecule through the reason in token order, which is why an intent can be teacher-forced into it and
+why the comparison between joint and factorised is an empirical question rather than an
+architectural one. We
 can then intervene on $z$ alone --- substituting the reference intent, a sentence written for
 a different pair, or no sentence at all --- and read off how much of the molecule the sentence
 decides. Prior reason-then-molecule systems generate the rationale and the structure inside one
